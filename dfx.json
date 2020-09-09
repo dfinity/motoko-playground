@@ -1,0 +1,40 @@
+{
+  "canisters": {
+    "playground": {
+      "main": "src/playground/main.mo",
+      "type": "motoko"
+    },
+    "playground_assets": {
+      "dependencies": [
+        "playground"
+      ],
+      "frontend": {
+        "entrypoint": "src/playground_assets/public/index.js"
+      },
+      "source": [
+        "src/playground_assets/assets",
+        "dist/playground_assets/"
+      ],
+      "type": "assets"
+    }
+  },
+  "defaults": {
+    "build": {
+      "packtool": ""
+    }
+  },
+  "dfx": "0.6.7",
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    },
+    "tungsten": {
+      "providers": [
+        "https://gw.dfinity.network"
+      ],
+      "type": "persistent"
+    }
+  },
+  "version": 1
+}
