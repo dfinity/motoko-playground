@@ -1,18 +1,11 @@
 {
   "canisters": {
-    "playground": {
-      "main": "src/playground/main.mo",
-      "type": "motoko"
-    },
     "playground_assets": {
-      "dependencies": [
-        "playground"
-      ],
       "frontend": {
-        "entrypoint": "src/playground_assets/public/index.js"
+        "entrypoint": "src/index.js"
       },
       "source": [
-        "src/playground_assets/assets",
+        "src/assets/",
         "dist/playground_assets/"
       ],
       "type": "assets"
@@ -23,7 +16,6 @@
       "packtool": ""
     }
   },
-  "dfx": "0.6.7",
   "networks": {
     "local": {
       "bind": "127.0.0.1:8000",
