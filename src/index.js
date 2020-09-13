@@ -1,16 +1,15 @@
 import assets from 'ic:canisters/playground_assets';
 import * as Wasi from './wasiPolyfill';
+import { Actor, blobFromUint8Array, httpAgent } from '@dfinity/agent';
 
 const prog = `
 import Time "mo:base/Time";
 import Prim "mo:prim";
-func fac(n: Nat) : Nat {
-  if (n == 0) return 1;
-  n * fac(n-1);
+actor {
+    public func greet(name : Text) : async Text {
+        return "Hello, " # name # " at " # (debug_show Time.now());
+    };
 };
-let x = fac(5);
-Prim.debugPrint (debug_show x);
-Time.now()
 `;
 
 async function retrieve(file) {
@@ -48,12 +47,17 @@ async function init() {
   run.value = "Run";
   const compile = document.createElement('input');
   compile.type = "button";
-  compile.value = "Compile";
+  compile.value = "Compile to WASI";
+  const ic = document.createElement('input');
+  ic.type = "button";
+  ic.value = "Deply on IC";
+  
   dom.appendChild(code);
   dom.appendChild(output);
   dom.appendChild(document.createElement('br'));
   dom.appendChild(run);
   dom.appendChild(compile);
+  dom.appendChild(ic);  
 
   run.addEventListener('click', () => {
     output.value = 'Running...';
@@ -87,6 +91,36 @@ async function init() {
       output.value = 'Exception:\n' + err;
       throw err;
     };
+  });
+
+  ic.addEventListener('click', () => {
+    output.value = 'Compiling...';
+    try {
+      const tStart = Date.now();
+      const out = Motoko.compileWasm("dfinity", code.value);
+      const duration = (Date.now() - tStart) / 1000;
+      if (out.result.code === null) {
+        output.value = JSON.stringify(out.result.diagnostics);
+      } else {
+        output.value = `(compile time: ${duration}s)\n`;
+        output.value += out.stderr + out.stdout;
+        const wasm = out.result.code;
+        (async () => {
+          output.value += `Deploying on IC...\n`;
+          // TODO: recycle canisterIds
+          const canisterId = await Actor.createCanister();
+          output.value += `Created canisterId ${canisterId}\n`;
+          await Actor.install({ module: blobFromUint8Array(wasm) }, { canisterId });
+          output.value += `Ready.\nUse "dfx canister --network tungsten call ${canisterId} method arguments" to communicate with the canister before Candid UI lands in Tungsten.\n`;
+        })().catch(err => {
+          output.value += 'IC Exception:\n' + err.stack;
+          throw err;
+        });
+      }
+    } catch(err) {
+      output.value = 'Exception:\n' + err;
+      throw err;
+    };    
   });
 }
 
