@@ -1,6 +1,6 @@
 import assets from 'ic:canisters/playground_assets';
 import * as Wasi from './wasiPolyfill';
-import { Actor, blobFromUint8Array, httpAgent } from '@dfinity/agent';
+import { Actor, blobFromUint8Array } from '@dfinity/agent';
 
 const prog = `
 import Time "mo:base/Time";
