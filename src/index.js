@@ -2,13 +2,12 @@ import assets from 'ic:canisters/playground_assets';
 import * as Wasi from './wasiPolyfill';
 import { Actor, blobFromUint8Array } from '@dfinity/agent';
 
-const prog = `
-import Time "mo:base/Time";
+const prog = `import Time "mo:base/Time";
 import Prim "mo:prim";
 actor {
-    public func greet(name : Text) : async Text {
-        return "Hello, " # name # " at " # (debug_show Time.now());
-    };
+  public func greet(name : Text) : async Text {
+    return "Hello, " # name # " at " # (debug_show Time.now());
+  };
 };
 `;
 
@@ -19,6 +18,29 @@ async function retrieve(file) {
 
 async function loadBase(lib) {
   Motoko.loadFile(lib, await retrieve(lib));
+}
+
+function loadEditor() {
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js';
+  document.body.appendChild(script);
+
+  script.addEventListener('load', () => {
+    const div = document.createElement('div');
+    div.id = "editor";
+    div.style = "height:400px;width:50%;border:1px solid black;";
+    document.body.appendChild(div);
+
+    ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/');
+    const editor = ace.edit("editor");
+    editor.setTheme('ace/theme/clouds');
+    editor.session.setOptions({
+      'mode': 'ace/mode/swift',
+      'wrap': true,
+      'tabSize': 2,
+    });
+    editor.setValue(prog);
+  });
 }
 
 async function init() {
@@ -34,6 +56,8 @@ async function init() {
   dom.innerHTML = '';
 
   loadBase('Time.mo');
+
+  loadEditor();
   
   const code = document.createElement('textarea');
   code.rows = 25;
