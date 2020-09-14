@@ -125,7 +125,7 @@ async function init() {
   ace_script.addEventListener('load', () => {
     ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/');
     editor = ace.edit("editor");
-    editor.setTheme('ace/theme/clouds');
+    editor.setTheme('ace/theme/chrome');
     editor.session.setOptions({
       'mode': 'ace/mode/swift',
       'wrap': true,
