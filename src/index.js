@@ -20,52 +20,22 @@ async function loadBase(lib) {
   Motoko.loadFile(lib, await retrieve(lib));
 }
 
-function loadEditor() {
-  const script = document.createElement('script');
-  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js';
-  document.body.appendChild(script);
+let output;
+let editor;
 
-  script.addEventListener('load', () => {
-    const div = document.createElement('div');
-    div.id = "editor";
-    div.style = "height:400px;width:50%;border:1px solid black;";
-    document.body.appendChild(div);
-
-    ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/');
-    const editor = ace.edit("editor");
-    editor.setTheme('ace/theme/clouds');
-    editor.session.setOptions({
-      'mode': 'ace/mode/swift',
-      'wrap': true,
-      'tabSize': 2,
-    });
-    editor.setValue(prog);
-  });
-}
-
-async function init() {
+function initUI() {
   const dom = document.createElement('div');
   dom.width = "100%";
+  dom.style = "width:100%;display:flex;align-items:stretch";
   document.body.appendChild(dom);
-  dom.innerHTML = 'Loading compiler...';
   
-  const js = await retrieve('mo_js.js');
-  const script = document.createElement('script');
-  script.text = js;
-  document.body.appendChild(script);
-  dom.innerHTML = '';
+  const code = document.createElement('div');
+  code.id = "editor";
+  code.style = "height:400px;width:50%;border:1px solid black;";
 
-  loadBase('Time.mo');
-
-  loadEditor();
-  
-  const code = document.createElement('textarea');
-  code.rows = 25;
-  code.style.width = "45%";
-  code.value = prog;
-  const output = document.createElement('textarea');
-  output.rows = 25;
+  output = document.createElement('textarea');
   output.style.width = "45%";
+  output.value = "Loading...(Do nothing before you see 'Ready')\n";
   const run = document.createElement('input');
   run.type = "button";
   run.value = "Run";
@@ -78,16 +48,15 @@ async function init() {
   
   dom.appendChild(code);
   dom.appendChild(output);
-  dom.appendChild(document.createElement('br'));
-  dom.appendChild(run);
-  dom.appendChild(compile);
-  dom.appendChild(ic);  
+  document.body.appendChild(run);
+  document.body.appendChild(compile);
+  document.body.appendChild(ic);
 
   run.addEventListener('click', () => {
     output.value = 'Running...';
     try {
       const tStart = Date.now();
-      const out = Motoko.run(code.value);
+      const out = Motoko.run(editor.session.getValue());
       const duration = (Date.now() - tStart) / 1000;
       output.value = out.stderr + out.stdout + out.result;
       output.value += `\n(run time: ${duration}s)\n`;
@@ -101,7 +70,7 @@ async function init() {
     output.value = 'Compiling...';
     try {
       const tStart = Date.now();
-      const out = Motoko.compileWasm("wasi", code.value);
+      const out = Motoko.compileWasm("wasi", editor.session.getValue());
       const duration = (Date.now() - tStart) / 1000;
       if (out.result.code === null) {
         output.value = JSON.stringify(out.result.diagnostics);
@@ -121,7 +90,7 @@ async function init() {
     output.value = 'Compiling...';
     try {
       const tStart = Date.now();
-      const out = Motoko.compileWasm("dfinity", code.value);
+      const out = Motoko.compileWasm("dfinity", editor.session.getValue());
       const duration = (Date.now() - tStart) / 1000;
       if (out.result.code === null) {
         output.value = JSON.stringify(out.result.diagnostics);
@@ -145,7 +114,37 @@ async function init() {
       output.value = 'Exception:\n' + err;
       throw err;
     };    
-  });
+  });  
 }
 
+async function init() {
+  // Load Ace editor
+  const ace_script = document.createElement('script');
+  ace_script.src = 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js';
+  document.body.appendChild(ace_script);
+  ace_script.addEventListener('load', () => {
+    ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/');
+    editor = ace.edit("editor");
+    editor.setTheme('ace/theme/clouds');
+    editor.session.setOptions({
+      'mode': 'ace/mode/swift',
+      'wrap': true,
+      'tabSize': 2,
+    });
+    editor.session.setValue(prog);
+    output.value += 'Editor loaded.\n';
+  });
+  // Load Motoko compiler
+  const js = await retrieve('mo_js.js');
+  const script = document.createElement('script');
+  script.text = js;
+  document.body.appendChild(script);
+  output.value += 'Compiler loaded.\n';
+  // Load base library
+  loadBase('Time.mo');
+  // TODO check if base library are loaded
+  output.value += 'Ready.\n';
+}
+
+initUI();
 init();
