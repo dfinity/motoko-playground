@@ -44,7 +44,7 @@ function initUI() {
   compile.value = "Compile to WASI";
   const ic = document.createElement('input');
   ic.type = "button";
-  ic.value = "Deply on IC";
+  ic.value = "Deploy on IC";
   
   dom.appendChild(code);
   dom.appendChild(output);
