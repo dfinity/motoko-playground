@@ -22,11 +22,12 @@ async function loadBase(lib) {
 
 let output;
 let editor;
+let overlay;
 
 function initUI() {
   const dom = document.createElement('div');
   dom.width = "100%";
-  dom.style = "width:100%;display:flex;align-items:stretch";
+  dom.style = "width:100%;display:flex;align-items:stretch; position:relative";
   document.body.appendChild(dom);
   
   const code = document.createElement('div');
@@ -34,8 +35,12 @@ function initUI() {
   code.style = "height:400px;width:50%;border:1px solid black;";
 
   output = document.createElement('textarea');
-  output.style.width = "45%";
+  output.style.width = "50%";
   output.value = "Loading...(Do nothing before you see 'Ready')\n";
+
+  overlay = document.createElement('iframe');
+  overlay.style = "position:absolute; top:4em; right:0; z-index:10; width:50%; height: 80%; visibility:hidden";
+  
   const run = document.createElement('input');
   run.type = "button";
   run.value = "Run";
@@ -45,13 +50,29 @@ function initUI() {
   const ic = document.createElement('input');
   ic.type = "button";
   ic.value = "Deploy on IC";
+  // Hide button
+  const hide = document.createElement('input');
+  hide.type = "button";
+  hide.value = "Hide UI";
   
   dom.appendChild(code);
   dom.appendChild(output);
+  dom.appendChild(overlay);
   document.body.appendChild(run);
   document.body.appendChild(compile);
   document.body.appendChild(ic);
+  document.body.appendChild(hide);  
 
+  hide.addEventListener('click', () => {
+    if (overlay.style.visibility === 'visible') {
+      overlay.style.visibility = 'hidden';
+      hide.value = 'Show UI';
+    } else {
+      overlay.style.visibility = 'visible';
+      hide.value = 'Hide UI';
+    }
+  });
+  
   run.addEventListener('click', () => {
     output.value = 'Running...';
     try {
@@ -104,7 +125,10 @@ function initUI() {
           const canisterId = await Actor.createCanister();
           output.value += `Created canisterId ${canisterId}\n`;
           await Actor.install({ module: blobFromUint8Array(wasm) }, { canisterId });
-          output.value += `Ready.\nUse "dfx canister --network tungsten call ${canisterId} method arguments" to communicate with the canister before Candid UI lands in Tungsten.\n`;
+          output.value += `Code installed\n`;
+          const url = window.location.origin + `/candid?canisterId=${canisterId}`;
+          overlay.src = url;
+          overlay.style.visibility = 'visible';
         })().catch(err => {
           output.value += 'IC Exception:\n' + err.stack;
           throw err;
