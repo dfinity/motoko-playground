@@ -1,6 +1,7 @@
 import assets from 'ic:canisters/playground_assets';
 import * as Wasi from './wasiPolyfill';
-import { Actor, blobFromUint8Array } from '@dfinity/agent';
+import { Actor, blobFromUint8Array, Principal } from '@dfinity/agent';
+import ic_idl from './management';
 
 const prog = `import Time "mo:base/Time";
 import Prim "mo:prim";
@@ -23,6 +24,8 @@ async function loadBase(lib) {
 let output;
 let editor;
 let overlay;
+let hide;
+const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
 
 function initUI() {
   const dom = document.createElement('div');
@@ -51,7 +54,7 @@ function initUI() {
   ic.type = "button";
   ic.value = "Deploy on IC";
   // Hide button
-  const hide = document.createElement('input');
+  hide = document.createElement('input');
   hide.type = "button";
   hide.value = "Hide UI";
   
@@ -129,6 +132,24 @@ function initUI() {
           const url = window.location.origin + `/candid?canisterId=${canisterId}`;
           overlay.src = url;
           overlay.style.visibility = 'visible';
+          // close button
+          const close = document.createElement('input');
+          close.type = 'button';
+          close.value = 'Delete canister';
+          document.body.appendChild(close);
+          close.addEventListener('click', () => {
+            (async () => {
+              if (overlay.style.visibility === 'visible') {
+                hide.click();
+              }
+              output.value += 'Deleting canister...\n';
+              await ic0.stop_canister({ canister_id: canisterId });
+              output.value += 'Canister stopped\n';
+              await ic0.delete_canister({ canister_id: canisterId });
+              output.value += 'Canister deleted\n';
+              close.remove();
+            })();
+          });
         })().catch(err => {
           output.value += 'IC Exception:\n' + err.stack;
           throw err;
