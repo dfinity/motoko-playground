@@ -6,9 +6,12 @@ import ic_idl from './management';
 const prog = `import Time "mo:base/Time";
 import Prim "mo:prim";
 actor {
-  public func greet(name : Text) : async Text {
-    return "Hello, " # name # " at " # (debug_show Time.now());
+  var c = Time.now();
+  public query func greet(name : Text) : async Text {
+    let uptime = (Time.now() - c)/1000000;
+    return "Hello, " # name # " at " # (debug_show uptime) # "ms";
   };
+  public func add() : async Int { c += 1; c };
 };
 `;
 
@@ -42,7 +45,7 @@ function initUI() {
   output.value = "Loading...(Do nothing before you see 'Ready')\n";
 
   overlay = document.createElement('iframe');
-  overlay.style = "position:absolute; top:4em; right:0; z-index:10; width:50%; height: 80%; visibility:hidden";
+  overlay.style = "position:absolute; top:4em; right:0; z-index:10; width:50%; height: 80%; visibility:hidden; border:0;";
   
   const run = document.createElement('input');
   run.type = "button";
