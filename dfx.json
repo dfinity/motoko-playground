@@ -1,6 +1,13 @@
 {
   "canisters": {
+    "didjs": {
+      "type": "custom",
+      "candid": "src/didjs.did",
+      "wasm": "src/didjs.wasm",
+      "build": ""
+    },
     "playground_assets": {
+      "dependencies": ["didjs"],
       "frontend": {
         "entrypoint": "src/index.js"
       },
