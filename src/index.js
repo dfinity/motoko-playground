@@ -3,6 +3,8 @@ import didjs from 'ic:canisters/didjs';
 import * as Wasi from './wasiPolyfill';
 import { Actor, blobFromUint8Array, Principal } from '@dfinity/agent';
 import ic_idl from './management';
+import { fetchActor, render } from './candid';
+import './candid.css';
 
 const prog = `import Time "mo:base/Time";
 import Prim "mo:prim";
@@ -15,22 +17,6 @@ actor {
   public func add() : async Int { c += 1; c };
 };
 `;
-
-async function fetchActor(canisterId) {
-  const common_interface = ({ IDL }) => IDL.Service({
-    __get_candid_interface_tmp_hack: IDL.Func([], [IDL.Text], ['query']),
-  });
-  const actor = Actor.createActor(common_interface, { canisterId });
-  const candid_source = await actor.__get_candid_interface_tmp_hack();
-  const js = await didjs.did_to_js(candid_source);
-  if (js === []) {
-    return undefined;
-  }
-  console.log(js[0]);
-  const dataUri = 'data:text/javascript;charset=utf-8,' + encodeURIComponent(js[0]);
-  const candid = await eval('import("' + dataUri + '")');
-  return Actor.createActor(candid.default, { canisterId });
-}
 
 async function retrieve(file) {
   const content = await assets.retrieve(file);
@@ -61,8 +47,8 @@ function initUI() {
   output.style.width = "50%";
   output.value = "Loading...(Do nothing before you see 'Ready')\n";
 
-  overlay = document.createElement('iframe');
-  overlay.style = "position:absolute; top:4em; right:0; z-index:10; width:50%; height: 80%; visibility:hidden; border:0;";
+  overlay = document.createElement('div');
+  overlay.style = "position:absolute; top:4em; right:0; z-index:10; width:50%; height: 80%; visibility:hidden; overflow:scroll;";
   
   const run = document.createElement('input');
   run.type = "button";
@@ -150,6 +136,8 @@ function initUI() {
           await Actor.install({ module: blobFromUint8Array(wasm) }, { canisterId });
           output.value += `Code installed\n`;
           const actor = await fetchActor(canisterId);
+          overlay.style.visibility = 'visible';
+          render(overlay, canisterId, actor);
           /*
           const url = window.location.origin + `/candid?canisterId=${canisterId}`;
           overlay.src = url;
