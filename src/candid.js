@@ -7,13 +7,18 @@ export async function fetchActor(canisterId) {
   });
   const actor = Actor.createActor(common_interface, { canisterId });
   const candid_source = await actor.__get_candid_interface_tmp_hack();
-  const js = await didjs.did_to_js(candid_source);
+  const candid = await didToJs(candid_source);
+  return Actor.createActor(candid.default, { canisterId });
+}
+
+export async function didToJs(source) {
+  const js = await didjs.did_to_js(source);
   if (js === []) {
     return undefined;
   }
   const dataUri = 'data:text/javascript;charset=utf-8,' + encodeURIComponent(js[0]);
   const candid = await eval('import("' + dataUri + '")');
-  return Actor.createActor(candid.default, { canisterId });  
+  return candid;
 }
 
 export function render(dom, id, canister) {

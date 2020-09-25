@@ -1,22 +1,27 @@
 import assets from 'ic:canisters/playground_assets';
 import didjs from 'ic:canisters/didjs';
 import * as Wasi from './wasiPolyfill';
-import { Actor, blobFromUint8Array, Principal } from '@dfinity/agent';
+import { Actor, blobFromUint8Array, Principal, IDL, UI } from '@dfinity/agent';
 import ic_idl from './management';
-import { fetchActor, render } from './candid';
+import { fetchActor, didToJs, render } from './candid';
 import './candid.css';
 
 const prog = `import Time "mo:base/Time";
 import Prim "mo:prim";
-actor {
-  var c = Time.now();
+shared {caller} actor class Example(init : Int) {
+  let controller = caller;
+  let init_time = Time.now();
+  var counter = init;
+
+  public query(msg) func getId() : async {caller:Principal; creator:Principal} {
+    {caller = msg.caller; creator = controller}
+  };
   public query func greet(name : Text) : async Text {
-    let uptime = (Time.now() - c)/1000000;
+    let uptime = (Time.now() - init_time)/1000000;
     return "Hello, " # name # " at " # (debug_show uptime) # "ms";
   };
-  public func add() : async Int { c += 1; c };
-};
-`;
+  public func add() : async Int { counter += 1; counter };
+};`;
 
 async function retrieve(file) {
   const content = await assets.retrieve(file);
@@ -121,6 +126,7 @@ function initUI() {
     try {
       const tStart = Date.now();
       const out = Motoko.compileWasm("dfinity", editor.session.getValue());
+      const candid_source = Motoko.candid(editor.session.getValue()).result;
       const duration = (Date.now() - tStart) / 1000;
       if (out.result.code === null) {
         output.value = JSON.stringify(out.result.diagnostics);
@@ -132,16 +138,18 @@ function initUI() {
           output.value += `Deploying on IC...\n`;
           // TODO: recycle canisterIds
           const canisterId = await Actor.createCanister();
-          output.value += `Created canisterId ${canisterId}\n`;
+          output.value += `Created canisterId ${canisterId}\n`;          
+          // init args
+          const candid = await didToJs(candid_source);
+          overlay.style.visibility = 'visible';
+          renderInit(overlay, candid, wasm, canisterId);
+          return;
+
           await Actor.install({ module: blobFromUint8Array(wasm) }, { canisterId });
           output.value += `Code installed\n`;
           const actor = await fetchActor(canisterId);
           overlay.style.visibility = 'visible';
           render(overlay, canisterId, actor);
-          /*
-          const url = window.location.origin + `/candid?canisterId=${canisterId}`;
-          overlay.src = url;
-          overlay.style.visibility = 'visible';*/
           // close button
           const close = document.createElement('input');
           close.type = 'button';
@@ -170,6 +178,47 @@ function initUI() {
       throw err;
     };    
   });  
+}
+
+export function renderInit(item, candid, wasm, canisterId) {
+  const argTypes = candid.init({ IDL });
+  item.innerHTML = `<div>This service requires the following installation arguments:</div>`;
+  const sig = document.createElement('div');
+  sig.className = 'signature';
+  sig.innerHTML = `Init arguments: (${argTypes.map(arg => arg.name).join(', ')})`;
+  item.appendChild(sig);
+
+  const inputs = [];
+  argTypes.forEach((arg, i) => {
+    const inputbox = UI.renderInput(arg);
+    inputs.push(inputbox);
+    inputbox.render(item);
+  });
+  const button = document.createElement('button');
+  button.className = 'btn';
+  button.innerText = 'Install';
+  item.appendChild(button);
+  
+  const resultDiv = document.createElement('div');
+  resultDiv.className = 'result';
+  item.appendChild(resultDiv);
+  
+  button.addEventListener('click', () => {
+    const args = inputs.map(arg => arg.parse());
+    const isReject = inputs.some(arg => arg.isRejected());
+    if (isReject) {
+      return;
+    }
+    const encoded = IDL.encode(argTypes, args);
+    (async () => {
+      resultDiv.innerText = 'Waiting...';
+      resultDiv.style.display = 'block';
+      await Actor.install({ module: blobFromUint8Array(wasm), arg: blobFromUint8Array(encoded) }, { canisterId });
+      output.value += 'Code installed\n';
+      const canister = Actor.createActor(candid.default, { canisterId });
+      render(item, canisterId, canister);
+    })();
+  });
 }
 
 async function init() {
