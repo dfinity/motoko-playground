@@ -25,7 +25,7 @@ export function render(dom, id, canister) {
   dom.innerHTML = `
 <div>This service has the following methods:
 <ul id="methods"></ul></div>
-<div class="console"></div>
+<div class="console" id="candid_console"></div>
 `;
   for (const [name, func] of Actor.interfaceOf(canister)._fields) {
     renderMethod(canister, name, func);
@@ -172,7 +172,7 @@ function encodeStr(str) {
 }
 
 function log(content) {
-  const consoleEl = document.getElementsByClassName('console')[0];
+  const consoleEl = document.getElementById('candid_console');
   const line = document.createElement('div');
   line.className = 'console-line';
   if (content instanceof Element) {

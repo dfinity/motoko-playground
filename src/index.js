@@ -34,8 +34,7 @@ async function loadBase(lib) {
 
 let output;
 let editor;
-let overlay;
-let hide;
+let canisterId;
 const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
 
 function initUI() {
@@ -48,13 +47,11 @@ function initUI() {
   code.id = "editor";
   code.style = "height:400px;width:50%;border:1px solid black;";
 
-  output = document.createElement('textarea');
-  output.style.width = "50%";
-  output.value = "Loading...(Do nothing before you see 'Ready')\n";
+  output = document.createElement('div');
+  output.className = "console";
+  output.style = "width:50%;height:400px;border:1px solid black;overflow:scroll";
+  log("Loading...(Do nothing before you see 'Ready')");
 
-  overlay = document.createElement('div');
-  overlay.style = "position:absolute; top:4em; right:0; z-index:10; width:50%; height: 80%; visibility:hidden; overflow:scroll;";
-  
   const run = document.createElement('input');
   run.type = "button";
   run.value = "Run";
@@ -64,123 +61,84 @@ function initUI() {
   const ic = document.createElement('input');
   ic.type = "button";
   ic.value = "Deploy on IC";
-  // Hide button
-  hide = document.createElement('input');
-  hide.type = "button";
-  hide.value = "Hide UI";
   
   dom.appendChild(code);
   dom.appendChild(output);
-  dom.appendChild(overlay);
   document.body.appendChild(run);
   document.body.appendChild(compile);
   document.body.appendChild(ic);
-  document.body.appendChild(hide);  
-
-  hide.addEventListener('click', () => {
-    if (overlay.style.visibility === 'visible') {
-      overlay.style.visibility = 'hidden';
-      hide.value = 'Show UI';
-    } else {
-      overlay.style.visibility = 'visible';
-      hide.value = 'Hide UI';
-    }
-  });
   
   run.addEventListener('click', () => {
-    output.value = 'Running...';
+    clearLogs();
+    log('Running...');
     try {
       const tStart = Date.now();
       const out = Motoko.run(editor.session.getValue());
       const duration = (Date.now() - tStart) / 1000;
-      output.value = out.stderr + out.stdout + out.result;
-      output.value += `\n(run time: ${duration}s)\n`;
+      log(out.stderr + out.stdout);
+      log(out.result);
+      log(`\n(run time: ${duration}s)`);
     } catch(err) {
-      output.value = 'Exception:\n' + err;
+      log('Exception:\n' + err);
       throw err;
     };
   });
 
   compile.addEventListener('click', () => {
-    output.value = 'Compiling...';
+    clearLogs();
+    log('Compiling...');
     try {
       const tStart = Date.now();
       const out = Motoko.compileWasm("wasi", editor.session.getValue());
       const duration = (Date.now() - tStart) / 1000;
       if (out.result.code === null) {
-        output.value = JSON.stringify(out.result.diagnostics);
+        log(JSON.stringify(out.result.diagnostics));
       } else {
-        output.value = `(compile time: ${duration}s)\n`;
+        log(`(compile time: ${duration}s)`);
         const wasiPolyfill = new Wasi.barebonesWASI();
-        Wasi.importWasmModule(out.result.code, wasiPolyfill, output);
-        output.value += out.stderr + out.stdout;
+        Wasi.importWasmModule(out.result.code, wasiPolyfill, log);
+        log(out.stderr + out.stdout);
       }
     } catch(err) {
-      output.value = 'Exception:\n' + err;
+      log('Exception:\n' + err);
       throw err;
     };
   });
 
   ic.addEventListener('click', () => {
-    output.value = 'Compiling...';
+    clearLogs();
+    log('Compiling...');
     try {
       const tStart = Date.now();
       const out = Motoko.compileWasm("dfinity", editor.session.getValue());
       const candid_source = Motoko.candid(editor.session.getValue()).result;
       const duration = (Date.now() - tStart) / 1000;
       if (out.result.code === null) {
-        output.value = JSON.stringify(out.result.diagnostics);
+        log(JSON.stringify(out.result.diagnostics));
       } else {
-        output.value = `(compile time: ${duration}s)\n`;
-        output.value += out.stderr + out.stdout;
+        log(`(compile time: ${duration}s)`);
+        log(out.stderr + out.stdout);
         const wasm = out.result.code;
         (async () => {
-          output.value += `Deploying on IC...\n`;
-          // TODO: recycle canisterIds
-          const canisterId = await Actor.createCanister();
-          output.value += `Created canisterId ${canisterId}\n`;          
+          log(`Deploying on IC...`);
           // init args
           const candid = await didToJs(candid_source);
-          overlay.style.visibility = 'visible';
-          renderInit(overlay, candid, wasm, canisterId);
-          return;
-
-          await Actor.install({ module: blobFromUint8Array(wasm) }, { canisterId });
-          output.value += `Code installed\n`;
-          const actor = await fetchActor(canisterId);
-          overlay.style.visibility = 'visible';
-          render(overlay, canisterId, actor);
-          // close button
-          const close = document.createElement('input');
-          close.type = 'button';
-          close.value = 'Delete canister';
-          document.body.appendChild(close);
-          close.addEventListener('click', () => {
-            (async () => {
-              if (overlay.style.visibility === 'visible') {
-                hide.click();
-              }
-              output.value += 'Deleting canister...\n';
-              await ic0.stop_canister({ canister_id: canisterId });
-              output.value += 'Canister stopped\n';
-              await ic0.delete_canister({ canister_id: canisterId });
-              output.value += 'Canister deleted\n';
-              close.remove();
-            })();
-          });
+          const line = document.createElement('div');
+          log(line);
+          renderInstall(line, candid, wasm);
         })().catch(err => {
-          output.value += 'IC Exception:\n' + err.stack;
+          log('IC Exception:\n' + err.stack);
           throw err;
         });
       }
     } catch(err) {
-      output.value = 'Exception:\n' + err;
+      log('Exception:\n' + err);
       throw err;
     };    
-  });  
+  });
 }
 
-export function renderInit(item, candid, wasm, canisterId) {
+export function renderInstall(item, candid, wasm) {
   const argTypes = candid.init({ IDL });
   item.innerHTML = `<div>This service requires the following installation arguments:</div>`;
   const sig = document.createElement('div');
@@ -194,14 +152,11 @@ export function renderInit(item, candid, wasm, canisterId) {
     inputs.push(inputbox);
     inputbox.render(item);
   });
+  
   const button = document.createElement('button');
   button.className = 'btn';
   button.innerText = 'Install';
   item.appendChild(button);
-  
-  const resultDiv = document.createElement('div');
-  resultDiv.className = 'result';
-  item.appendChild(resultDiv);
   
   button.addEventListener('click', () => {
     const args = inputs.map(arg => arg.parse());
@@ -211,14 +166,65 @@ export function renderInit(item, candid, wasm, canisterId) {
     }
     const encoded = IDL.encode(argTypes, args);
     (async () => {
-      resultDiv.innerText = 'Waiting...';
-      resultDiv.style.display = 'block';
-      await Actor.install({ module: blobFromUint8Array(wasm), arg: blobFromUint8Array(encoded) }, { canisterId });
-      output.value += 'Code installed\n';
+      output.removeChild(item.parentNode);      
+      let mode;
+      if (!canisterId) {
+        log('Creating canister id...');
+        canisterId = await Actor.createCanister();
+        log(`Created canisterId ${canisterId}`);
+        mode = 'install';
+        deleteButton();
+      } else {
+        log(`Reinstalling ${canisterId}...`);
+        mode = 'reinstall';
+      }
+      await Actor.install({ module: blobFromUint8Array(wasm), arg: blobFromUint8Array(encoded), mode }, { canisterId });
+      log('Code installed');
       const canister = Actor.createActor(candid.default, { canisterId });
-      render(item, canisterId, canister);
+      const line = document.createElement('div');
+      line.id = 'candid-ui';
+      log(line);
+      render(line, canisterId, canister);
     })();
   });
+}
+
+function deleteButton() {
+  const close = document.createElement('input');
+  close.type = 'button';
+  close.value = 'Delete canister';
+  document.body.appendChild(close);
+  close.addEventListener('click', () => {
+    const ui = document.getElementById('candid-ui');
+    output.removeChild(ui.parentNode);
+    (async () => {
+      log('Deleting canister...');
+      await ic0.stop_canister({ canister_id: canisterId });
+      log('Canister stopped');
+      await ic0.delete_canister({ canister_id: canisterId });
+      log('Canister deleted');
+      canisterId = undefined;
+      close.remove();
+    })();
+  });  
+}
+
+function log(content) {
+  const line = document.createElement('div');
+  line.className = 'console-line';
+  if (content instanceof Element) {
+    line.appendChild(content);
+  } else {
+    line.innerHTML = content;
+  }
+  output.appendChild(line);
+  return line;
+}
+
+function clearLogs() {
+  while (output.firstChild) {
+    output.removeChild(output.firstChild);
+  }
 }
 
 async function init() {
@@ -236,18 +242,18 @@ async function init() {
       'tabSize': 2,
     });
     editor.session.setValue(prog);
-    output.value += 'Editor loaded.\n';
+    log('Editor loaded.');
   });
   // Load Motoko compiler
   const js = await retrieve('mo_js.js');
   const script = document.createElement('script');
   script.text = js;
   document.body.appendChild(script);
-  output.value += 'Compiler loaded.\n';
+  log('Compiler loaded.');
   // Load base library
   loadBase('Time.mo');
   // TODO check if base library are loaded
-  output.value += 'Ready.\n';
+  log('Ready.');
 }
 
 initUI();

@@ -101,7 +101,7 @@ export function barebonesWASI() {
     if (fd === WASI_STDOUT_FILENO) {
       const content = String.fromCharCode.apply(null, bufferBytes);
       //console.log(content);
-      moduleOutput.value += content;
+      moduleOutput(content);
     }
     view.setUint32(nwritten, written, !0);
     return WASI_ESUCCESS;
@@ -166,13 +166,13 @@ export function importWasmModule(code, wasiPolyfill, output) {
     wasiPolyfill.setModuleInstance(instance);
     wasiPolyfill.setOutput(output);
     let duration = (Date.now() - tStart) / 1000;
-    output.value += `(load time: ${duration}s)\n`;
+    output(`(load time: ${duration}s)`);
     tStart = Date.now();
     instance.exports._start();
     duration = (Date.now() - tStart) / 1000;
-    output.value += `(run time: ${duration}s)\n`;
+    output(`(run time: ${duration}s)`);
   })().catch(err => {
-    output.value += "\nWasm exception:\n" + err.stack;
+    output("Wasm exception:\n" + err.stack);
     throw err;
   });
 }
