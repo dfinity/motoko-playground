@@ -124,6 +124,7 @@ function initUI() {
           // init args
           const candid = await didToJs(candid_source);
           const line = document.createElement('div');
+          line.id = 'install';
           log(line);
           renderInstall(line, candid, wasm);
         })().catch(err => {
@@ -139,6 +140,7 @@ function initUI() {
 }
 
 export function renderInstall(item, candid, wasm) {
+  const module = blobFromUint8Array(wasm);
   const argTypes = candid.init({ IDL });
   item.innerHTML = `<div>This service requires the following installation arguments:</div>`;
   const sig = document.createElement('div');
@@ -152,41 +154,67 @@ export function renderInstall(item, candid, wasm) {
     inputs.push(inputbox);
     inputbox.render(item);
   });
-  
-  const button = document.createElement('button');
-  button.className = 'btn';
-  button.innerText = 'Install';
-  item.appendChild(button);
-  
-  button.addEventListener('click', () => {
+
+  const parse = () => {
     const args = inputs.map(arg => arg.parse());
     const isReject = inputs.some(arg => arg.isRejected());
     if (isReject) {
-      return;
+      return undefined;
     }
-    const encoded = IDL.encode(argTypes, args);
-    (async () => {
-      output.removeChild(item.parentNode);      
-      let mode;
+    return blobFromUint8Array(IDL.encode(argTypes, args));      
+  };
+  
+  const button = document.createElement('button');
+  button.className = 'btn';
+  button.innerText = canisterId ? 'Reinstall' : 'Install';
+  item.appendChild(button);
+
+  if (canisterId) {
+    const upgrade = document.createElement('button');
+    upgrade.className = 'btn';
+    upgrade.innerText = 'Upgrade';
+    item.appendChild(upgrade);
+    upgrade.addEventListener('click', () => {
+      const encoded = parse();
+      if (encoded) {
+        output.removeChild(item.parentNode);
+        log(`Upgrading ${canisterId}...`);
+        install(module, encoded, 'upgrade', candid.default);
+      }
+    });
+  }
+  
+  button.addEventListener('click', () => {
+    const encoded = parse();
+    if (encoded) {
+      output.removeChild(item.parentNode);
       if (!canisterId) {
         log('Creating canister id...');
-        canisterId = await Actor.createCanister();
-        log(`Created canisterId ${canisterId}`);
-        mode = 'install';
-        deleteButton();
+        (async () => {
+          canisterId = await Actor.createCanister();
+          log(`Created canisterId ${canisterId}`);
+          deleteButton();
+          install(module, encoded, 'install', candid.default);
+        })();
       } else {
         log(`Reinstalling ${canisterId}...`);
-        mode = 'reinstall';
+        install(module, encoded, 'reinstall', candid.default);
       }
-      await Actor.install({ module: blobFromUint8Array(wasm), arg: blobFromUint8Array(encoded), mode }, { canisterId });
-      log('Code installed');
-      const canister = Actor.createActor(candid.default, { canisterId });
-      const line = document.createElement('div');
-      line.id = 'candid-ui';
-      log(line);
-      render(line, canisterId, canister);
-    })();
+    }
   });
+}
+
+async function install(module, arg, mode, candid) {
+  if (!canisterId) {
+    throw new Error('no canister id');
+  }
+  await Actor.install({ module, arg, mode }, { canisterId });
+  log('Code installed');
+  const canister = Actor.createActor(candid, { canisterId });
+  const line = document.createElement('div');
+  line.id = 'candid-ui';
+  log(line);
+  render(line, canisterId, canister);  
 }
 
 function deleteButton() {
@@ -196,7 +224,9 @@ function deleteButton() {
   document.body.appendChild(close);
   close.addEventListener('click', () => {
     const ui = document.getElementById('candid-ui');
-    output.removeChild(ui.parentNode);
+    if (ui) {
+      output.removeChild(ui.parentNode);
+    }
     (async () => {
       log('Deleting canister...');
       await ic0.stop_canister({ canister_id: canisterId });
