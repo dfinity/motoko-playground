@@ -9,8 +9,8 @@ import './candid.css';
 const prog = `import Time "mo:base/Time";
 import Prim "mo:prim";
 shared {caller} actor class Example(init : Int) {
-  let controller = caller;
-  let init_time = Time.now();
+  stable let controller = caller;
+  stable let init_time = Time.now();
   var counter = init;
 
   public query(msg) func getId() : async {caller:Principal; creator:Principal} {
@@ -164,11 +164,6 @@ export function renderInstall(item, candid, wasm) {
     return blobFromUint8Array(IDL.encode(argTypes, args));      
   };
   
-  const button = document.createElement('button');
-  button.className = 'btn';
-  button.innerText = canisterId ? 'Reinstall' : 'Install';
-  item.appendChild(button);
-
   if (canisterId) {
     const upgrade = document.createElement('button');
     upgrade.className = 'btn';
@@ -183,6 +178,11 @@ export function renderInstall(item, candid, wasm) {
       }
     });
   }
+
+  const button = document.createElement('button');
+  button.className = 'btn';
+  button.innerText = canisterId ? 'Reinstall' : 'Install';
+  item.appendChild(button);  
   
   button.addEventListener('click', () => {
     const encoded = parse();
