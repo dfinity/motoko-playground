@@ -29,12 +29,14 @@ async function retrieve(file) {
 }
 
 async function loadBase(lib) {
-  Motoko.loadFile(lib, await retrieve(lib));
+  Motoko.saveFile(`base/${lib}`, await retrieve(lib));
+  Motoko.saveFile(`base/${lib}`, await retrieve(lib));  
 }
 
 let output;
 let editor;
 let canisterId;
+let main_file = 'src/main.mo';
 const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
 
 function initUI() {
@@ -88,8 +90,9 @@ function initUI() {
     clearLogs();
     log('Compiling...');
     try {
+      Motoko.saveFile(main_file, editor.session.getValue());
       const tStart = Date.now();
-      const out = Motoko.compileWasm("wasi", editor.session.getValue());
+      const out = Motoko.compileWasm("wasi", main_file);
       const duration = (Date.now() - tStart) / 1000;
       if (out.result.code === null) {
         log(JSON.stringify(out.result.diagnostics));
@@ -109,9 +112,10 @@ function initUI() {
     clearLogs();
     log('Compiling...');
     try {
+      Motoko.saveFile(main_file, editor.session.getValue());
       const tStart = Date.now();
-      const out = Motoko.compileWasm("dfinity", editor.session.getValue());
-      const candid_source = Motoko.candid(editor.session.getValue()).result;
+      const out = Motoko.compileWasm("dfinity", main_file);
+      const candid_source = Motoko.candid(main_file).result;
       const duration = (Date.now() - tStart) / 1000;
       if (out.result.code === null) {
         log(JSON.stringify(out.result.diagnostics));
