@@ -5,9 +5,12 @@ import { Actor, blobFromUint8Array, Principal, IDL, UI } from '@dfinity/agent';
 import ic_idl from './management';
 import { fetchActor, didToJs, render } from './candid';
 import './candid.css';
+import './playground.css';
 
 const prog = `import Time "mo:base/Time";
+import P "mo:base/Principal";
 import Prim "mo:prim";
+import T "./types";
 shared {caller} actor class Example(init : Int) {
   stable let controller = caller;
   stable let init_time = Time.now();
@@ -28,22 +31,61 @@ async function retrieve(file) {
   return new TextDecoder().decode(new Uint8Array(content));
 }
 
-async function loadBase(lib) {
-  Motoko.saveFile(`base/${lib}`, await retrieve(lib));
-  Motoko.saveFile(`base/${lib}`, await retrieve(lib));  
+async function loadBase() {
+  const base_url = 'https://raw.githubusercontent.com/dfinity/motoko-base/master/src/';
+  const libs = ['Array', 'AssocList', 'Blob', 'Bool', 'Buffer', 'Char', 'Debug',
+                'Deque', 'Error', 'Float', 'Func', 'Hash', 'HashMap', 'Heap',
+                'Int', 'Int8', 'Int16', 'Int32', 'Int64', 'Iter', 'IterType', 'List',
+                'Nat', 'Nat8', 'Nat16', 'Nat32', 'Nat64', 'None', 'Option', 'Order',
+                'Prelude', 'Principal', 'RBTree', 'Random', 'Result', 'Stack', 'Text',
+                'Time', 'Trie', 'TrieMap', 'TrieSet', 'Word8', 'Word16', 'Word32', 'Word64'];
+  for (const lib of libs) {
+    (async () => {
+      const response = await fetch(base_url + lib + '.mo');
+      const content = await response.text();
+      Motoko.saveFile(`base/${lib}.mo`, content);
+      log(lib + ' loaded');
+    })();
+  }
 }
+
+function fetchCode(name) {
+  return files[name].getValue();
+}
+window.fetchCode = fetchCode;
 
 let output;
 let editor;
+let filetab;
 let canisterId;
+// mo_js has a mount point src/ which calls fetchCode(filename)
 let main_file = 'src/main.mo';
 const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
+const files = {};
+
+function addFile(ace, tab, name, content) {
+  const entry = document.createElement('button');
+  entry.innerText = name;
+  tab.appendChild(entry);
+  files[name] = ace.createEditSession(content, 'ace/mode/swift');
+  entry.addEventListener('click', () => {
+    const session = files[name];
+    editor.setSession(session);
+    for (const e of tab.children) {
+      e.className = '';
+    }
+    entry.className += ' active';
+  });
+}
 
 function initUI() {
   const dom = document.createElement('div');
   dom.width = "100%";
   dom.style = "width:100%;display:flex;align-items:stretch; position:relative";
   document.body.appendChild(dom);
+
+  filetab = document.createElement('div');
+  filetab.className = 'tab';
   
   const code = document.createElement('div');
   code.id = "editor";
@@ -54,6 +96,10 @@ function initUI() {
   output.style = "width:50%;height:400px;border:1px solid black;overflow:scroll";
   log("Loading...(Do nothing before you see 'Ready')");
 
+  const newfile = document.createElement('input');
+  newfile.type = "button";
+  newfile.value = "New file";
+  
   const run = document.createElement('input');
   run.type = "button";
   run.value = "Run";
@@ -63,12 +109,21 @@ function initUI() {
   const ic = document.createElement('input');
   ic.type = "button";
   ic.value = "Deploy on IC";
-  
+
+  dom.appendChild(filetab);
   dom.appendChild(code);
   dom.appendChild(output);
+  document.body.appendChild(newfile);
   document.body.appendChild(run);
   document.body.appendChild(compile);
   document.body.appendChild(ic);
+
+  newfile.addEventListener('click', () => {
+    const name = prompt('Please enter new file name', '');
+    if (name) {
+      addFile(ace, filetab, name, `// ${name}`);
+    }
+  });
   
   run.addEventListener('click', () => {
     clearLogs();
@@ -90,12 +145,18 @@ function initUI() {
     clearLogs();
     log('Compiling...');
     try {
-      Motoko.saveFile(main_file, editor.session.getValue());
       const tStart = Date.now();
       const out = Motoko.compileWasm("wasi", main_file);
       const duration = (Date.now() - tStart) / 1000;
       if (out.result.code === null) {
-        log(JSON.stringify(out.result.diagnostics));
+        const diags = out.result.diagnostics;
+        log(diags);
+        /*
+        for (const diag of diags) {
+          const Range = ace.require('ace/range').Range;
+          editor.session.addMarker(new Range(diag.range.start.line, diag.range.start.character, diag.range.end.line, diag.range.end.character), 'codeMarker', 'range');
+          log(diag.message);
+        }*/
       } else {
         log(`(compile time: ${duration}s)`);
         const wasiPolyfill = new Wasi.barebonesWASI();
@@ -112,7 +173,6 @@ function initUI() {
     clearLogs();
     log('Compiling...');
     try {
-      Motoko.saveFile(main_file, editor.session.getValue());
       const tStart = Date.now();
       const out = Motoko.compileWasm("dfinity", main_file);
       const candid_source = Motoko.candid(main_file).result;
@@ -270,12 +330,10 @@ async function init() {
     ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/');
     editor = ace.edit("editor");
     editor.setTheme('ace/theme/chrome');
-    editor.session.setOptions({
-      'mode': 'ace/mode/swift',
-      'wrap': true,
-      'tabSize': 2,
-    });
-    editor.session.setValue(prog);
+    addFile(ace, filetab, 'main.mo', prog);
+    addFile(ace, filetab, 'types.mo', 'type List<T> = ?(T, List<T>);');
+    filetab.firstChild.className += ' active';
+    editor.setSession(files['main.mo']);
     log('Editor loaded.');
   });
   // Load Motoko compiler
@@ -285,7 +343,7 @@ async function init() {
   document.body.appendChild(script);
   log('Compiler loaded.');
   // Load base library
-  loadBase('Time.mo');
+  loadBase();
   // TODO check if base library are loaded
   log('Ready.');
 }
