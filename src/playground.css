@@ -11,7 +11,7 @@
     border: none;
     outline: none;
     text-align: left;
-    cursor: point;
+    cursor: pointer;
     transition: 0.3s;
 }
 

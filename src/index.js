@@ -31,35 +31,39 @@ async function retrieve(file) {
   return new TextDecoder().decode(new Uint8Array(content));
 }
 
-async function loadBase() {
-  const base_url = 'https://raw.githubusercontent.com/dfinity/motoko-base/master/src/';
-  const libs = ['Array', 'AssocList', 'Blob', 'Bool', 'Buffer', 'Char', 'Debug',
-                'Deque', 'Error', 'Float', 'Func', 'Hash', 'HashMap', 'Heap',
-                'Int', 'Int8', 'Int16', 'Int32', 'Int64', 'Iter', 'IterType', 'List',
-                'Nat', 'Nat8', 'Nat16', 'Nat32', 'Nat64', 'None', 'Option', 'Order',
-                'Prelude', 'Principal', 'RBTree', 'Random', 'Result', 'Stack', 'Text',
-                'Time', 'Trie', 'TrieMap', 'TrieSet', 'Word8', 'Word16', 'Word32', 'Word64'];
-  for (const lib of libs) {
-    (async () => {
-      const response = await fetch(base_url + lib + '.mo');
-      const content = await response.text();
-      Motoko.saveFile(`base/${lib}.mo`, content);
-      log(lib + ' loaded');
-    })();
+async function loadPackage(name, repo, version, dir) {
+  const meta_url = `https://data.jsdelivr.com/v1/package/gh/${repo}@${version}/flat`;
+  const base_url = `https://cdn.jsdelivr.net/gh/${repo}@${version}`;
+  const response = await fetch(meta_url);
+  const json = await response.json()
+  const promises = [];
+  for (const f of json.files) {
+    if (f.name.startsWith(`/${dir}/`) && /\.mo$/.test(f.name)) {
+      const promise = (async () => {
+        const content = await (await fetch(base_url + f.name)).text();
+        const stripped = name + f.name.slice(dir.length + 1);
+        Motoko.saveFile(stripped, content);
+      })();
+      promises.push(promise);
+    }
   }
+  Promise.all(promises).then(() => {
+    Motoko.addPackage(name, name + '/');
+    log(`Package ${name} loaded (${promises.length} files).`)
+  });
 }
 
-function fetchCode(name) {
-  return files[name].getValue();
+function saveCodeToMotoko() {
+  for (const [name, content] of Object.entries(files)) {
+    Motoko.saveFile(name, content.getValue());
+  }
 }
-window.fetchCode = fetchCode;
 
 let output;
 let editor;
 let filetab;
 let canisterId;
-// mo_js has a mount point src/ which calls fetchCode(filename)
-let main_file = 'src/main.mo';
+let main_file = 'main.mo';
 const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
 const files = {};
 
@@ -127,6 +131,7 @@ function initUI() {
   
   run.addEventListener('click', () => {
     clearLogs();
+    saveCodeToMotoko();
     log('Running...');
     try {
       const tStart = Date.now();
@@ -143,6 +148,7 @@ function initUI() {
 
   compile.addEventListener('click', () => {
     clearLogs();
+    saveCodeToMotoko();    
     log('Compiling...');
     try {
       const tStart = Date.now();
@@ -150,7 +156,7 @@ function initUI() {
       const duration = (Date.now() - tStart) / 1000;
       if (out.result.code === null) {
         const diags = out.result.diagnostics;
-        log(diags);
+        log(JSON.stringify(diags));
         /*
         for (const diag of diags) {
           const Range = ace.require('ace/range').Range;
@@ -171,8 +177,13 @@ function initUI() {
 
   ic.addEventListener('click', () => {
     clearLogs();
+    saveCodeToMotoko();    
     log('Compiling...');
     try {
+      // There is a bug in jsoo that will raise an exception when type checking fails.
+      // This seems to only happen in dfinity mode
+      const check = Motoko.check(main_file);
+      log(JSON.stringify(check.result.diagnostics));
       const tStart = Date.now();
       const out = Motoko.compileWasm("dfinity", main_file);
       const candid_source = Motoko.candid(main_file).result;
@@ -342,8 +353,9 @@ async function init() {
   script.text = js;
   document.body.appendChild(script);
   log('Compiler loaded.');
-  // Load base library
-  loadBase();
+  // Load library  
+  loadPackage('base', 'dfinity/motoko-base', 'dfx-0.6.6', 'src');
+  loadPackage('matcher', 'kritzcreek/motoko-matchers', '0.1.3', 'src');
   // TODO check if base library are loaded
   log('Ready.');
 }
