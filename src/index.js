@@ -147,7 +147,7 @@ function initUI() {
     }
   });
   newpack.addEventListener('click', () => {
-    const pack = prompt('Please enter package info (name, git repo, version, directory)', 'matchers, kritzcreek/motoko-matchers, 0.1.3, src');
+    const pack = prompt('Please enter package info (name, github repo, version, directory)', 'matchers, kritzcreek/motoko-matchers, 0.1.3, src');
     if (pack) {
       const args = pack.split(',').map(s => s.trim());
       addPackage(...args);
@@ -380,7 +380,6 @@ async function init() {
   log('Compiler loaded.');
   // Load library  
   addPackage('base', 'dfinity/motoko-base', 'dfx-0.6.6', 'src');
-  //addPackage('matchers', 'kritzcreek/motoko-matchers', '0.1.3', 'src');
 }
 
 initUI();
