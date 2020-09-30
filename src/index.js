@@ -31,17 +31,19 @@ async function retrieve(file) {
   return new TextDecoder().decode(new Uint8Array(content));
 }
 
-async function loadPackage(name, repo, version, dir) {
+async function addPackage(name, repo, version, dir) {
   const meta_url = `https://data.jsdelivr.com/v1/package/gh/${repo}@${version}/flat`;
   const base_url = `https://cdn.jsdelivr.net/gh/${repo}@${version}`;
   const response = await fetch(meta_url);
   const json = await response.json()
   const promises = [];
+  const fetchedFiles = [];
   for (const f of json.files) {
     if (f.name.startsWith(`/${dir}/`) && /\.mo$/.test(f.name)) {
       const promise = (async () => {
         const content = await (await fetch(base_url + f.name)).text();
         const stripped = name + f.name.slice(dir.length + 1);
+        fetchedFiles.push(stripped);
         Motoko.saveFile(stripped, content);
       })();
       promises.push(promise);
@@ -50,7 +52,17 @@ async function loadPackage(name, repo, version, dir) {
   Promise.all(promises).then(() => {
     Motoko.addPackage(name, name + '/');
     log(`Package ${name} loaded (${promises.length} files).`)
+    // add ui
+    const content = [`Fetched from ${repo}@${version}/${dir}`, ...fetchedFiles.map(s => `mo:${s.slice(0,-3)}`)];
+    const session = ace.createEditSession(content, 'ace/mode/text');
+    addFileEntry(`mo:${name}`, session, true);
   });
+}
+
+function addFile(name, content) {
+  const session = ace.createEditSession(content, 'ace/mode/swift');
+  files[name] = session;
+  addFileEntry(name, session, false);
 }
 
 function saveCodeToMotoko() {
@@ -67,19 +79,20 @@ let main_file = 'main.mo';
 const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
 const files = {};
 
-function addFile(ace, tab, name, content) {
+function addFileEntry(name, session, isPackage) {
   const entry = document.createElement('button');
   entry.innerText = name;
-  tab.appendChild(entry);
-  files[name] = ace.createEditSession(content, 'ace/mode/swift');
+  if (isPackage) {
+    entry.style = 'color:blue';
+  }
+  filetab.appendChild(entry);
   entry.addEventListener('click', () => {
-    const session = files[name];
     editor.setSession(session);
-    for (const e of tab.children) {
+    for (const e of filetab.children) {
       e.className = '';
     }
-    entry.className += ' active';
-  });
+    entry.className = 'active';
+  });  
 }
 
 function initUI() {
@@ -103,6 +116,10 @@ function initUI() {
   const newfile = document.createElement('input');
   newfile.type = "button";
   newfile.value = "New file";
+
+  const newpack = document.createElement('input');
+  newpack.type = 'button';
+  newpack.value = 'New package';
   
   const run = document.createElement('input');
   run.type = "button";
@@ -118,6 +135,7 @@ function initUI() {
   dom.appendChild(code);
   dom.appendChild(output);
   document.body.appendChild(newfile);
+  document.body.appendChild(newpack);  
   document.body.appendChild(run);
   document.body.appendChild(compile);
   document.body.appendChild(ic);
@@ -125,7 +143,14 @@ function initUI() {
   newfile.addEventListener('click', () => {
     const name = prompt('Please enter new file name', '');
     if (name) {
-      addFile(ace, filetab, name, `// ${name}`);
+      addFile(name, `// ${name}`);
+    }
+  });
+  newpack.addEventListener('click', () => {
+    const pack = prompt('Please enter package info (name, git repo, version, directory)', 'matchers, kritzcreek/motoko-matchers, 0.1.3, src');
+    if (pack) {
+      const args = pack.split(',').map(s => s.trim());
+      addPackage(...args);
     }
   });
   
@@ -341,8 +366,8 @@ async function init() {
     ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/');
     editor = ace.edit("editor");
     editor.setTheme('ace/theme/chrome');
-    addFile(ace, filetab, 'main.mo', prog);
-    addFile(ace, filetab, 'types.mo', 'type List<T> = ?(T, List<T>);');
+    addFile('main.mo', prog);
+    addFile('types.mo', 'type List<T> = ?(T, List<T>);');
     filetab.firstChild.className += ' active';
     editor.setSession(files['main.mo']);
     log('Editor loaded.');
@@ -354,11 +379,9 @@ async function init() {
   document.body.appendChild(script);
   log('Compiler loaded.');
   // Load library  
-  loadPackage('base', 'dfinity/motoko-base', 'dfx-0.6.6', 'src');
-  loadPackage('matcher', 'kritzcreek/motoko-matchers', '0.1.3', 'src');
-  // TODO check if base library are loaded
-  log('Ready.');
+  addPackage('base', 'dfinity/motoko-base', 'dfx-0.6.6', 'src');
+  //addPackage('matchers', 'kritzcreek/motoko-matchers', '0.1.3', 'src');
 }
 
 initUI();
-init();
+init().then(() => { log('Ready.'); });
