@@ -7,24 +7,26 @@ import { fetchActor, didToJs, render } from './candid';
 import './candid.css';
 import './playground.css';
 
-const prog = `import Time "mo:base/Time";
-import P "mo:base/Principal";
-import Prim "mo:prim";
+const prog = `import P "mo:base/Principal";
+import List "mo:base/List";
 import T "./types";
-shared {caller} actor class Example(init : Int) {
+shared {caller} actor class Example(init : Int) = Self {
+  public type Id = { caller : Principal; creator : Principal; canister : Principal };
   stable let controller = caller;
-  stable let init_time = Time.now();
+  stable var history = List.nil<Int>();
   var counter = init;
-
-  public query(msg) func getId() : async {caller:Principal; creator:Principal} {
-    {caller = msg.caller; creator = controller}
+  
+  system func preupgrade(){
+    history := List.push(counter, history);
   };
-  public query func greet(name : Text) : async Text {
-    let uptime = (Time.now() - init_time)/1000000;
-    return "Hello, " # name # " at " # (debug_show uptime) # "ms";
+
+  public query func getHistory() : async T.List<Int> { history };
+  public query(msg) func getId() : async Id {
+    {canister = P.fromActor(Self); creator = controller; caller = msg.caller}
   };
   public func add() : async Int { counter += 1; counter };
-};`;
+};
+`;
 
 async function retrieve(file) {
   const content = await assets.retrieve(file);
