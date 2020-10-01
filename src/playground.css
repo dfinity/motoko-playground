@@ -1,0 +1,30 @@
+.tab {
+    width: 10%;
+    overflow: scroll;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+}
+
+.tab button {
+    background-color: inherit;
+    width: 100%;
+    border: none;
+    outline: none;
+    text-align: left;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.tab button:hover {
+    background-color: #ddd;
+}
+
+.tab button.active {
+    background-color: #ccc;
+}
+
+.codeMarker {
+    position: absolute;
+    background: rgba(100,200,100,0.5);
+    z-index: 20;
+}

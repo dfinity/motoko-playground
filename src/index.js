@@ -5,45 +5,106 @@ import { Actor, blobFromUint8Array, Principal, IDL, UI } from '@dfinity/agent';
 import ic_idl from './management';
 import { fetchActor, didToJs, render } from './candid';
 import './candid.css';
+import './playground.css';
 
-const prog = `import Time "mo:base/Time";
-import Prim "mo:prim";
-shared {caller} actor class Example(init : Int) {
+const prog = `import P "mo:base/Principal";
+import List "mo:base/List";
+import T "./types";
+shared {caller} actor class Example(init : Int) = Self {
+  public type Id = { caller : Principal; creator : Principal; canister : Principal };
   stable let controller = caller;
-  stable let init_time = Time.now();
+  stable var history = List.nil<Int>();
   var counter = init;
-
-  public query(msg) func getId() : async {caller:Principal; creator:Principal} {
-    {caller = msg.caller; creator = controller}
+  
+  system func preupgrade(){
+    history := List.push(counter, history);
   };
-  public query func greet(name : Text) : async Text {
-    let uptime = (Time.now() - init_time)/1000000;
-    return "Hello, " # name # " at " # (debug_show uptime) # "ms";
+
+  public query func getHistory() : async T.List<Int> { history };
+  public query(msg) func getId() : async Id {
+    {canister = P.fromActor(Self); creator = controller; caller = msg.caller}
   };
   public func add() : async Int { counter += 1; counter };
-};`;
+};
+`;
 
 async function retrieve(file) {
   const content = await assets.retrieve(file);
   return new TextDecoder().decode(new Uint8Array(content));
 }
 
-async function loadBase(lib) {
-  Motoko.saveFile(`base/${lib}`, await retrieve(lib));
-  Motoko.saveFile(`base/${lib}`, await retrieve(lib));  
+async function addPackage(name, repo, version, dir) {
+  const meta_url = `https://data.jsdelivr.com/v1/package/gh/${repo}@${version}/flat`;
+  const base_url = `https://cdn.jsdelivr.net/gh/${repo}@${version}`;
+  const response = await fetch(meta_url);
+  const json = await response.json()
+  const promises = [];
+  const fetchedFiles = [];
+  for (const f of json.files) {
+    if (f.name.startsWith(`/${dir}/`) && /\.mo$/.test(f.name)) {
+      const promise = (async () => {
+        const content = await (await fetch(base_url + f.name)).text();
+        const stripped = name + f.name.slice(dir.length + 1);
+        fetchedFiles.push(stripped);
+        Motoko.saveFile(stripped, content);
+      })();
+      promises.push(promise);
+    }
+  }
+  Promise.all(promises).then(() => {
+    Motoko.addPackage(name, name + '/');
+    log(`Package ${name} loaded (${promises.length} files).`)
+    // add ui
+    const content = [`Fetched from ${repo}@${version}/${dir}`, ...fetchedFiles.map(s => `mo:${s.slice(0,-3)}`)];
+    const session = ace.createEditSession(content, 'ace/mode/text');
+    addFileEntry(`mo:${name}`, session, true);
+  });
+}
+
+function addFile(name, content) {
+  const session = ace.createEditSession(content, 'ace/mode/swift');
+  files[name] = session;
+  addFileEntry(name, session, false);
+}
+
+function saveCodeToMotoko() {
+  for (const [name, content] of Object.entries(files)) {
+    Motoko.saveFile(name, content.getValue());
+  }
 }
 
 let output;
 let editor;
+let filetab;
 let canisterId;
-let main_file = 'src/main.mo';
+let main_file = 'main.mo';
 const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
+const files = {};
+
+function addFileEntry(name, session, isPackage) {
+  const entry = document.createElement('button');
+  entry.innerText = name;
+  if (isPackage) {
+    entry.style = 'color:blue';
+  }
+  filetab.appendChild(entry);
+  entry.addEventListener('click', () => {
+    editor.setSession(session);
+    for (const e of filetab.children) {
+      e.className = '';
+    }
+    entry.className = 'active';
+  });  
+}
 
 function initUI() {
   const dom = document.createElement('div');
   dom.width = "100%";
   dom.style = "width:100%;display:flex;align-items:stretch; position:relative";
   document.body.appendChild(dom);
+
+  filetab = document.createElement('div');
+  filetab.className = 'tab';
   
   const code = document.createElement('div');
   code.id = "editor";
@@ -54,6 +115,14 @@ function initUI() {
   output.style = "width:50%;height:400px;border:1px solid black;overflow:scroll";
   log("Loading...(Do nothing before you see 'Ready')");
 
+  const newfile = document.createElement('input');
+  newfile.type = "button";
+  newfile.value = "New file";
+
+  const newpack = document.createElement('input');
+  newpack.type = 'button';
+  newpack.value = 'New package';
+  
   const run = document.createElement('input');
   run.type = "button";
   run.value = "Run";
@@ -63,15 +132,33 @@ function initUI() {
   const ic = document.createElement('input');
   ic.type = "button";
   ic.value = "Deploy on IC";
-  
+
+  dom.appendChild(filetab);
   dom.appendChild(code);
   dom.appendChild(output);
+  document.body.appendChild(newfile);
+  document.body.appendChild(newpack);  
   document.body.appendChild(run);
   document.body.appendChild(compile);
   document.body.appendChild(ic);
+
+  newfile.addEventListener('click', () => {
+    const name = prompt('Please enter new file name', '');
+    if (name) {
+      addFile(name, `// ${name}`);
+    }
+  });
+  newpack.addEventListener('click', () => {
+    const pack = prompt('Please enter package info (name, github repo, version, directory)', 'matchers, kritzcreek/motoko-matchers, 0.1.3, src');
+    if (pack) {
+      const args = pack.split(',').map(s => s.trim());
+      addPackage(...args);
+    }
+  });
   
   run.addEventListener('click', () => {
     clearLogs();
+    saveCodeToMotoko();
     log('Running...');
     try {
       const tStart = Date.now();
@@ -88,14 +175,21 @@ function initUI() {
 
   compile.addEventListener('click', () => {
     clearLogs();
+    saveCodeToMotoko();    
     log('Compiling...');
     try {
-      Motoko.saveFile(main_file, editor.session.getValue());
       const tStart = Date.now();
       const out = Motoko.compileWasm("wasi", main_file);
       const duration = (Date.now() - tStart) / 1000;
       if (out.result.code === null) {
-        log(JSON.stringify(out.result.diagnostics));
+        const diags = out.result.diagnostics;
+        log(JSON.stringify(diags));
+        /*
+        for (const diag of diags) {
+          const Range = ace.require('ace/range').Range;
+          editor.session.addMarker(new Range(diag.range.start.line, diag.range.start.character, diag.range.end.line, diag.range.end.character), 'codeMarker', 'range');
+          log(diag.message);
+        }*/
       } else {
         log(`(compile time: ${duration}s)`);
         const wasiPolyfill = new Wasi.barebonesWASI();
@@ -110,9 +204,13 @@ function initUI() {
 
   ic.addEventListener('click', () => {
     clearLogs();
+    saveCodeToMotoko();    
     log('Compiling...');
     try {
-      Motoko.saveFile(main_file, editor.session.getValue());
+      // There is a bug in jsoo that will raise an exception when type checking fails.
+      // This seems to only happen in dfinity mode
+      const check = Motoko.check(main_file);
+      log(JSON.stringify(check.result.diagnostics));
       const tStart = Date.now();
       const out = Motoko.compileWasm("dfinity", main_file);
       const candid_source = Motoko.candid(main_file).result;
@@ -270,12 +368,10 @@ async function init() {
     ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/');
     editor = ace.edit("editor");
     editor.setTheme('ace/theme/chrome');
-    editor.session.setOptions({
-      'mode': 'ace/mode/swift',
-      'wrap': true,
-      'tabSize': 2,
-    });
-    editor.session.setValue(prog);
+    addFile('main.mo', prog);
+    addFile('types.mo', 'type List<T> = ?(T, List<T>);');
+    filetab.firstChild.className += ' active';
+    editor.setSession(files['main.mo']);
     log('Editor loaded.');
   });
   // Load Motoko compiler
@@ -284,11 +380,9 @@ async function init() {
   script.text = js;
   document.body.appendChild(script);
   log('Compiler loaded.');
-  // Load base library
-  loadBase('Time.mo');
-  // TODO check if base library are loaded
-  log('Ready.');
+  // Load library  
+  addPackage('base', 'dfinity/motoko-base', 'dfx-0.6.6', 'src');
 }
 
 initUI();
-init();
+init().then(() => { log('Ready.'); });
