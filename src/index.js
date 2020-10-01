@@ -370,8 +370,7 @@ async function init() {
     editor.setTheme('ace/theme/chrome');
     addFile('main.mo', prog);
     addFile('types.mo', 'type List<T> = ?(T, List<T>);');
-    filetab.firstChild.className += ' active';
-    editor.setSession(files['main.mo']);
+    filetab.firstChild.click();
     log('Editor loaded.');
   });
   // Load Motoko compiler
