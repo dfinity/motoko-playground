@@ -1,4 +1,4 @@
-import { Actor, IDL, InputBox, Principal, UI } from '@dfinity/agent';
+import { Actor, IDL, Principal, UI } from '@dfinity/agent';
 import didjs from 'ic:canisters/didjs';
 
 export async function fetchActor(canisterId) {

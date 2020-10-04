@@ -27,6 +27,28 @@ shared {caller} actor class Example(init : Int) = Self {
   public func add() : async Int { counter += 1; counter };
 };
 `;
+const fac = `import Debug "mo:base/Debug";
+func fac(n : Nat) : Nat {
+  if (n == 0) return 1;
+  return n * fac(n-1);
+};
+Debug.print(debug_show (fac(20)));
+`;
+const matchers = `import Suite "mo:matchers/Suite";
+import M "mo:matchers/Matchers";
+import T "mo:matchers/Testable";
+
+func fac(n : Nat) : Nat {
+  if (n == 0) return 1;
+  return n * fac(n-1);
+};
+
+let suite = Suite.suite("factorial", [
+  Suite.test("fac(0)", fac(0), M.equals(T.nat 1)),
+  Suite.test("fac(10)", fac(10), M.equals(T.nat 3628800)),
+]);
+Suite.run(suite);
+`;
 
 async function retrieve(file) {
   const content = await assets.retrieve(file);
@@ -55,8 +77,8 @@ async function addPackage(name, repo, version, dir) {
     Motoko.addPackage(name, name + '/');
     log(`Package ${name} loaded (${promises.length} files).`)
     // add ui
-    const content = [`Fetched from ${repo}@${version}/${dir}`, ...fetchedFiles.map(s => `mo:${s.slice(0,-3)}`)];
-    const session = ace.createEditSession(content, 'ace/mode/text');
+    const content = [`// Fetched from ${repo}@${version}/${dir}`, ...fetchedFiles.map(s => `mo:${s.slice(0,-3)}`)];
+    const session = ace.createEditSession(content, 'ace/mode/swift');
     addFileEntry(`mo:${name}`, session, true);
   });
 }
@@ -78,6 +100,7 @@ let editor;
 let filetab;
 let canisterId;
 let main_file = 'main.mo';
+let current_session_name;
 const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
 const files = {};
 
@@ -94,13 +117,15 @@ function addFileEntry(name, session, isPackage) {
       e.className = '';
     }
     entry.className = 'active';
+    current_session_name = name;
   });  
 }
 
 function initUI() {
+  document.title = 'Motoko Playground';
   const dom = document.createElement('div');
   dom.width = "100%";
-  dom.style = "width:100%;display:flex;align-items:stretch; position:relative";
+  dom.style = "width:100%;height:90vh;display:flex;align-items:stretch; position:relative";
   document.body.appendChild(dom);
 
   filetab = document.createElement('div');
@@ -108,11 +133,11 @@ function initUI() {
   
   const code = document.createElement('div');
   code.id = "editor";
-  code.style = "height:400px;width:50%;border:1px solid black;";
+  code.style = "height:90vh;width:50%;border:1px solid black;";
 
   output = document.createElement('div');
   output.className = "console";
-  output.style = "width:50%;height:400px;border:1px solid black;overflow:scroll";
+  output.style = "width:50%;height:90vh;border:1px solid black;overflow:scroll";
   log("Loading...(Do nothing before you see 'Ready')");
 
   const newfile = document.createElement('input');
@@ -175,11 +200,11 @@ function initUI() {
 
   compile.addEventListener('click', () => {
     clearLogs();
-    saveCodeToMotoko();    
+    saveCodeToMotoko();
     log('Compiling...');
     try {
       const tStart = Date.now();
-      const out = Motoko.compileWasm("wasi", main_file);
+      const out = Motoko.compileWasm("wasi", current_session_name);
       const duration = (Date.now() - tStart) / 1000;
       if (out.result.code === null) {
         const diags = out.result.diagnostics;
@@ -370,6 +395,8 @@ async function init() {
     editor.setTheme('ace/theme/chrome');
     addFile('main.mo', prog);
     addFile('types.mo', 'type List<T> = ?(T, List<T>);');
+    addFile('fac.mo', fac);
+    addFile('test.mo', matchers);
     filetab.firstChild.click();
     log('Editor loaded.');
   });

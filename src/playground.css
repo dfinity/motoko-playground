@@ -1,5 +1,6 @@
 .tab {
-    width: 10%;
+    width: 7%;
+    height: 100%;
     overflow: scroll;
     border: 1px solid #ccc;
     background-color: #f1f1f1;
