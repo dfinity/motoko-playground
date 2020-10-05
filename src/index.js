@@ -49,6 +49,45 @@ let suite = Suite.suite("factorial", [
 ]);
 Suite.run(suite);
 `;
+const type = `type Counter = { topic: Text; value: Nat; };
+type List<T> = ?(T, List<T>);
+`;
+const pub = `import Array "mo:base/Array";
+import T "./types";
+actor Publisher {
+    public type Subscriber = { topic: Text; callback: shared T.Counter -> (); };
+    var subscribers: [Subscriber] = [];
+
+    public func subscribe(subscriber: Subscriber) {
+        subscribers := Array.append<Subscriber>(subscribers, [subscriber]);
+    };
+
+    public func publish(counter: T.Counter) {
+        for (subscriber in subscribers.vals()) {
+            if (subscriber.topic == counter.topic) {
+                subscriber.callback(counter);
+            };
+        };
+    };
+};
+`;
+const sub = `import Publisher "canister:pub";
+import T "./types";
+actor Subscriber {
+    let counter_topic = "Apples";
+    var count: Nat = 0;
+
+    public func init() {
+        Publisher.subscribe({ topic = counter_topic; callback = updateCount; });
+    };
+    public func updateCount(counter: T.Counter) {
+        count += counter.value;
+    };
+    public query func getCount(): async Nat {
+        count
+    };
+};
+`;
 
 async function retrieve(file) {
   const content = await assets.retrieve(file);
@@ -79,14 +118,14 @@ async function addPackage(name, repo, version, dir) {
     // add ui
     const content = [`// Fetched from ${repo}@${version}/${dir}`, ...fetchedFiles.map(s => `mo:${s.slice(0,-3)}`)];
     const session = ace.createEditSession(content, 'ace/mode/swift');
-    addFileEntry(`mo:${name}`, session, true);
+    addFileEntry('package', `mo:${name}`, session);
   });
 }
 
 function addFile(name, content) {
   const session = ace.createEditSession(content, 'ace/mode/swift');
   files[name] = session;
-  addFileEntry(name, session, false);
+  addFileEntry('file', name, session);
 }
 
 function saveCodeToMotoko() {
@@ -98,27 +137,44 @@ function saveCodeToMotoko() {
 let output;
 let editor;
 let filetab;
-let canisterId;
-let main_file = 'main.mo';
+
 let current_session_name;
 const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
+// map filepath to code session
 const files = {};
+// map canister name to canister id
+const canister = {};
+// map canister name to ui
+const canister_ui = {};
 
-function addFileEntry(name, session, isPackage) {
+function getCanisterName(path) {
+  return path.split('/').pop().slice(0,-3);
+}
+
+function addFileEntry(type, name, session) {
   const entry = document.createElement('button');
   entry.innerText = name;
-  if (isPackage) {
+  if (type === 'package') {
     entry.style = 'color:blue';
+  } else if (type === 'canister') {
+    entry.style = 'color:green';
   }
   filetab.appendChild(entry);
   entry.addEventListener('click', () => {
-    editor.setSession(session);
     for (const e of filetab.children) {
       e.className = '';
     }
     entry.className = 'active';
-    current_session_name = name;
-  });  
+    if (type === 'canister') {
+      clearLogs();      
+      const ui = canister_ui[name.slice(9)];
+      log(ui);      
+    } else {
+      editor.setSession(session);
+      current_session_name = name; 
+    }
+  });
+  return entry;
 }
 
 function initUI() {
@@ -232,13 +288,15 @@ function initUI() {
     saveCodeToMotoko();    
     log('Compiling...');
     try {
-      // There is a bug in jsoo that will raise an exception when type checking fails.
-      // This seems to only happen in dfinity mode
-      const check = Motoko.check(main_file);
-      log(JSON.stringify(check.result.diagnostics));
+      const candid_result = Motoko.candid(current_session_name);
+      log(candid_result.stderr);
+      const candid_source = candid_result.result;
+      if (!candid_source || candid_source.trim() === '') {
+        log('cannot deploy empty candid file');
+        return;
+      }
       const tStart = Date.now();
-      const out = Motoko.compileWasm("dfinity", main_file);
-      const candid_source = Motoko.candid(main_file).result;
+      const out = Motoko.compileWasm("dfinity", current_session_name);
       const duration = (Date.now() - tStart) / 1000;
       if (out.result.code === null) {
         log(JSON.stringify(out.result.diagnostics));
@@ -253,7 +311,7 @@ function initUI() {
           const line = document.createElement('div');
           line.id = 'install';
           log(line);
-          renderInstall(line, candid, wasm);
+          renderInstall(line, getCanisterName(current_session_name), candid, wasm);
         })().catch(err => {
           log('IC Exception:\n' + err.stack);
           throw err;
@@ -266,7 +324,7 @@ function initUI() {
   });
 }
 
-export function renderInstall(item, candid, wasm) {
+export function renderInstall(item, name, candid, wasm) {
   const module = blobFromUint8Array(wasm);
   const argTypes = candid.init({ IDL });
   item.innerHTML = `<div>This service requires the following installation arguments:</div>`;
@@ -291,6 +349,7 @@ export function renderInstall(item, candid, wasm) {
     return blobFromUint8Array(IDL.encode(argTypes, args));      
   };
   
+  const canisterId = canister[name];
   if (canisterId) {
     const upgrade = document.createElement('button');
     upgrade.className = 'btn';
@@ -301,14 +360,14 @@ export function renderInstall(item, candid, wasm) {
       if (encoded) {
         output.removeChild(item.parentNode);
         log(`Upgrading ${canisterId}...`);
-        install(module, encoded, 'upgrade', candid.default);
+        install(name, canisterId, module, encoded, 'upgrade', candid.default);
       }
     });
   }
 
   const button = document.createElement('button');
   button.className = 'btn';
-  button.innerText = canisterId ? 'Reinstall' : 'Install';
+  button.innerText = canister[name] ? 'Reinstall' : 'Install';
   item.appendChild(button);  
   
   button.addEventListener('click', () => {
@@ -316,22 +375,24 @@ export function renderInstall(item, candid, wasm) {
     if (encoded) {
       output.removeChild(item.parentNode);
       if (!canisterId) {
-        log('Creating canister id...');
+        log(`Creating canister id for ${name}...`);
         (async () => {
-          canisterId = await Actor.createCanister();
-          log(`Created canisterId ${canisterId}`);
-          deleteButton();
-          install(module, encoded, 'install', candid.default);
+          const new_id = await Actor.createCanister();
+          canister[name] = new_id;
+          log(`Created canisterId ${new_id}`);
+          install(name, new_id, module, encoded, 'install', candid.default);
+          const entry = addFileEntry('canister', 'canister:' + name);
+          deleteButton(name, entry);
         })();
       } else {
         log(`Reinstalling ${canisterId}...`);
-        install(module, encoded, 'reinstall', candid.default);
+        install(name, canisterId, module, encoded, 'reinstall', candid.default);
       }
     }
   });
 }
 
-async function install(module, arg, mode, candid) {
+async function install(name, canisterId, module, arg, mode, candid) {
   if (!canisterId) {
     throw new Error('no canister id');
   }
@@ -339,28 +400,31 @@ async function install(module, arg, mode, candid) {
   log('Code installed');
   const canister = Actor.createActor(candid, { canisterId });
   const line = document.createElement('div');
-  line.id = 'candid-ui';
+  line.id = name;
   log(line);
-  render(line, canisterId, canister);  
+  render(line, canisterId, canister);
+  canister_ui[name] = line;
 }
 
-function deleteButton() {
+function deleteButton(name, entry) {
+  const canisterId = canister[name];
   const close = document.createElement('input');
   close.type = 'button';
-  close.value = 'Delete canister';
+  close.value = `Delete ${name}`;
   document.body.appendChild(close);
   close.addEventListener('click', () => {
-    const ui = document.getElementById('candid-ui');
+    const ui = document.getElementById(name);
     if (ui) {
       output.removeChild(ui.parentNode);
     }
     (async () => {
-      log('Deleting canister...');
+      log(`Deleting canister ${name}...`);
       await ic0.stop_canister({ canister_id: canisterId });
       log('Canister stopped');
       await ic0.delete_canister({ canister_id: canisterId });
       log('Canister deleted');
-      canisterId = undefined;
+      canister[name] = undefined;
+      entry.remove();
       close.remove();
     })();
   });  
@@ -372,7 +436,7 @@ function log(content) {
   if (content instanceof Element) {
     line.appendChild(content);
   } else {
-    line.innerHTML = content;
+    line.innerText = content;
   }
   output.appendChild(line);
   return line;
@@ -394,7 +458,9 @@ async function init() {
     editor = ace.edit("editor");
     editor.setTheme('ace/theme/chrome');
     addFile('main.mo', prog);
-    addFile('types.mo', 'type List<T> = ?(T, List<T>);');
+    addFile('types.mo', type);
+    addFile('pub.mo', pub);
+    addFile('sub.mo', sub);
     addFile('fac.mo', fac);
     addFile('test.mo', matchers);
     filetab.firstChild.click();
