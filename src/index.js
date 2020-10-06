@@ -313,14 +313,15 @@ function initUI() {
         const wasm = out.result.code;
         (async () => {
           log(`Deploying on IC...`);
-          const canister_name = getCanisterName(current_session_name);
+          const canister_name = prompt('Please enter canister name', getCanisterName(current_session_name));
+          if (!canister_name) { return; }
           canister_candid[canister_name] = candid_source;
           // init args
           const candid = await didToJs(candid_source);
           const line = document.createElement('div');
           line.id = 'install';
           log(line);
-          renderInstall(line, getCanisterName(current_session_name), candid, wasm);
+          renderInstall(line, canister_name, candid, wasm);
         })().catch(err => {
           log('IC Exception:\n' + err.stack);
           throw err;
@@ -376,7 +377,7 @@ function renderInstall(item, name, candid, wasm) {
 
   const button = document.createElement('button');
   button.className = 'btn';
-  button.innerText = canister[name] ? 'Reinstall' : 'Install';
+  button.innerText = canisterId ? 'Reinstall' : 'Install';
   item.appendChild(button);  
   
   button.addEventListener('click', () => {
