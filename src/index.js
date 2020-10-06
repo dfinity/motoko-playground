@@ -434,9 +434,9 @@ function deleteButton(name, entry) {
       log('Canister stopped');
       await ic0.delete_canister({ canister_id: canisterId });
       log('Canister deleted');
-      canister[name] = undefined;
-      canister_ui[name] = undefined;
-      canister_candid[name] = undefined;
+      delete canister[name];
+      delete canister_ui[name];
+      delete canister_candid[name];
       entry.remove();
       close.remove();
     })();
