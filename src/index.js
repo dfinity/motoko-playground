@@ -132,6 +132,11 @@ function saveCodeToMotoko() {
   for (const [name, content] of Object.entries(files)) {
     Motoko.saveFile(name, content.getValue());
   }
+  const aliases = [];
+  for (const [name, id] of Object.entries(canister)) {
+    aliases.push([name, id.toText()]);
+  }
+  Motoko.setActorAliases(aliases);
 }
 
 let output;
@@ -146,6 +151,8 @@ const files = {};
 const canister = {};
 // map canister name to ui
 const canister_ui = {};
+// map canister name to candid
+const canister_candid = {};
 
 function getCanisterName(path) {
   return path.split('/').pop().slice(0,-3);
@@ -306,6 +313,8 @@ function initUI() {
         const wasm = out.result.code;
         (async () => {
           log(`Deploying on IC...`);
+          const canister_name = getCanisterName(current_session_name);
+          canister_candid[canister_name] = candid_source;
           // init args
           const candid = await didToJs(candid_source);
           const line = document.createElement('div');
@@ -324,7 +333,7 @@ function initUI() {
   });
 }
 
-export function renderInstall(item, name, candid, wasm) {
+function renderInstall(item, name, candid, wasm) {
   const module = blobFromUint8Array(wasm);
   const argTypes = candid.init({ IDL });
   item.innerHTML = `<div>This service requires the following installation arguments:</div>`;
@@ -404,6 +413,7 @@ async function install(name, canisterId, module, arg, mode, candid) {
   log(line);
   render(line, canisterId, canister);
   canister_ui[name] = line;
+  Motoko.saveFile(`idl/${canisterId}.did`, canister_candid[name]);
 }
 
 function deleteButton(name, entry) {
