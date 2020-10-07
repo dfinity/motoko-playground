@@ -49,8 +49,10 @@ let suite = Suite.suite("factorial", [
 ]);
 Suite.run(suite);
 `;
-const type = `type Counter = { topic: Text; value: Nat; };
-type List<T> = ?(T, List<T>);
+const type = `module {
+  public type Counter = { topic: Text; value: Nat; };
+  public type List<T> = ?(T, List<T>);
+}
 `;
 const pub = `import Array "mo:base/Array";
 import T "./types";
