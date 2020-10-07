@@ -23,7 +23,7 @@ export async function didToJs(source) {
 
 export function render(dom, id, canister) {
   dom.innerHTML = `
-<div>This service has the following methods:
+<div>Service ${id} has the following methods:
 <ul id="methods"></ul></div>
 <div class="console" id="candid_console"></div>
 `;
