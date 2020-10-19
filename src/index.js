@@ -118,21 +118,21 @@ async function addPackage(name, repo, version, dir) {
     Motoko.addPackage(name, name + '/');
     log(`Package ${name} loaded (${promises.length} files).`)
     // add ui
-    const content = [`// Fetched from ${repo}@${version}/${dir}`, ...fetchedFiles.map(s => `mo:${s.slice(0,-3)}`)];
-    const session = ace.createEditSession(content, 'ace/mode/swift');
-    addFileEntry('package', `mo:${name}`, session);
+    const content = [`// Fetched from ${repo}@${version}/${dir}`, ...fetchedFiles.map(s => `mo:${s.slice(0,-3)}`)].join('\n');
+    const model = monaco.editor.createModel(content, 'swift');
+    addFileEntry('package', `mo:${name}`, model);
   });
 }
 
 function addFile(name, content) {
-  const session = ace.createEditSession(content, 'ace/mode/swift');
-  files[name] = session;
-  addFileEntry('file', name, session);
+  const model = monaco.editor.createModel(content, 'swift');
+  files[name] = {model, state: null};
+  addFileEntry('file', name, model);
 }
 
 function saveCodeToMotoko() {
-  for (const [name, content] of Object.entries(files)) {
-    Motoko.saveFile(name, content.getValue());
+  for (const [name, session] of Object.entries(files)) {
+    Motoko.saveFile(name, session.model.getValue());
   }
   const aliases = [];
   for (const [name, id] of Object.entries(canister)) {
@@ -147,7 +147,7 @@ let filetab;
 
 let current_session_name;
 const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
-// map filepath to code session
+// map filepath to code session { state, model }
 const files = {};
 // map canister name to canister id
 const canister = {};
@@ -160,7 +160,7 @@ function getCanisterName(path) {
   return path.split('/').pop().slice(0,-3);
 }
 
-function addFileEntry(type, name, session) {
+function addFileEntry(type, name, model) {
   const entry = document.createElement('button');
   entry.innerText = name;
   if (type === 'package') {
@@ -179,8 +179,14 @@ function addFileEntry(type, name, session) {
       const ui = canister_ui[name.slice(9)];
       log(ui);      
     } else {
-      editor.setSession(session);
-      current_session_name = name; 
+      if (files[current_session_name]) {
+        files[current_session_name].state = editor.saveViewState();
+      }
+      if (files[name] && files[name].state) {
+        editor.restoreViewState(files[name].state);
+      }
+      editor.setModel(model);
+      current_session_name = name;
     }
   });
   return entry;
@@ -252,7 +258,7 @@ function initUI() {
     log('Running...');
     try {
       const tStart = Date.now();
-      const out = Motoko.run(editor.session.getValue());
+      const out = Motoko.run(editor.getModel().getValue());
       const duration = (Date.now() - tStart) / 1000;
       log(out.stderr + out.stdout);
       log(out.result);
@@ -463,32 +469,59 @@ function clearLogs() {
   }
 }
 
-async function init() {
-  // Load Ace editor
-  const ace_script = document.createElement('script');
-  ace_script.src = 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js';
-  document.body.appendChild(ace_script);
-  ace_script.addEventListener('load', () => {
-    ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/');
-    editor = ace.edit("editor");
-    editor.setTheme('ace/theme/chrome');
-    addFile('main.mo', prog);
-    addFile('types.mo', type);
-    addFile('pub.mo', pub);
-    addFile('sub.mo', sub);
-    addFile('fac.mo', fac);
-    addFile('test.mo', matchers);
-    filetab.firstChild.click();
-    log('Editor loaded.');
+function loadEditor() {
+  const link = document.createElement('link');
+  link.rel = "stylesheet";
+  link.setAttribute('data-name', "vs/editor/editor.main");
+  link.href = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/editor/editor.main.min.css';
+  document.getElementsByTagName('head')[0].appendChild(link);
+  const script = document.createElement('script');
+  script.src = "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/loader.min.js";
+  document.body.appendChild(script);
+  script.addEventListener('load', () => {
+    const code = document.getElementById('editor');
+    __non_webpack_require__.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs' }});
+    window.MonacoEnvironment = {
+      getWorkerUrl: function(workerId, label) {
+        return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+        self.MonacoEnvironment = {
+          baseUrl: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min'
+        };
+        importScripts('https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/base/worker/workerMain.min.js');`
+      )}`;
+      }
+    };
+    __non_webpack_require__(["vs/editor/editor.main"], function () {
+      addFile('main.mo', prog);
+      addFile('types.mo', type);
+      addFile('pub.mo', pub);
+      addFile('sub.mo', sub);
+      addFile('fac.mo', fac);
+      addFile('test.mo', matchers);      
+      editor = monaco.editor.create(code, {
+        model: files['main.mo'].model,
+        language: 'swift',
+        theme: 'vs',
+        minimap: { enabled: false },
+      });
+      current_session_name = 'main.mo';
+      filetab.firstChild.click();      
+      log('Editor loaded.');
+      // Load library
+      addPackage('base', 'dfinity/motoko-base', 'dfx-0.6.12', 'src');
+    });
   });
+}
+
+async function init() {
+  // Load Monaco editor
+  loadEditor();
   // Load Motoko compiler
   const js = await retrieve('mo_js.js');
   const script = document.createElement('script');
   script.text = js;
   document.body.appendChild(script);
   log('Compiler loaded.');
-  // Load library  
-  addPackage('base', 'dfinity/motoko-base', 'dfx-0.6.12', 'src');
 }
 
 initUI();
