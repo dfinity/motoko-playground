@@ -488,7 +488,7 @@ async function init() {
   document.body.appendChild(script);
   log('Compiler loaded.');
   // Load library  
-  addPackage('base', 'dfinity/motoko-base', 'dfx-0.6.6', 'src');
+  addPackage('base', 'dfinity/motoko-base', 'dfx-0.6.12', 'src');
 }
 
 initUI();
