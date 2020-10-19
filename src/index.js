@@ -507,8 +507,6 @@ function loadEditor() {
       current_session_name = 'main.mo';
       filetab.firstChild.click();      
       log('Editor loaded.');
-      // Load library
-      addPackage('base', 'dfinity/motoko-base', 'dfx-0.6.12', 'src');
     });
   });
 }
@@ -525,4 +523,8 @@ async function init() {
 }
 
 initUI();
-init().then(() => { log('Ready.'); });
+init().then(() => {
+  // Load library
+  addPackage('base', 'dfinity/motoko-base', 'dfx-0.6.12', 'src');
+  log('Ready.');
+});
