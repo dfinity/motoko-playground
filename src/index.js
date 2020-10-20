@@ -128,6 +128,15 @@ function addFile(name, content) {
   const model = monaco.editor.createModel(content, 'motoko');
   files[name] = {model, state: null};
   addFileEntry('file', name, model);
+  let handle;
+  model.onDidChangeContent(() => {
+    clearTimeout(handle);
+    handle = setTimeout(() => {
+      saveCodeToMotoko();
+      const markers = checkCode(name);
+      monaco.editor.setModelMarkers(model, 'moc', markers);
+    }, 500);
+  });
 }
 
 function saveCodeToMotoko() {
@@ -139,6 +148,22 @@ function saveCodeToMotoko() {
     aliases.push([name, id.toText()]);
   }
   Motoko.setActorAliases(aliases);
+}
+
+function checkCode(name) {
+  const diags = Motoko.check(name).result.diagnostics;
+  const markers = diags.map(d => {
+    const severity = d.severity === 1 ? monaco.MarkerSeverity.Error : monaco.MarkerSeverity.Warning;
+    return {
+      startLineNumber: d.range.start.line+1,
+      startColumn: d.range.start.character+1,
+      endLineNumber: d.range.end.line+1,
+      endColumn: d.range.end.character+1,
+      message: d.message,
+      severity,
+    };
+  });
+  return markers;
 }
 
 let output;
@@ -280,12 +305,6 @@ function initUI() {
       if (out.result.code === null) {
         const diags = out.result.diagnostics;
         log(JSON.stringify(diags));
-        /*
-        for (const diag of diags) {
-          const Range = ace.require('ace/range').Range;
-          editor.session.addMarker(new Range(diag.range.start.line, diag.range.start.character, diag.range.end.line, diag.range.end.character), 'codeMarker', 'range');
-          log(diag.message);
-        }*/
       } else {
         log(`(compile time: ${duration}s)`);
         const wasiPolyfill = new Wasi.barebonesWASI();
