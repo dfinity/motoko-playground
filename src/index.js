@@ -486,8 +486,8 @@ function registerMotoko() {
       { open: '[', close: ']' },
       { open: '(', close: ')' },
       { open: '"', close: '"' },
-      { open: "'", close: "'" },
-    ],    
+      { open: "<", close: ">" },
+    ],
   });
   monaco.languages.setMonarchTokensProvider('motoko', {
     defaultToken: '',
@@ -499,15 +499,21 @@ function registerMotoko() {
                'true', 'type', 'var', 'while', 'stable', 'flexible', 'system'
               ],
     accessmodifiers: ['public', 'private', 'shared'],
-    typeKeywords: ['Int', 'Nat', 'Bool', 'Text'],
-    operators: ['=', '<', '>', '+=', '==', ':=', '^', '#', '!=', '->'],
+    typeKeywords: ['Any', 'None', 'Null', 'Bool', 'Int', 'Int8', 'Int16', 'Int32', 'Int64',
+                   'Nat', 'Nat8', 'Nat16', 'Nat32', 'Nat64', 'Word8', 'Word16', 'Word32', 'Word64',
+                   'Float', 'Char', 'Text', 'Blob', 'Error', 'Principal'
+                  ],
+    operators: ['=', '<', '>', ':', '<:', '?', '+', '-', '*', '/', '%', '**', '&', '|', '^',
+                '<<', '>>', '#', '==', '!=', '>=', '<=', ':=', '+=', '-=', '*=', '/=',
+                '%=', '**=', '&=', '|=', '^=', '<<=', '>>=', '#=', '->'
+               ],
     symbols: /[=(){}\[\].,:;@#\_&\-<>`?!+*\\\/]/,
     // C# style strings
     escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
     tokenizer: {
       root: [
         // identifiers and keywords
-        [/[a-z_$][\w$]*/, { cases: { '@typeKeywords': 'keyword',
+        [/[a-zA-Z_$][\w$]*/, { cases: { '@typeKeywords': 'keyword.type',
                                      '@keywords': 'keyword',
                                      '@default': 'identifier' } }],
         // whitespace
@@ -593,10 +599,12 @@ function loadEditor() {
         model: files['main.mo'].model,
         language: 'motoko',
         theme: 'vs',
+        wordWrap: 'on',
+        wrappingIndent: "indent",
         minimap: { enabled: false },
       });
       current_session_name = 'main.mo';
-      filetab.firstChild.click();      
+      filetab.firstChild.click();
       log('Editor loaded.');
     });
   });
