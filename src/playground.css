@@ -23,9 +23,3 @@
 .tab button.active {
     background-color: #ccc;
 }
-
-.codeMarker {
-    position: absolute;
-    background: rgba(100,200,100,0.5);
-    z-index: 20;
-}
