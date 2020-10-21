@@ -4,221 +4,22 @@ import * as Wasi from './wasiPolyfill';
 import { Actor, blobFromUint8Array, Principal, IDL, UI } from '@dfinity/agent';
 import ic_idl from './management';
 import { fetchActor, didToJs, render } from './candid';
+import { loadEditor, editor } from './monaco';
+import { addFile, addFileEntry, addPackage, saveCodeToMotoko, files, current_session_name, filetab } from './file';
+import { log, clearLogs, output } from './log';
+import { canister, canister_ui, canister_candid } from './build';
 import './candid.css';
 import './playground.css';
 
-const prog = `import P "mo:base/Principal";
-import List "mo:base/List";
-import T "./types";
-shared {caller} actor class Example(init : Int) = Self {
-  public type Id = { caller : Principal; creator : Principal; canister : Principal };
-  stable let controller = caller;
-  stable var history = List.nil<Int>();
-  var counter = init;
-  
-  system func preupgrade(){
-    history := List.push(counter, history);
-  };
-
-  public query func getHistory() : async T.List<Int> { history };
-  public query(msg) func getId() : async Id {
-    {canister = P.fromActor(Self); creator = controller; caller = msg.caller}
-  };
-  public func add() : async Int { counter += 1; counter };
-};
-`;
-const fac = `import Debug "mo:base/Debug";
-func fac(n : Nat) : Nat {
-  if (n == 0) return 1;
-  return n * fac(n-1);
-};
-Debug.print(debug_show (fac(20)));
-`;
-const matchers = `import Suite "mo:matchers/Suite";
-import M "mo:matchers/Matchers";
-import T "mo:matchers/Testable";
-
-func fac(n : Nat) : Nat {
-  if (n == 0) return 1;
-  return n * fac(n-1);
-};
-
-let suite = Suite.suite("factorial", [
-  Suite.test("fac(0)", fac(0), M.equals(T.nat 1)),
-  Suite.test("fac(10)", fac(10), M.equals(T.nat 3628800)),
-]);
-Suite.run(suite);
-`;
-const type = `module {
-  public type Counter = { topic: Text; value: Nat; };
-  public type List<T> = ?(T, List<T>);
-}
-`;
-const pub = `import Array "mo:base/Array";
-import T "./types";
-actor Publisher {
-    public type Subscriber = { topic: Text; callback: shared T.Counter -> (); };
-    var subscribers: [Subscriber] = [];
-
-    public func subscribe(subscriber: Subscriber) {
-        subscribers := Array.append<Subscriber>(subscribers, [subscriber]);
-    };
-
-    public func publish(counter: T.Counter) {
-        for (subscriber in subscribers.vals()) {
-            if (subscriber.topic == counter.topic) {
-                subscriber.callback(counter);
-            };
-        };
-    };
-};
-`;
-const sub = `import Publisher "canister:pub";
-import T "./types";
-actor Subscriber {
-    let counter_topic = "Apples";
-    var count: Nat = 0;
-
-    public func init() {
-        Publisher.subscribe({ topic = counter_topic; callback = updateCount; });
-    };
-    public func updateCount(counter: T.Counter) {
-        count += counter.value;
-    };
-    public query func getCount(): async Nat {
-        count
-    };
-};
-`;
-
-let output;
-let editor;
-let filetab;
-
-let current_session_name;
 const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
-// map filepath to code session { state, model }
-const files = {};
-// map canister name to canister id
-const canister = {};
-// map canister name to ui
-const canister_ui = {};
-// map canister name to candid
-const canister_candid = {};
 
 async function retrieve(file) {
   const content = await assets.retrieve(file);
   return new TextDecoder().decode(new Uint8Array(content));
 }
 
-async function addPackage(name, repo, version, dir) {
-  const meta_url = `https://data.jsdelivr.com/v1/package/gh/${repo}@${version}/flat`;
-  const base_url = `https://cdn.jsdelivr.net/gh/${repo}@${version}`;
-  const response = await fetch(meta_url);
-  const json = await response.json()
-  const promises = [];
-  const fetchedFiles = [];
-  for (const f of json.files) {
-    if (f.name.startsWith(`/${dir}/`) && /\.mo$/.test(f.name)) {
-      const promise = (async () => {
-        const content = await (await fetch(base_url + f.name)).text();
-        const stripped = name + f.name.slice(dir.length + 1);
-        fetchedFiles.push(stripped);
-        Motoko.saveFile(stripped, content);
-      })();
-      promises.push(promise);
-    }
-  }
-  Promise.all(promises).then(() => {
-    Motoko.addPackage(name, name + '/');
-    log(`Package ${name} loaded (${promises.length} files).`)
-    // add ui
-    const content = [`// Fetched from ${repo}@${version}/${dir}`, ...fetchedFiles.map(s => `mo:${s.slice(0,-3)}`)].join('\n');
-    const model = monaco.editor.createModel(content, 'motoko');
-    addFileEntry('package', `mo:${name}`, model);
-  });
-}
-
-function addFile(name, content) {
-  const model = monaco.editor.createModel(content, 'motoko');
-  files[name] = {model, state: null};
-  addFileEntry('file', name, model);
-  let handle;
-  model.onDidChangeContent(() => {
-    clearTimeout(handle);
-    handle = setTimeout(() => {
-      /*const proxy = worker.getProxy();
-      proxy.then((p) => {
-        p.doValidate(null).then((r) => { console.log(r) })
-      });*/
-      saveCodeToMotoko();
-      const markers = checkCode(name);
-      monaco.editor.setModelMarkers(model, 'moc', markers);
-    }, 500);
-  });
-}
-
-function saveCodeToMotoko() {
-  for (const [name, session] of Object.entries(files)) {
-    Motoko.saveFile(name, session.model.getValue());
-  }
-  const aliases = [];
-  for (const [name, id] of Object.entries(canister)) {
-    aliases.push([name, id.toText()]);
-  }
-  Motoko.setActorAliases(aliases);
-}
-
-function checkCode(name) {
-  const diags = Motoko.check(name).result.diagnostics;
-  const markers = diags.map(d => {
-    const severity = d.severity === 1 ? monaco.MarkerSeverity.Error : monaco.MarkerSeverity.Warning;
-    return {
-      startLineNumber: d.range.start.line+1,
-      startColumn: d.range.start.character+1,
-      endLineNumber: d.range.end.line+1,
-      endColumn: d.range.end.character+1,
-      message: d.message,
-      severity,
-    };
-  });
-  return markers;
-}
-
 function getCanisterName(path) {
   return path.split('/').pop().slice(0,-3);
-}
-
-function addFileEntry(type, name, model) {
-  const entry = document.createElement('button');
-  entry.innerText = name;
-  if (type === 'package') {
-    entry.style = 'color:blue';
-  } else if (type === 'canister') {
-    entry.style = 'color:green';
-  }
-  filetab.appendChild(entry);
-  entry.addEventListener('click', () => {
-    for (const e of filetab.children) {
-      e.className = '';
-    }
-    entry.className = 'active';
-    if (type === 'canister') {
-      clearLogs();      
-      const ui = canister_ui[name.slice(9)];
-      log(ui);      
-    } else {
-      if (files[current_session_name]) {
-        files[current_session_name].state = editor.saveViewState();
-      }
-      if (files[name] && files[name].state) {
-        editor.restoreViewState(files[name].state);
-      }
-      editor.setModel(model);
-      current_session_name = name;
-    }
-  });
-  return entry;
 }
 
 function initUI() {
@@ -228,14 +29,12 @@ function initUI() {
   dom.style = "width:100%;height:90vh;display:flex;align-items:stretch; position:relative";
   document.body.appendChild(dom);
 
-  filetab = document.createElement('div');
   filetab.className = 'tab';
   
   const code = document.createElement('div');
   code.id = "editor";
   code.style = "height:90vh;width:50%;border:1px solid black;";
 
-  output = document.createElement('div');
   output.className = "console";
   output.style = "width:50%;height:90vh;border:1px solid black;overflow:scroll";
   log("Loading...(Do nothing before you see 'Ready')");
@@ -472,165 +271,6 @@ function deleteButton(name, entry) {
       close.remove();
     })();
   });  
-}
-
-function log(content) {
-  const line = document.createElement('div');
-  line.className = 'console-line';
-  if (content instanceof Element) {
-    line.appendChild(content);
-  } else {
-    line.innerText = content;
-  }
-  output.appendChild(line);
-  return line;
-}
-
-function clearLogs() {
-  while (output.firstChild) {
-    output.removeChild(output.firstChild);
-  }
-}
-
-function registerMotoko() {
-  monaco.languages.register({ id: 'motoko' });
-  monaco.languages.setLanguageConfiguration('motoko', {
-    comments: {
-      lineComment: '//',
-      blockComment: ['/*', '*/']
-    },    
-    brackets: [
-      ['{', '}'],
-      ['[', ']'],
-      ['(', ')']
-    ],
-    autoClosingPairs: [
-      { open: '{', close: '}' },
-      { open: '[', close: ']' },
-      { open: '(', close: ')' },
-      { open: '"', close: '"' },
-      { open: "<", close: ">" },
-    ],
-  });
-  monaco.languages.setMonarchTokensProvider('motoko', {
-    defaultToken: '',
-    tokenPostfix: '.mo',
-    keywords: ['actor', 'and', 'async', 'assert', 'await', 'break', 'case', 'catch', 'class',
-               'continue', 'debug', 'else', 'false', 'for', 'func', 'if', 'in', 'import',
-               'module', 'not', 'null', 'object', 'or', 'label', 'let', 'loop', 'private',
-               'public', 'return', 'shared', 'try', 'throw', 'debug_show', 'query', 'switch',
-               'true', 'type', 'var', 'while', 'stable', 'flexible', 'system'
-              ],
-    accessmodifiers: ['public', 'private', 'shared'],
-    typeKeywords: ['Any', 'None', 'Null', 'Bool', 'Int', 'Int8', 'Int16', 'Int32', 'Int64',
-                   'Nat', 'Nat8', 'Nat16', 'Nat32', 'Nat64', 'Word8', 'Word16', 'Word32', 'Word64',
-                   'Float', 'Char', 'Text', 'Blob', 'Error', 'Principal'
-                  ],
-    operators: ['=', '<', '>', ':', '<:', '?', '+', '-', '*', '/', '%', '**', '&', '|', '^',
-                '<<', '>>', '#', '==', '!=', '>=', '<=', ':=', '+=', '-=', '*=', '/=',
-                '%=', '**=', '&=', '|=', '^=', '<<=', '>>=', '#=', '->'
-               ],
-    symbols: /[=(){}\[\].,:;@#\_&\-<>`?!+*\\\/]/,
-    // C# style strings
-    escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
-    tokenizer: {
-      root: [
-        // identifiers and keywords
-        [/[a-zA-Z_$][\w$]*/, { cases: { '@typeKeywords': 'keyword.type',
-                                     '@keywords': 'keyword',
-                                     '@default': 'identifier' } }],
-        // whitespace
-        { include: '@whitespace' },
-
-        // delimiters and operators
-        [/[{}()\[\]]/, '@brackets'],
-        [/[<>](?!@symbols)/, '@brackets'],
-        [/@symbols/, { cases: { '@operators': 'operator',
-                                '@default'  : '' } } ],
-        // numbers
-        [/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
-        [/0[xX][0-9a-fA-F_]+/, 'number.hex'],
-        [/[0-9_]+/, 'number'],
-
-        // delimiter: after number because of .\d floats
-        [/[;,.]/, 'delimiter'],
-        
-        // strings
-        [/"([^"\\]|\\.)*$/, 'string.invalid' ],  // non-teminated string
-        [/"/,  { token: 'string.quote', bracket: '@open', next: '@string' } ],
-
-        // characters
-        [/'[^\\']'/, 'string'],
-        [/(')(@escapes)(')/, ['string','string.escape','string']],
-        [/'/, 'string.invalid']
-      ],
-
-      comment: [
-        [/[^\/*]+/, 'comment' ],
-        [/\/\*/,    'comment', '@push' ],    // nested comment
-        ["\\*/",    'comment', '@pop'  ],
-        [/[\/*]/,   'comment' ]
-      ],
-
-      string: [
-        [/[^\\"]+/,  'string'],
-        [/@escapes/, 'string.escape'],
-        [/\\./,      'string.escape.invalid'],
-        [/"/,        { token: 'string.quote', bracket: '@close', next: '@pop' } ]
-      ],
-
-      whitespace: [
-        [/[ \t\r\n]+/, 'white'],
-        [/\/\*/,       'comment', '@comment' ],
-        [/\/\/.*$/,    'comment'],
-      ],        
-    },
-  });
-}
-
-function loadEditor() {
-  const link = document.createElement('link');
-  link.rel = "stylesheet";
-  link.setAttribute('data-name', "vs/editor/editor.main");
-  link.href = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.21.2/min/vs/editor/editor.main.min.css';
-  document.getElementsByTagName('head')[0].appendChild(link);
-  const script = document.createElement('script');
-  script.src = "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.21.2/min/vs/loader.min.js";
-  document.body.appendChild(script);
-  script.addEventListener('load', () => {
-    __non_webpack_require__.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.21.2/min/vs' }});
-    window.MonacoEnvironment = {
-      getWorkerUrl: function(workerId, label) {
-        return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
-        self.MonacoEnvironment = {
-          baseUrl: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.21.2/min'
-        };
-        importScripts('https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.21.2/min/vs/base/worker/workerMain.min.js');
-        `
-      )}`;
-      }
-    };
-    __non_webpack_require__(["vs/editor/editor.main"], function () {
-      registerMotoko();
-      addFile('main.mo', prog);
-      addFile('types.mo', type);
-      addFile('pub.mo', pub);
-      addFile('sub.mo', sub);
-      addFile('fac.mo', fac);
-      addFile('test.mo', matchers);
-      editor = monaco.editor.create(document.getElementById('editor'), {
-        model: files['main.mo'].model,
-        language: 'motoko',
-        theme: 'vs',
-        wordWrap: 'on',
-        wrappingIndent: "indent",
-        minimap: { enabled: false },
-      });
-      current_session_name = 'main.mo';
-      filetab.firstChild.click();
-      log('Editor loaded.');
-    });
-  });
 }
 
 async function init() {
