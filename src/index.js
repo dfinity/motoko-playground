@@ -91,6 +91,21 @@ actor Subscriber {
 };
 `;
 
+let output;
+let editor;
+let filetab;
+
+let current_session_name;
+const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
+// map filepath to code session { state, model }
+const files = {};
+// map canister name to canister id
+const canister = {};
+// map canister name to ui
+const canister_ui = {};
+// map canister name to candid
+const canister_candid = {};
+
 async function retrieve(file) {
   const content = await assets.retrieve(file);
   return new TextDecoder().decode(new Uint8Array(content));
@@ -132,6 +147,10 @@ function addFile(name, content) {
   model.onDidChangeContent(() => {
     clearTimeout(handle);
     handle = setTimeout(() => {
+      /*const proxy = worker.getProxy();
+      proxy.then((p) => {
+        p.doValidate(null).then((r) => { console.log(r) })
+      });*/
       saveCodeToMotoko();
       const markers = checkCode(name);
       monaco.editor.setModelMarkers(model, 'moc', markers);
@@ -165,21 +184,6 @@ function checkCode(name) {
   });
   return markers;
 }
-
-let output;
-let editor;
-let filetab;
-
-let current_session_name;
-const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
-// map filepath to code session { state, model }
-const files = {};
-// map canister name to canister id
-const canister = {};
-// map canister name to ui
-const canister_ui = {};
-// map canister name to candid
-const canister_candid = {};
 
 function getCanisterName(path) {
   return path.split('/').pop().slice(0,-3);
@@ -545,8 +549,8 @@ function registerMotoko() {
                                 '@default'  : '' } } ],
         // numbers
         [/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
-        [/0[xX][0-9a-fA-F]+/, 'number.hex'],
-        [/\d+/, 'number'],
+        [/0[xX][0-9a-fA-F_]+/, 'number.hex'],
+        [/[0-9_]+/, 'number'],
 
         // delimiter: after number because of .\d floats
         [/[;,.]/, 'delimiter'],
@@ -588,21 +592,21 @@ function loadEditor() {
   const link = document.createElement('link');
   link.rel = "stylesheet";
   link.setAttribute('data-name', "vs/editor/editor.main");
-  link.href = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/editor/editor.main.min.css';
+  link.href = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.21.2/min/vs/editor/editor.main.min.css';
   document.getElementsByTagName('head')[0].appendChild(link);
   const script = document.createElement('script');
-  script.src = "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/loader.min.js";
+  script.src = "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.21.2/min/vs/loader.min.js";
   document.body.appendChild(script);
   script.addEventListener('load', () => {
-    const code = document.getElementById('editor');
-    __non_webpack_require__.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs' }});
+    __non_webpack_require__.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.21.2/min/vs' }});
     window.MonacoEnvironment = {
       getWorkerUrl: function(workerId, label) {
         return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
         self.MonacoEnvironment = {
-          baseUrl: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min'
+          baseUrl: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.21.2/min'
         };
-        importScripts('https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/base/worker/workerMain.min.js');`
+        importScripts('https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.21.2/min/vs/base/worker/workerMain.min.js');
+        `
       )}`;
       }
     };
@@ -613,8 +617,8 @@ function loadEditor() {
       addFile('pub.mo', pub);
       addFile('sub.mo', sub);
       addFile('fac.mo', fac);
-      addFile('test.mo', matchers);      
-      editor = monaco.editor.create(code, {
+      addFile('test.mo', matchers);
+      editor = monaco.editor.create(document.getElementById('editor'), {
         model: files['main.mo'].model,
         language: 'motoko',
         theme: 'vs',
