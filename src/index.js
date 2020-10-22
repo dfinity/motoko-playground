@@ -86,10 +86,9 @@ function initUI() {
     log('Running...');
     try {
       const tStart = Date.now();
-      const out = Motoko.run(editor.getModel().getValue());
+      const out = Motoko.run(current_session_name);
       const duration = (Date.now() - tStart) / 1000;
       log(out.stderr + out.stdout);
-      log(out.result);
       log(`\n(run time: ${duration}s)`);
     } catch(err) {
       log('Exception:\n' + err);
