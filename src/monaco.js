@@ -1,4 +1,4 @@
-import { addFile, filetab } from './file';
+import { addFile, filetab, files } from './file';
 import { log } from './log';
 import * as Example from './example';
 
@@ -144,11 +144,14 @@ export function loadEditor() {
   });
 }
 
-export function checkCode(name) {
-  const diags = Motoko.check(name).result.diagnostics;
-  const markers = diags.map(d => {
+export function setMarkers(diags) {
+  const markers = {};
+  Object.keys(files).forEach(f => {
+    markers[f] = [];
+  });
+  diags.forEach(d => {
     const severity = d.severity === 1 ? monaco.MarkerSeverity.Error : monaco.MarkerSeverity.Warning;
-    return {
+    const marker = {
       startLineNumber: d.range.start.line+1,
       startColumn: d.range.start.character+1,
       endLineNumber: d.range.end.line+1,
@@ -156,6 +159,9 @@ export function checkCode(name) {
       message: d.message,
       severity,
     };
+    markers[d.source].push(marker);
   });
-  return markers;
+  Object.entries(markers).forEach(([file, marks]) => {
+    monaco.editor.setModelMarkers(files[file].model, 'moc', marks);
+  });
 }

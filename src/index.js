@@ -4,7 +4,7 @@ import * as Wasi from './wasiPolyfill';
 import { Actor, blobFromUint8Array, Principal, IDL, UI } from '@dfinity/agent';
 import ic_idl from './management';
 import { fetchActor, didToJs, render } from './candid';
-import { loadEditor, editor } from './monaco';
+import { setMarkers, loadEditor, editor } from './monaco';
 import { addFile, addFileEntry, addPackage, saveCodeToMotoko, files, current_session_name, filetab } from './file';
 import { log, clearLogs, output } from './log';
 import { canister, canister_ui, canister_candid } from './build';
@@ -105,14 +105,13 @@ function initUI() {
       const tStart = Date.now();
       const out = Motoko.compileWasm("wasi", current_session_name);
       const duration = (Date.now() - tStart) / 1000;
-      if (out.result.code === null) {
-        const diags = out.result.diagnostics;
-        log(JSON.stringify(diags));
+      setMarkers(out.diagnostics);
+      if (out.code === null) {
+        log(JSON.stringify(out.diagnostics));
       } else {
         log(`(compile time: ${duration}s)`);
         const wasiPolyfill = new Wasi.barebonesWASI();
-        Wasi.importWasmModule(out.result.code, wasiPolyfill, log);
-        log(out.stderr + out.stdout);
+        Wasi.importWasmModule(out.code, wasiPolyfill, log);
       }
     } catch(err) {
       log('Exception:\n' + err);
@@ -126,8 +125,8 @@ function initUI() {
     log('Compiling...');
     try {
       const candid_result = Motoko.candid(current_session_name);
-      log(candid_result.stderr);
-      const candid_source = candid_result.result;
+      setMarkers(candid_result.diagnostics);
+      const candid_source = candid_result.code;
       if (!candid_source || candid_source.trim() === '') {
         log('cannot deploy empty candid file');
         return;
@@ -135,12 +134,12 @@ function initUI() {
       const tStart = Date.now();
       const out = Motoko.compileWasm("dfinity", current_session_name);
       const duration = (Date.now() - tStart) / 1000;
-      if (out.result.code === null) {
-        log(JSON.stringify(out.result.diagnostics));
+      setMarkers(out.diagnostics);
+      if (out.code === null) {
+        log(JSON.stringify(out.diagnostics));
       } else {
         log(`(compile time: ${duration}s)`);
-        log(out.stderr + out.stdout);
-        const wasm = out.result.code;
+        const wasm = out.code;
         (async () => {
           log(`Deploying on IC...`);
           const canister_name = prompt('Please enter canister name', getCanisterName(current_session_name));

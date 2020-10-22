@@ -1,4 +1,4 @@
-import { checkCode, editor } from './monaco';
+import { setMarkers, editor } from './monaco';
 import { log, clearLogs } from './log';
 import { canister, canister_ui } from './build';
 
@@ -20,8 +20,8 @@ export function addFile(name, content) {
         p.doValidate(null).then((r) => { console.log(r) })
       });*/
       saveCodeToMotoko();
-      const markers = checkCode(name);
-      monaco.editor.setModelMarkers(model, 'moc', markers);
+      const diags = Motoko.check(name).diagnostics;
+      setMarkers(diags);
     }, 500);
   });
 }
@@ -43,7 +43,7 @@ export function addFileEntry(type, name, model) {
     if (type === 'canister') {
       clearLogs();      
       const ui = canister_ui[name.slice(9)];
-      log(ui);      
+      log(ui);
     } else {
       if (files[current_session_name]) {
         files[current_session_name].state = editor.saveViewState();
