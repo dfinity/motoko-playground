@@ -38,6 +38,7 @@ function generateWebpackConfigForCanister(name, info) {
     mode: "production",
     entry: {
       index: path.join(__dirname, info.frontend.entrypoint),
+      "motoko.worker": path.join(__dirname, "src/worker/motoko.js"),
     },
     devtool: "",
     optimization: {
@@ -48,6 +49,7 @@ function generateWebpackConfigForCanister(name, info) {
       alias: aliases,
     },
     output: {
+      globalObject: "self",
       filename: "[name].js",
       path: path.join(__dirname, "dist", name),
     },
