@@ -1,7 +1,6 @@
-import { setMarkers, editor } from './monaco';
+import { setMarkers, editor, worker } from './monaco';
 import { log, clearLogs } from './log';
 import { canister, canister_ui } from './build';
-import { worker } from './worker';
 
 // map filepath to code session { state, model }
 export const files = {};
@@ -16,14 +15,13 @@ export function addFile(name, content) {
   model.onDidChangeContent(() => {
     clearTimeout(handle);
     handle = setTimeout(() => {
-      worker.postMessage({data : 'test'});
-      /*const proxy = worker.getProxy();
+      const proxy = worker([model.uri]);
       proxy.then((p) => {
-        p.doValidate(null).then((r) => { console.log(r) })
-      });*/
-      saveCodeToMotoko();
+        p.doValidation(model.uri.toString()).then((diags) => { setMarkers(diags) })
+      });
+      /*saveCodeToMotoko();
       const diags = Motoko.check(name).diagnostics;
-      setMarkers(diags);
+      setMarkers(diags);*/
     }, 500);
   });
 }

@@ -1,102 +1,111 @@
 import { addFile, filetab, files } from './file';
 import { log } from './log';
+import { retrieve, codeToUri } from './util';
+import { WorkerManager } from './workerManager';
 import * as Example from './example';
 
 export var editor;
+export var worker;
 
 function registerMotoko() {
   monaco.languages.register({ id: 'motoko' });
-  monaco.languages.setLanguageConfiguration('motoko', {
-    comments: {
-      lineComment: '//',
-      blockComment: ['/*', '*/']
-    },    
-    brackets: [
-      ['{', '}'],
-      ['[', ']'],
-      ['(', ')']
-    ],
-    autoClosingPairs: [
-      { open: '{', close: '}' },
-      { open: '[', close: ']' },
-      { open: '(', close: ')' },
-      { open: '"', close: '"' },
-      { open: "<", close: ">" },
-    ],
-  });
-  monaco.languages.setMonarchTokensProvider('motoko', {
-    defaultToken: '',
-    tokenPostfix: '.mo',
-    keywords: ['actor', 'and', 'async', 'assert', 'await', 'break', 'case', 'catch', 'class',
-               'continue', 'debug', 'else', 'false', 'for', 'func', 'if', 'in', 'import',
-               'module', 'not', 'null', 'object', 'or', 'label', 'let', 'loop', 'private',
-               'public', 'return', 'shared', 'try', 'throw', 'debug_show', 'query', 'switch',
-               'true', 'type', 'var', 'while', 'stable', 'flexible', 'system'
-              ],
-    accessmodifiers: ['public', 'private', 'shared'],
-    typeKeywords: ['Any', 'None', 'Null', 'Bool', 'Int', 'Int8', 'Int16', 'Int32', 'Int64',
-                   'Nat', 'Nat8', 'Nat16', 'Nat32', 'Nat64', 'Word8', 'Word16', 'Word32', 'Word64',
-                   'Float', 'Char', 'Text', 'Blob', 'Error', 'Principal'
-                  ],
-    operators: ['=', '<', '>', ':', '<:', '?', '+', '-', '*', '/', '%', '**', '&', '|', '^',
-                '<<', '>>', '#', '==', '!=', '>=', '<=', ':=', '+=', '-=', '*=', '/=',
-                '%=', '**=', '&=', '|=', '^=', '<<=', '>>=', '#=', '->'
-               ],
-    symbols: /[=(){}\[\].,:;@#\_&\-<>`?!+*\\\/]/,
-    // C# style strings
-    escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
-    tokenizer: {
-      root: [
-        // identifiers and keywords
-        [/[a-zA-Z_$][\w$]*/, { cases: { '@typeKeywords': 'keyword.type',
-                                     '@keywords': 'keyword',
-                                     '@default': 'identifier' } }],
-        // whitespace
-        { include: '@whitespace' },
-
-        // delimiters and operators
-        [/[{}()\[\]]/, '@brackets'],
-        [/[<>](?!@symbols)/, '@brackets'],
-        [/@symbols/, { cases: { '@operators': 'operator',
-                                '@default'  : '' } } ],
-        // numbers
-        [/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
-        [/0[xX][0-9a-fA-F_]+/, 'number.hex'],
-        [/[0-9_]+/, 'number'],
-
-        // delimiter: after number because of .\d floats
-        [/[;,.]/, 'delimiter'],
+  monaco.languages.onLanguage('motoko', () => {
+    monaco.languages.setLanguageConfiguration('motoko', {
+      comments: {
+        lineComment: '//',
+        blockComment: ['/*', '*/']
+      },    
+      brackets: [
+        ['{', '}'],
+        ['[', ']'],
+        ['(', ')']
+      ],
+      autoClosingPairs: [
+        { open: '{', close: '}' },
+        { open: '[', close: ']' },
+        { open: '(', close: ')' },
+        { open: '"', close: '"' },
+        { open: "<", close: ">" },
+      ],
+    });
+    monaco.languages.setMonarchTokensProvider('motoko', {
+      defaultToken: '',
+      tokenPostfix: '.mo',
+      keywords: ['actor', 'and', 'async', 'assert', 'await', 'break', 'case', 'catch', 'class',
+                 'continue', 'debug', 'else', 'false', 'for', 'func', 'if', 'in', 'import',
+                 'module', 'not', 'null', 'object', 'or', 'label', 'let', 'loop', 'private',
+                 'public', 'return', 'shared', 'try', 'throw', 'debug_show', 'query', 'switch',
+                 'true', 'type', 'var', 'while', 'stable', 'flexible', 'system'
+                ],
+      accessmodifiers: ['public', 'private', 'shared'],
+      typeKeywords: ['Any', 'None', 'Null', 'Bool', 'Int', 'Int8', 'Int16', 'Int32', 'Int64',
+                     'Nat', 'Nat8', 'Nat16', 'Nat32', 'Nat64', 'Word8', 'Word16', 'Word32', 'Word64',
+                     'Float', 'Char', 'Text', 'Blob', 'Error', 'Principal'
+                    ],
+      operators: ['=', '<', '>', ':', '<:', '?', '+', '-', '*', '/', '%', '**', '&', '|', '^',
+                  '<<', '>>', '#', '==', '!=', '>=', '<=', ':=', '+=', '-=', '*=', '/=',
+                  '%=', '**=', '&=', '|=', '^=', '<<=', '>>=', '#=', '->'
+                 ],
+      symbols: /[=(){}\[\].,:;@#\_&\-<>`?!+*\\\/]/,
+      // C# style strings
+      escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
+      tokenizer: {
+        root: [
+          // identifiers and keywords
+          [/[a-zA-Z_$][\w$]*/, { cases: { '@typeKeywords': 'keyword.type',
+                                          '@keywords': 'keyword',
+                                          '@default': 'identifier' } }],
+          // whitespace
+          { include: '@whitespace' },
+          
+          // delimiters and operators
+          [/[{}()\[\]]/, '@brackets'],
+          [/[<>](?!@symbols)/, '@brackets'],
+          [/@symbols/, { cases: { '@operators': 'operator',
+                                  '@default'  : '' } } ],
+          // numbers
+          [/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
+          [/0[xX][0-9a-fA-F_]+/, 'number.hex'],
+          [/[0-9_]+/, 'number'],
+          
+          // delimiter: after number because of .\d floats
+          [/[;,.]/, 'delimiter'],
+          
+          // strings
+          [/"([^"\\]|\\.)*$/, 'string.invalid' ],  // non-teminated string
+          [/"/,  { token: 'string.quote', bracket: '@open', next: '@string' } ],
+          
+          // characters
+          [/'[^\\']'/, 'string'],
+          [/(')(@escapes)(')/, ['string','string.escape','string']],
+          [/'/, 'string.invalid']
+        ],
         
-        // strings
-        [/"([^"\\]|\\.)*$/, 'string.invalid' ],  // non-teminated string
-        [/"/,  { token: 'string.quote', bracket: '@open', next: '@string' } ],
-
-        // characters
-        [/'[^\\']'/, 'string'],
-        [/(')(@escapes)(')/, ['string','string.escape','string']],
-        [/'/, 'string.invalid']
-      ],
-
-      comment: [
-        [/[^\/*]+/, 'comment' ],
-        [/\/\*/,    'comment', '@push' ],    // nested comment
-        ["\\*/",    'comment', '@pop'  ],
-        [/[\/*]/,   'comment' ]
-      ],
-
-      string: [
-        [/[^\\"]+/,  'string'],
-        [/@escapes/, 'string.escape'],
-        [/\\./,      'string.escape.invalid'],
-        [/"/,        { token: 'string.quote', bracket: '@close', next: '@pop' } ]
-      ],
-
-      whitespace: [
-        [/[ \t\r\n]+/, 'white'],
-        [/\/\*/,       'comment', '@comment' ],
-        [/\/\/.*$/,    'comment'],
-      ],        
-    },
+        comment: [
+          [/[^\/*]+/, 'comment' ],
+          [/\/\*/,    'comment', '@push' ],    // nested comment
+          ["\\*/",    'comment', '@pop'  ],
+          [/[\/*]/,   'comment' ]
+        ],
+        
+        string: [
+          [/[^\\"]+/,  'string'],
+          [/@escapes/, 'string.escape'],
+          [/\\./,      'string.escape.invalid'],
+          [/"/,        { token: 'string.quote', bracket: '@close', next: '@pop' } ]
+        ],
+        
+        whitespace: [
+          [/[ \t\r\n]+/, 'white'],
+          [/\/\*/,       'comment', '@comment' ],
+          [/\/\/.*$/,    'comment'],
+        ],        
+      },
+    });
+    const client = new WorkerManager();
+    worker = (...uris) => {
+      return client.getLanguageServiceWorker(...uris);
+    };
   });
 }
 
@@ -111,17 +120,7 @@ export function loadEditor() {
   document.body.appendChild(script);
   script.addEventListener('load', () => {
     __non_webpack_require__.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.21.2/min/vs' }});
-    window.MonacoEnvironment = {
-      getWorkerUrl: function(workerId, label) {
-        return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
-        self.MonacoEnvironment = {
-          baseUrl: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.21.2/min'
-        };
-        importScripts('https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.21.2/min/vs/base/worker/workerMain.min.js');
-        `
-      )}`;
-      }
-    };
+    setupWorker();
     __non_webpack_require__(["vs/editor/editor.main"], function () {
       registerMotoko();
       editor = monaco.editor.create(document.getElementById('editor'), {
@@ -142,6 +141,25 @@ export function loadEditor() {
       log('Editor loaded.');
     });
   });
+}
+
+function setupWorker() {
+  const proxy = `
+  self.MonacoEnvironment = {
+    baseUrl: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.21.2/min'
+  };
+  importScripts('https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.21.2/min/vs/base/worker/workerMain.min.js');`;
+  retrieve('motoko.worker.js').then(js => {
+    const motokoUri = codeToUri(js);
+    window.MonacoEnvironment = {
+      getWorkerUrl: function(worderId, label) {
+        if (label === 'motoko') {
+          return motokoUri;
+        }
+        return codeToUri(proxy);
+      }
+    };
+  })
 }
 
 export function setMarkers(diags) {

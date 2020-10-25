@@ -1,15 +1,10 @@
-import assets from 'ic:canisters/playground_assets';
 import { loadEditor } from './monaco';
 import { addFile, addPackage, current_session_name, filetab } from './file';
 import { log, output } from './log';
 import { interpret, wasi, deploy } from './build';
+import { retrieve } from './util';
 import './candid.css';
 import './playground.css';
-
-async function retrieve(file) {
-  const content = await assets.retrieve(file);
-  return new TextDecoder().decode(new Uint8Array(content));
-}
 
 function initUI() {
   document.title = 'Motoko Playground';
