@@ -1,27 +1,20 @@
-
+import * as ic from './bootstrap';
+import { retrieve, codeToUri } from '../util';
 
 export class MotokoWorker {
   constructor(ctx, createData) {
+    retrieve('mo_js.js').then(js => {
+      const uri = codeToUri(js);
+      importScripts(uri);
+      console.log('moc imported');
+    });
     this._ctx = ctx;
   }
-  async doValidation(uri) {
-    const content = this._getDoc(uri);
-    //console.log(uri, content);
-    if (content) {
-      Motoko.saveFile(uri, content);
-      const diags = Motoko.check(uri).diagnostics;
-      return Promise.resolve(diags);
-    }
-    return Promise.resolve([]);
+  async doValidation(name) {
+    const diags = Motoko.check(name).diagnostics;
+    return Promise.resolve(diags);
   }
-  _getDoc(uri) {
-    const models = this._ctx.getMirrorModels();
-    for (const model of models) {
-      console.log(model.uri.toString(), uri)
-      if (model.uri.toString() === uri) {
-        return model.getValue();
-      }
-    }
+  syncFile(name, content) {
+    return Motoko.saveFile(name, content);
   }
 }
-

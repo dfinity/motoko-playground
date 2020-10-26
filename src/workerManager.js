@@ -1,5 +1,3 @@
-import { MotokoWorker } from './worker/motoko';
-
 export class WorkerManager {
   constructor() {
     this.worker = null;

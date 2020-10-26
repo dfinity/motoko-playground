@@ -7,6 +7,49 @@ export const files = {};
 export var current_session_name = "main.mo";
 export const filetab = document.createElement('div');
 
+export const resources = new Resources();
+
+export class Resources {
+  constructor() {
+    this.files = {};
+    this.canisters = {};
+    //this.filetab = document.createElement('div');
+    //this.current_session_name = 'main.mo';
+  }
+  addFile(name, content) {
+    const uri = monaco.Uri.file(name);
+    const model = monaco.editor.createModel(content, 'motoko', uri);
+    this.files[name] = { model, state: null };
+    this.addEntry('file', name);
+    let handle;
+    model.onDidChangeContent(() => {
+      clearTimeout(handle);
+      handle = setTimeout(() => {
+        const proxy = worker();
+        proxy.then(p => {
+          p.syncFile(name, model.getValue());
+          p.doValidation(name).then(setMarkers);
+        });
+      });
+    });
+  }
+  getModel(name) {
+    return this.files[name].model;
+  }
+  addEntry(type, name) {
+    const entry = document.createElement('button');
+    entry.innerText = name;
+    filetab.appendChild(entry);
+    entry.addEventListener('click', () => {
+      for (const e of filetab.children) {
+        e.className = '';
+      }
+      entry.className = 'active';
+      editor.setModel(this.getModel(name));
+    });
+  }
+}
+
 export function addFile(name, content) {
   const model = monaco.editor.createModel(content, 'motoko');
   files[name] = {model, state: null};
@@ -17,7 +60,7 @@ export function addFile(name, content) {
     handle = setTimeout(() => {
       const proxy = worker([model.uri]);
       proxy.then((p) => {
-        p.doValidation(model.uri.toString()).then((diags) => { setMarkers(diags) })
+        p.doValidation(files, name).then((diags) => { setMarkers(diags) })
       });
       /*saveCodeToMotoko();
       const diags = Motoko.check(name).diagnostics;

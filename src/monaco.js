@@ -1,4 +1,4 @@
-import { addFile, filetab, files } from './file';
+import { filetab, resources } from './file';
 import { log } from './log';
 import { retrieve, codeToUri } from './util';
 import { WorkerManager } from './workerManager';
@@ -106,6 +106,7 @@ function registerMotoko() {
     worker = (...uris) => {
       return client.getLanguageServiceWorker(...uris);
     };
+    worker();
   });
 }
 
@@ -131,12 +132,12 @@ export function loadEditor() {
         wrappingIndent: "indent",
         minimap: { enabled: false },
       });
-      addFile('main.mo', Example.prog);
-      addFile('types.mo', Example.type);
-      addFile('pub.mo', Example.pub);
-      addFile('sub.mo', Example.sub);
-      addFile('fac.mo', Example.fac);
-      addFile('test.mo', Example.matchers);      
+      resources.addFile('main.mo', Example.prog);
+      resources.addFile('types.mo', Example.type);
+      resources.addFile('pub.mo', Example.pub);
+      resources.addFile('sub.mo', Example.sub);
+      resources.addFile('fac.mo', Example.fac);
+      resources.addFile('test.mo', Example.matchers);      
       filetab.firstChild.click();
       log('Editor loaded.');
     });
@@ -164,7 +165,7 @@ function setupWorker() {
 
 export function setMarkers(diags) {
   const markers = {};
-  Object.keys(files).forEach(f => {
+  Object.keys(resources.files).forEach(f => {
     markers[f] = [];
   });
   diags.forEach(d => {
@@ -180,6 +181,6 @@ export function setMarkers(diags) {
     markers[d.source].push(marker);
   });
   Object.entries(markers).forEach(([file, marks]) => {
-    monaco.editor.setModelMarkers(files[file].model, 'moc', marks);
+    monaco.editor.setModelMarkers(resources.files[file].model, 'moc', marks);
   });
 }
