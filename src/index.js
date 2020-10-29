@@ -1,5 +1,5 @@
 import { loadEditor } from './monaco';
-import { addFile, addPackage, current_session_name, filetab } from './file';
+import { filetab, resources } from './file';
 import { log, output } from './log';
 import { interpret, wasi, deploy } from './build';
 import { retrieve } from './util';
@@ -53,20 +53,20 @@ function initUI() {
   newfile.addEventListener('click', () => {
     const name = prompt('Please enter new file name', '');
     if (name) {
-      addFile(name, `// ${name}`);
+      resources.addFile(name, `// ${name}`);
     }
   });
   newpack.addEventListener('click', () => {
-    const pack = prompt('Please enter package info (name, github repo, version, directory)', 'matchers, kritzcreek/motoko-matchers, 0.1.3, src');
+    const pack = prompt('Please enter package info (name, github repo, version, directory)', 'base, dfinity/motoko-base, dfx-0.6.12, src');//'matchers, kritzcreek/motoko-matchers, 0.1.3, src');
     if (pack) {
       const args = pack.split(',').map(s => s.trim());
-      addPackage(...args);
+      resources.addPackage(...args);
     }
   });
   
-  run.addEventListener('click', () => interpret(current_session_name));
-  compile.addEventListener('click', () => wasi(current_session_name));
-  ic.addEventListener('click', () => deploy(current_session_name));
+  run.addEventListener('click', () => interpret(resources.current_name));
+  compile.addEventListener('click', () => wasi(resources.current_name));
+  ic.addEventListener('click', () => deploy(resources.current_name));
 }
 
 
@@ -84,6 +84,6 @@ async function init() {
 initUI();
 init().then(() => {
   // Load library
-  addPackage('base', 'dfinity/motoko-base', 'dfx-0.6.12', 'src');
+  //resources.addPackage('base', 'dfinity/motoko-base', 'dfx-0.6.12', 'src');
   log('Ready.');
 });

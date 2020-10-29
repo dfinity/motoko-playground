@@ -23,7 +23,7 @@ function build(status, func) {
     func()
   } catch(err) {
     log('Exception:\n' + err);
-    throw err;    
+    throw err;
   }
 }
 

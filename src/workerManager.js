@@ -2,13 +2,15 @@ export class WorkerManager {
   constructor() {
     this.worker = null;
   }
+  handleMessage(msg) {
+    console.log(msg);
+  }
   getClientproxy() {
     if (!this.workerClientProxy) {
       this.worker = monaco.editor.createWebWorker({
         moduleId: 'MotokoWorker',
         label: 'motoko',
-        createData: {
-        }
+        keepIdleModels: true,
       });
       this.workerClientProxy = this.worker.getProxy();
     }

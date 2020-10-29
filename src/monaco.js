@@ -137,7 +137,7 @@ export function loadEditor() {
       resources.addFile('pub.mo', Example.pub);
       resources.addFile('sub.mo', Example.sub);
       resources.addFile('fac.mo', Example.fac);
-      resources.addFile('test.mo', Example.matchers);      
+      resources.addFile('test.mo', Example.matchers);
       filetab.firstChild.click();
       log('Editor loaded.');
     });
