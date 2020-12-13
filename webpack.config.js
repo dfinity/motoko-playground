@@ -39,6 +39,9 @@ function generateWebpackConfigForCanister(name, info) {
     entry: {
       index: path.join(__dirname, info.frontend.entrypoint),
     },
+    node: {
+      fs: "empty"
+    },
     devtool: "",
     optimization: {
       minimize: true,

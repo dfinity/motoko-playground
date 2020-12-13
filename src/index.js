@@ -1,15 +1,9 @@
-import assets from 'ic:canisters/playground_assets';
 import { loadEditor } from './monaco';
 import { addFile, addPackage, current_session_name, filetab } from './file';
 import { log, output } from './log';
 import { interpret, wasi, deploy } from './build';
 import './candid.css';
 import './playground.css';
-
-async function retrieve(file) {
-  const content = await assets.retrieve(file);
-  return new TextDecoder().decode(new Uint8Array(content));
-}
 
 function initUI() {
   document.title = 'Motoko Playground';
@@ -74,21 +68,19 @@ function initUI() {
   ic.addEventListener('click', () => deploy(current_session_name));
 }
 
-
 async function init() {
   // Load Monaco editor
   loadEditor();
   // Load Motoko compiler
-  const js = await retrieve('mo_js.js');
   const script = document.createElement('script');
-  script.text = js;
   document.body.appendChild(script);
-  log('Compiler loaded.');
+  script.addEventListener('load', async () => {
+    log('Compiler loaded.');
+    await addPackage('base', 'dfinity/motoko-base', 'dfx-0.6.16', 'src');
+    log('Ready.');
+  });
+  script.src = 'https://download.dfinity.systems/motoko/0.5.3/js/moc-0.5.3.js';
 }
 
 initUI();
-init().then(() => {
-  // Load library
-  addPackage('base', 'dfinity/motoko-base', 'dfx-0.6.12', 'src');
-  log('Ready.');
-});
+init();

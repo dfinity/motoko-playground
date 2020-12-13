@@ -30,7 +30,7 @@ function build(status, func) {
 export function interpret(file) {
   build("Running...", () => {
     const tStart = Date.now();
-    const out = Motoko.run(file);
+    const out = Motoko.run([], file);
     const duration = (Date.now() - tStart) / 1000;
     log(out.stderr + out.stdout);
     log(`\n(run time: ${duration}s)`);    

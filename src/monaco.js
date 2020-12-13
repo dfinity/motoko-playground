@@ -150,6 +150,10 @@ export function setMarkers(diags) {
     markers[f] = [];
   });
   diags.forEach(d => {
+    if (!markers[d.source]) {
+      // possible if the error comes from external packages
+      return;
+    }
     const severity = d.severity === 1 ? monaco.MarkerSeverity.Error : monaco.MarkerSeverity.Warning;
     const marker = {
       startLineNumber: d.range.start.line+1,

@@ -12,7 +12,6 @@
         "entrypoint": "src/index.js"
       },
       "source": [
-        "src/assets/",
         "dist/playground_assets/"
       ],
       "type": "assets"
