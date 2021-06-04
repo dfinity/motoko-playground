@@ -1,5 +1,5 @@
 import { Actor, IDL, Principal, UI } from '@dfinity/agent';
-import didjs from 'ic:canisters/didjs';
+import { idlFactory as didjs } from 'dfx-generated/didjs';
 
 export async function fetchActor(canisterId) {
   const common_interface = ({ IDL }) => IDL.Service({
