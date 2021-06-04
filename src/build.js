@@ -4,9 +4,10 @@ import { setMarkers } from './monaco';
 import * as Wasi from './wasiPolyfill';
 import ic_idl from './management';
 import { fetchActor, didToJs, render } from './candid';
-import { Actor, blobFromUint8Array, Principal, IDL, UI } from '@dfinity/agent';
+import { Actor, HttpAgent, blobFromUint8Array, Principal, IDL, UI } from '@dfinity/agent';
 
-const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
+const agent = new HttpAgent();
+const ic0 = Actor.createActor(ic_idl, { agent, canisterId: Principal.fromHex('') });
 
 // map canister name to canister id
 export const canister = {};
@@ -98,9 +99,9 @@ async function install(name, canisterId, module, arg, mode, candid) {
   if (!canisterId) {
     throw new Error('no canister id');
   }
-  await Actor.install({ module, arg, mode }, { canisterId });
+  await Actor.install({ module, arg, mode }, { agent, canisterId });
   log('Code installed');
-  const canister = Actor.createActor(candid, { canisterId });
+  const canister = Actor.createActor(candid, { agent, canisterId });
   const line = document.createElement('div');
   line.id = name;
   log(line);
@@ -162,7 +163,7 @@ function renderInstall(item, name, candid, wasm) {
       if (!canisterId) {
         log(`Creating canister id for ${name}...`);
         (async () => {
-          const new_id = await Actor.createCanister();
+          const new_id = await Actor.createCanister({agent});
           canister[name] = new_id;
           log(`Created canisterId ${new_id}`);
           install(name, new_id, module, encoded, 'install', candid.default);
