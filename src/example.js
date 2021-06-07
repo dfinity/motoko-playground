@@ -1,7 +1,7 @@
 export const prog = `import P "mo:base/Principal";
 import List "mo:base/List";
 import T "./types";
-shared {caller} actor class Example(init : Int) = Self {
+shared ({caller}) actor class Example(init : Int) = Self {
   public type Id = { caller : Principal; creator : Principal; canister : Principal };
   stable let controller = caller;
   stable var history = List.nil<Int>();

@@ -7,11 +7,19 @@
     "build": "webpack"
   },
   "devDependencies": {
-    "@dfinity/agent": "0.6.16",
-    "css-loader": "^3.6.0",
+    "@dfinity/agent": "0.8.9",
+    "@dfinity/identity": "0.8.9",
+    "assert": "2.0.0",
+    "buffer": "6.0.3",
+    "css-loader": "^5.2.6",
+    "events": "3.3.0",
+    "html-webpack-plugin": "5.3.1",
+    "process": "0.11.10",
+    "stream-browserify": "3.0.0",
     "style-loader": "^1.2.1",
-    "terser-webpack-plugin": "^4.2.0",
-    "webpack": "4.41.3",
-    "webpack-cli": "3.3.10"
+    "terser-webpack-plugin": "5.1.1",
+    "util": "0.12.3",
+    "webpack": "5.24.4",
+    "webpack-cli": "4.5.0"
   }
 }

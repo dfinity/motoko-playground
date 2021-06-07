@@ -1,14 +1,17 @@
 import { Actor, IDL, Principal, UI } from '@dfinity/agent';
-import didjs from 'ic:canisters/didjs';
+import { idlFactory as idl_didjs, canisterId as didjs_id } from 'dfx-generated/didjs';
+import { agent } from './agent';
+
+const didjs = Actor.createActor(idl_didjs, { agent, canisterId: didjs_id });
 
 export async function fetchActor(canisterId) {
   const common_interface = ({ IDL }) => IDL.Service({
     __get_candid_interface_tmp_hack: IDL.Func([], [IDL.Text], ['query']),
   });
-  const actor = Actor.createActor(common_interface, { canisterId });
+  const actor = Actor.createActor(common_interface, { agent, canisterId });
   const candid_source = await actor.__get_candid_interface_tmp_hack();
   const candid = await didToJs(candid_source);
-  return Actor.createActor(candid.default, { canisterId });
+  return Actor.createActor(candid.default, { agent, canisterId });
 }
 
 export async function didToJs(source) {
@@ -124,7 +127,7 @@ function renderMethod(canister, name, idlFunc) {
       containers.push(jsonContainer);
       jsonContainer.style.display = 'none';
       left.appendChild(jsonContainer);
-      jsonContainer.innerText = JSON.stringify(callResult);
+      jsonContainer.innerText = JSON.stringify(callResult, (k,v) => typeof v === 'bigint'?v.toString():v);
 
       let i = 0;
       left.addEventListener('click', () => {

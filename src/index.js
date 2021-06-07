@@ -56,7 +56,7 @@ function initUI() {
     }
   });
   newpack.addEventListener('click', () => {
-    const pack = prompt('Please enter package info (name, github repo, version, directory)', 'matchers, kritzcreek/motoko-matchers, 0.1.3, src');
+    const pack = prompt('Please enter package info (name, github repo, version, directory)', 'matchers, kritzcreek/motoko-matchers, 1.1.1, src');
     if (pack) {
       const args = pack.split(',').map(s => s.trim());
       addPackage(...args);
@@ -76,10 +76,10 @@ async function init() {
   document.body.appendChild(script);
   script.addEventListener('load', async () => {
     log('Compiler loaded.');
-    await addPackage('base', 'dfinity/motoko-base', 'dfx-0.6.16', 'src');
+    await addPackage('base', 'dfinity/motoko-base', 'dfx-0.7.0', 'src');
     log('Ready.');
   });
-  script.src = 'https://download.dfinity.systems/motoko/0.5.3/js/moc-0.5.3.js';
+  script.src = 'https://download.dfinity.systems/motoko/0.6.2/js/moc-0.6.2.js';
 }
 
 initUI();
