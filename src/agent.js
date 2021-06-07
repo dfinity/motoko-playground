@@ -21,8 +21,9 @@ initAgent();
 
 export const ic0 = Actor.createActor(ic_idl, { agent, canisterId: Principal.fromHex('') });
 // TODO: With DNS, we don't need to hard code the canister id.
-export const didjs_id = is_local(agent)?'ryjl3-tyaaa-aaaaa-aaaba-cai':'a4gq6-oaaaa-aaaab-qaa4q-cai';
-export const didjs = Actor.createActor(didjs_idl, { agent, canisterId: Principal.fromText(didjs_id) });
+const ui_canister_id = is_local(agent)?'ryjl3-tyaaa-aaaaa-aaaba-cai':'a4gq6-oaaaa-aaaab-qaa4q-cai';
+export const ui_canister_url = is_local(agent)?`?canisterId=${ui_canister_id}&`:`https://${ui_canister_id}.ic0.app/`;
+const didjs = Actor.createActor(didjs_idl, { agent, canisterId: Principal.fromText(ui_canister_id) });
 export async function didToJs(source) {
   const js = await didjs.did_to_js(source);
   if (js === []) {
