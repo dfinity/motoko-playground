@@ -3,10 +3,8 @@ import { saveCodeToMotoko, addFileEntry } from './file';
 import { setMarkers } from './monaco';
 import * as Wasi from './wasiPolyfill';
 import { fetchActor, didToJs, render } from './candid';
-import { agent, ic0, Wallet } from './agent';
+import { agent, ic0, wallet } from './agent';
 import { Actor, blobFromUint8Array, Principal, IDL, UI } from '@dfinity/agent';
-
-const wallet = new Wallet(Principal.fromText('rwlgt-iiaaa-aaaaa-aaaaa-cai'));
 
 // map canister name to canister id
 export const canister = {};
