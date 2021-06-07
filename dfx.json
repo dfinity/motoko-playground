@@ -1,13 +1,6 @@
 {
   "canisters": {
-    "didjs": {
-      "type": "custom",
-      "candid": "src/didjs.did",
-      "wasm": "src/didjs.wasm",
-      "build": ""
-    },
     "playground_assets": {
-      "dependencies": ["didjs"],
       "frontend": {
         "entrypoint": "src/index.js"
       },
@@ -26,12 +19,6 @@
     "local": {
       "bind": "127.0.0.1:8000",
       "type": "ephemeral"
-    },
-    "ic": {
-      "providers": [
-        "https://gw.dfinity.network"
-      ],
-      "type": "persistent"
     }
   },
   "version": 1
