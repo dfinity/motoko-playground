@@ -127,7 +127,7 @@ function renderMethod(canister, name, idlFunc) {
       containers.push(jsonContainer);
       jsonContainer.style.display = 'none';
       left.appendChild(jsonContainer);
-      jsonContainer.innerText = JSON.stringify(callResult);
+      jsonContainer.innerText = JSON.stringify(callResult, (k,v) => typeof v === 'bigint'?v.toString():v);
 
       let i = 0;
       left.addEventListener('click', () => {

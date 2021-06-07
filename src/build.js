@@ -2,12 +2,10 @@ import { log, clearLogs, output } from './log';
 import { saveCodeToMotoko, addFileEntry } from './file';
 import { setMarkers } from './monaco';
 import * as Wasi from './wasiPolyfill';
-import ic_idl from './management';
 import { fetchActor, didToJs, render } from './candid';
-import { agent } from './agent';
+import { agent, ic0 } from './agent';
 import { Actor, blobFromUint8Array, Principal, IDL, UI } from '@dfinity/agent';
 
-const ic0 = Actor.createActor(ic_idl, { agent, canisterId: Principal.fromHex('') });
 
 // map canister name to canister id
 export const canister = {};
