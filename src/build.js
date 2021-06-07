@@ -2,8 +2,7 @@ import { log, clearLogs, output } from './log';
 import { saveCodeToMotoko, addFileEntry } from './file';
 import { setMarkers } from './monaco';
 import * as Wasi from './wasiPolyfill';
-import { fetchActor, didToJs, render } from './candid';
-import { agent, ic0 } from './agent';
+import { agent, ic0, ui_canister_url, didToJs } from './agent';
 import { Actor, blobFromUint8Array, Principal, IDL, UI } from '@dfinity/agent';
 
 
@@ -103,7 +102,8 @@ async function install(name, canisterId, module, arg, mode, candid) {
   const line = document.createElement('div');
   line.id = name;
   log(line);
-  render(line, canisterId, canister);
+  // TODO add in iframe
+  line.innerHTML = `<a href="${ui_canister_url}id=${canisterId}" target="_blank">Candid UI for ${name}</a>`;
   canister_ui[name] = line;
   Motoko.saveFile(`idl/${canisterId}.did`, canister_candid[name]);
 }
