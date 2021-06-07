@@ -67,6 +67,7 @@ export function deploy(file) {
       return;
     }
     const tStart = Date.now();
+    // NOTE: Will change to "ic" in a future moc release
     const out = Motoko.compileWasm("dfinity", file);
     const duration = (Date.now() - tStart) / 1000;
     setMarkers(out.diagnostics);
@@ -162,7 +163,6 @@ function renderInstall(item, name, candid, wasm) {
       if (!canisterId) {
         log(`Creating canister id for ${name}...`);
         (async () => {
-          //const new_id = await Actor.createCanister({agent});
           const new_id = await wallet.createCanister();
           canister[name] = new_id;
           log(`Created canisterId ${new_id}`);

@@ -7,7 +7,9 @@ function is_local(hostname) {
   return hostname === '127.0.0.1' || hostname.endsWith('localhost');
 }
 
-const identity = Ed25519KeyIdentity.generate();
+const seed = new Array(32).fill(0);
+const identity = Ed25519KeyIdentity.generate(new Uint8Array(seed));
+console.log(identity.getPrincipal().toText());
 export const agent = new HttpAgent({identity});
 async function initAgent() {
   if (is_local(agent._host.hostname)) {
@@ -25,7 +27,7 @@ export class Wallet {
     this._wallet = Actor.createActor(wallet_idl, { agent, canisterId });
   }
   async createCanister(config) {
-    const result = this._wallet.wallet_create_canister({
+    const result = await this._wallet.wallet_create_canister({
       settings: {
         compute_allocation: [],
         controller: [],
