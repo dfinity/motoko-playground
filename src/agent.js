@@ -19,6 +19,26 @@ initAgent();
 
 export const ic0 = Actor.createActor(ic_idl, { agent, canisterId: Principal.fromHex('') });
 
-export function getWallet(canisterId) {
-  return Actor.createActor(wallet_idl, { agent, canisterId });
+export class Wallet {
+  constructor(canisterId) {
+    this._canisterId = canisterId;
+    this._wallet = Actor.createActor(wallet_idl, { agent, canisterId });
+  }
+  async createCanister(config) {
+    const result = this._wallet.wallet_create_canister({
+      settings: {
+        compute_allocation: [],
+        controller: [],
+        freezing_threshold: [],
+        memory_allocation: [],
+      },
+      cycles: BigInt(1_000_000),      
+    });
+    if ("Ok" in result) {
+      return result.Ok.canister_id
+    } else {
+      throw result.Err;
+    }
+  }
 }
+
