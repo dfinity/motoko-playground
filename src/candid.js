@@ -1,7 +1,7 @@
-import { Actor, HttpAgent, IDL, Principal, UI } from '@dfinity/agent';
+import { Actor, IDL, Principal, UI } from '@dfinity/agent';
 import { idlFactory as idl_didjs, canisterId as didjs_id } from 'dfx-generated/didjs';
+import { agent } from './agent';
 
-const agent = new HttpAgent();
 const didjs = Actor.createActor(idl_didjs, { agent, canisterId: didjs_id });
 
 export async function fetchActor(canisterId) {

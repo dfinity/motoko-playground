@@ -4,9 +4,9 @@ import { setMarkers } from './monaco';
 import * as Wasi from './wasiPolyfill';
 import ic_idl from './management';
 import { fetchActor, didToJs, render } from './candid';
-import { Actor, HttpAgent, blobFromUint8Array, Principal, IDL, UI } from '@dfinity/agent';
+import { agent } from './agent';
+import { Actor, blobFromUint8Array, Principal, IDL, UI } from '@dfinity/agent';
 
-const agent = new HttpAgent();
 const ic0 = Actor.createActor(ic_idl, { agent, canisterId: Principal.fromHex('') });
 
 // map canister name to canister id
