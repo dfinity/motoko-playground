@@ -162,8 +162,12 @@ function renderInstall(item, name, candid, wasm) {
       if (!canisterId) {
         log(`Creating canister id for ${name}...`);
         (async () => {
+<<<<<<< HEAD
           //const new_id = await Actor.createCanister({agent});
           const new_id = await wallet.createCanister();
+=======
+          const new_id = await Actor.createCanister({agent});
+>>>>>>> origin/master
           canister[name] = new_id;
           log(`Created canisterId ${new_id}`);
           install(name, new_id, module, encoded, 'install', candid.default);
