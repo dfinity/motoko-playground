@@ -2,9 +2,8 @@ import { log, clearLogs, output } from './log';
 import { saveCodeToMotoko, addFileEntry } from './file';
 import { setMarkers } from './monaco';
 import * as Wasi from './wasiPolyfill';
-import { agent, ic0, ui_canister_url, didToJs } from './agent';
+import { agent, ui_canister_url, didToJs, wallet } from './agent';
 import { Actor, blobFromUint8Array, Principal, IDL, UI } from '@dfinity/agent';
-
 
 // map canister name to canister id
 export const canister = {};
@@ -65,6 +64,7 @@ export function deploy(file) {
       return;
     }
     const tStart = Date.now();
+    // NOTE: Will change to "ic" in a future moc release
     const out = Motoko.compileWasm("dfinity", file);
     const duration = (Date.now() - tStart) / 1000;
     setMarkers(out.diagnostics);
@@ -96,7 +96,13 @@ async function install(name, canisterId, module, arg, mode, candid) {
   if (!canisterId) {
     throw new Error('no canister id');
   }
-  await Actor.install({ module, arg, mode }, { agent, canisterId });
+  const installArgs = {
+    arg: [...arg],
+    wasm_module: [...module],
+    mode: { [mode]:null },
+    canister_id: canisterId,
+  };
+  await wallet.forwardManagement('install_code', canisterId, installArgs);
   log('Code installed');
   const canister = Actor.createActor(candid, { agent, canisterId });
   const line = document.createElement('div');
@@ -161,7 +167,7 @@ function renderInstall(item, name, candid, wasm) {
       if (!canisterId) {
         log(`Creating canister id for ${name}...`);
         (async () => {
-          const new_id = await Actor.createCanister({agent});
+          const new_id = await wallet.createCanister();
           canister[name] = new_id;
           log(`Created canisterId ${new_id}`);
           install(name, new_id, module, encoded, 'install', candid.default);
@@ -189,9 +195,9 @@ function deleteButton(name, entry) {
     }
     (async () => {
       log(`Deleting canister ${name}...`);
-      await ic0.stop_canister({ canister_id: canisterId });
+      await wallet.forwardManagement('stop_canister', canisterId, { canister_id: canisterId });
       log('Canister stopped');
-      await ic0.delete_canister({ canister_id: canisterId });
+      await wallet.forwardManagement('delete_canister', canisterId, { canister_id: canisterId });
       log('Canister deleted');
       delete canister[name];
       delete canister_ui[name];
