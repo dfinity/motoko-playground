@@ -96,8 +96,6 @@ async function install(name, canisterId, module, arg, mode, candid) {
   if (!canisterId) {
     throw new Error('no canister id');
   }
-  //await Actor.install({ module, arg, mode }, { agent, canisterId });
-  //await wallet.install(canisterId, module, arg, mode);
   const installArgs = {
     arg: [...arg],
     wasm_module: [...module],
