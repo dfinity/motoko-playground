@@ -36,6 +36,10 @@ export async function didToJs(source) {
   return candid;
 }
 
+function bufferToArray(buf) {
+  return [...buf];
+}
+
 class Wallet {
   constructor(canisterId) {
     this._canisterId = canisterId;
@@ -58,18 +62,23 @@ class Wallet {
     }
   }
   async forwardCall(canisterId, method, func, ...args) {
-    const encoded = IDL.encode(func.argTypes, args);
+    const encoded = bufferToArray(IDL.encode(func.argTypes, args));
+    console.log(encoded);
     const result = await this._wallet.wallet_call({
       args: encoded,
-      cycles: BigInt(0),
+      cycles: BigInt(1),
       method_name: method,
       canister: canisterId,
     });
     if ("Ok" in result) {
-      return IDL.decode(func.retTypes, result.Ok.return);
+      return IDL.decode(func.retTypes, Buffer.from(result.Ok.return));
     } else {
       throw result.Err;
     }
+  }
+  async install(canister_id, wasm_module, arg, mode) {
+    const func = Object.fromEntries(Actor.interfaceOf(ic0)._fields)['install_code'];
+    return await this.forwardCall(Principal.fromHex(''), 'install_code', func, {arg:bufferToArray(arg), wasm_module:bufferToArray(wasm_module), mode: {[mode]:null}, canister_id});
   }
 }
 

@@ -2,7 +2,7 @@ import { log, clearLogs, output } from './log';
 import { saveCodeToMotoko, addFileEntry } from './file';
 import { setMarkers } from './monaco';
 import * as Wasi from './wasiPolyfill';
-import { agent, ic0, ui_canister_url, didToJs } from './agent';
+import { agent, ic0, ui_canister_url, didToJs, wallet } from './agent';
 import { Actor, blobFromUint8Array, Principal, IDL, UI } from '@dfinity/agent';
 
 // map canister name to canister id
@@ -96,7 +96,8 @@ async function install(name, canisterId, module, arg, mode, candid) {
   if (!canisterId) {
     throw new Error('no canister id');
   }
-  await Actor.install({ module, arg, mode }, { agent, canisterId });
+  //await Actor.install({ module, arg, mode }, { agent, canisterId });
+  await wallet.install(canisterId, module, arg, mode);
   log('Code installed');
   const canister = Actor.createActor(candid, { agent, canisterId });
   const line = document.createElement('div');
