@@ -3,7 +3,9 @@ import { saveCodeToMotoko, addFileEntry } from './file';
 import { setMarkers } from './monaco';
 import * as Wasi from './wasiPolyfill';
 import { agent, ui_canister_url, didToJs, wallet } from './agent';
-import { Actor, blobFromUint8Array, Principal, IDL, UI } from '@dfinity/agent';
+import { Actor } from '@dfinity/agent';
+import { Principal } from '@dfinity/principal';
+import { IDL, renderInput, blobFromUint8Array } from '@dfinity/candid';
 
 // map canister name to canister id
 export const canister = {};
@@ -125,7 +127,7 @@ function renderInstall(item, name, candid, wasm) {
 
   const inputs = [];
   argTypes.forEach((arg, i) => {
-    const inputbox = UI.renderInput(arg);
+    const inputbox = renderInput(arg);
     inputs.push(inputbox);
     inputbox.render(item);
   });

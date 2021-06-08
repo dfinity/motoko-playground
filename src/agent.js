@@ -1,4 +1,6 @@
-import { Actor, HttpAgent, Principal, IDL } from '@dfinity/agent';
+import { Actor, HttpAgent } from '@dfinity/agent';
+import { Principal } from '@dfinity/principal';
+import { IDL } from '@dfinity/candid';
 import { Ed25519KeyIdentity } from '@dfinity/identity';
 import wallet_idl from './wallet.did';
 import ic_idl from './ic.did';
