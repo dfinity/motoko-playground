@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 // Import the canister actor and give it a meaningful name
 import { getActor } from "./config/actor";
 
+import Editor from "./components/Editor";
+
 function App() {
   const [value, setValue] = useState();
 
@@ -45,6 +47,9 @@ function App() {
         <h2>Value received from IC canister: {value}</h2>
         <button onClick={onIncrement}>Increment</button>
       </header>
+      <main>
+        <Editor />
+      </main>
     </div>
   );
 }
