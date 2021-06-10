@@ -1,32 +1,25 @@
-import { useEffect, useState, useCallback } from 'react'
-// Import functions to setup canister interactions:
-import { Actor, HttpAgent } from '@dfinity/agent'
-// Import canister interface and id:
-import { idlFactory, canisterId } from 'dfx-generated/motoko_app'
-
-import './App.css'
-
-const agent = new HttpAgent()
-const canister = Actor.createActor(idlFactory, { agent, canisterId })
+import { useEffect, useState, useCallback } from "react";
+// Import the canister actor and give it a meaningful name
+import { actor as MotokoCanister } from "./config/actor";
 
 function App() {
-  const [value, setValue] = useState()
+  const [value, setValue] = useState();
 
   useEffect(() => {
     // Call a public function defined in the canister
-    canister.getValue().then((response) => {
-      // Since the response is a BigNumber we need to stringify it
-      setValue(response.toString())
-    })
-  }, [])
+    MotokoCanister.getValue().then((response) => {
+      // Since the response is a BigInt we need to stringify it
+      setValue(response);
+    });
+  }, []);
 
   const onIncrement = useCallback(async () => {
     // Call another public function
-    await canister.increment()
+    await MotokoCanister.increment();
     // Get latest value from canister again
-    const newValue = await canister.getValue()
-    setValue(newValue.toString())
-  }, [])
+    const newValue = await MotokoCanister.getValue();
+    setValue(newValue);
+  }, []);
 
   return (
     <div className="App">
@@ -51,7 +44,7 @@ function App() {
         <button onClick={onIncrement}>Increment</button>
       </header>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
