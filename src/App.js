@@ -1,23 +1,25 @@
 import { useEffect, useState, useCallback } from "react";
 // Import the canister actor and give it a meaningful name
-import { actor as MotokoCanister } from "./config/actor";
+import { getActor } from "./config/actor";
 
 function App() {
   const [value, setValue] = useState();
 
   useEffect(() => {
     // Call a public function defined in the canister
-    MotokoCanister.getValue().then((response) => {
-      // Since the response is a BigInt we need to stringify it
-      setValue(response);
+    getActor().then((actor) => {
+      actor.getValue().then((response) => {
+        // Since the response is a BigInt we need to stringify it
+        setValue(response);
+      });
     });
   }, []);
 
   const onIncrement = useCallback(async () => {
     // Call another public function
-    await MotokoCanister.increment();
+    await (await getActor()).increment();
     // Get latest value from canister again
-    const newValue = await MotokoCanister.getValue();
+    const newValue = await (await getActor()).getValue();
     setValue(newValue);
   }, []);
 
