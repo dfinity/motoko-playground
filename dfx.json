@@ -1,0 +1,28 @@
+{
+  "canisters": {
+    "motoko_app": {
+      "main": "backend/main.mo",
+      "type": "motoko"
+    },
+    "react_app": {
+      "dependencies": ["motoko_app"],
+      "frontend": {
+        "entrypoint": "public/index.html"
+      },
+      "source": ["build"],
+      "type": "assets"
+    }
+  },
+  "defaults": {
+    "build": {
+      "output": "build",
+      "packtool": ""
+    }
+  },
+  "networks": {
+    "local": {
+      "bind": "localhost:8000",
+      "type": "ephemeral"
+    }
+  }
+}
