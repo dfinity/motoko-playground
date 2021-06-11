@@ -1,7 +1,12 @@
-import Principal "mo:base/Principal";
+import State "./State";
 
 actor {
-    public func getCanisterId() : async Principal {
-        Principal.fromText("aaaaa-aa")
-    }
+    var state = State.empty();
+    
+    public shared(msg) func loadProject() : async ?State.ProjectInfo {
+        state.project.get(msg.caller)
+    };
+    public shared(msg) func saveProject(info : State.ProjectInfo) : async () {
+        state.project.put(msg.caller, info);
+    };
 }
