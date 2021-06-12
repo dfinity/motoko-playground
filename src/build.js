@@ -2,7 +2,7 @@ import { log, clearLogs, output } from './log';
 import { saveCodeToMotoko, addFileEntry } from './file';
 import { setMarkers } from './monaco';
 import * as Wasi from './wasiPolyfill';
-import { agent, ui_canister_url, didToJs, wallet } from './agent';
+import { agent, ui_canister_url, didToJs, wallet, backend } from './agent';
 import { Actor } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { IDL, renderInput, blobFromUint8Array } from '@dfinity/candid';
@@ -169,7 +169,8 @@ function renderInstall(item, name, candid, wasm) {
       if (!canisterId) {
         log(`Creating canister id for ${name}...`);
         (async () => {
-          const new_id = await wallet.createCanister();
+          //const new_id = await wallet.createCanister();
+          const new_id = await backend.getCanisterId();
           canister[name] = new_id;
           log(`Created canisterId ${new_id}`);
           install(name, new_id, module, encoded, 'install', candid.default);
