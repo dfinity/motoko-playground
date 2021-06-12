@@ -1,5 +1,5 @@
 import { loadEditor } from './monaco';
-import { addFile, addPackage, current_session_name, filetab } from './file';
+import { addFile, addPackage, current_session_name, filetab, saveFiles } from './file';
 import { log, output } from './log';
 import { interpret, wasi, deploy } from './build';
 import './candid.css';
@@ -29,6 +29,10 @@ function initUI() {
   const newpack = document.createElement('input');
   newpack.type = 'button';
   newpack.value = 'New package';
+
+  const save = document.createElement('input');
+  save.type = 'button';
+  save.value = 'Save';
   
   const run = document.createElement('input');
   run.type = "button";
@@ -44,7 +48,8 @@ function initUI() {
   dom.appendChild(code);
   dom.appendChild(output);
   document.body.appendChild(newfile);
-  document.body.appendChild(newpack);  
+  document.body.appendChild(newpack);
+  document.body.appendChild(save);  
   document.body.appendChild(run);
   document.body.appendChild(compile);
   document.body.appendChild(ic);
@@ -62,6 +67,7 @@ function initUI() {
       addPackage(...args);
     }
   });
+  save.addEventListener('click', () => saveFiles());
   
   run.addEventListener('click', () => interpret(current_session_name));
   compile.addEventListener('click', () => wasi(current_session_name));

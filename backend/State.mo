@@ -16,6 +16,11 @@ module {
         packages: [Text];
         canisters: [CanisterInfo];
     };
+    public type SharedProjectInfo = {
+        files: [(Text, Text)];
+        packages: [Text];
+        canisters: [CanisterInfo];        
+    };
     public type State = {
         project: Map<Principal, ProjectInfo>;
         canisterPool: [Principal];

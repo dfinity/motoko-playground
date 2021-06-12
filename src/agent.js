@@ -5,6 +5,7 @@ import { Ed25519KeyIdentity } from '@dfinity/identity';
 import wallet_idl from './wallet.did';
 import ic_idl from './ic.did';
 import didjs_idl from './didjs.did';
+import { idlFactory as backend_idl, canisterId as backend_id } from 'dfx-generated/playground';
 
 function is_local(agent) {
   const hostname = agent._host.hostname;
@@ -22,6 +23,8 @@ async function initAgent() {
   }  
 }
 initAgent();
+
+export const backend = Actor.createActor(backend_idl, { agent, canisterId: backend_id });
 
 export const ic0 = Actor.createActor(ic_idl, { agent, canisterId: Principal.fromHex('') });
 // TODO: With DNS, we don't need to hard code the canister id.

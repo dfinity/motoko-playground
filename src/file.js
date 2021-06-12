@@ -1,6 +1,7 @@
 import { setMarkers, editor } from './monaco';
 import { log, clearLogs } from './log';
 import { canister, canister_ui } from './build';
+import { backend } from './agent';
 
 // map filepath to code session { state, model }
 export const files = {};
@@ -95,4 +96,23 @@ export function saveCodeToMotoko() {
     aliases.push([name, id.toText()]);
   }
   Motoko.setActorAliases(aliases);
+}
+
+export async function saveFiles() {
+  const code = [];
+  for (const [name, session] of Object.entries(files)) {
+    code.push([name, session.model.getValue()]);
+  }
+  const canisters = [];
+  for (const [name, id] of Object.entries(canister)) {
+    canisters.push({ name, id, owner: id, timestamp: 0n });
+  }
+  await backend.saveProject({ files: code, packages: [], canisters });
+}
+
+export async function loadFiles() {
+  let project = await backend.loadProject();
+  for (const info of project.canisters) {
+    console.log(info);
+  }
 }
