@@ -1,11 +1,10 @@
 import Principal "mo:base/Principal";
-import Buffer "mo:base/Buffer";
 import Map "mo:base/HashMap";
-import Heap "mo:base/Heap";
+import RBTree "mo:base/RBTree";
+import Time "mo:base/Time";
 
 module {
     type Map<K,V> = Map.HashMap<K,V>;
-    type Buffer<T> = Buffer.Buffer<T>;
     public type InstallArgs = {
         arg : Blob;
         wasm_module : Blob;
@@ -16,21 +15,57 @@ module {
         id: Principal;
         timestamp: Int;
     };
+    func canisterInfoCompare(x: CanisterInfo, y: CanisterInfo): {#less;#equal;#greater} {
+        if (x.timestamp < y.timestamp) { #less }
+        else if (x.timestamp == y.timestamp and x.id < y.id) { #less }
+        else if (x.id == y.id) { #equal }
+        else { #greater }
+    };
+    public class CanisterPool(size: Nat, TTL: Nat) {
+        var len = 0;
+        var tree = RBTree.RBTree<CanisterInfo, ()>(canisterInfoCompare);
+        public type NewId = { #newId; #reuse:Principal; #outOfCapacity:Int };
+        public func getExpiredCanisterId() : NewId {
+            if (len < size) {
+                #newId
+            } else {
+                switch (tree.entries().next()) {
+                case null #outOfCapacity(-1);
+                case (?(info,_)) {
+                         let now = Time.now();
+                         let elapsed = now - info.timestamp;
+                         if (elapsed >= TTL) {
+                             tree.delete(info);
+                             tree.put({ timestamp = now; id = info.id }, ());
+                             #reuse(info.id)
+                         } else {
+                             #outOfCapacity(TTL - elapsed)
+                         }
+                     };
+                };
+            };
+        };
+        public func add(info: CanisterInfo) {
+            if (len >= size) {
+                assert false;
+            };
+            len += 1;
+            tree.put(info, ());
+        };
+        public func share() : RBTree.Tree<CanisterInfo, ()> {
+            tree.share()
+        };
+    };
     public type ProjectInfo = {
         files: [(Text, Text)];
         packages: [Text];
     };
     public type State = {
         project: Map<Principal, ProjectInfo>;
-        canisterPool: Heap.Heap<CanisterInfo>;
     };
     public func empty() : State {
-        func compare(x: CanisterInfo, y: CanisterInfo) : { #less; #equal; #greater } {
-            if (x.timestamp < y.timestamp) { #greater } else { #less };
-        };
         {
             project = Map.HashMap<Principal, ProjectInfo>(0, Principal.equal, Principal.hash);
-            canisterPool = Heap.Heap(compare);
         }
     };
 }

@@ -1,20 +1,19 @@
 import Iter "mo:base/Iter";
-import Array "mo:base/Array";
 import Cycles "mo:base/ExperimentalCycles";
 import Time "mo:base/Time";
 import Error "mo:base/Error";
-import Heap "mo:base/Heap";
-import Option "mo:base/Option";
+import RBTree "mo:base/RBTree";
 import State "./State";
 import ICType "./IC";
 
 actor {
-    var state = State.empty();
-    var totalCanisters = 0;
     let IC : ICType.Self = actor "aaaaa-aa";
     let MIN_CYCLE = 105_000_000_000;
     let MAX_NUM_CANISTERS = 2;
     let TTL = 5_000_000_000;
+
+    var state = State.empty();
+    var pool = State.CanisterPool(MAX_NUM_CANISTERS, TTL);
     
     public query({caller}) func loadProject() : async ?State.ProjectInfo {
         state.project.get(caller)
@@ -25,29 +24,26 @@ actor {
     
     // TODO: only playground frontend can call these functions
     public func getCanisterId() : async Principal {
-        if (totalCanisters < MAX_NUM_CANISTERS) {
-            Cycles.add(MIN_CYCLE);
-            let cid = await IC.create_canister({ settings = null });
-            let info = { id = cid.canister_id; timestamp = Time.now() };
-            totalCanisters += 1;            
-            state.canisterPool.put(info);
-            cid.canister_id
-        } else {
-            let info = Option.unwrap(state.canisterPool.peekMin());
-            let now = Time.now();
-            if (now - info.timestamp >= TTL) {
-                state.canisterPool.deleteMin();
-                state.canisterPool.put({ id = info.id; timestamp = now });
-                let cid = { canister_id = info.id };
-                let status = await IC.canister_status(cid);
-                let top_up_cycles : Nat = MIN_CYCLE - status.cycles;
-                Cycles.add(top_up_cycles);
-                await IC.uninstall_code(cid);
-                info.id
-            } else {
-                let left = TTL - (now - info.timestamp);
-                throw Error.reject("No available canister id, wait for " # debug_show(left) # " seconds.");
-            };
+        switch (pool.getExpiredCanisterId()) {
+        case (#newId) {
+                 Cycles.add(MIN_CYCLE);
+                 let cid = await IC.create_canister({ settings = null });
+                 let info = { id = cid.canister_id; timestamp = Time.now() };
+                 pool.add(info);
+                 cid.canister_id               
+             };
+        case (#reuse(id)) {
+                 let cid = { canister_id = id };
+                 let status = await IC.canister_status(cid);
+                 let top_up_cycles : Nat = MIN_CYCLE - status.cycles;
+                 Cycles.add(top_up_cycles);
+                 await IC.uninstall_code(cid);
+                 id
+             };
+        case (#outOfCapacity(time)) {
+                 let second = time / 1_000_000_000;
+                 throw Error.reject("No available canister id, wait for " # debug_show(second) # " seconds.");
+             };
         };
     };
     public func installCode(args: State.InstallArgs) : async () {
@@ -55,8 +51,8 @@ actor {
         await IC.install_code(args);
     };
     
-    public query func dump() : async Heap.Tree<State.CanisterInfo> {
+    public query func dump() : async RBTree.Tree<State.CanisterInfo, ()> {
         //Iter.toArray(state.project.entries());
-        state.canisterPool.share()
+        pool.share()
     };
 }
