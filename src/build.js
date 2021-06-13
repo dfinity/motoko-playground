@@ -104,7 +104,7 @@ async function install(name, canisterId, module, arg, mode, candid) {
     mode: { [mode]:null },
     canister_id: canisterId,
   };
-  await wallet.forwardManagement('install_code', canisterId, installArgs);
+  await backend.installCode(installArgs);
   log('Code installed');
   const canister = Actor.createActor(candid, { agent, canisterId });
   const line = document.createElement('div');
@@ -169,7 +169,6 @@ function renderInstall(item, name, candid, wasm) {
       if (!canisterId) {
         log(`Creating canister id for ${name}...`);
         (async () => {
-          //const new_id = await wallet.createCanister();
           const new_id = await backend.getCanisterId();
           canister[name] = new_id;
           log(`Created canisterId ${new_id}`);

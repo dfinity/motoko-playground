@@ -6,6 +6,12 @@ import Heap "mo:base/Heap";
 module {
     type Map<K,V> = Map.HashMap<K,V>;
     type Buffer<T> = Buffer.Buffer<T>;
+    public type InstallArgs = {
+        arg : Blob;
+        wasm_module : Blob;
+        mode : { #reinstall; #upgrade; #install };
+        canister_id : Principal;        
+    };
     public type CanisterInfo = {
         id: Principal;
         timestamp: Int;
