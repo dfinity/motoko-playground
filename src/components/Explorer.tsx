@@ -1,5 +1,4 @@
 import styled from "styled-components";
-import { files } from "../examples/fileStructure";
 
 const StyledExplorer = styled.div`
   width: var(--explorerWidth);
@@ -13,19 +12,26 @@ const CategoryTitle = styled.summary`
 
 const CategoryContents = styled.details``;
 
-const FileButton = styled.button`
+const FileButton = styled("button")<{ isActive: boolean }>`
   width: 100%;
   height: 4rem;
+  ${(props) => (props.isActive ? "background-color: white;" : "")}
 `;
 
-export function Explorer({ selectedFile = "filepath" }) {
+// @ts-ignore
+export function Explorer({ workplace = {}, selectedFile, onSelectFile } = {}) {
   return (
     <StyledExplorer>
-      <CategoryContents>
+      <CategoryContents open>
         <CategoryTitle>Files</CategoryTitle>
-        {files.map(({ filepath, body }) => (
-          <FileButton onClick={() => console.log("handleClickWithBody" + body)}>
-            {filepath}
+        {Object.keys(workplace).map((filename) => (
+          <FileButton
+            key={filename}
+            // @ts-ignore
+            isActive={selectedFile === filename}
+            onClick={() => onSelectFile(filename)}
+          >
+            {filename}
           </FileButton>
         ))}
       </CategoryContents>

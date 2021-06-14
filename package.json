@@ -34,7 +34,10 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "globals": {
+      "Motoko": true
+    }
   },
   "browserslist": [
     "last 1 chrome version",
