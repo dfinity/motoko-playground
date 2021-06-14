@@ -11,6 +11,7 @@ export const Container = styled.div`
 
 function OurEditor() {
   const monaco = useMonaco();
+  const [editorCode, setEditorCode] = useState("// def");
 
   useEffect(() => {
     if (monaco) {
@@ -18,12 +19,19 @@ function OurEditor() {
     }
   }, [monaco]);
 
+  const onEditorChange = (newValue, ev) => {
+    ev.preventDefault();
+    setEditorCode(newValue);
+  }
+
   return (
     <Container>
       <Editor
         height="90vh"
         defaultLanguage="motoko"
         defaultValue="// some comment"
+        value={editorCode}
+        onChange={onEditorChange}
       />
     </Container>
   )
