@@ -5,6 +5,8 @@ import { getActor } from "./config/actor";
 import Editor from "./components/Editor";
 import Explorer from "./components/Explorer";
 import * as workplaceFiles from "./examples/main";
+import { addPackage } from "./file";
+import { saveWorkplaceToMotoko } from "./file";
 
 const defaultWorkplace = {
   "main.mo": workplaceFiles.prog,
@@ -23,6 +25,21 @@ function App() {
     setSelectedFile(selectedFile);
   };
 
+  const saveWorkplace = () => {
+    saveWorkplaceToMotoko(workplace);
+  };
+
+  // Add the Motoko package to allow for compilation / checking
+  useEffect(() => {
+    const script = document.createElement("script");
+    document.body.appendChild(script);
+    script.addEventListener("load", () => {
+      addPackage("base", "dfinity/motoko-base", "dfx-0.6.16", "src");
+    });
+    script.src =
+      "https://download.dfinity.systems/motoko/0.5.3/js/moc-0.5.3.js";
+  }, []);
+
   return (
     <div className="App">
       <header className="App-header">
@@ -31,7 +48,11 @@ function App() {
         </p>
       </header>
       <main>
-        <Editor fileCode={workplace[selectedFile]} />
+        <Editor
+          fileCode={workplace[selectedFile]}
+          fileName={selectedFile}
+          onSave={saveWorkplace}
+        />
         <Explorer workplace={workplace} onSelectFile={selectFile} />
       </main>
     </div>
