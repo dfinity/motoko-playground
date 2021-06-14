@@ -3,6 +3,7 @@ import Cycles "mo:base/ExperimentalCycles";
 import Time "mo:base/Time";
 import Error "mo:base/Error";
 import RBTree "mo:base/RBTree";
+import Principal "mo:base/Principal";
 import State "./State";
 import ICType "./IC";
 
@@ -47,8 +48,15 @@ actor {
         };
     };
     public func installCode(args: State.InstallArgs) : async () {
-        // TODO update TTL
+        switch (pool.getInfo(args.canister_id)) {
+        case null { throw Error.reject("Cannot find canister " # Principal.toText(args.canister_id)) };
+        case (?info) { pool.refresh(info) };
+        };
         await IC.install_code(args);
+    };
+    public func removeCode(info: State.CanisterInfo) : async () {
+        pool.retire(info);
+        await IC.uninstall_code({canister_id=info.id});
     };
     
     public query func dump() : async RBTree.Tree<State.CanisterInfo, ()> {

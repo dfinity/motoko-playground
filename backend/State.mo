@@ -52,6 +52,22 @@ module {
             len += 1;
             tree.put(info, ());
         };
+        public func getInfo(id: Principal) : ?CanisterInfo {
+            let now = Time.now();
+            for ((info, _) in tree.entriesRev()) {
+                if (info.id == id) return ?info;
+                if (info.timestamp < now - TTL) return null;
+            };
+            null
+        };
+        public func refresh(info: CanisterInfo) {
+            tree.delete(info);
+            tree.put({ timestamp = Time.now(); id = info.id }, ());
+        };
+        public func retire(info: CanisterInfo) {
+            tree.delete(info);
+            tree.put({ timestamp = 0; id = info.id }, ());
+        };
         public func share() : RBTree.Tree<CanisterInfo, ()> {
             tree.share()
         };
