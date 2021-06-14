@@ -42,8 +42,12 @@ export function App() {
     setSelectedFile(selectedFile);
   };
 
-  const saveWorkplace = () => {
-    saveWorkplaceToMotoko(workplace);
+  const saveWorkplace = (newCode) => {
+    // Resave workplace files with new code changes
+    const updatedWorkplace = { ...workplace };
+    updatedWorkplace[selectedFile] = newCode;
+    setWorkplace(updatedWorkplace);
+    saveWorkplaceToMotoko(updatedWorkplace);
   };
 
   // Add the Motoko package to allow for compilation / checking

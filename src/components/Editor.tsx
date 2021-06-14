@@ -74,7 +74,7 @@ export function Editor({ fileCode = "", fileName, onSave } = {}) {
 
   const onEditorChange = (newValue, ev) => {
     setEditorCode(newValue);
-    onSave();
+    onSave(newValue);
     const diags = Motoko.check(fileName).diagnostics;
     setMarkers(diags, codeModel, monaco);
   };
