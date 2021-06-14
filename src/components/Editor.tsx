@@ -9,15 +9,20 @@ export const Container = styled.div`
   padding: var(--gutterWidth);
 `;
 
-function OurEditor() {
+function OurEditor({ fileCode = "" } = {}) {
   const monaco = useMonaco();
-  const [editorCode, setEditorCode] = useState("// def");
+  const [editorCode, setEditorCode] = useState(fileCode);
 
   useEffect(() => {
     if (monaco) {
       registerMotoko(monaco);
     }
   }, [monaco]);
+
+  // When you load a new file
+  useEffect(() => {
+    setEditorCode(fileCode);
+  }, [fileCode]);
 
   const onEditorChange = (newValue, ev) => {
     ev.preventDefault();
@@ -27,9 +32,9 @@ function OurEditor() {
   return (
     <Container>
       <Editor
-        height="90vh"
+        height="50vh"
         defaultLanguage="motoko"
-        defaultValue="// some comment"
+        defaultValue={fileCode}
         value={editorCode}
         onChange={onEditorChange}
       />
