@@ -1,5 +1,5 @@
-#root {
-  --headerHeight: 80px;
+:root {
+  --headerHeight: 9.6rem;
   --appHeight: calc(100vh - var(--headerHeight));
   --explorerWidth: max(200px, 15%);
   --editorWidth: calc(100vw - var(--explorerWidth));
@@ -9,4 +9,5 @@
     var(--appHeight) - (var(--gutterWidth) * 2) - var(--sectionHeaderHeight)
   );
   font-family: "Roboto", sans-serif;
+  font-size: 10px;
 }

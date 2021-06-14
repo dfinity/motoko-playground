@@ -1,57 +1,40 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
+import styled, { createGlobalStyle } from "styled-components";
+import { CandidUI } from "./components/CandidUI";
+import { Editor } from "./components/Editor";
+import { Explorer } from "./components/Explorer";
+import { Header } from "./components/Header";
 // Import the canister actor and give it a meaningful name
-import { getActor } from "./config/actor";
+// import { actor as MotokoCanister } from "./config/actor";
 
-import Editor from "./components/Editor";
+const GlobalStyles = createGlobalStyle`
+  
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+  }
 
-function App() {
-  const [value, setValue] = useState();
+`;
 
-  useEffect(() => {
-    // Call a public function defined in the canister
-    getActor().then((actor) => {
-      actor.getValue().then((response) => {
-        // Since the response is a BigInt we need to stringify it
-        setValue(response);
-      });
-    });
-  }, []);
+const AppContainer = styled.div`
+  display: flex;
+  height: var(--appHeight);
+`;
 
-  const onIncrement = useCallback(async () => {
-    // Call another public function
-    await (await getActor()).increment();
-    // Get latest value from canister again
-    const newValue = await (await getActor()).getValue();
-    setValue(newValue);
-  }, []);
+export function App() {
+  const [selectedFile, setSelectedFile] = useState(null);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <img
-          src={`${process.env.PUBLIC_URL}/logo512.png`}
-          className="App-logo"
-          alt="logo"
-        />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://dfinity.org/developers"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn How to Develop on the Internet Computer
-        </a>
-        <h2>Value received from IC canister: {value}</h2>
-        <button onClick={onIncrement}>Increment</button>
-      </header>
-      <main>
+    <div>
+      <GlobalStyles />
+      <Header />
+      <AppContainer>
+        <Explorer />
         <Editor />
-      </main>
+        <CandidUI />
+      </AppContainer>
     </div>
   );
 }
-
-export default App;
