@@ -1,10 +1,15 @@
-import styled from "styled-components";
 import { useState } from "react";
+import styled from "styled-components";
+import { PanelHeader } from "./Editor";
+
+const CandidPanel = styled.div`
+  flex: 1;
+`;
 
 const CandidFrame = styled.iframe`
-  flex: 1;
+  height: calc(var(--appHeight) - var(--sectionHeaderHeight) - 0.4rem);
+  width: 100%;
   border: none;
-  background-color: #ffb8c1;
 `;
 
 const CANDID_UI_CANISTER_URL =
@@ -16,8 +21,9 @@ export function CandidUI({ selectedFile = "filepath" }) {
   );
 
   return (
-    <CandidFrame src={`${CANDID_UI_CANISTER_URL}/?id=${loadedCanister}`}>
-      CandidUI loaded from web
-    </CandidFrame>
+    <CandidPanel>
+      <PanelHeader>CANDID UI</PanelHeader>
+      <CandidFrame src={`${CANDID_UI_CANISTER_URL}/?id=${loadedCanister}`} />
+    </CandidPanel>
   );
 }

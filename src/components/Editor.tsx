@@ -10,21 +10,28 @@ const EditorColumn = styled.div`
   flex-direction: column;
   flex: 1;
   height: var(--appHeight);
+  border: 1px solid var(--borderColor);
+  border-top: none;
+  border-bottom: none;
 `;
 
-const EditorHeader = styled.header`
+export const PanelHeader = styled.header`
   display: flex;
   align-items: center;
-  height: 4.8rem;
+  flex-shrink: 0;
+  height: var(--sectionHeaderHeight);
+  padding-left: 1.2rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-bottom: 1px solid var(--borderColor);
 `;
 
 const EditorContainer = styled.div`
-  flex: 1;
-  max-height: calc(var(--appHeight) - 10rem);
+  height: calc(var(--editorHeight) - 10rem);
 `;
 
-const LogContainer = styled.div`
-  height: 10ch;
+const LogContainer = styled.pre`
+  height: 10rem;
   white-space: pre;
 `;
 
@@ -80,7 +87,7 @@ export function Editor({ fileCode = "", fileName, onSave } = {}) {
   };
   return (
     <EditorColumn>
-      <EditorHeader>Editor</EditorHeader>
+      <PanelHeader>EDITOR</PanelHeader>
       <EditorContainer>
         <MonacoEditor
           defaultLanguage="motoko"
