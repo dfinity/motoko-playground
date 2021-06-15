@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
 import { configureMonaco } from "../config/monacoConfig";
+import { Console } from "./Console";
+import { useLogging } from "./Logger";
 
 declare var Motoko: any;
 
@@ -62,6 +64,7 @@ export function Editor({ fileCode = "", fileName, onSave } = {}) {
   const monaco = useMonaco();
   const [editorCode, setEditorCode] = useState(fileCode);
   const [codeModel, setCodeModel] = useState();
+  const logger = useLogging();
 
   // When you load a new file
   useEffect(() => {
@@ -95,13 +98,7 @@ export function Editor({ fileCode = "", fileName, onSave } = {}) {
           }}
         />
       </EditorContainer>
-      <LogContainer>
-        {`public shared(msg) func bump() : async Nat {
-    assert (owner == msg.caller);
-    count := 1;
-    count;
-};`}
-      </LogContainer>
+      <Console />
     </EditorColumn>
   );
 }

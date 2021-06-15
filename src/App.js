@@ -6,6 +6,7 @@ import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
 import { files } from "./examples/fileStructure";
 import { addPackage, saveWorkplaceToMotoko } from "./file";
+import { useLogging } from "./components/Logger";
 
 const GlobalStyles = createGlobalStyle`
   :root {
@@ -37,6 +38,7 @@ const AppContainer = styled.div`
 export function App() {
   const [workplace, setWorkplace] = useState(files);
   const [selectedFile, setSelectedFile] = useState("main.mo");
+  const logger = useLogging();
 
   const selectFile = (selectedFile) => {
     setSelectedFile(selectedFile);
@@ -54,7 +56,8 @@ export function App() {
   useEffect(() => {
     const script = document.createElement("script");
     script.addEventListener("load", () => {
-      addPackage("base", "dfinity/motoko-base", "dfx-0.6.16", "src");
+      addPackage("base", "dfinity/motoko-base", "dfx-0.6.16", "src", logger);
+      logger.log("Compiler loaded.");
     });
     script.src =
       "https://download.dfinity.systems/motoko/0.5.3/js/moc-0.5.3.js";

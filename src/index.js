@@ -2,10 +2,13 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { App } from "./App";
 import reportWebVitals from "./reportWebVitals";
+import { ProvideLogging } from "./components/Logger";
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <ProvideLogging>
+      <App />
+    </ProvideLogging>
   </React.StrictMode>,
   document.getElementById("root")
 );

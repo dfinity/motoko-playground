@@ -7,7 +7,7 @@ export const filetab = document.createElement("div");
 
 declare var Motoko: any;
 
-export async function addPackage(name, repo, version, dir) {
+export async function addPackage(name, repo, version, dir, logger) {
   const meta_url = `https://data.jsdelivr.com/v1/package/gh/${repo}@${version}/flat`;
   const base_url = `https://cdn.jsdelivr.net/gh/${repo}@${version}`;
   const response = await fetch(meta_url);
@@ -29,6 +29,7 @@ export async function addPackage(name, repo, version, dir) {
   }
   Promise.all(promises).then(() => {
     Motoko.addPackage(name, name + "/");
+    logger.log(`Package ${name} loaded (${promises.length} files).`)
     const content = [
       `// Fetched from ${repo}@${version}/${dir}`,
       // @ts-ignore
