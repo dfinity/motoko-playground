@@ -3,7 +3,6 @@ import Cycles "mo:base/ExperimentalCycles";
 import Time "mo:base/Time";
 import Error "mo:base/Error";
 import RBTree "mo:base/RBTree";
-import Principal "mo:base/Principal";
 import State "./State";
 import ICType "./IC";
 
@@ -24,22 +23,22 @@ actor {
     };
     
     // TODO: only playground frontend can call these functions
-    public func getCanisterId() : async Principal {
+    public func getCanisterId() : async State.CanisterInfo {
         switch (pool.getExpiredCanisterId()) {
         case (#newId) {
                  Cycles.add(MIN_CYCLE);
                  let cid = await IC.create_canister({ settings = null });
                  let info = { id = cid.canister_id; timestamp = Time.now() };
                  pool.add(info);
-                 cid.canister_id               
+                 info
              };
-        case (#reuse(id)) {
-                 let cid = { canister_id = id };
+        case (#reuse(info)) {
+                 let cid = { canister_id = info.id };
                  let status = await IC.canister_status(cid);
                  let top_up_cycles : Nat = MIN_CYCLE - status.cycles;
                  Cycles.add(top_up_cycles);
                  await IC.uninstall_code(cid);
-                 id
+                 info
              };
         case (#outOfCapacity(time)) {
                  let second = time / 1_000_000_000;
@@ -47,16 +46,20 @@ actor {
              };
         };
     };
-    public func installCode(args: State.InstallArgs) : async () {
-        switch (pool.getInfo(args.canister_id)) {
-        case null { throw Error.reject("Cannot find canister " # Principal.toText(args.canister_id)) };
-        case (?info) { pool.refresh(info) };
-        };
+    public func installCode(info: State.CanisterInfo, args: State.InstallArgs) : async State.CanisterInfo {
+        let new_info = pool.refresh(info);
         await IC.install_code(args);
+        new_info
     };
     public func removeCode(info: State.CanisterInfo) : async () {
         pool.retire(info);
         await IC.uninstall_code({canister_id=info.id});
+    };
+    public func GCCanisters() {
+        let list = pool.gcList();
+        for (id in list.vals()) {
+            await IC.uninstall_code({canister_id=id});
+        };
     };
     
     public query func dump() : async RBTree.Tree<State.CanisterInfo, ()> {

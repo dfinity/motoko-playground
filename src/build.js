@@ -7,7 +7,7 @@ import { Actor } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { IDL, renderInput, blobFromUint8Array } from '@dfinity/candid';
 
-// map canister name to canister id
+// map canister name to { id: Principal; timestamp: bigint }
 export const canister = {};
 // map canister name to ui
 export const canister_ui = {};
@@ -94,17 +94,19 @@ export function deploy(file) {
   });
 }
 
-async function install(name, canisterId, module, arg, mode, candid) {
-  if (!canisterId) {
+async function install(name, canisterInfo, module, arg, mode, candid) {
+  if (!canisterInfo) {
     throw new Error('no canister id');
   }
+  const canisterId = canisterInfo.id;
   const installArgs = {
     arg: [...arg],
     wasm_module: [...module],
     mode: { [mode]:null },
     canister_id: canisterId,
   };
-  await backend.installCode(installArgs);
+  const new_info = await backend.installCode(canisterInfo, installArgs);
+  canister[name] = new_info;
   log('Code installed');
   const canister = Actor.createActor(candid, { agent, canisterId });
   const line = document.createElement('div');
@@ -141,8 +143,9 @@ function renderInstall(item, name, candid, wasm) {
     return blobFromUint8Array(IDL.encode(argTypes, args));      
   };
   
-  const canisterId = canister[name];
-  if (canisterId) {
+  const canisterInfo = canister[name];
+  if (canisterInfo) {
+    const canisterId = canisterInfo.id;
     const upgrade = document.createElement('button');
     upgrade.className = 'btn';
     upgrade.innerText = 'Upgrade';
@@ -159,33 +162,38 @@ function renderInstall(item, name, candid, wasm) {
 
   const button = document.createElement('button');
   button.className = 'btn';
-  button.innerText = canisterId ? 'Reinstall' : 'Install';
+  button.innerText = canisterInfo ? 'Reinstall' : 'Install';
   item.appendChild(button);  
   
   button.addEventListener('click', () => {
     const encoded = parse();
     if (encoded) {
       output.removeChild(item.parentNode);
-      if (!canisterId) {
+      if (!canisterInfo) {
         log(`Creating canister id for ${name}...`);
         (async () => {
-          const new_id = await backend.getCanisterId();
-          canister[name] = new_id;
-          log(`Created canisterId ${new_id}`);
-          install(name, new_id, module, encoded, 'install', candid.default);
+          const info = await backend.getCanisterId();
+          canister[name] = info;
+          const canisterId = info.id;
+          log(`Created canisterId ${canisterId}`);
+          await install(name, info, module, encoded, 'install', candid.default);
           const entry = addFileEntry('canister', 'canister:' + name);
           deleteButton(name, entry);
-        })();
+        })().catch(err => {
+          log('Cannot get canister id: ' + err);
+          throw err;
+        });
       } else {
-        log(`Reinstalling ${canisterId}...`);
-        install(name, canisterId, module, encoded, 'reinstall', candid.default);
+        log(`Reinstalling ${canisterInfo.id}...`);
+        install(name, canisterInfo, module, encoded, 'reinstall', candid.default);
       }
     }
   });
 }
 
 function deleteButton(name, entry) {
-  const canisterId = canister[name];
+  const canisterInfo = canister[name];
+  const canisterId = canisterInfo.id;
   const close = document.createElement('input');
   close.type = 'button';
   close.value = `Delete ${name}`;
@@ -196,11 +204,8 @@ function deleteButton(name, entry) {
       output.removeChild(ui.parentNode);
     }
     (async () => {
-      log(`Deleting canister ${name}...`);
-      await wallet.forwardManagement('stop_canister', canisterId, { canister_id: canisterId });
-      log('Canister stopped');
-      await wallet.forwardManagement('delete_canister', canisterId, { canister_id: canisterId });
-      log('Canister deleted');
+      log(`Release canister ${name}...`);
+      await backend.removeCode(canisterInfo);
       delete canister[name];
       delete canister_ui[name];
       delete canister_candid[name];

@@ -2,6 +2,7 @@ import Principal "mo:base/Principal";
 import Map "mo:base/HashMap";
 import RBTree "mo:base/RBTree";
 import Time "mo:base/Time";
+import Buffer "mo:base/Buffer";
 
 module {
     type Map<K,V> = Map.HashMap<K,V>;
@@ -24,7 +25,7 @@ module {
     public class CanisterPool(size: Nat, TTL: Nat) {
         var len = 0;
         var tree = RBTree.RBTree<CanisterInfo, ()>(canisterInfoCompare);
-        public type NewId = { #newId; #reuse:Principal; #outOfCapacity:Int };
+        public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Int };
         public func getExpiredCanisterId() : NewId {
             if (len < size) {
                 #newId
@@ -36,8 +37,9 @@ module {
                          let elapsed = now - info.timestamp;
                          if (elapsed >= TTL) {
                              tree.delete(info);
-                             tree.put({ timestamp = now; id = info.id }, ());
-                             #reuse(info.id)
+                             let new_info = { timestamp = now; id = info.id };
+                             tree.put(new_info, ());
+                             #reuse(new_info)
                          } else {
                              #outOfCapacity(TTL - elapsed)
                          }
@@ -52,21 +54,28 @@ module {
             len += 1;
             tree.put(info, ());
         };
-        public func getInfo(id: Principal) : ?CanisterInfo {
-            let now = Time.now();
-            for ((info, _) in tree.entriesRev()) {
-                if (info.id == id) return ?info;
-                if (info.timestamp < now - TTL) return null;
-            };
-            null
-        };
-        public func refresh(info: CanisterInfo) {
+        public func refresh(info: CanisterInfo) : CanisterInfo {
             tree.delete(info);
-            tree.put({ timestamp = Time.now(); id = info.id }, ());
+            let new_info = { timestamp = Time.now(); id = info.id };
+            tree.put(new_info, ());
+            new_info
         };
         public func retire(info: CanisterInfo) {
             tree.delete(info);
             tree.put({ timestamp = 0; id = info.id }, ());
+        };
+        public func gcList() : Buffer.Buffer<Principal> {
+            let now = Time.now();
+            let result = Buffer.Buffer<Principal>(len);
+            for ((info, _) in tree.entries()) {
+                if (info.timestamp > 0) {
+                    // assumes when timestamp == 0, uninstall_code is already done
+                    if (info.timestamp > now - TTL) { return result };
+                    result.add(info.id);
+                    retire(info);
+                }
+            };
+            result
         };
         public func share() : RBTree.Tree<CanisterInfo, ()> {
             tree.share()
