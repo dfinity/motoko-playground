@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
-import throttle from "lodash.throttle";
 import debounce from "lodash.debounce";
 
 import { Button } from "./shared/Button";
