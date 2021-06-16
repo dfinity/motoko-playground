@@ -51,13 +51,12 @@ function setMarkers(diags, codeModel, monaco, fileName) {
       message: d.message,
       severity,
     };
+    // TODO we're currently only saving marks for current file is that OK?
     // @ts-ignore
     markers.push(marker);
   });
-  markers.forEach(marks => {
-    monaco.editor.setModelMarkers(codeModel, "moc", marks);
-    console.log('marker set', codeModel);
-  });
+
+  monaco.editor.setModelMarkers(codeModel, "moc", markers);
 }
 
 // @ts-ignore
@@ -69,10 +68,8 @@ export function Editor({ fileCode = "", fileName, onSave } = {}) {
     // @ts-ignore
     const check = Motoko.check(fileName);
     const diags = check.diagnostics;
-    // console.log('after check', diags)
     // @ts-ignore
     setMarkers(diags, monaco?.editor.getModel(`file:///${fileName}`), monaco, fileName);
-    console.log('after marks', monaco);
   }
 
   const debouncedSaveChanges = debounce(saveChanges, 1000, { leading: false });
