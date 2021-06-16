@@ -1,6 +1,10 @@
 {
   "canisters": {
+    "playground": {
+      "main": "backend/Main.mo"
+    },
     "playground_assets": {
+      "dependencies": [ "playground" ],
       "frontend": {
         "entrypoint": "src/index.js"
       },

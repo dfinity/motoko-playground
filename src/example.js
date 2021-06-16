@@ -1,5 +1,6 @@
 export const prog = `import P "mo:base/Principal";
 import List "mo:base/List";
+import Cycles "mo:base/ExperimentalCycles";
 import T "./types";
 shared ({caller}) actor class Example(init : Int) = Self {
   public type Id = { caller : Principal; creator : Principal; canister : Principal };
@@ -10,7 +11,9 @@ shared ({caller}) actor class Example(init : Int) = Self {
   system func preupgrade(){
     history := List.push(counter, history);
   };
-
+  public query func balance() : async Int {
+    Cycles.balance();
+  };
   public query func getHistory() : async T.List<Int> { history };
   public query(msg) func getId() : async Id {
     {canister = P.fromActor(Self); creator = controller; caller = msg.caller}
