@@ -12,27 +12,62 @@ const GlobalStyles = createGlobalStyle`
   :root {
     --headerHeight: 9.6rem;
     --appHeight: calc(100vh - var(--headerHeight));
+    --sectionHeaderHeight: 4.8rem;
+    --editorHeight: calc(var(--appHeight) - var(--sectionHeaderHeight));
     --explorerWidth: max(200px, 15%);
-    --editorWidth: calc(100vw - var(--explorerWidth));
-    --gutterWidth: 15px;
-    --sectionHeaderHeight: 40px;
-    --editorHeight: calc(
-            var(--appHeight) - (var(--gutterWidth) * 2) - var(--sectionHeaderHeight)
-    );
-    font-family: "Roboto", sans-serif;
+    
+    --defaultColor: #818284;
+    --primaryColor: #387ff7;
+    
+    --lightTextColor: #818284;
+    --buttonTextColor: #555659;
+    --textColor: #3f4043;
+    --darkTextColor: #292a2e;
+    
+    --lightBorderColor: #efefef;
+    --borderColor: #d9d9da;
+    --darkBorderColor: #c3c3c4;
+    
+    font-family: "CircularXX", sans-serif;
     font-size: 10px;
   }
+
   * {
     box-sizing: border-box;
   }
+
   body {
     margin: 0;
+    font-size: 1.6rem;
+    color: var(--textColor);
+  }
+  
+  a {
+    color: var(--buttonTextColor);
+    text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  
+  button {
+    cursor: pointer;
+    
+    &:hover {
+      filter: brightness(0.95);
+    }
+    &:active {
+      filter: brightness(0.85);
+    }
   }
 `;
 
 const AppContainer = styled.div`
   display: flex;
   height: var(--appHeight);
+  overflow-y: hidden;
+  border-top: 1px solid var(--darkBorderColor);
 `;
 
 export function App() {

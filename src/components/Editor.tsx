@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
+import { Button } from "./shared/Button";
+import { PanelHeader } from "./shared/PanelHeader";
+import { RightContainer } from "./shared/RightContainer";
 import { configureMonaco } from "../config/monacoConfig";
 import { Console } from "./Console";
-import { useLogging } from "./Logger";
+import iconRabbit from "../assets/images/icon-rabbit.png";
 
 declare var Motoko: any;
 
@@ -12,23 +15,20 @@ const EditorColumn = styled.div`
   flex-direction: column;
   flex: 1;
   height: var(--appHeight);
-`;
-
-const EditorHeader = styled.header`
-  display: flex;
-  align-items: center;
-  height: 4.8rem;
+  border: 1px solid var(--borderColor);
+  border-top: none;
+  border-bottom: none;
 `;
 
 const EditorContainer = styled.div`
-  flex: 1;
-  max-height: calc(var(--appHeight) - 10rem);
+  height: calc(var(--editorHeight) - 10rem);
+
+  .margin {
+    background-color: #ececec !important;
+    width: 5.5ch !important;
+  }
 `;
 
-const LogContainer = styled.div`
-  height: 10ch;
-  white-space: pre;
-`;
 
 function setMarkers(diags, codeModel, monaco) {
   const markers = {};
@@ -64,7 +64,6 @@ export function Editor({ fileCode = "", fileName, onSave } = {}) {
   const monaco = useMonaco();
   const [editorCode, setEditorCode] = useState(fileCode);
   const [codeModel, setCodeModel] = useState();
-  const logger = useLogging();
 
   // When you load a new file
   useEffect(() => {
@@ -83,7 +82,15 @@ export function Editor({ fileCode = "", fileName, onSave } = {}) {
   };
   return (
     <EditorColumn>
-      <EditorHeader>Editor</EditorHeader>
+      <PanelHeader>
+        Editor
+        <RightContainer>
+          <Button kind="primary" small>
+            <img src={iconRabbit} alt="Rabbit icon" />
+            <p>Deploy</p>
+          </Button>
+        </RightContainer>
+      </PanelHeader>
       <EditorContainer>
         <MonacoEditor
           defaultLanguage="motoko"
