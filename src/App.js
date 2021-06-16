@@ -40,6 +40,26 @@ const GlobalStyles = createGlobalStyle`
     font-size: 1.6rem;
     color: var(--textColor);
   }
+  
+  a {
+    color: var(--buttonTextColor);
+    text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  
+  button {
+    cursor: pointer;
+    
+    &:hover {
+      filter: brightness(0.95);
+    }
+    &:active {
+      filter: brightness(0.85);
+    }
+  }
 `;
 
 const AppContainer = styled.div`

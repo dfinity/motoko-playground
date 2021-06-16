@@ -10,7 +10,8 @@ const CategoryTitle = styled.summary`
   line-height: 2.4rem;
   font-size: 1.2rem;
   font-weight: bold;
-  border-bottom: 1px solid var(--lightBorderColor);
+  border-bottom: 1px solid var(--borderColor);
+  text-transform: uppercase;
 `;
 
 const CategoryContents = styled.details``;
@@ -26,8 +27,8 @@ const FileButton = styled("button")<{ isActive: boolean }>`
   color: ${(props) =>
     props.isActive ? "var(--textColor)" : "var(--lightTextColor)"};
   border: none;
-  background-color: ${(props) => (props.isActive ? "#ebf0fa" : "white")};
-  border-bottom: 1px solid var(--lightBorderColor);
+  background-color: ${(props) => (props.isActive ? "#ebf0fa" : "#f5f5f5")};
+  border-bottom: 1px solid var(--borderColor);
 `;
 
 // @ts-ignore
@@ -35,7 +36,7 @@ export function Explorer({ workplace = {}, selectedFile, onSelectFile } = {}) {
   return (
     <StyledExplorer>
       <CategoryContents open>
-        <CategoryTitle>FILES</CategoryTitle>
+        <CategoryTitle>Files</CategoryTitle>
         {Object.keys(workplace).map((filename) => (
           <FileButton
             key={filename}
@@ -45,6 +46,12 @@ export function Explorer({ workplace = {}, selectedFile, onSelectFile } = {}) {
             {filename}
           </FileButton>
         ))}
+      </CategoryContents>
+      <CategoryContents>
+        <CategoryTitle>Packages</CategoryTitle>
+      </CategoryContents>
+      <CategoryContents>
+        <CategoryTitle>Canisters</CategoryTitle>
       </CategoryContents>
     </StyledExplorer>
   );

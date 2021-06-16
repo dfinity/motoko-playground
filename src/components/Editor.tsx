@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
+import { Button } from "./shared/Button";
 import { configureMonaco } from "../config/monacoConfig";
+import iconRabbit from "../assets/images/icon-rabbit.png";
+import iconCaretDown from "../assets/images/icon-caret-down.svg";
 
 declare var Motoko: any;
 
@@ -18,21 +21,40 @@ const EditorColumn = styled.div`
 export const PanelHeader = styled.header`
   display: flex;
   align-items: center;
+  width: 100%;
   flex-shrink: 0;
   height: var(--sectionHeaderHeight);
-  padding-left: 1.2rem;
+  padding: 0 1.2rem;
   font-size: 1.2rem;
   font-weight: bold;
   border-bottom: 1px solid var(--borderColor);
+  text-transform: uppercase;
 `;
 
 const EditorContainer = styled.div`
   height: calc(var(--editorHeight) - 10rem);
+
+  .margin {
+    background-color: #ececec !important;
+    width: 5.5ch !important;
+  }
 `;
 
-const LogContainer = styled.pre`
-  height: 10rem;
-  white-space: pre;
+const LogContainer = styled.div`
+  height: 15rem;
+`;
+
+const LogHeader = styled(PanelHeader)`
+  padding: 0 1rem;
+  height: 2.4rem;
+  border-top: 1px solid var(--borderColor);
+`;
+
+const RightContainer = styled.div`
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
 `;
 
 function setMarkers(diags, codeModel, monaco) {
@@ -87,7 +109,15 @@ export function Editor({ fileCode = "", fileName, onSave } = {}) {
   };
   return (
     <EditorColumn>
-      <PanelHeader>EDITOR</PanelHeader>
+      <PanelHeader>
+        Editor
+        <RightContainer>
+          <Button kind="primary" small>
+            <img src={iconRabbit} alt="Rabbit icon" />
+            <p>Deploy</p>
+          </Button>
+        </RightContainer>
+      </PanelHeader>
       <EditorContainer>
         <MonacoEditor
           defaultLanguage="motoko"
@@ -103,11 +133,26 @@ export function Editor({ fileCode = "", fileName, onSave } = {}) {
         />
       </EditorContainer>
       <LogContainer>
-        {`public shared(msg) func bump() : async Nat {
+        <LogHeader>
+          Log
+          <RightContainer>
+            <img src={iconCaretDown} alt="Caret icon" />
+          </RightContainer>
+        </LogHeader>
+        <pre
+          style={{
+            height: "100%",
+            margin: 0,
+            padding: "1rem 1.6rem",
+            backgroundColor: "#efefef",
+          }}
+        >
+          {`public shared(msg) func bump() : async Nat {
     assert (owner == msg.caller);
     count := 1;
     count;
 };`}
+        </pre>
       </LogContainer>
     </EditorColumn>
   );
