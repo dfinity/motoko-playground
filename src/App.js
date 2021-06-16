@@ -4,7 +4,7 @@ import { CandidUI } from "./components/CandidUI";
 import { Editor } from "./components/Editor";
 import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
-import { files } from "./examples/fileStructure";
+import { files } from "./examples/firstExample/fileStructure";
 import { addPackage, saveWorkplaceToMotoko } from "./file";
 import { useLogging } from "./components/Logger";
 
