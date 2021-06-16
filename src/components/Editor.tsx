@@ -32,7 +32,7 @@ const EditorContainer = styled.div`
 `;
 
 
-function setMarkers(diags, codeModel, monaco, editor, fileName) {
+function setMarkers(diags, codeModel, monaco, fileName) {
   const markers = [];
   diags.forEach((d) => {
     if (d.source !== fileName) {
@@ -63,12 +63,6 @@ function setMarkers(diags, codeModel, monaco, editor, fileName) {
 // @ts-ignore
 export function Editor({ fileCode = "", fileName, onSave } = {}) {
   const monaco = useMonaco();
-  const editorRef = useRef(null);
-
-  const onMount = (editor, monaco) => {
-    editorRef.current = editor;
-  }
-
   const saveChanges = (newValue) => {
     onSave(newValue);
     // if (!codeModel) codeModel = monaco?.editor.getModel();
@@ -77,8 +71,7 @@ export function Editor({ fileCode = "", fileName, onSave } = {}) {
     const diags = check.diagnostics;
     // console.log('after check', diags)
     // @ts-ignore
-    setMarkers(diags, editorRef.current?.getModel(), monaco, editorRef.current, fileName);
-    console.log('after marks', editorRef);
+    setMarkers(diags, monaco?.editor.getModel(`file:///${fileName}`), monaco, fileName);
     console.log('after marks', monaco);
   }
 
@@ -107,7 +100,6 @@ export function Editor({ fileCode = "", fileName, onSave } = {}) {
           value={fileCode}
           onChange={onEditorChange}
           beforeMount={configureMonaco}
-          onMount={onMount}
           options={{
             minimap: { enabled: false },
             wordWrap: "on",
