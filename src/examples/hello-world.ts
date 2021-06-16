@@ -16,11 +16,22 @@ actor HelloWorld {
 }
 `.trim();
 
+const dfxJson: FileContent = `
+{
+  "canisters": {
+    "hello_world": {
+      "main": "src/Main.mo"
+    }
+  }
+}
+`.trim()
+
 const helloWorldExampleProject: ExampleProject = {
     name: "Hello, world",
     directory: {
 			"README": helloWorldExampleProjectReadme,
 			"Main.mo": helloWorldMainFileContents,
+			"dfx.json": dfxJson,
     }
 }
 
