@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
+import debounce from "lodash.debounce";
+
 import { Button } from "./shared/Button";
 import { PanelHeader } from "./shared/PanelHeader";
 import { RightContainer } from "./shared/RightContainer";
@@ -30,13 +32,10 @@ const EditorContainer = styled.div`
 `;
 
 
-function setMarkers(diags, codeModel, monaco) {
-  const markers = {};
-  // Object.keys(files).forEach(f => {
-  //   markers[f] = [];
-  // });
+function setMarkers(diags, codeModel, monaco, fileName) {
+  const markers = [];
   diags.forEach((d) => {
-    if (!markers[d.source]) {
+    if (d.source !== fileName) {
       // possible if the error comes from external packages
       return;
     }
@@ -52,34 +51,33 @@ function setMarkers(diags, codeModel, monaco) {
       message: d.message,
       severity,
     };
-    markers[d.source].push(marker);
+    // TODO we're currently only saving marks for current file is that OK?
+    // @ts-ignore
+    markers.push(marker);
   });
-  Object.entries(markers).forEach(([, marks]) => {
-    monaco.editor.setModelMarkers(codeModel, "moc", marks);
-  });
+
+  monaco.editor.setModelMarkers(codeModel, "moc", markers);
 }
 
 // @ts-ignore
 export function Editor({ fileCode = "", fileName, onSave } = {}) {
   const monaco = useMonaco();
-  const [editorCode, setEditorCode] = useState(fileCode);
-  const [codeModel, setCodeModel] = useState();
-
-  // When you load a new file
-  useEffect(() => {
-    setEditorCode(fileCode);
-    const model = monaco?.editor.createModel(fileName, "motoko");
+  const saveChanges = (newValue) => {
+    onSave(newValue);
+    // if (!codeModel) codeModel = monaco?.editor.getModel();
     // @ts-ignore
-    setCodeModel(model);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fileCode]);
+    const check = Motoko.check(fileName);
+    const diags = check.diagnostics;
+    // @ts-ignore
+    setMarkers(diags, monaco?.editor.getModel(`file:///${fileName}`), monaco, fileName);
+  }
+
+  const debouncedSaveChanges = debounce(saveChanges, 1000, { leading: false });
 
   const onEditorChange = (newValue, ev) => {
-    setEditorCode(newValue);
-    onSave(newValue);
-    const diags = Motoko.check(fileName).diagnostics;
-    setMarkers(diags, codeModel, monaco);
+    debouncedSaveChanges(newValue);
   };
+
   return (
     <EditorColumn>
       <PanelHeader>
@@ -95,7 +93,8 @@ export function Editor({ fileCode = "", fileName, onSave } = {}) {
         <MonacoEditor
           defaultLanguage="motoko"
           defaultValue={fileCode}
-          value={editorCode}
+          path={fileName}
+          value={fileCode}
           onChange={onEditorChange}
           beforeMount={configureMonaco}
           options={{
