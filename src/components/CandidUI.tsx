@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { PanelHeader } from "./Editor";
+import { PanelHeader } from "./shared/PanelHeader";
 import { Button } from "./shared/Button";
 import iconCollapse from "../assets/images/icon-collapse.svg";
 import iconTime from "../assets/images/icon-time.svg";

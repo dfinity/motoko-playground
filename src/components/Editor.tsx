@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
 import { Button } from "./shared/Button";
+import { PanelHeader } from "./shared/PanelHeader";
+import { RightContainer } from "./shared/RightContainer";
 import { configureMonaco } from "../config/monacoConfig";
+import { Console } from "./Console";
 import iconRabbit from "../assets/images/icon-rabbit.png";
-import iconCaretDown from "../assets/images/icon-caret-down.svg";
 
 declare var Motoko: any;
 
@@ -18,19 +20,6 @@ const EditorColumn = styled.div`
   border-bottom: none;
 `;
 
-export const PanelHeader = styled.header`
-  display: flex;
-  align-items: center;
-  width: 100%;
-  flex-shrink: 0;
-  height: var(--sectionHeaderHeight);
-  padding: 0 1.2rem;
-  font-size: 1.2rem;
-  font-weight: bold;
-  border-bottom: 1px solid var(--borderColor);
-  text-transform: uppercase;
-`;
-
 const EditorContainer = styled.div`
   height: calc(var(--editorHeight) - 10rem);
 
@@ -40,22 +29,6 @@ const EditorContainer = styled.div`
   }
 `;
 
-const LogContainer = styled.div`
-  height: 15rem;
-`;
-
-const LogHeader = styled(PanelHeader)`
-  padding: 0 1rem;
-  height: 2.4rem;
-  border-top: 1px solid var(--borderColor);
-`;
-
-const RightContainer = styled.div`
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: flex-end;
-`;
 
 function setMarkers(diags, codeModel, monaco) {
   const markers = {};
@@ -132,28 +105,7 @@ export function Editor({ fileCode = "", fileName, onSave } = {}) {
           }}
         />
       </EditorContainer>
-      <LogContainer>
-        <LogHeader>
-          Log
-          <RightContainer>
-            <img src={iconCaretDown} alt="Caret icon" />
-          </RightContainer>
-        </LogHeader>
-        <pre
-          style={{
-            height: "100%",
-            margin: 0,
-            padding: "1rem 1.6rem",
-            backgroundColor: "#efefef",
-          }}
-        >
-          {`public shared(msg) func bump() : async Nat {
-    assert (owner == msg.caller);
-    count := 1;
-    count;
-};`}
-        </pre>
-      </LogContainer>
+      <Console />
     </EditorColumn>
   );
 }
