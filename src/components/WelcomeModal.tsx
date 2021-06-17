@@ -4,6 +4,8 @@ import { SelectList, ListButton } from "./shared/SelectList";
 import motokoLabLogo from "../assets/images/motoko-lab-logo.png";
 import motokoLabWordmark from "../assets/images/motoko-lab-wordmark.svg";
 import iconCaretRight from "../assets/images/icon-caret-right.svg";
+import { ExampleProject } from "../examples/types";
+import React from "react";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -31,7 +33,19 @@ function Button({ onClick, children }) {
   );
 }
 
-export function WelcomeModal({ isOpen = true, close = () => {} }) {
+export function WelcomeModal(props: {
+  isOpen: boolean;
+  chooseExampleProject: (project: ExampleProject) => void;
+  close: () => void;
+  exampleProjects: ExampleProject[];
+}) {
+  const { isOpen = true, close = () => {}, exampleProjects } = props;
+  function chooseAndCloseClickHandler(choice: ExampleProject) {
+    return (event: React.MouseEvent) => {
+      props.chooseExampleProject(choice);
+      close();
+    }
+  }
   return (
     <Modal
       isOpen={isOpen}
@@ -54,11 +68,14 @@ export function WelcomeModal({ isOpen = true, close = () => {} }) {
         </p>
         <p style={{ fontSize: "1.6rem" }}>Select a project to get started</p>
         <SelectList height="18rem">
-          <Button onClick={close}>Hello World</Button>
-          <Button onClick={close}>Todo List</Button>
-          <Button onClick={close}>Phone Book</Button>
-          <Button onClick={close}>Calculator</Button>
-          <Button onClick={close}>Whoami</Button>
+          {exampleProjects.map(
+            (project, index) =>
+              <Button
+                key={project.name}
+                onClick={chooseAndCloseClickHandler(project)}>
+                {project.name}
+              </Button>
+          )}
         </SelectList>
       </ModalContainer>
     </Modal>
