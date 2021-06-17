@@ -1,9 +1,10 @@
 import styled from "styled-components";
-import { ReactNode } from "react";
+import { MouseEvent, ReactNode } from "react";
 
 const StyledButton = styled("button")<{
   small?: boolean;
   kind?: "primary" | "secondary";
+  onClick?: (ev: MouseEvent<HTMLButtonElement>) => void,
   width?: string;
 }>`
   display: flex;
@@ -43,13 +44,14 @@ const StyledButton = styled("button")<{
 interface ButtonProps {
   small?: boolean;
   kind?: "primary" | "secondary";
+  onClick?: (ev: MouseEvent<HTMLButtonElement>) => void,
   width?: string;
   children: ReactNode;
 }
 
-export function Button({ small = false, kind, width, children }: ButtonProps) {
+export function Button({ small = false, kind, onClick, width, children }: ButtonProps) {
   return (
-    <StyledButton small={small} kind={kind} width={width}>
+    <StyledButton small={small} kind={kind} onClick={onClick} width={width}>
       {children}
     </StyledButton>
   );

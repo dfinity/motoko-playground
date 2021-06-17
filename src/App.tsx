@@ -6,7 +6,7 @@ import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
 import { files } from "./examples/firstExample/fileStructure";
 import { addPackage, saveWorkplaceToMotoko } from "./file";
-import { deploy, interpret } from "./build";
+import { interpret, wasi } from "./build";
 import { useLogging } from "./components/Logger";
 
 const GlobalStyles = createGlobalStyle`
@@ -95,9 +95,9 @@ export function App() {
     interpret(defaultMainFile, logger);
   };
 
-  const deployWorkplace = () => {
+  const buildWorkplace = () => {
     saveWorkplaceToMotoko(workplace);
-    deploy(defaultMainFile, logger);
+    wasi(defaultMainFile, logger);
   };
 
   // Add the Motoko package to allow for compilation / checking
@@ -110,12 +110,14 @@ export function App() {
     script.src =
       "https://download.dfinity.systems/motoko/0.5.3/js/moc-0.5.3.js";
     document.body.appendChild(script);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <main>
       <GlobalStyles />
       <Header />
+      <button onClick={buildWorkplace}>Build</button>
       <button onClick={interpretWorkplace}>Run</button>
       <AppContainer>
         <Explorer
@@ -127,7 +129,7 @@ export function App() {
           fileCode={workplace[selectedFile]}
           fileName={selectedFile}
           onSave={saveWorkplace}
-          onDeploy={deployWorkplace}
+          onDeploy={interpretWorkplace}
         />
         <CandidUI />
       </AppContainer>

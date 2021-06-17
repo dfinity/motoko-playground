@@ -51,6 +51,48 @@ export function wasi(file, logger) {
   });
 }
 
+export function deploy(file, logger) {
+  build("Compiling...", logger, () => {
+    const candid_result = Motoko.candid(file);
+    // setMarkers(candid_result.diagnostics);
+    const candid_source = candid_result.code;
+    if (!candid_source || candid_source.trim() === "") {
+      logger.log("cannot deploy: syntax error or empty candid file");
+      return;
+    }
+    const tStart = Date.now();
+    // NOTE: Will change to "ic" in a future moc release
+    const out = Motoko.compileWasm("dfinity", file);
+    const duration = (Date.now() - tStart) / 1000;
+    // setMarkers(out.diagnostics);
+    if (out.code === null) {
+      logger.log("syntax error");
+    } else {
+      logger.log(`(compile time: ${duration}s)`);
+      const wasm = out.code;
+      (async () => {
+        logger.log(`Deploying on IC...`);
+        const canister_name = prompt(
+          "Please enter canister name",
+          getCanisterName(file)
+        );
+        if (!canister_name) {
+          return;
+        }
+        canister_candid[canister_name] = candid_source;
+        // init args
+        const candid = await didToJs(candid_source);
+        const line = document.createElement("div");
+        line.id = "install";
+        logger.log(line);
+      })().catch((err) => {
+        logger.log("IC Exception:\n" + err.stack);
+        throw err;
+      });
+    }
+  });
+}
+
 function getCanisterName(path) {
   return path.split("/").pop().slice(0, -3);
 }
