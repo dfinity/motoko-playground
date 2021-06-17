@@ -97,6 +97,7 @@ export function App() {
     script.src =
       "https://download.dfinity.systems/motoko/0.5.3/js/moc-0.5.3.js";
     document.body.appendChild(script);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
