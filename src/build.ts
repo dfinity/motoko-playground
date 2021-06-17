@@ -1,4 +1,4 @@
-import { blobFromUint8Array, BinaryBlob } from "@dfinity/agent";
+import { blobFromUint8Array, BinaryBlob, Principal } from "@dfinity/agent";
 
 import { getActor, didToJs, getUiCanisterUrl } from "./config/actor";
 import { ILoggingStore } from './components/Logger';
@@ -6,22 +6,21 @@ import { ILoggingStore } from './components/Logger';
 // const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
 
 // map canister name to canister id
-export const canister = {};
 
 declare var Motoko: any;
 
 interface CanisterInfo {
-  id: string,
-  name: string,
-  url: string,
+  id: Principal,
+  timestamp: BigInt,
+  name?: string,
   candid?: string | null,
 }
 
 let canisterInfo: CanisterInfo | null = null;
 // map canister name to ui
-export const canister_ui = {};
-// map canister name to candid
-export const canister_candid = null;
+// export const canister_ui = {};
+// // map canister name to candid
+// export const canister_candid = null;
 
 export function interpret(file: string, logger: ILoggingStore): void {
   logger.clearLogs();
@@ -54,6 +53,7 @@ export async function deploy(file: string, logger: ILoggingStore): Promise<Canis
   // NOTE: Will change to "ic" in a future moc release
   const out = Motoko.compileWasm("dfinity", file);
   const duration = (Date.now() - tStart) / 1000;
+  // TODO output diags, run setmarkers
   // setMarkers(out.diagnostics);
   if (out.code === null) {
     logger.log("syntax error");
@@ -63,25 +63,26 @@ export async function deploy(file: string, logger: ILoggingStore): Promise<Canis
     const module = blobFromUint8Array(wasm);
     try {
       logger.log(`Deploying code...`);
-      const candid = await didToJs(candid_source);
       let updatedState: CanisterInfo | null = null;
       if (!canisterInfo) {
-        canisterInfo = await createCanister();
+        canisterInfo = await createCanister(logger);
         updatedState = await install(
           canisterInfo,
           module,
           "install",
-          candid.default,
+          candid_source,
+          logger
         );
       } else {
         updatedState = await install(
           canisterInfo,
           module,
           "reinstall",
+          candid_source,
           logger
         );
       }
-      updatedState.candid = candid_source;
+      // updatedState.candid = candid_source;
       canisterInfo = updatedState;
       return updatedState;
     } catch (err) {
@@ -91,13 +92,13 @@ export async function deploy(file: string, logger: ILoggingStore): Promise<Canis
   }
 }
 
-async function createCanister(): Promise<CanisterInfo> {
+async function createCanister(logger: ILoggingStore): Promise<CanisterInfo> {
   const backend = await getActor();
-  const id = await backend.getCanisterId();
+  const info = await backend.getCanisterId();
+  logger.log(`Created canister with id: ${info.id}`);
   return {
-    id,
-    name: '',
-    url: getUiCanisterUrl(id),
+    id: info.id,
+    timestamp: info.timestamp,
   };
 }
 
@@ -105,6 +106,7 @@ async function install(
   canisterInfo: CanisterInfo,
   module: BinaryBlob,
   mode: string,
+  candid_source: string,
   logger: ILoggingStore): Promise<CanisterInfo>
 {
   if (!canisterInfo) {
@@ -120,8 +122,8 @@ async function install(
   const backend = await getActor();
   const new_info = await backend.installCode(canisterInfo, installArgs);
   canisterInfo = new_info;
-  logger.log("Code installed");
-  Motoko.saveFile(`idl/${canisterId}.did`, canister);
+  logger.log(`Code installed at canister with id: ${canisterInfo.id}`);
+  Motoko.saveFile(`idl/${canisterId}.did`, candid_source);
   return canisterInfo;
 }
 

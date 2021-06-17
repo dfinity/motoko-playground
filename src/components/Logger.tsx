@@ -10,7 +10,7 @@ export interface ILoggingStore {
 const useLoggingStore = (): ILoggingStore => {
   const [logLines, setLogLines] = useState<string[]>([]);
   const clearLogs = () => setLogLines([]);
-  const log = (line: string) => setLogLines([line, ...logLines]);
+  const log = (line: string) => setLogLines(prevLines => [...prevLines, line]);
   return {
     clearLogs,
     log,

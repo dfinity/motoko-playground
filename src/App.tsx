@@ -52,7 +52,7 @@ const AppContainer = styled.div`
   border-top: 1px solid var(--grey400);
 `;
 
-const defaultMainFile = "main.mo";
+const defaultMainFile = "Main.mo";
 
 export function App(props) {
   const [workplaceState, workplaceDispatch] = useReducer(
@@ -87,8 +87,11 @@ export function App(props) {
   };
 
   const deployWorkplace = async () => {
-    saveWorkplaceToMotoko(workplace);
-    await deploy(defaultMainFile, logger);
+    console.log('deploy', workplaceState.files);
+    // TODO don't pass readme non-mo files to motoko
+    saveWorkplaceToMotoko(workplaceState.files);
+    const info = await deploy(defaultMainFile, logger);
+    console.log('deploy', info);
     // TODO set canister information after deploy succeeds
   }
 
