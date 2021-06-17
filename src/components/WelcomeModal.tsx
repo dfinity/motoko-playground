@@ -69,9 +69,12 @@ export function WelcomeModal(props: {
         <p style={{ fontSize: "1.6rem" }}>Select a project to get started</p>
         <SelectList height="18rem">
           {exampleProjects.map(
-            (project) => <>
-              <Button onClick={chooseAndCloseClickHandler(project)}>{project.name}</Button>
-            </>
+            (project, index) =>
+              <Button
+                key={project.name}
+                onClick={chooseAndCloseClickHandler(project)}>
+                {project.name}
+              </Button>
           )}
         </SelectList>
       </ModalContainer>
