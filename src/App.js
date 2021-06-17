@@ -128,6 +128,7 @@ export function App() {
           fileCode={workplace[selectedFile]}
           fileName={selectedFile}
           onSave={saveWorkplace}
+          onDeploy={interpretWorkplace}
         />
         <CandidUI />
       </AppContainer>

@@ -60,7 +60,7 @@ function setMarkers(diags, codeModel, monaco, fileName) {
 }
 
 // @ts-ignore
-export function Editor({ fileCode = "", fileName, onSave } = {}) {
+export function Editor({ fileCode = "", fileName, onSave, onDeploy } = {}) {
   const monaco = useMonaco();
   const saveChanges = (newValue) => {
     onSave(newValue);
@@ -83,7 +83,7 @@ export function Editor({ fileCode = "", fileName, onSave } = {}) {
       <PanelHeader>
         Editor
         <RightContainer>
-          <Button kind="primary" small>
+          <Button onClick={onDeploy} kind="primary" small>
             <img src={iconRabbit} alt="Rabbit icon" />
             <p>Deploy</p>
           </Button>

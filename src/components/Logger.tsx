@@ -8,7 +8,7 @@ const LoggingStore = () => {
   // @ts-ignore
   const log = (line) => {
     // @ts-ignore
-    setLogLines(prevLines => ([line, ...prevLines]))
+    setLogLines(prevLines => ([...prevLines, line]))
   }
 
   return {
