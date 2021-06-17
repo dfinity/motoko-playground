@@ -10,7 +10,7 @@ export const canister = {};
 // map canister name to ui
 export const canister_ui = {};
 // map canister name to candid
-export const canister_candid = {};
+export const canister_candid = null;
 
 function build(status, logger, func) {
   logger.clearLogs();
@@ -70,21 +70,9 @@ export function deploy(file, logger) {
     } else {
       logger.log(`(compile time: ${duration}s)`);
       const wasm = out.code;
+      console.log("wasm", wasm);
       (async () => {
         logger.log(`Deploying on IC...`);
-        const canister_name = prompt(
-          "Please enter canister name",
-          getCanisterName(file)
-        );
-        if (!canister_name) {
-          return;
-        }
-        canister_candid[canister_name] = candid_source;
-        // init args
-        const candid = await didToJs(candid_source);
-        const line = document.createElement("div");
-        line.id = "install";
-        logger.log(line);
       })().catch((err) => {
         logger.log("IC Exception:\n" + err.stack);
         throw err;
@@ -93,6 +81,30 @@ export function deploy(file, logger) {
   });
 }
 
-function getCanisterName(path) {
-  return path.split("/").pop().slice(0, -3);
-}
+// async function install(name, canisterInfo, module, arg, mode, candid) {
+//   if (!canisterInfo) {
+//     throw new Error("no canister id");
+//   }
+//   const canisterId = canisterInfo.id;
+//   const installArgs = {
+//     arg: [...arg],
+//     wasm_module: [...module],
+//     mode: { [mode]: null },
+//     canister_id: canisterId,
+//   };
+//   const new_info = await backend.installCode(canisterInfo, installArgs);
+//   canister[name] = new_info;
+//   log("Code installed");
+//   const canister = Actor.createActor(candid, { agent, canisterId });
+//   const line = document.createElement("div");
+//   line.id = name;
+//   log(line);
+//   // TODO add in iframe
+//   line.innerHTML = `<a href="${ui_canister_url}id=${canisterId}" target="_blank">Candid UI for ${name}</a>`;
+//   canister_ui[name] = line;
+//   Motoko.saveFile(`idl/${canisterId}.did`, canister_candid[name]);
+// }
+
+// function getCanisterName(path) {
+//   return path.split("/").pop().slice(0, -3);
+// }
