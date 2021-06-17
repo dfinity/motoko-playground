@@ -1,8 +1,4 @@
-import {useContext} from "react";
 import styled from "styled-components";
-import { WorkplaceDispatchContext } from "../contexts/WorkplaceState";
-import { exampleProjects } from "../examples";
-import { ExampleProject } from "../examples/types";
 import iconPackage from "../assets/images/icon-package.svg";
 import { ListButton } from "./shared/SelectList";
 
@@ -21,24 +17,6 @@ const CategoryTitle = styled.div`
   text-transform: uppercase;
   pointer-events: none;
 `;
-
-function ExampleProjectChooser(props: {
-  choices: ExampleProject[];
-}) {
-  const dispatch = useContext(WorkplaceDispatchContext)
-  return <>
-    {props.choices.map((item, index) => <>
-      <ListButton onClick={() => dispatch({
-        type: 'loadExampleProject',
-        payload: {
-          project: item
-        },
-      })}>
-        {item.name}
-      </ListButton>
-    </>)}
-  </>
-}
 
 // @ts-ignore
 export function Explorer({ workplace = {}, selectedFile, onSelectFile } = {}) {
@@ -61,10 +39,6 @@ export function Explorer({ workplace = {}, selectedFile, onSelectFile } = {}) {
         <p>mo:base</p>
       </ListButton>
       <CategoryTitle>Canisters</CategoryTitle>
-      <CategoryTitle>Example Projects</CategoryTitle>
-      <ExampleProjectChooser
-        choices={exampleProjects}
-        />
     </StyledExplorer>
   );
 }
