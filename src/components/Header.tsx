@@ -1,10 +1,10 @@
 import styled from "styled-components";
 import { Button } from "./shared/Button";
+import { RightContainer } from "./shared/RightContainer";
 import motokoLabLogo from "../assets/images/motoko-lab-logo.png";
-import motokoLabWordmark from "../assets/images/motoko-lab-wordmark.png";
-import iconArrowDown from "../assets/images/icon-arrow-down.svg";
+import motokoLabWordmark from "../assets/images/motoko-lab-wordmark.svg";
+import iconSun from "../assets/images/icon-sun.svg";
 import iconPlus from "../assets/images/icon-plus.svg";
-import iconMoon from "../assets/images/icon-moon.svg";
 
 const StyledHeader = styled("header")<{ darkMode?: boolean }>`
   display: flex;
@@ -22,54 +22,38 @@ const BrandContainer = styled.div`
   height: 6.4rem;
 `;
 
-const Logo = styled("img")<{ darkMode?: boolean }>`
+const Logo = styled.img`
   margin: -1.6rem;
   margin-left: -1.2rem;
   width: 10.9rem;
-  ${(props) => (props.darkMode ? "filter: brightness(1.7) saturate(0.9);" : "")}
 `;
 
-const WordMark = styled("img")<{ darkMode?: boolean }>`
+const WordMark = styled.img`
   margin-left: 2.4rem;
   height: 2.4rem;
-  ${(props) =>
-    props.darkMode
-      ? "filter: brightness(3) saturate(0.75) hue-rotate(-14deg);"
-      : ""}
 `;
 
-const RightContainer = styled.div`
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: flex-end;
-
+const ButtonContainer = styled(RightContainer)`
   > *:not(:last-child) {
     margin-right: 1.8rem;
   }
 `;
 
 const HeaderLink = styled.a`
+  letter-spacing: 0.04rem;
   font-size: 1.8rem;
+  font-weight: 500;
   padding: 1rem 1.6rem;
 `;
 
-export function Header({ darkMode = false }) {
+export function Header({ openTutorial, darkMode = false }) {
   return (
     <StyledHeader darkMode={darkMode}>
       <BrandContainer>
-        <Logo
-          darkMode={darkMode}
-          src={motokoLabLogo}
-          alt="Motoko Ghost Logo in wireframe"
-        />
-        <WordMark
-          darkMode={darkMode}
-          src={motokoLabWordmark}
-          alt="Motoko Lab"
-        />
+        <Logo src={motokoLabLogo} alt="Motoko Ghost Logo in wireframe" />
+        <WordMark src={motokoLabWordmark} alt="Motoko Lab" />
       </BrandContainer>
-      <RightContainer>
+      <ButtonContainer>
         <HeaderLink
           href="https://sdk.dfinity.org/docs/language-guide/motoko.html"
           target="_blank"
@@ -85,17 +69,13 @@ export function Header({ darkMode = false }) {
           Internet Computer SDK
         </HeaderLink>
         <Button width="7.8rem">
-          <img src={iconMoon} alt="Moon icon" />
+          <img src={iconSun} alt="Sun icon" />
         </Button>
-        <Button width="16.4rem">
-          <img src={iconArrowDown} alt="Down arrow icon" />
-          <p>Save & Share</p>
-        </Button>
-        <Button width="16.4rem">
+        <Button width="16.4rem" onClick={openTutorial}>
           <img src={iconPlus} alt="Plus icon" />
-          <p>New Project</p>
+          <p>Open Tutorial</p>
         </Button>
-      </RightContainer>
+      </ButtonContainer>
     </StyledHeader>
   );
 }

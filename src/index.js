@@ -3,6 +3,8 @@ import ReactDOM from "react-dom";
 import { App } from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { ProvideLogging } from "./components/Logger";
+import "./assets/styles/reboot.css";
+import "./assets/styles/variables.css";
 import "./assets/fonts/CircularXX.css";
 
 ReactDOM.render(

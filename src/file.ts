@@ -1,5 +1,3 @@
-import {canister, canister_ui} from "./build";
-
 // map filepath to code session { state, model }
 export const files = {};
 export var current_session_name = "main.mo";
@@ -29,12 +27,12 @@ export async function addPackage(name, repo, version, dir, logger) {
   }
   Promise.all(promises).then(() => {
     Motoko.addPackage(name, name + "/");
-    logger.log(`Package ${name} loaded (${promises.length} files).`)
-    const content = [
-      `// Fetched from ${repo}@${version}/${dir}`,
-      // @ts-ignore
-      ...fetchedFiles.map((s) => `mo:${s.slice(0, -3)}`),
-    ].join("\n");
+    logger.log(`Package ${name} loaded (${promises.length} files).`);
+    // const content = [
+    //   `// Fetched from ${repo}@${version}/${dir}`,
+    //   // @ts-ignore
+    //   ...fetchedFiles.map((s) => `mo:${s.slice(0, -3)}`),
+    // ].join("\n");
   });
 }
 

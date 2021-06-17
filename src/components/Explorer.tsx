@@ -3,36 +3,23 @@ import styled from "styled-components";
 import { WorkplaceDispatchContext } from "../contexts/WorkplaceState";
 import { exampleProjects } from "../examples";
 import { ExampleProject } from "../examples/types";
+import iconPackage from "../assets/images/icon-package.svg";
+import { ListButton } from "./shared/SelectList";
 
 const StyledExplorer = styled.div`
   width: var(--explorerWidth);
 `;
 
-const CategoryTitle = styled.summary`
-  padding-left: 1rem;
-  height: 2.4rem;
-  line-height: 2.4rem;
-  font-size: 1.2rem;
-  font-weight: bold;
-  border-bottom: 1px solid var(--borderColor);
-  text-transform: uppercase;
-`;
-
-const CategoryContents = styled.details``;
-
-const FileButton = styled("button")<{ isActive: boolean }>`
+const CategoryTitle = styled.div`
   display: flex;
   align-items: center;
-  width: 100%;
-  height: 4rem;
-  padding-left: 1.6rem;
-  font-family: "CircularXX", sans-serif;
-  font-size: 1.4rem;
-  color: ${(props) =>
-    props.isActive ? "var(--textColor)" : "var(--lightTextColor)"};
-  border: none;
-  background-color: ${(props) => (props.isActive ? "#ebf0fa" : "#f5f5f5")};
-  border-bottom: 1px solid var(--borderColor);
+  padding-left: 1rem;
+  height: 2.4rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-bottom: 1px solid var(--grey300);
+  text-transform: uppercase;
+  pointer-events: none;
 `;
 
 function ExampleProjectChooser(props: {
@@ -67,30 +54,27 @@ function ExampleProjectChooser(props: {
 export function Explorer({ workplace = {}, selectedFile, onSelectFile } = {}) {
   return (
     <StyledExplorer>
-      <CategoryContents open>
-        <CategoryTitle>Files</CategoryTitle>
-        {Object.keys(workplace).map((filename) => (
-          <FileButton
-            key={filename}
-            isActive={selectedFile === filename}
-            onClick={() => onSelectFile(filename)}
-          >
-            {filename}
-          </FileButton>
-        ))}
-      </CategoryContents>
-      <CategoryContents>
-        <CategoryTitle>Packages</CategoryTitle>
-      </CategoryContents>
-      <CategoryContents>
-        <CategoryTitle>Canisters</CategoryTitle>
-      </CategoryContents>
-      <CategoryContents open>
-        <CategoryTitle>Example Projects</CategoryTitle>
-        <ExampleProjectChooser
-          choices={exampleProjects}
-          />
-      </CategoryContents>
+      <CategoryTitle>Files</CategoryTitle>
+      {Object.keys(workplace).map((filename) => (
+        <ListButton
+          key={filename}
+          isActive={selectedFile === filename}
+          disabled={selectedFile === filename}
+          onClick={() => onSelectFile(filename)}
+        >
+          {filename}
+        </ListButton>
+      ))}
+      <CategoryTitle>Packages</CategoryTitle>
+      <ListButton disabled>
+        <img src={iconPackage} alt="Package icon" />
+        <p>mo:base</p>
+      </ListButton>
+      <CategoryTitle>Canisters</CategoryTitle>
+      <CategoryTitle>Example Projects</CategoryTitle>
+      <ExampleProjectChooser
+        choices={exampleProjects}
+        />
     </StyledExplorer>
   );
 }
