@@ -9,7 +9,7 @@ import { ILoggingStore } from './components/Logger';
 
 declare var Motoko: any;
 
-interface CanisterInfo {
+export interface CanisterInfo {
   id: Principal,
   timestamp: BigInt,
   name?: string,

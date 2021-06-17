@@ -87,12 +87,16 @@ export function App(props) {
   };
 
   const deployWorkplace = async () => {
-    console.log('deploy', workplaceState.files);
     // TODO don't pass readme non-mo files to motoko
     saveWorkplaceToMotoko(workplaceState.files);
     const info = await deploy(defaultMainFile, logger);
+    workplaceDispatch({
+      type: 'deployWorkplace',
+      payload: {
+        canisters: info ? [info] : [],
+      }
+    });
     console.log('deploy', info);
-    // TODO set canister information after deploy succeeds
   }
 
   const chooseExampleProject = useCallback(
@@ -155,7 +159,7 @@ export function App(props) {
           onSave={saveWorkplace}
           onDeploy={deployWorkplace}
         />
-        <CandidUI />
+        <CandidUI canisterId={workplaceState.canisters[0]?.id.toString()} />
       </AppContainer>
     </main>
     </WorkplaceDispatchContext.Provider>
