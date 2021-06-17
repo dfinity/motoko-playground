@@ -1,7 +1,6 @@
 import styled from "styled-components";
-import { ReactNode } from "react";
 
-const StyledButton = styled("button")<{
+export const Button = styled("button")<{
   small?: boolean;
   kind?: "primary" | "secondary";
   width?: string;
@@ -11,46 +10,50 @@ const StyledButton = styled("button")<{
   justify-content: center;
   padding: 0.6rem 1.6rem;
   font-size: 1.4rem;
-  font-weight: bold;
+  font-weight: 500;
   height: ${(props) => (props.small ? "3.3rem" : "4.5rem")};
   min-width: ${(props) => (props.small ? "5.6rem" : "7.8rem")};
   ${(props) => (props.width ? `width: ${props.width}` : "")};
   background-color: ${(props) =>
     props.kind
       ? props.kind === "primary"
-        ? "var(--primaryColor)"
+        ? "var(--colorPrimary)"
         : "white"
-      : "var(--lightBorderColor)"};
+      : "var(--grey200)"};
   color: ${(props) =>
     props.kind === "primary"
       ? "white"
       : props.kind === "secondary"
-      ? "var(--lightTextColor)"
-      : "var(--buttonTextColor)"};
+      ? "var(--grey500)"
+      : "var(--grey600)"};
   border: ${(props) =>
-    props.kind === "secondary" ? "1px solid var(--darkBorderColor)" : "none"};
+    props.kind === "secondary" ? "1px solid var(--grey400)" : "none"};
   border-radius: ${(props) => (props.small ? "1.7rem" : "2.3rem")};
 
   > :not(:last-child) {
     margin-right: 0.8rem;
   }
 
+  > p {
+    margin: 0;
+  }
+
+  &:hover {
+    background-color: ${(props) =>
+      props.kind === "primary" ? "var(--colorPrimaryDark)" : "var(--grey100)"};
+    ${(props) =>
+      !props.kind
+        ? `color: var(--colorPrimary);
+           border: 1px solid var(--grey300);
+           
+           > svg * {
+             fill: var(--colorPrimary);
+           } 
+           `
+        : ""};
+  }
+
   img {
     max-width: 2.5rem;
   }
 `;
-
-interface ButtonProps {
-  small?: boolean;
-  kind?: "primary" | "secondary";
-  width?: string;
-  children: ReactNode;
-}
-
-export function Button({ small = false, kind, width, children }: ButtonProps) {
-  return (
-    <StyledButton small={small} kind={kind} width={width}>
-      {children}
-    </StyledButton>
-  );
-}

@@ -9,6 +9,6 @@ export const PanelHeader = styled.header`
   padding: 0 1.2rem;
   font-size: 1.2rem;
   font-weight: bold;
-  border-bottom: 1px solid var(--borderColor);
+  border-bottom: 1px solid var(--grey300);
   text-transform: uppercase;
 `;
