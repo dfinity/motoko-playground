@@ -40,22 +40,11 @@ actor Counter {
 };
 `.trim();
 
-const dfxJson: FileContent = `
-{
-  "canisters": {
-    "counter": {
-      "main": "Main.mo"
-    }
-  }
-}
-`.trim()
-
 const counterExampleProject: ExampleProject = {
     name: "Counter",
     directory: {
         "README": counterReadme,
         "Main.mo": counterMain,
-				"dfx.json": dfxJson,
     }
 };
 

@@ -42,23 +42,11 @@ shared (install) actor class WhoAmI(someone : Principal) =
 };
 `.trim();
 
-const dfxJson: FileContent = `
-
-{
-  "canisters": {
-    "whoami": {
-      "main": "Main.mo"
-    }
-  }
-}
-`.trim()
-
 const project: ExampleProject = {
     name: "Who Am I?",
     directory: {
-        "README": readme,
-        "Main.mo": main,
-				"dfx.json": dfxJson,
+      "README": readme,
+      "Main.mo": main,
     }
 };
 

@@ -124,16 +124,6 @@ module Utils {
 };
 `.trim();
 
-const dfxJson: FileContent = `
-{
-	"canisters": {
-		"simple_to_do": {
-			"main": "Main.mo"
-		}
-	}
-}
-`.trim()
-
 const project: ExampleProject = {
     name: "Simple To-Do",
     directory: {
@@ -141,7 +131,6 @@ const project: ExampleProject = {
         "Main.mo": main,
         "Types.mo": types,
         "Utils.mo": utils,
-				"dfx.json": dfxJson,
     }
 };
 
