@@ -9,14 +9,17 @@ This example illustrates how to create a simple to-do checklist application.
 
 The application is built from the following Motoko source code files:
 
+*  \`Main.mo\`, which contains the actor definition and methods exposed by this
+   canister.
+  * this file accesses values from the \`module\` declarations in the other files via \`import\` declaration. For more on modules and imports, see https://sdk.dfinity.org/docs/language-guide/modules-and-imports.html#_importing_local_files
+
 *  \`Utils.mo\`, which contains the core functions for adding, completing, and
    removing to-do checklist items;
+  * Several of these utility functions make use of methods on the \`Array\` module from the Motoko Base Library, which is documented at https://sdk.dfinity.org/docs/base-libraries/array
 
 *  \`Types.mo\`, which contains the type definition of a to-do checklist item;
    and
 
-*  \`Main.mo\`, which contains the actor definition and methods exposed by this
-   canister.
 `.trim()
 
 const main: FileContent = `
