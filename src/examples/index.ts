@@ -1,6 +1,5 @@
 import helloWorld from "./hello-world";
 import { ExampleProject } from "./types";
-import firstExample from "./firstExample";
 import counter from "./counter";
 import calculator from "./calculator";
 import phonebook from "./phone-book";
@@ -15,7 +14,6 @@ export const emptyProject: ExampleProject = {
 }
 
 export const exampleProjects: ExampleProject[] = [
-    firstExample,
     helloWorld,
     counter,
     calculator,
