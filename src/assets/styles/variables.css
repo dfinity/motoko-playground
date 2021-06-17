@@ -1,0 +1,20 @@
+:root {
+  --headerHeight: 9.6rem;
+  --appHeight: calc(100vh - var(--headerHeight));
+  --sectionHeaderHeight: 4.8rem;
+  --editorHeight: calc(var(--appHeight) - var(--sectionHeaderHeight));
+  --explorerWidth: max(200px, 15%);
+
+  --colorPrimaryLight: #ebf0fa;
+  --colorPrimary: #387ff7;
+  --colorPrimaryDark: #1f4fa2;
+
+  --grey100: #f5f5f5;
+  --grey200: #efefef;
+  --grey300: #d9d9da;
+  --grey400: #c3c3c4;
+  --grey500: #818284;
+  --grey600: #555659;
+  --grey700: #3f4043;
+  --grey800: #292a2e;
+}

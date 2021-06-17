@@ -40,22 +40,11 @@ actor {
 };
 `.trim();
 
-const dfxJson: FileContent = `
-{
-	"canisters": {
-		"phone_book": {
-			"main": "Main.mo"
-		}
-	}
-}
-`.trim()
-
 const project: ExampleProject = {
     name: "Phone Book",
     directory: {
         "README": readme,
         "Main.mo": main,
-				"dfx.json": dfxJson,
     }
 };
 

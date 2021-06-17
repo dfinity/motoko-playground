@@ -1,34 +1,18 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useReducer, useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 import { CandidUI } from "./components/CandidUI";
 import { Editor } from "./components/Editor";
 import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
-import { files } from "./examples/firstExample/fileStructure";
 import { addPackage, saveWorkplaceToMotoko } from "./file";
 import { deploy } from "./build";
 import { useLogging } from "./components/Logger";
+import { workplaceReducer, WorkplaceDispatchContext } from "./contexts/WorkplaceState";
+import { WelcomeModal } from "./components/WelcomeModal";
+import { exampleProjects } from "./examples";
 
 const GlobalStyles = createGlobalStyle`
   :root {
-    --headerHeight: 9.6rem;
-    --appHeight: calc(100vh - var(--headerHeight));
-    --sectionHeaderHeight: 4.8rem;
-    --editorHeight: calc(var(--appHeight) - var(--sectionHeaderHeight));
-    --explorerWidth: max(200px, 15%);
-
-    --defaultColor: #818284;
-    --primaryColor: #387ff7;
-
-    --lightTextColor: #818284;
-    --buttonTextColor: #555659;
-    --textColor: #3f4043;
-    --darkTextColor: #292a2e;
-
-    --lightBorderColor: #efefef;
-    --borderColor: #d9d9da;
-    --darkBorderColor: #c3c3c4;
-
     font-family: "CircularXX", sans-serif;
     font-size: 10px;
   }
@@ -40,11 +24,11 @@ const GlobalStyles = createGlobalStyle`
   body {
     margin: 0;
     font-size: 1.6rem;
-    color: var(--textColor);
+    color: var(--grey700);
   }
 
   a {
-    color: var(--buttonTextColor);
+    color: var(--grey600);
     text-decoration: none;
 
     &:hover {
@@ -55,9 +39,6 @@ const GlobalStyles = createGlobalStyle`
   button {
     cursor: pointer;
 
-    &:hover {
-      filter: brightness(0.95);
-    }
     &:active {
       filter: brightness(0.85);
     }
@@ -68,26 +49,41 @@ const AppContainer = styled.div`
   display: flex;
   height: var(--appHeight);
   overflow-y: hidden;
-  border-top: 1px solid var(--darkBorderColor);
+  border-top: 1px solid var(--grey400);
 `;
 
 const defaultMainFile = "main.mo";
 
-export function App() {
-  const [workplace, setWorkplace] = useState(files);
-  const [selectedFile, setSelectedFile] = useState("main.mo");
+export function App(props) {
+  const [workplaceState, workplaceDispatch] = useReducer(
+    workplaceReducer.reduce,
+    {},
+    workplaceReducer.init);
+  const [motokoIsLoaded, setMotokoIsLoaded] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(true);
   const logger = useLogging();
 
-  const selectFile = (selectedFile) => {
-    setSelectedFile(selectedFile);
+  const selectFile = (selectedFile: string) => {
+    workplaceDispatch({
+      type: 'selectFile',
+      payload: {
+        path: selectedFile
+      }
+    })
   };
 
-  const saveWorkplace = (newCode) => {
-    // Resave workplace files with new code changes
-    const updatedWorkplace = { ...workplace };
-    updatedWorkplace[selectedFile] = newCode;
-    setWorkplace(updatedWorkplace);
-    saveWorkplaceToMotoko(updatedWorkplace);
+  const saveWorkplace = (newCode: string) => {
+    if ( ! workplaceState.selectedFile) {
+      console.warn('Called saveWorkplace with no selectedFile')
+      return;
+    }
+    workplaceDispatch({
+      type: 'saveFile',
+      payload: {
+        path: workplaceState.selectedFile,
+        contents: newCode
+      }
+    });
   };
 
   const deployWorkplace = async () => {
@@ -96,37 +92,69 @@ export function App() {
     // TODO set canister information after deploy succeeds
   }
 
+  const chooseExampleProject = useCallback(
+    (project) => workplaceDispatch({
+      type: 'loadExampleProject',
+      payload: {
+        project,
+      }
+    }),
+    [workplaceDispatch]
+  );
+
   // Add the Motoko package to allow for compilation / checking
   useEffect(() => {
     const script = document.createElement("script");
     script.addEventListener("load", () => {
+      setMotokoIsLoaded(true);
       addPackage("base", "dfinity/motoko-base", "dfx-0.6.16", "src", logger);
       logger.log("Compiler loaded.");
     });
     script.src =
       "https://download.dfinity.systems/motoko/0.5.3/js/moc-0.5.3.js";
     document.body.appendChild(script);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(
+    () => {
+      if ( ! motokoIsLoaded) {
+        // saving won't work until the Motoko global is loaded
+        return;
+      }
+      saveWorkplaceToMotoko(workplaceState.files);
+    },
+    [workplaceState.files, motokoIsLoaded]
+  )
+
   return (
+    <WorkplaceDispatchContext.Provider value={workplaceDispatch}>
     <main>
       <GlobalStyles />
-      <Header />
+      <WelcomeModal
+        exampleProjects={exampleProjects}
+        isOpen={isModalOpen}
+        chooseExampleProject={chooseExampleProject}
+        close={() => setIsModalOpen(false)}
+        />
+      <Header openTutorial={() => setIsModalOpen(true)} />
       <AppContainer>
         <Explorer
-          workplace={workplace}
-          selectedFile={selectedFile}
+          workplace={workplaceState.files}
+          selectedFile={workplaceState.selectedFile}
           onSelectFile={selectFile}
         />
         <Editor
-          fileCode={workplace[selectedFile]}
-          fileName={selectedFile}
+          fileCode={workplaceState.selectedFile
+            ? workplaceState.files[workplaceState.selectedFile]
+            : ""}
+          fileName={workplaceState.selectedFile}
           onSave={saveWorkplace}
           onDeploy={deployWorkplace}
         />
         <CandidUI />
       </AppContainer>
     </main>
+    </WorkplaceDispatchContext.Provider>
   );
 }

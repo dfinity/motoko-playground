@@ -63,22 +63,11 @@ actor Calc {
 };
 `.trim();
 
-const dfxJson: FileContent = `
-{
-  "canisters": {
-    "calc": {
-      "main": "Main.mo"
-    }
-  }
-}
-`.trim()
-
 const exampleProject: ExampleProject = {
     name: "Calculator",
     directory: {
         "README": readme,
         "Main.mo": main,
-				"dfx.json": dfxJson,
     }
 };
 

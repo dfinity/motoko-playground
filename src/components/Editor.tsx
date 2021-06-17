@@ -1,4 +1,3 @@
-import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
 import debounce from "lodash.debounce";
@@ -17,7 +16,7 @@ const EditorColumn = styled.div`
   flex-direction: column;
   flex: 1;
   height: var(--appHeight);
-  border: 1px solid var(--borderColor);
+  border: 1px solid var(--grey300);
   border-top: none;
   border-bottom: none;
 `;
@@ -26,11 +25,10 @@ const EditorContainer = styled.div`
   height: calc(var(--editorHeight) - 10rem);
 
   .margin {
-    background-color: #ececec !important;
+    background-color: var(--grey200) !important;
     width: 5.5ch !important;
   }
 `;
-
 
 function setMarkers(diags, codeModel, monaco, fileName) {
   const markers = [];
@@ -65,12 +63,16 @@ export function Editor({ fileCode = "", fileName, onSave, onDeploy } = {}) {
   const saveChanges = (newValue) => {
     onSave(newValue);
     // if (!codeModel) codeModel = monaco?.editor.getModel();
-    // @ts-ignore
     const check = Motoko.check(fileName);
     const diags = check.diagnostics;
-    // @ts-ignore
-    setMarkers(diags, monaco?.editor.getModel(`file:///${fileName}`), monaco, fileName);
-  }
+    setMarkers(
+      diags,
+      // @ts-ignore
+      monaco?.editor.getModel(encodeURIComponent(`file:///${fileName}`)),
+      monaco,
+      fileName
+    );
+  };
 
   const debouncedSaveChanges = debounce(saveChanges, 1000, { leading: false });
 
