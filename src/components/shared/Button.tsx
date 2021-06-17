@@ -47,10 +47,10 @@ export const Button = styled("button")<{
       !props.kind
         ? `color: var(--colorPrimary);
            border: 1px solid var(--grey300);
-           
+
            > svg * {
              fill: var(--colorPrimary);
-           } 
+           }
            `
         : ""};
   }
@@ -59,19 +59,3 @@ export const Button = styled("button")<{
     max-width: 2.5rem;
   }
 `;
-
-interface ButtonProps {
-  small?: boolean;
-  kind?: "primary" | "secondary";
-  onClick?: (ev: MouseEvent<HTMLButtonElement>) => void,
-  width?: string;
-  children: ReactNode;
-}
-
-export function Button({ small = false, kind, onClick, width, children }: ButtonProps) {
-  return (
-    <StyledButton small={small} kind={kind} onClick={onClick} width={width}>
-      {children}
-    </StyledButton>
-  );
-}
