@@ -6,7 +6,7 @@ import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
 import { files } from "./examples/firstExample/fileStructure";
 import { addPackage, saveWorkplaceToMotoko } from "./file";
-import { interpret, wasi } from "./build";
+import { deploy } from "./build";
 import { useLogging } from "./components/Logger";
 
 const GlobalStyles = createGlobalStyle`
@@ -16,19 +16,19 @@ const GlobalStyles = createGlobalStyle`
     --sectionHeaderHeight: 4.8rem;
     --editorHeight: calc(var(--appHeight) - var(--sectionHeaderHeight));
     --explorerWidth: max(200px, 15%);
-    
+
     --defaultColor: #818284;
     --primaryColor: #387ff7;
-    
+
     --lightTextColor: #818284;
     --buttonTextColor: #555659;
     --textColor: #3f4043;
     --darkTextColor: #292a2e;
-    
+
     --lightBorderColor: #efefef;
     --borderColor: #d9d9da;
     --darkBorderColor: #c3c3c4;
-    
+
     font-family: "CircularXX", sans-serif;
     font-size: 10px;
   }
@@ -42,19 +42,19 @@ const GlobalStyles = createGlobalStyle`
     font-size: 1.6rem;
     color: var(--textColor);
   }
-  
+
   a {
     color: var(--buttonTextColor);
     text-decoration: none;
-    
+
     &:hover {
       text-decoration: underline;
     }
   }
-  
+
   button {
     cursor: pointer;
-    
+
     &:hover {
       filter: brightness(0.95);
     }
@@ -90,15 +90,11 @@ export function App() {
     saveWorkplaceToMotoko(updatedWorkplace);
   };
 
-  const interpretWorkplace = () => {
+  const deployWorkplace = async () => {
     saveWorkplaceToMotoko(workplace);
-    interpret(defaultMainFile, logger);
-  };
-
-  const buildWorkplace = () => {
-    saveWorkplaceToMotoko(workplace);
-    wasi(defaultMainFile, logger);
-  };
+    await deploy(defaultMainFile, logger);
+    // TODO set canister information after deploy succeeds
+  }
 
   // Add the Motoko package to allow for compilation / checking
   useEffect(() => {
@@ -117,8 +113,6 @@ export function App() {
     <main>
       <GlobalStyles />
       <Header />
-      <button onClick={buildWorkplace}>Build</button>
-      <button onClick={interpretWorkplace}>Run</button>
       <AppContainer>
         <Explorer
           workplace={workplace}
@@ -129,7 +123,7 @@ export function App() {
           fileCode={workplace[selectedFile]}
           fileName={selectedFile}
           onSave={saveWorkplace}
-          onDeploy={interpretWorkplace}
+          onDeploy={deployWorkplace}
         />
         <CandidUI />
       </AppContainer>

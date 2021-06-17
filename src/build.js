@@ -1,12 +1,14 @@
 import { saveWorkplaceToMotoko } from "./file";
 import * as Wasi from "./wasiPolyfill";
 import { fetchActor, didToJs, render } from "./candid";
+import { getActor } from "./config/actor";
 import { Actor, blobFromUint8Array, Principal, IDL, UI } from "@dfinity/agent";
 
 // const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
 
 // map canister name to canister id
 export const canister = {};
+let canisterInfo = null;
 // map canister name to ui
 export const canister_ui = {};
 // map canister name to candid
@@ -51,6 +53,7 @@ export function wasi(file, logger) {
   });
 }
 
+// TODO this should be async
 export function deploy(file, logger) {
   build("Compiling...", logger, () => {
     const candid_result = Motoko.candid(file);
@@ -70,9 +73,27 @@ export function deploy(file, logger) {
     } else {
       logger.log(`(compile time: ${duration}s)`);
       const wasm = out.code;
-      console.log("wasm", wasm);
+      const module = blobFromUint8Array(wasm);
       (async () => {
         logger.log(`Deploying on IC...`);
+        if (!canisterInfo) {
+          canisterInfo = await createCanister(logger);
+          await install(
+            canisterInfo,
+            module,
+            "install",
+            candid.default,
+            logger
+          );
+        } else {
+          await install(
+            canisterInfo,
+            module,
+            "reinstall",
+            candid.default,
+            logger
+          );
+        }
       })().catch((err) => {
         logger.log("IC Exception:\n" + err.stack);
         throw err;
@@ -81,30 +102,33 @@ export function deploy(file, logger) {
   });
 }
 
-// async function install(name, canisterInfo, module, arg, mode, candid) {
-//   if (!canisterInfo) {
-//     throw new Error("no canister id");
-//   }
-//   const canisterId = canisterInfo.id;
-//   const installArgs = {
-//     arg: [...arg],
-//     wasm_module: [...module],
-//     mode: { [mode]: null },
-//     canister_id: canisterId,
-//   };
-//   const new_info = await backend.installCode(canisterInfo, installArgs);
-//   canister[name] = new_info;
-//   log("Code installed");
-//   const canister = Actor.createActor(candid, { agent, canisterId });
-//   const line = document.createElement("div");
-//   line.id = name;
-//   log(line);
-//   // TODO add in iframe
-//   line.innerHTML = `<a href="${ui_canister_url}id=${canisterId}" target="_blank">Candid UI for ${name}</a>`;
-//   canister_ui[name] = line;
-//   Motoko.saveFile(`idl/${canisterId}.did`, canister_candid[name]);
-// }
+async function createCanister(logger) {
+  const backend = await getActor();
+  const info = await backend.getCanisterId();
+  return canisterInfo;
+}
 
-// function getCanisterName(path) {
-//   return path.split("/").pop().slice(0, -3);
-// }
+async function install(canisterInfo, module, mode, candid, logger) {
+  if (!canisterInfo) {
+    throw new Error("no canister id");
+  }
+  const canisterId = canisterInfo.id;
+  const installArgs = {
+    arg: [],
+    wasm_module: [...module],
+    mode: { [mode]: null },
+    canister_id: canisterId,
+  };
+  const backend = await getActor();
+  const new_info = await backend.installCode(canisterInfo, installArgs);
+  canisterInfo = new_info;
+  logger.log("Code installed");
+  const canister = Actor.createActor(candid, { agent, canisterId });
+  // TODO add in iframe
+  // canisterUi =
+  Motoko.saveFile(`idl/${canisterId}.did`, canister);
+}
+
+function getCanisterName(path) {
+  return path.split("/").pop().slice(0, -3);
+}
