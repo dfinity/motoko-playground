@@ -17,7 +17,7 @@ jobs:
       run: |
         echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
         echo "/home/runner/bin" >> $GITHUB_PATH
-        wget --output-document $GITHUB_PATH https://github.com/chenyan2002/ic-repl/releases/download/$IC_REPL_VERSION/ic-repl-linux64
+        wget --output-document $GITHUB_PATH/ic-repl https://github.com/chenyan2002/ic-repl/releases/download/$IC_REPL_VERSION/ic-repl-linux64
     - name: Build
       run: |
         dfx cache install
