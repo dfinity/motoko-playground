@@ -17,25 +17,28 @@
 
 @font-face {
   font-family: "CircularXX";
-  font-weight: 200;
-  font-style: normal;
+  font-weight: 100;
   src: local(CircularXX), local(CircularXXWeb-Light),
-    url(./CircularXXWeb-Light.woff2) format("woff2"),
-    url(./CircularXXWeb-Light.woff) format("woff");
+    url(./CircularXXWeb-Light.woff2) format("woff2");
 }
 
 @font-face {
   font-family: "CircularXX";
-  font-style: normal;
+  font-weight: 400;
+  src: local(CircularXX), local(CircularXXWeb-Book),
+    url(./CircularXXWeb-Book.woff2) format("woff2");
+}
+
+@font-face {
+  font-family: "CircularXX";
+  font-weight: 700;
   src: local(CircularXX), local(CircularXXWeb-Medium),
     url(./CircularXXWeb-Medium.woff) format("woff");
 }
 
 @font-face {
   font-family: "CircularXX";
-  font-weight: bold;
-  font-style: normal;
+  font-weight: 900;
   src: local(CircularXX), local(CircularXXWeb-Bold),
-    url(./CircularXXWeb-Bold.woff2) format("woff2"),
-    url(./CircularXXWeb-Bold.woff) format("woff");
+    url(./CircularXXWeb-Bold.woff2) format("woff2");
 }
