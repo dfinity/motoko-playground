@@ -27,8 +27,8 @@ export function Console() {
       </LogHeader>
       {/*
          // @ts-ignore */}
-      {logger.logLines.map((line) => (
-        <pre>{line}</pre>
+      {logger.logLines.map((line, index) => (
+        <pre key={index}>{line}</pre>
       ))}
     </LogContainer>
   );
