@@ -26,27 +26,17 @@ function ExampleProjectChooser(props: {
   choices: ExampleProject[];
 }) {
   const dispatch = useContext(WorkplaceDispatchContext)
-  const List = styled.ul`
-    list-style-type: none;
-    padding-left: inherit;
-  `
-  const ListItem = styled.li`
-    cursor: pointer;
-    margin: 1em;
-  `
   return <>
-    <List>
     {props.choices.map((item, index) => <>
-      <ListItem onClick={() => dispatch({
+      <ListButton onClick={() => dispatch({
         type: 'loadExampleProject',
         payload: {
           project: item
         },
       })}>
         {item.name}
-      </ListItem>
+      </ListButton>
     </>)}
-    </List>
   </>
 }
 
