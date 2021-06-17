@@ -9,26 +9,47 @@ export interface WorkplaceState {
 }
 
 export type WorkplaceReducerAction =
+/**
+ * Call to replace all current files with files from an ExampleProject
+ */
 | { type: 'loadExampleProject',
     payload: {
       project: ExampleProject
     }
   }
+/**
+ * Call to reset all state to initial values.
+ * Files are reset to an empty project.
+ */
 | { type: 'reset', payload: {} }
+/**
+ * Call to set a new file path as the currently selected file
+ */
 | { type: 'selectFile',
     payload: {
+      /** path of file that is now selected. Should correspond to a property in state.files */
       path: string
     }
   }
+/**
+ * Call to update the contents of a specific file in the current files
+ */
 | { type: 'saveFile',
     payload: {
+      /** path of file that should be updated. Should correspond to a property in state.files */
       path: string;
+      /** new contents of file */
       contents: string;
     },
   }
 ;
 
+/**
+ * Reducer to reduce actions that modify state about the Editor 'Workplace'.
+ * Meant to be used with `React.useReducer` or similar.
+ */
 export const workplaceReducer = {
+  /** Create initial state */
   init(props: {}): WorkplaceState {
     const files = {...emptyProject.directory}
     const selectedFile = selectFirstFile(emptyProject)
@@ -37,6 +58,7 @@ export const workplaceReducer = {
       selectedFile,
     }
   },
+  /** Return updated state based on an action */
   reduce(state: WorkplaceState, action: WorkplaceReducerAction): WorkplaceState {
     switch (action.type) {
       case 'loadExampleProject':
@@ -70,7 +92,12 @@ export const workplaceReducer = {
   }
 }
 
-// https://reactjs.org/docs/hooks-faq.html#how-to-avoid-passing-callbacks-down
+/**
+ * Context used to access `dispatch` to update WorkplaceState.
+ * You can use this instead of passing callbacks all the way down the component tree.
+ * Recommended as good practice in larger trees by
+ *  https://reactjs.org/docs/hooks-faq.html#how-to-avoid-passing-callbacks-down.
+ */
 export const WorkplaceDispatchContext = React.createContext<React.Dispatch<WorkplaceReducerAction>>(() => {
   console.warn('using default WorkplaceDispathcContext. Make sure to Provide one in your component tree')
 })
