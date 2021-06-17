@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 import { CandidUI } from "./components/CandidUI";
 import { Editor } from "./components/Editor";
 import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
-import { files } from "./examples/firstExample/fileStructure";
 import { addPackage, saveWorkplaceToMotoko } from "./file";
 import { useLogging } from "./components/Logger";
+import { workplaceReducer, WorkplaceDispatchContext } from "./contexts/WorkplaceState";
 
 const GlobalStyles = createGlobalStyle`
   :root {
@@ -70,27 +70,43 @@ const AppContainer = styled.div`
   border-top: 1px solid var(--darkBorderColor);
 `;
 
-export function App() {
-  const [workplace, setWorkplace] = useState(files);
-  const [selectedFile, setSelectedFile] = useState("main.mo");
+export function App(props) {
+  const [workplaceState, workplaceDispatch] = useReducer(
+    workplaceReducer.reduce,
+    {},
+    workplaceReducer.init);
+  console.log('workplaceState', workplaceState)
+  const [motokoIsLoaded, setMotokoIsLoaded] = useState(false);
   const logger = useLogging();
 
-  const selectFile = (selectedFile) => {
-    setSelectedFile(selectedFile);
+  const selectFile = (selectedFile: string) => {
+    workplaceDispatch({
+      type: 'selectFile',
+      payload: {
+        path: selectedFile
+      }
+    })
   };
 
-  const saveWorkplace = (newCode) => {
-    // Resave workplace files with new code changes
-    const updatedWorkplace = { ...workplace };
-    updatedWorkplace[selectedFile] = newCode;
-    setWorkplace(updatedWorkplace);
-    saveWorkplaceToMotoko(updatedWorkplace);
+  const saveWorkplace = (newCode: string) => {
+    if ( ! workplaceState.selectedFile) {
+      console.warn('Called saveWorkplace with no selectedFile')
+      return;
+    }
+    workplaceDispatch({
+      type: 'saveFile',
+      payload: {
+        path: workplaceState.selectedFile,
+        contents: newCode
+      }
+    });
   };
 
   // Add the Motoko package to allow for compilation / checking
   useEffect(() => {
     const script = document.createElement("script");
     script.addEventListener("load", () => {
+      setMotokoIsLoaded(true);
       addPackage("base", "dfinity/motoko-base", "dfx-0.6.16", "src", logger);
       logger.log("Compiler loaded.");
     });
@@ -100,23 +116,38 @@ export function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(
+    () => {
+      if ( ! motokoIsLoaded) {
+        // saving won't work until the Motoko global is loaded
+        return;
+      }
+      saveWorkplaceToMotoko(workplaceState.files);
+    },
+    [workplaceState.files, motokoIsLoaded]
+  )
+
   return (
+    <WorkplaceDispatchContext.Provider value={workplaceDispatch}>
     <main>
       <GlobalStyles />
       <Header />
       <AppContainer>
         <Explorer
-          workplace={workplace}
-          selectedFile={selectedFile}
+          workplace={workplaceState.files}
+          selectedFile={workplaceState.selectedFile}
           onSelectFile={selectFile}
         />
         <Editor
-          fileCode={workplace[selectedFile]}
-          fileName={selectedFile}
+          fileCode={workplaceState.selectedFile
+            ? workplaceState.files[workplaceState.selectedFile]
+            : ""}
+          fileName={workplaceState.selectedFile}
           onSave={saveWorkplace}
         />
         <CandidUI />
       </AppContainer>
     </main>
+    </WorkplaceDispatchContext.Provider>
   );
 }

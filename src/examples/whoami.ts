@@ -1,22 +1,9 @@
 import { ExampleProject, FileContent } from "./types";
 
 const readme: FileContent = `
-# Simple To-Do
+# Who Am I?
 
-This example illustrates how to create a simple to-do checklist application.
-
-## Introduction
-
-The application is built from the following Motoko source code files:
-
-*  \`Utils.mo\`, which contains the core functions for adding, completing, and
-   removing to-do checklist items;
-
-*  \`Types.mo\`, which contains the type definition of a to-do checklist item;
-   and
-
-*  \`Main.mo\`, which contains the actor definition and methods exposed by this
-   canister.
+This example demonstrates how a canister can identify its caller and itself.
 `.trim()
 
 const main: FileContent = `

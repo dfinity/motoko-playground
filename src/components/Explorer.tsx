@@ -1,4 +1,8 @@
+import {useContext} from "react";
 import styled from "styled-components";
+import { WorkplaceDispatchContext } from "../contexts/WorkplaceState";
+import { exampleProjects } from "../examples";
+import { ExampleProject } from "../examples/types";
 
 const StyledExplorer = styled.div`
   width: var(--explorerWidth);
@@ -31,6 +35,34 @@ const FileButton = styled("button")<{ isActive: boolean }>`
   border-bottom: 1px solid var(--borderColor);
 `;
 
+function ExampleProjectChooser(props: {
+  choices: ExampleProject[];
+}) {
+  const dispatch = useContext(WorkplaceDispatchContext)
+  const List = styled.ul`
+    list-style-type: none;
+    padding-left: inherit;
+  `
+  const ListItem = styled.li`
+    cursor: pointer;
+    margin: 1em;
+  `
+  return <>
+    <List>
+    {props.choices.map((item, index) => <>
+      <ListItem onClick={() => dispatch({
+        type: 'loadExampleProject',
+        payload: {
+          project: item
+        },
+      })}>
+        {item.name}
+      </ListItem>
+    </>)}
+    </List>
+  </>
+}
+
 // @ts-ignore
 export function Explorer({ workplace = {}, selectedFile, onSelectFile } = {}) {
   return (
@@ -52,6 +84,12 @@ export function Explorer({ workplace = {}, selectedFile, onSelectFile } = {}) {
       </CategoryContents>
       <CategoryContents>
         <CategoryTitle>Canisters</CategoryTitle>
+      </CategoryContents>
+      <CategoryContents open>
+        <CategoryTitle>Example Projects</CategoryTitle>
+        <ExampleProjectChooser
+          choices={exampleProjects}
+          />
       </CategoryContents>
     </StyledExplorer>
   );
