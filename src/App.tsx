@@ -8,6 +8,7 @@ import { addPackage, saveWorkplaceToMotoko } from "./file";
 import { useLogging } from "./components/Logger";
 import { workplaceReducer, WorkplaceDispatchContext } from "./contexts/WorkplaceState";
 import { WelcomeModal } from "./components/WelcomeModal";
+import { exampleProjects } from "./examples";
 
 const GlobalStyles = createGlobalStyle`
   :root {
@@ -111,7 +112,17 @@ export function App(props) {
     <WorkplaceDispatchContext.Provider value={workplaceDispatch}>
     <main>
       <GlobalStyles />
-      <WelcomeModal isOpen={isModalOpen} close={() => setIsModalOpen(false)} />
+      <WelcomeModal
+        exampleProjects={exampleProjects}
+        isOpen={isModalOpen}
+        chooseExampleProject={(project) => workplaceDispatch({
+          type: 'loadExampleProject',
+          payload: {
+            project,
+          }
+        })}
+        close={() => setIsModalOpen(false)}
+        />
       <Header openTutorial={() => setIsModalOpen(true)} />
       <AppContainer>
         <Explorer
