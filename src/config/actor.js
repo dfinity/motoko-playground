@@ -1,6 +1,6 @@
 import { Actor, HttpAgent } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { idlFactory, canisterId } from "dfx-generated/motoko_app";
+import { idlFactory, canisterId } from "dfx-generated/backend";
 
 import didjs_idl from "../didjs.did";
 
@@ -54,6 +54,12 @@ const didjs = Actor.createActor(didjs_idl, {
   agent,
   canisterId: Principal.fromText(uiCanisterId),
 });
+
+export function getUiCanisterUrl(canisterId) {
+  return isLocalEnv
+    ? `http://${canisterId}.${dfxConfig.networks.local.bind}`
+    : `https://${canisterId}.raw.ic0.app/?`;
+}
 
 export async function didToJs(source) {
   const js = await didjs.did_to_js(source);

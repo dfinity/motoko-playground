@@ -1,7 +1,7 @@
 
 import {useState, createContext, useContext} from "react";
 
-interface ILoggingStore {
+export interface ILoggingStore {
   clearLogs(): void;
   log(line: string): void;
   logLines: string[];
