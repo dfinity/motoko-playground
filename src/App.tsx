@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer, useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 import { CandidUI } from "./components/CandidUI";
 import { Editor } from "./components/Editor";
@@ -83,6 +83,16 @@ export function App(props) {
     });
   };
 
+  const chooseExampleProject = useCallback(
+    (project) => workplaceDispatch({
+      type: 'loadExampleProject',
+      payload: {
+        project,
+      }
+    }),
+    [workplaceDispatch]
+  );
+
   // Add the Motoko package to allow for compilation / checking
   useEffect(() => {
     const script = document.createElement("script");
@@ -115,12 +125,7 @@ export function App(props) {
       <WelcomeModal
         exampleProjects={exampleProjects}
         isOpen={isModalOpen}
-        chooseExampleProject={(project) => workplaceDispatch({
-          type: 'loadExampleProject',
-          payload: {
-            project,
-          }
-        })}
+        chooseExampleProject={chooseExampleProject}
         close={() => setIsModalOpen(false)}
         />
       <Header openTutorial={() => setIsModalOpen(true)} />
