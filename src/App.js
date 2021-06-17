@@ -6,6 +6,7 @@ import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
 import { files } from "./examples/fileStructure";
 import { addPackage, saveWorkplaceToMotoko } from "./file";
+import { interpret, wasi } from "./build";
 import { useLogging } from "./components/Logger";
 
 const GlobalStyles = createGlobalStyle`
@@ -70,6 +71,8 @@ const AppContainer = styled.div`
   border-top: 1px solid var(--darkBorderColor);
 `;
 
+const defaultMainFile = "main.mo";
+
 export function App() {
   const [workplace, setWorkplace] = useState(files);
   const [selectedFile, setSelectedFile] = useState("main.mo");
@@ -85,6 +88,16 @@ export function App() {
     updatedWorkplace[selectedFile] = newCode;
     setWorkplace(updatedWorkplace);
     saveWorkplaceToMotoko(updatedWorkplace);
+  };
+
+  const interpretWorkplace = () => {
+    saveWorkplaceToMotoko(workplace);
+    interpret(defaultMainFile, logger);
+  };
+
+  const buildWorkplace = () => {
+    saveWorkplaceToMotoko(workplace);
+    wasi(defaultMainFile, logger);
   };
 
   // Add the Motoko package to allow for compilation / checking
@@ -103,6 +116,8 @@ export function App() {
     <main>
       <GlobalStyles />
       <Header />
+      <button onClick={buildWorkplace}>Build</button>
+      <button onClick={interpretWorkplace}>Run</button>
       <AppContainer>
         <Explorer
           workplace={workplace}

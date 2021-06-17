@@ -4,12 +4,15 @@ import {useState, createContext, useContext} from "react";
 const LoggingStore = () => {
   const [logLines, setLogLines] = useState([]);
 
-  const clearLog = () => setLogLines([]);
+  const clearLogs = () => setLogLines([]);
   // @ts-ignore
-  const log = (line) => setLogLines([line, ...logLines])
+  const log = (line) => {
+    // @ts-ignore
+    setLogLines(prevLines => ([line, ...prevLines]))
+  }
 
   return {
-    clearLog,
+    clearLogs,
     log,
     logLines,
   }
