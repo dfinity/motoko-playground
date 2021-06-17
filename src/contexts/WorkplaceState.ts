@@ -1,5 +1,5 @@
 import * as React from "react";
-import { emptyProject, selectFirstFile } from "../examples";
+import { emptyProject, selectFirstFile, withOnlyUserVisibleFiles } from "../examples";
 import { ExampleProject } from "../examples/types";
 
 
@@ -62,7 +62,7 @@ export const workplaceReducer = {
   reduce(state: WorkplaceState, action: WorkplaceReducerAction): WorkplaceState {
     switch (action.type) {
       case 'loadExampleProject':
-        const newProjectFiles = {...action.payload.project.directory};
+        const newProjectFiles = withOnlyUserVisibleFiles(action.payload.project.directory);
         return {
           ...state,
           files: newProjectFiles,

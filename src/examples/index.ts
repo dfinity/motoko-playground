@@ -37,3 +37,16 @@ export function selectFirstFile(project: ExampleProject): string | null {
     if (fileNames.length > 0) { return fileNames[0]; }
     return null;
 }
+
+/**
+ * Given project files, return a subset that should be shown to end-users
+ * of the Motoko Playground.
+ * e.g. no 'dfx.json'
+ */
+export function withOnlyUserVisibleFiles(files: ExampleProject['directory']): ExampleProject['directory'] {
+    const entries = Object.entries(files);
+    return Object.fromEntries(entries.filter(([path, value]) => {
+        if (path === 'dfx.json') { return false; }
+        return true;
+    }));
+}
