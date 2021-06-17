@@ -1,7 +1,6 @@
 import { saveWorkplaceToMotoko } from "./file";
 import * as Wasi from "./wasiPolyfill";
-import { fetchActor, didToJs, render } from "./candid";
-import { getActor } from "./config/actor";
+import { getActor, agent, didToJs, uiCanisterUrl } from "./config/actor";
 import { Actor, blobFromUint8Array, Principal, IDL, UI } from "@dfinity/agent";
 
 // const ic0 = Actor.createActor(ic_idl, { canisterId: Principal.fromHex('') });
@@ -11,7 +10,9 @@ export const canister = {};
 let canisterInfo = null;
 // map canister name to ui
 export const canister_ui = {};
+let canisterUi = null;
 // map canister name to candid
+let canisterCandid = null;
 export const canister_candid = null;
 
 function build(status, logger, func) {
@@ -53,9 +54,9 @@ export function wasi(file, logger) {
   });
 }
 
-// TODO this should be async
-export function deploy(file, logger) {
-  build("Compiling...", logger, () => {
+// TODO this should be async, fix async
+export async function deploy(file, logger) {
+  build("Compiling...", logger, async () => {
     const candid_result = Motoko.candid(file);
     // setMarkers(candid_result.diagnostics);
     const candid_source = candid_result.code;
@@ -74,11 +75,14 @@ export function deploy(file, logger) {
       logger.log(`(compile time: ${duration}s)`);
       const wasm = out.code;
       const module = blobFromUint8Array(wasm);
-      (async () => {
+      try {
         logger.log(`Deploying on IC...`);
+        canisterCandid = candid_source;
+        const candid = await didToJs(candid_source);
+        let updatedState = {};
         if (!canisterInfo) {
           canisterInfo = await createCanister(logger);
-          await install(
+          updatedState = await install(
             canisterInfo,
             module,
             "install",
@@ -86,7 +90,7 @@ export function deploy(file, logger) {
             logger
           );
         } else {
-          await install(
+          updatedState = await install(
             canisterInfo,
             module,
             "reinstall",
@@ -94,10 +98,11 @@ export function deploy(file, logger) {
             logger
           );
         }
-      })().catch((err) => {
+        return updatedState;
+      } catch (err) {
         logger.log("IC Exception:\n" + err.stack);
         throw err;
-      });
+      }
     }
   });
 }
@@ -123,10 +128,17 @@ async function install(canisterInfo, module, mode, candid, logger) {
   const new_info = await backend.installCode(canisterInfo, installArgs);
   canisterInfo = new_info;
   logger.log("Code installed");
-  const canister = Actor.createActor(candid, { agent, canisterId });
+  canisterUi = { canisterUrl: uiCanisterUrl, canisterId };
+  // TODO don't think this is needed
+  // const canister = Actor.createActor(candid, { agent, canisterId });
   // TODO add in iframe
   // canisterUi =
   Motoko.saveFile(`idl/${canisterId}.did`, canister);
+  return {
+    canisterInfo,
+    canisterUi,
+    canisterCandid,
+  };
 }
 
 function getCanisterName(path) {
