@@ -1,11 +1,11 @@
 {
   "canisters": {
-    "motoko_app": {
-      "main": "backend/main.mo",
+    "backend": {
+      "main": "backend/Main.mo",
       "type": "motoko"
     },
     "react_app": {
-      "dependencies": ["motoko_app"],
+      "dependencies": ["backend"],
       "frontend": {
         "entrypoint": "public/index.html"
       },
