@@ -50,7 +50,11 @@ assert _ ~= "No available canister id";
 // Out of cycle
 let id = call ic.provisional_create_canister_with_cycles(record { settings = null; amount = opt 10_000_000 });
 let S = id.canister_id;
-let init = (null : opt record {});
+let init = opt record {
+  cycles_per_canister = 105_000_000_000;
+  max_num_canisters = 2;
+  TTL = 60_000_000_000;
+};
 call ic.install_code(
   record {
     arg = encode (init);
@@ -60,7 +64,7 @@ call ic.install_code(
   },
 );
 fail call S.getCanisterId();
-assert _ ~= "from a call when only 10000000 was available";
+assert _ ~= "attempted to send 105000000000 cycles";
 call ic.provisional_top_up_canister(
   record {
     canister_id = S;
