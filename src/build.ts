@@ -66,19 +66,19 @@ export async function deploy(file: string, logger: ILoggingStore): Promise<Canis
       let updatedState: CanisterInfo | null = null;
       if (!canisterInfo) {
         canisterInfo = await createCanister(logger);
+        canisterInfo.candid = candid_source;
         updatedState = await install(
           canisterInfo,
           module,
           "install",
-          candid_source,
           logger
         );
       } else {
+        canisterInfo.candid = candid_source;
         updatedState = await install(
           canisterInfo,
           module,
           "reinstall",
-          candid_source,
           logger
         );
       }
@@ -106,7 +106,6 @@ async function install(
   canisterInfo: CanisterInfo,
   module: BinaryBlob,
   mode: string,
-  candid_source: string,
   logger: ILoggingStore): Promise<CanisterInfo>
 {
   if (!canisterInfo) {
@@ -123,7 +122,7 @@ async function install(
   const new_info = await backend.installCode(canisterInfo, installArgs);
   canisterInfo = new_info;
   logger.log(`Code installed at canister with id: ${canisterInfo.id}`);
-  Motoko.saveFile(`idl/${canisterId}.did`, candid_source);
+  Motoko.saveFile(`idl/${canisterId}.did`, canisterInfo.candid);
   return canisterInfo;
 }
 
