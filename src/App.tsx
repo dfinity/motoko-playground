@@ -90,7 +90,6 @@ export function App() {
 
   const chooseExampleProject = useCallback(
     (project) => {
-      console.log(`App:104 (anon)`, { project });
       workplaceDispatch({
         type: "loadExampleProject",
         payload: {
