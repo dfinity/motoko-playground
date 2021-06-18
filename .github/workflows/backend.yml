@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DFX_VERSION: 0.7.2
-      IC_REPL_VERSION: 2021-05-24
+      IC_REPL_VERSION: 2021-06-17
     steps:
     - uses: actions/checkout@v2
     - name: Install
