@@ -24,7 +24,7 @@ jobs:
       run: |
         dfx cache install
         dfx start --background --no-artificial-delay
-        dfx canister create backend
+        dfx canister --no-wallet create backend
         dfx build backend
     - name: Test
       run: |
