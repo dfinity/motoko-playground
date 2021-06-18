@@ -4,6 +4,18 @@ const readme: FileContent = `
 # Who Am I?
 
 This example demonstrates how a canister can identify its caller and itself.
+
+For more on caller identification, see https://sdk.dfinity.org/docs/language-guide/caller-id.html.
+
+## Overview
+
+\`Main.mo\` declares an actor class, which enable you to create multiple instances of the same kind of actor.
+Read more about actor classes at https://sdk.dfinity.org/docs/language-guide/actor-classes.html.
+
+See the comments in the actor class declaration for an explanation of each method.
+
+Several methods make use of \`Principal\` from the Motoko Base Library, which is documented at https://sdk.dfinity.org/docs/base-libraries/principal.html#type.Principal.
+
 `.trim()
 
 const main: FileContent = `

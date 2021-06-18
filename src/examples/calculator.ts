@@ -4,23 +4,28 @@ const readme: FileContent = `
 # Calculator
 
 This example demonstrates a four-function calculator application. It uses an
-[orthogonally persistent](https://sdk.dfinity.org/docs/language-guide/motoko.html#_orthogonal_persistence) \`cell\` variable to store an arbitrary precision integer
+orthogonally persistent \`cell\` variable to store an arbitrary precision integer
 that represents the result of the most recent calculation.
 
-## Introduction
+## Overview
 
 The application provides an interface that exposes the following methods:
 
-*  \`add\`, which accepts input and performs addition;
+*  \`add\`, which accepts input and performs addition
 
-*  \`sub\`, which accepts input and performs subtraction;
+*  \`sub\`, which accepts input and performs subtraction
 
-*  \`mul\`, which accepts input and performs multiplication;
+*  \`mul\`, which accepts input and performs multiplication
 
-*  \`div\`, which accepts input, performs division, and returns an optional type
-   to guard against division by zero; and
+*  \`div\`, which accepts input, performs division, and returns an optional type to guard against division by zero
+  * For more on Option types, see:
+	* Motoko Base Library functions for woring with Option types: https://sdk.dfinity.org/docs/base-libraries/option
+	* https://sdk.dfinity.org/docs/language-guide/errors.html#_error_reporting_with_option
 
 *  \`clearall\`, which clears the \`cell\` variable by setting its value to zero.
+
+Many of these methods modify the \`cell: Int\` using operators documented at https://sdk.dfinity.org/docs/developers-guide/basic-syntax-rules.html#_numbers_text_and_operators.
+
 `.trim()
 
 const main: FileContent = `
