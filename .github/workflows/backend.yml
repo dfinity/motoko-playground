@@ -1,0 +1,38 @@
+name: Backend
+
+on:
+  push:
+    branches: [ main, mvp ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DFX_VERSION: 0.7.2
+      IC_REPL_VERSION: 2021-06-17
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install
+      run: |
+        echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+        echo "/home/runner/bin" >> $GITHUB_PATH
+        wget https://github.com/chenyan2002/ic-repl/releases/download/$IC_REPL_VERSION/ic-repl-linux64
+        cp ./ic-repl-linux64 /home/runner/bin/ic-repl
+        chmod a+x /home/runner/bin/ic-repl
+    - name: Build
+      run: |
+        dfx cache install
+        dfx start --background --no-artificial-delay
+        dfx canister --no-wallet create backend
+        dfx build backend
+    - name: Test
+      run: |
+        (for f in backend/tests/*.test.sh; do
+          echo "==== Run test $f ===="
+          ic-repl -r http://localhost:8000 "$f" || exit
+        done)
+    - name: stop dfx
+      run: |
+        echo "dfx stop"
+        dfx stop

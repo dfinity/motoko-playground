@@ -3,22 +3,21 @@ import Cycles "mo:base/ExperimentalCycles";
 import Time "mo:base/Time";
 import Error "mo:base/Error";
 import RBTree "mo:base/RBTree";
+import Option "mo:base/Option";
 import Types "./Types";
 import ICType "./IC";
 
-actor {
+actor class Self(opt_params : ?Types.InitParams) {
     let IC : ICType.Self = actor "aaaaa-aa";
-    let MIN_CYCLE = 105_000_000_000;
-    let MAX_NUM_CANISTERS = 2;
-    let TTL = 5_000_000_000;
+    let params = Option.get(opt_params, Types.defaultParams);
 
-    var pool = Types.CanisterPool(MAX_NUM_CANISTERS, TTL);
+    var pool = Types.CanisterPool(params.max_num_canisters, params.TTL);
     
     // TODO: only playground frontend can call these functions
     public func getCanisterId() : async Types.CanisterInfo {
         switch (pool.getExpiredCanisterId()) {
         case (#newId) {
-                 Cycles.add(MIN_CYCLE);
+                 Cycles.add(params.cycles_per_canister);
                  let cid = await IC.create_canister({ settings = null });
                  let info = { id = cid.canister_id; timestamp = Time.now() };
                  pool.add(info);
@@ -27,7 +26,7 @@ actor {
         case (#reuse(info)) {
                  let cid = { canister_id = info.id };
                  let status = await IC.canister_status(cid);
-                 let top_up_cycles : Nat = MIN_CYCLE - status.cycles;
+                 let top_up_cycles : Nat = params.cycles_per_canister - status.cycles;
                  Cycles.add(top_up_cycles);
                  await IC.uninstall_code(cid);
                  info
