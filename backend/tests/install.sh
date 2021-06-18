@@ -1,7 +1,7 @@
 #!/ic-repl
 
-// assumes init variable exists
-let id = call ic.provisional_create_canister_with_cycles(record { settings = null; amount = null });
+// assumes cycles, init variable exists
+let id = call ic.provisional_create_canister_with_cycles(record { settings = null; amount = opt cycles });
 call ic.install_code(
   record {
     arg = encode (init);

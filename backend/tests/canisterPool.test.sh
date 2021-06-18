@@ -1,7 +1,8 @@
 #!ic-repl
 
 // Immediately expire
-let init = record {
+let cycles = (100_000_000_000_000 : nat);
+let init = opt record {
   cycles_per_canister = 105_000_000_000;
   max_num_canisters = 2;
   TTL = 1;
@@ -19,7 +20,7 @@ assert c1.id == c3.id;
 assert c2.id == c4.id;
 
 // Out of capacity
-let init = record {
+let init = opt record {
   cycles_per_canister = 105_000_000_000;
   max_num_canisters = 2;
   TTL = 60_000_000_000;
@@ -29,3 +30,10 @@ call S.getCanisterId();
 call S.getCanisterId();
 fail call S.getCanisterId();
 assert _ ~= "No available canister id";
+
+// Out of cycle
+let cycles = (10_000_000 : nat);
+let init = (null : opt record {});
+load "install.sh";
+fail call S.getCanisterId();
+assert _ ~= "from a call when only 10000000 was available";
