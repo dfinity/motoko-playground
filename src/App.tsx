@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
+
 import { CandidUI } from "./components/CandidUI";
 import { Editor } from "./components/Editor";
 import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
 import { addPackage, saveWorkplaceToMotoko } from "./file";
 import { useLogging } from "./components/Logger";
-import { workplaceReducer, WorkplaceDispatchContext } from "./contexts/WorkplaceState";
-import { WelcomeModal } from "./components/WelcomeModal";
+import {
+  workplaceReducer,
+  WorkplaceDispatchContext,
+} from "./contexts/WorkplaceState";
+import { ProjectModal } from "./components/ProjectModal";
 import { exampleProjects } from "./examples";
 
 const GlobalStyles = createGlobalStyle`
@@ -26,15 +30,6 @@ const GlobalStyles = createGlobalStyle`
     color: var(--grey700);
   }
 
-  a {
-    color: var(--grey600);
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-
   button {
     cursor: pointer;
 
@@ -51,45 +46,57 @@ const AppContainer = styled.div`
   border-top: 1px solid var(--grey400);
 `;
 
-export function App(props) {
+export function App() {
   const [workplaceState, workplaceDispatch] = useReducer(
     workplaceReducer.reduce,
     {},
-    workplaceReducer.init);
+    workplaceReducer.init
+  );
   const [motokoIsLoaded, setMotokoIsLoaded] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(true);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(true);
+  const [isFirstVisit, setIsFirstVisit] = useState(true);
   const logger = useLogging();
+
+  function closeProjectModal() {
+    setIsProjectModalOpen(false);
+    if (isFirstVisit) {
+      // The modal takes 750ms to animate out, so we wait to set isFirstVisit.
+      setTimeout(() => setIsFirstVisit(false), 750);
+    }
+  }
 
   const selectFile = (selectedFile: string) => {
     workplaceDispatch({
-      type: 'selectFile',
+      type: "selectFile",
       payload: {
-        path: selectedFile
-      }
-    })
+        path: selectedFile,
+      },
+    });
   };
 
   const saveWorkplace = (newCode: string) => {
-    if ( ! workplaceState.selectedFile) {
-      console.warn('Called saveWorkplace with no selectedFile')
+    if (!workplaceState.selectedFile) {
+      console.warn("Called saveWorkplace with no selectedFile");
       return;
     }
     workplaceDispatch({
-      type: 'saveFile',
+      type: "saveFile",
       payload: {
         path: workplaceState.selectedFile,
-        contents: newCode
-      }
+        contents: newCode,
+      },
     });
   };
 
   const chooseExampleProject = useCallback(
-    (project) => workplaceDispatch({
-      type: 'loadExampleProject',
-      payload: {
-        project,
-      }
-    }),
+    (project) => {
+      workplaceDispatch({
+        type: "loadExampleProject",
+        payload: {
+          project,
+        },
+      });
+    },
     [workplaceDispatch]
   );
 
@@ -107,44 +114,44 @@ export function App(props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(
-    () => {
-      if ( ! motokoIsLoaded) {
-        // saving won't work until the Motoko global is loaded
-        return;
-      }
-      saveWorkplaceToMotoko(workplaceState.files);
-    },
-    [workplaceState.files, motokoIsLoaded]
-  )
+  useEffect(() => {
+    if (!motokoIsLoaded) {
+      // saving won't work until the Motoko global is loaded
+      return;
+    }
+    saveWorkplaceToMotoko(workplaceState.files);
+  }, [workplaceState.files, motokoIsLoaded]);
 
   return (
-    <WorkplaceDispatchContext.Provider value={workplaceDispatch}>
     <main>
       <GlobalStyles />
-      <WelcomeModal
-        exampleProjects={exampleProjects}
-        isOpen={isModalOpen}
-        chooseExampleProject={chooseExampleProject}
-        close={() => setIsModalOpen(false)}
+      <Header openTutorial={() => setIsProjectModalOpen(true)} />
+      <WorkplaceDispatchContext.Provider value={workplaceDispatch}>
+        <ProjectModal
+          exampleProjects={exampleProjects}
+          isOpen={isProjectModalOpen}
+          chooseExampleProject={chooseExampleProject}
+          close={closeProjectModal}
+          isFirstOpen={isFirstVisit}
         />
-      <Header openTutorial={() => setIsModalOpen(true)} />
-      <AppContainer>
-        <Explorer
-          workplace={workplaceState.files}
-          selectedFile={workplaceState.selectedFile}
-          onSelectFile={selectFile}
-        />
-        <Editor
-          fileCode={workplaceState.selectedFile
-            ? workplaceState.files[workplaceState.selectedFile]
-            : ""}
-          fileName={workplaceState.selectedFile}
-          onSave={saveWorkplace}
-        />
-        <CandidUI />
-      </AppContainer>
+        <AppContainer>
+          <Explorer
+            workplace={workplaceState.files}
+            selectedFile={workplaceState.selectedFile}
+            onSelectFile={selectFile}
+          />
+          <Editor
+            fileCode={
+              workplaceState.selectedFile
+                ? workplaceState.files[workplaceState.selectedFile]
+                : ""
+            }
+            fileName={workplaceState.selectedFile}
+            onSave={saveWorkplace}
+          />
+          <CandidUI />
+        </AppContainer>
+      </WorkplaceDispatchContext.Provider>
     </main>
-    </WorkplaceDispatchContext.Provider>
   );
 }

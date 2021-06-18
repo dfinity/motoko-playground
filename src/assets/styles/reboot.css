@@ -161,6 +161,13 @@ samp {
   font-size: 1em;
 }
 
+kbd {
+  border: 2px outset #ccc;
+  border-radius: 4px;
+  padding: 0 5px;
+  font-size: 0.9em;
+}
+
 pre {
   margin-top: 0;
   margin-bottom: 1rem;
