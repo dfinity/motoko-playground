@@ -60,8 +60,8 @@ export function App() {
   function closeProjectModal() {
     setIsProjectModalOpen(false);
     if (isFirstVisit) {
-      // The modal takes 500ms to animate out, so we wait to set isFirstVisit.
-      setTimeout(() => setIsFirstVisit(false), 500);
+      // The modal takes 750ms to animate out, so we wait to set isFirstVisit.
+      setTimeout(() => setIsFirstVisit(false), 750);
     }
   }
 
