@@ -75,6 +75,9 @@ export function Editor({ fileCode = "", fileName, onSave, onDeploy } = {}) {
   }
   const saveChanges = (newValue) => {
     onSave(newValue);
+    if (!fileName.endsWith('mo') || !Motoko) return;
+    // This has to happen sync so the check Motoko has updated file when checking.
+    Motoko.saveFile(fileName, newValue);
     checkFileAddMarkers();
   };
 
