@@ -5,6 +5,16 @@ import Buffer "mo:base/Buffer";
 import Option "mo:base/Option";
 
 module {
+    public type InitParams = {
+        cycles_per_canister: Nat;
+        max_num_canisters: Nat;
+        TTL: Nat;
+    };
+    public let defaultParams : InitParams = {
+        cycles_per_canister = 105_000_000_000;
+        max_num_canisters = 2;
+        TTL = 5_000_000_000;
+    };
     public type InstallArgs = {
         arg : Blob;
         wasm_module : Blob;
