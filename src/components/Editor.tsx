@@ -83,7 +83,7 @@ export function Editor({ fileCode = "", fileName, onSave, onDeploy } = {}) {
 
   const debouncedSaveChanges = debounce(saveChanges, 1000, { leading: false });
 
-  const onEditorChange = (newValue, ev) => {
+  const onEditorChange = (newValue) => {
     debouncedSaveChanges(newValue);
   };
 
@@ -107,8 +107,9 @@ export function Editor({ fileCode = "", fileName, onSave, onDeploy } = {}) {
         <MonacoEditor
           defaultLanguage="motoko"
           defaultValue={fileCode}
-          path={fileName}
+          language={fileName === "README" ? "markdown" : "motoko"}
           value={fileCode}
+          path={fileName}
           onChange={onEditorChange}
           beforeMount={configureMonaco}
           options={{

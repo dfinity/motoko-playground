@@ -1,10 +1,9 @@
 import styled from "styled-components";
 import { Button } from "./shared/Button";
 import { RightContainer } from "./shared/RightContainer";
-import motokoLabLogo from "../assets/images/motoko-lab-logo.png";
-import motokoLabWordmark from "../assets/images/motoko-lab-wordmark.svg";
 import iconSun from "../assets/images/icon-sun.svg";
 import iconPlus from "../assets/images/icon-plus.svg";
+import { MotokoLabLogo } from "./shared/MotokoLabLogo";
 
 const StyledHeader = styled("header")<{ darkMode?: boolean }>`
   display: flex;
@@ -22,17 +21,6 @@ const BrandContainer = styled.div`
   height: 6.4rem;
 `;
 
-const Logo = styled.img`
-  margin: -1.6rem;
-  margin-left: -1.2rem;
-  width: 10.9rem;
-`;
-
-const WordMark = styled.img`
-  margin-left: 2.4rem;
-  height: 2.4rem;
-`;
-
 const ButtonContainer = styled(RightContainer)`
   > *:not(:last-child) {
     margin-right: 1.8rem;
@@ -44,14 +32,19 @@ const HeaderLink = styled.a`
   font-size: 1.8rem;
   font-weight: 500;
   padding: 1rem 1.6rem;
+  color: var(--grey600);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 export function Header({ openTutorial, darkMode = false }) {
   return (
     <StyledHeader darkMode={darkMode}>
       <BrandContainer>
-        <Logo src={motokoLabLogo} alt="Motoko Ghost Logo in wireframe" />
-        <WordMark src={motokoLabWordmark} alt="Motoko Lab" />
+        <MotokoLabLogo horizontal />
       </BrandContainer>
       <ButtonContainer>
         <HeaderLink
