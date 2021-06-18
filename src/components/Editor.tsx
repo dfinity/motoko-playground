@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
 import debounce from "lodash.debounce";
@@ -60,18 +61,21 @@ function setMarkers(diags, codeModel, monaco, fileName) {
 // @ts-ignore
 export function Editor({ fileCode = "", fileName, onSave, onDeploy } = {}) {
   const monaco = useMonaco();
-  const saveChanges = (newValue) => {
-    onSave(newValue);
-    // if (!codeModel) codeModel = monaco?.editor.getModel();
+  const checkFileAddMarkers = () => {
+    if (!fileName.endsWith('mo') || !Motoko) return;
     const check = Motoko.check(fileName);
     const diags = check.diagnostics;
     setMarkers(
       diags,
       // @ts-ignore
-      monaco?.editor.getModel(encodeURIComponent(`file:///${fileName}`)),
+      monaco?.editor.getModel(`file:///${fileName}`),
       monaco,
       fileName
     );
+  }
+  const saveChanges = (newValue) => {
+    onSave(newValue);
+    checkFileAddMarkers();
   };
 
   const debouncedSaveChanges = debounce(saveChanges, 1000, { leading: false });
@@ -79,6 +83,11 @@ export function Editor({ fileCode = "", fileName, onSave, onDeploy } = {}) {
   const onEditorChange = (newValue, ev) => {
     debouncedSaveChanges(newValue);
   };
+
+  useEffect(() => {
+    if (!monaco) return;
+    checkFileAddMarkers();
+  }, [monaco, fileName]);
 
   return (
     <EditorColumn>

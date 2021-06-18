@@ -38,11 +38,31 @@ export function interpret(file: string, logger: ILoggingStore): void {
   }
 }
 
+interface Diagnostics {
+  message: String,
+  range: {
+    start: { line: number, character: number },
+    end: { line: number, character: number },
+  },
+  severity: number,
+  source: string,
+}
+
+function logDiags(diagnostics: Diagnostics[], logger: ILoggingStore) {
+  diagnostics.forEach(d => {
+    const { message,severity, source, range: { start } } = d;
+    const severityText = severity === 1 ? "Error" : "Warning";
+    const out = `${severityText} in file ${source}:${start.line}:${start.character}   ${message}`
+    logger.log(out);
+  })
+}
+
 export async function deploy(file: string, logger: ILoggingStore): Promise<CanisterInfo | undefined> {
   logger.clearLogs();
   logger.log('Compiling code...');
 
   const candid_result = Motoko.candid(file);
+  if (candid_result.diagnostics) logDiags(candid_result.diagnostics, logger);
   // setMarkers(candid_result.diagnostics);
   const candid_source = candid_result.code;
   if (!candid_source || candid_source.trim() === "") {
@@ -53,7 +73,7 @@ export async function deploy(file: string, logger: ILoggingStore): Promise<Canis
   // NOTE: Will change to "ic" in a future moc release
   const out = Motoko.compileWasm("dfinity", file);
   const duration = (Date.now() - tStart) / 1000;
-  // TODO output diags, run setmarkers
+  if (out.diagnostics) logDiags(out.diagnostics, logger);
   // setMarkers(out.diagnostics);
   if (out.code === null) {
     logger.log("syntax error");
