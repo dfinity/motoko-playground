@@ -2,6 +2,7 @@ import Principal "mo:base/Principal";
 import RBTree "mo:base/RBTree";
 import Time "mo:base/Time";
 import Buffer "mo:base/Buffer";
+import Option "mo:base/Option";
 
 module {
     public type InstallArgs = {
@@ -17,7 +18,7 @@ module {
     func canisterInfoCompare(x: CanisterInfo, y: CanisterInfo): {#less;#equal;#greater} {
         if (x.timestamp < y.timestamp) { #less }
         else if (x.timestamp == y.timestamp and x.id < y.id) { #less }
-        else if (x.id == y.id) { #equal }
+        else if (x.timestamp == y.timestamp and x.id == y.id) { #equal }
         else { #greater }
     };
     public class CanisterPool(size: Nat, TTL: Nat) {
@@ -34,7 +35,7 @@ module {
                          let now = Time.now();
                          let elapsed = now - info.timestamp;
                          if (elapsed >= TTL) {
-                             tree.delete(info);
+                             Option.assertSome(tree.remove(info));
                              let new_info = { timestamp = now; id = info.id };
                              tree.put(new_info, ());
                              #reuse(new_info)
@@ -53,13 +54,13 @@ module {
             tree.put(info, ());
         };
         public func refresh(info: CanisterInfo) : CanisterInfo {
-            tree.delete(info);
+            Option.assertSome(tree.remove(info));
             let new_info = { timestamp = Time.now(); id = info.id };
             tree.put(new_info, ());
             new_info
         };
         public func retire(info: CanisterInfo) {
-            tree.delete(info);
+            Option.assertSome(tree.remove(info));
             tree.put({ timestamp = 0; id = info.id }, ());
         };
         public func gcList() : Buffer.Buffer<Principal> {
