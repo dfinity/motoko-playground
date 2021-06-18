@@ -1,3 +1,4 @@
+import { ReactNodeArray } from "react";
 import styled from "styled-components";
 
 export const ListButton = styled("button")<{ isActive?: boolean }>`
@@ -63,7 +64,15 @@ const List = styled("div")<{ height: string; width: string }>`
   }
 `;
 
-export function SelectList({ height = "auto", width = "100%", children }) {
+export function SelectList({
+  height = "auto",
+  width = "100%",
+  children,
+}: {
+  height?: string;
+  width?: string;
+  children: ReactNodeArray;
+}) {
   return (
     <ListContainer width={width} height={height}>
       <List width={width} height={height}>
