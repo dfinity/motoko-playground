@@ -121,11 +121,11 @@ export function App() {
     const script = document.createElement("script");
     script.addEventListener("load", () => {
       setMotokoIsLoaded(true);
-      addPackage("base", "dfinity/motoko-base", "dfx-0.6.16", "src", logger);
+      addPackage("base", "dfinity/motoko-base", "dfx-0.7.0", "src", logger);
       logger.log("Compiler loaded.");
     });
     script.src =
-      "https://download.dfinity.systems/motoko/0.5.3/js/moc-0.5.3.js";
+      "https://download.dfinity.systems/motoko/0.6.2/js/moc-0.6.2.js";
     document.body.appendChild(script);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

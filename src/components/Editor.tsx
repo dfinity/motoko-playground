@@ -106,7 +106,6 @@ export function Editor({ fileCode = "", fileName, onSave, onDeploy } = {}) {
       <EditorContainer>
         <MonacoEditor
           defaultLanguage="motoko"
-          defaultValue={fileCode}
           language={fileName === "README" ? "markdown" : "motoko"}
           value={fileCode}
           path={fileName}
@@ -116,6 +115,8 @@ export function Editor({ fileCode = "", fileName, onSave, onDeploy } = {}) {
             minimap: { enabled: false },
             wordWrap: "on",
             wrappingIndent: "indent",
+            scrollBeyondLastLine: false,
+            fontSize: 16,
           }}
         />
       </EditorContainer>
