@@ -64,7 +64,7 @@ call ic.install_code(
   },
 );
 fail call S.getCanisterId();
-assert _ ~= "attempted to keep 105000000000 cycles";
+assert _ ~= "105000000000 cycles when only";
 call ic.provisional_top_up_canister(
   record {
     canister_id = S;
