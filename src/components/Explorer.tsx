@@ -19,15 +19,15 @@ const CategoryTitle = styled.div`
 `;
 
 // @ts-ignore
-export function Explorer({ workplace = {}, selectedFile, onSelectFile } = {}) {
+export function Explorer({ state, onSelectFile } = {}) {
   return (
     <StyledExplorer>
       <CategoryTitle>Files</CategoryTitle>
-      {Object.keys(workplace).map((filename) => (
+      {Object.keys(state.files).map((filename) => (
         <ListButton
           key={filename}
-          isActive={selectedFile === filename}
-          disabled={selectedFile === filename}
+          isActive={state.selectedFile === filename}
+          disabled={state.selectedFile === filename}
           onClick={() => onSelectFile(filename)}
         >
           {filename}
@@ -39,6 +39,13 @@ export function Explorer({ workplace = {}, selectedFile, onSelectFile } = {}) {
         <p>mo:base</p>
       </ListButton>
       <CategoryTitle>Canisters</CategoryTitle>
+      {Object.keys(state.canisters).map((canister) => (
+        <ListButton
+          key={canister}
+        >
+          {canister}
+        </ListButton>
+      ))}      
     </StyledExplorer>
   );
 }

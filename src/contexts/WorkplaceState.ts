@@ -47,7 +47,7 @@ export type WorkplaceReducerAction =
 | { type: 'deployWorkplace',
     payload: {
       /** path of file that should be updated. Should correspond to a property in state.files */
-      canisters: CanisterInfo[]
+      canister: CanisterInfo
       /** new contents of file */
     },
   }
@@ -97,7 +97,10 @@ export const workplaceReducer = {
       case 'deployWorkplace':
         return {
           ...state,
-          canisters: action.payload.canisters
+          canisters: [
+            ...state.canisters,
+            action.payload.canister
+          ]
         }
       default:
         // this should never be reached. If there is a type error here, add a 'case'

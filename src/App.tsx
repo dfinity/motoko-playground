@@ -95,13 +95,15 @@ export function App() {
     // TODO don't pass readme non-mo files to motoko
     saveWorkplaceToMotoko(workplaceState.files);
     const info = await deploy(defaultMainFile, logger);
+    if (info) {
     workplaceDispatch({
       type: 'deployWorkplace',
       payload: {
-        canisters: info ? [info] : [],
+        canister: info,
       }
     });
     console.log('deploy', info);
+    }
   }
 
   const chooseExampleProject = useCallback(
@@ -152,8 +154,7 @@ export function App() {
         />
         <AppContainer>
           <Explorer
-            workplace={workplaceState.files}
-            selectedFile={workplaceState.selectedFile}
+            state={workplaceState}
             onSelectFile={selectFile}
           />
           <Editor
