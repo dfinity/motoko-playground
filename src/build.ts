@@ -142,7 +142,7 @@ async function install(
   const new_info = await backend.installCode(canisterInfo, installArgs);
   canisterInfo = new_info;
   logger.log(`Code installed at canister with id: ${canisterInfo.id}`);
-  Motoko.saveFile(`idl/${canisterId}.did`, canisterInfo.candid);
+  //Motoko.saveFile(`idl/${canisterId}.did`, canisterInfo.candid);
   return canisterInfo;
 }
 

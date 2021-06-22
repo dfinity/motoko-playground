@@ -166,7 +166,10 @@ export function App() {
             onSave={saveWorkplace}
             onDeploy={deployWorkplace}
           />
-          <CandidUI canisterId={workplaceState.canisters[0]?.id.toString()} />
+          <CandidUI
+            canisterId={workplaceState.canisters[0]?.id.toString()}
+            isOpen={workplaceState.canisters.length === 0?false:true}
+          />
         </AppContainer>
       </WorkplaceDispatchContext.Provider>
     </main>

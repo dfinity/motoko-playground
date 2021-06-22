@@ -49,7 +49,7 @@ const uiCanisterId = isLocalEnv
   : "a4gq6-oaaaa-aaaab-qaa4q-cai";
 export const uiCanisterUrl = isLocalEnv
   ? `http://${uiCanisterId}.${dfxConfig.networks.local.bind}`
-  : `https://${uiCanisterId}.raw.ic0.app/?`;
+  : `https://${uiCanisterId}.raw.ic0.app`;
 const didjs = Actor.createActor(didjs_idl, {
   agent,
   canisterId: Principal.fromText(uiCanisterId),
