@@ -53,7 +53,7 @@ let S = id.canister_id;
 let init = opt record {
   cycles_per_canister = 105_000_000_000 : nat;
   max_num_canisters = 2 : nat;
-  TTL = 600_000_000_000 : nat;
+  TTL = 60_000_000_000 : nat;
 };
 call ic.install_code(
   record {
@@ -64,7 +64,7 @@ call ic.install_code(
   },
 );
 fail call S.getCanisterId();
-assert _ ~= "105000000000 cycles when only";
+assert _ ~= "105000000000 cycles";
 call ic.provisional_top_up_canister(
   record {
     canister_id = S;
