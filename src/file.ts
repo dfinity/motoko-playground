@@ -38,6 +38,7 @@ export async function addPackage(name, repo, version, dir, logger) {
 
 export function saveWorkplaceToMotoko(workplace = {}) {
   for (const [name, code] of Object.entries(workplace)) {
+    if (!name.endsWith('mo')) continue;
     // @ts-ignore
     Motoko.saveFile(name, code);
   }

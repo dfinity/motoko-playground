@@ -1,8 +1,10 @@
 import styled from "styled-components";
+import { MouseEvent, ReactNode } from "react";
 
 export const Button = styled("button")<{
   small?: boolean;
   kind?: "primary" | "secondary";
+  onClick?: (ev: MouseEvent<HTMLButtonElement>) => void,
   width?: string;
 }>`
   display: flex;
@@ -45,10 +47,10 @@ export const Button = styled("button")<{
       !props.kind
         ? `color: var(--colorPrimary);
            border: 1px solid var(--grey300);
-           
+
            > svg * {
              fill: var(--colorPrimary);
-           } 
+           }
            `
         : ""};
   }

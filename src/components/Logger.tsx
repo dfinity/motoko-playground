@@ -1,18 +1,18 @@
 
 import {useState, createContext, useContext} from "react";
 
-interface ILoggingStore {
-  clearLog(): void;
+export interface ILoggingStore {
+  clearLogs(): void;
   log(line: string): void;
   logLines: string[];
 }
 
 const useLoggingStore = (): ILoggingStore => {
   const [logLines, setLogLines] = useState<string[]>([]);
-  const clearLog = () => setLogLines([]);
-  const log = (line: string) => setLogLines([line, ...logLines]);
+  const clearLogs = () => setLogLines([]);
+  const log = (line: string) => setLogLines(prevLines => [...prevLines, line]);
   return {
-    clearLog,
+    clearLogs,
     log,
     logLines,
   }
@@ -23,7 +23,7 @@ const useLoggingStore = (): ILoggingStore => {
  * if no other store is provided
  */
 const noopLoggingStore: ILoggingStore = {
-  clearLog() {},
+  clearLogs() {},
   log(line: string) {},
   logLines: [],
 }

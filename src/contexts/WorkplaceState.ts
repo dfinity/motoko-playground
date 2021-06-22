@@ -1,11 +1,13 @@
 import * as React from "react";
 import { emptyProject, selectFirstFile, withOnlyUserVisibleFiles } from "../examples";
 import { ExampleProject } from "../examples/types";
+import { CanisterInfo } from "../build"
 
 
 export interface WorkplaceState {
   files: Record<string,string>;
   selectedFile: string|null;
+  canisters: CanisterInfo[];
 }
 
 export type WorkplaceReducerAction =
@@ -42,6 +44,13 @@ export type WorkplaceReducerAction =
       contents: string;
     },
   }
+| { type: 'deployWorkplace',
+    payload: {
+      /** path of file that should be updated. Should correspond to a property in state.files */
+      canister: CanisterInfo
+      /** new contents of file */
+    },
+  }
 ;
 
 /**
@@ -53,9 +62,11 @@ export const workplaceReducer = {
   init(props: {}): WorkplaceState {
     const files = {...emptyProject.directory}
     const selectedFile = selectFirstFile(emptyProject)
+    const canisters = [];
     return {
       files,
       selectedFile,
+      canisters,
     }
   },
   /** Return updated state based on an action */
@@ -82,6 +93,14 @@ export const workplaceReducer = {
             ...state.files,
             [action.payload.path]: action.payload.contents
           }
+        }
+      case 'deployWorkplace':
+        return {
+          ...state,
+          canisters: [
+            ...state.canisters,
+            action.payload.canister
+          ]
         }
       default:
         // this should never be reached. If there is a type error here, add a 'case'

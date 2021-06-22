@@ -6,7 +6,8 @@ import { useLogging } from "./Logger";
 import iconCaretDown from "../assets/images/icon-caret-down.svg";
 
 const LogContainer = styled.div`
-  height: 10rem;
+  height: 40rem;
+  overflow: auto;
 `;
 
 const LogHeader = styled(PanelHeader)`
