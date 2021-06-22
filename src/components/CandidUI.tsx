@@ -4,21 +4,20 @@ import iconCollapse from "../assets/images/icon-collapse.svg";
 import iconOpen from "../assets/images/icon-open.svg";
 import { uiCanisterUrl } from "../config/actor";
 
-const CandidPanel = styled.div<{ isOpen: boolean }>`
+const CandidPanel = styled.div`
   width: 40%;
   max-width: 60rem;
-  ${(props) => (props.isOpen ? "visibility: inherit;" : "visibility: hidden;")}
+  width: var(--candidWidth);
 `;
 
 const CandidFrame = styled.iframe`
   height: calc(var(--appHeight) - var(--sectionHeaderHeight));
-  width: 100%;
   border: none;
+  width: var(--candidWidth);
 `;
 
-const CollapseIcon = styled("img")<{ isOpen: boolean }>`
+const CollapseIcon = styled("img")`
   width: 1.4rem;
-  ${(props) => (props.isOpen ? "" : "transform: scaleX(-1);")}
   margin-right: 1rem;
 `;
 
@@ -31,15 +30,13 @@ const CANDID_UI_CANISTER_URL = uiCanisterUrl;
 
 export function CandidUI({
   canisterId = "",
-  isOpen = false,
 }) {
   return (
-    <CandidPanel isOpen={isOpen}>
+    <CandidPanel >
       <PanelHeader>
         <CollapseIcon
           src={iconCollapse}
           alt="Collapse icon"
-          isOpen={isOpen}
           onClick={() => {}}
         />
         CANDID UI

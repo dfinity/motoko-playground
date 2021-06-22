@@ -40,11 +40,14 @@ const GlobalStyles = createGlobalStyle`
   }
 `;
 
-const AppContainer = styled.div`
+const AppContainer = styled.div<{candidWidth: string}>`
   display: flex;
   height: var(--appHeight);
-  overflow-y: hidden;
+  overflow: hidden;
+
+  width: 100vw;
   border-top: 1px solid var(--grey400);
+  --candidWidth: ${props=>props.candidWidth ?? 0};
 `;
 
 const defaultMainFile = "Main.mo";
@@ -54,10 +57,11 @@ export function App() {
     workplaceReducer.reduce,
     {},
     workplaceReducer.init
-  );
-  const [motokoIsLoaded, setMotokoIsLoaded] = useState(false);
-  const [isProjectModalOpen, setIsProjectModalOpen] = useState(true);
-  const [isFirstVisit, setIsFirstVisit] = useState(true);
+    );
+    const [motokoIsLoaded, setMotokoIsLoaded] = useState(false);
+    const [isProjectModalOpen, setIsProjectModalOpen] = useState(true);
+    const [isFirstVisit, setIsFirstVisit] = useState(true);
+    const [showCandidUI, setShowCandidUI] = useState(false);
   const logger = useLogging();
 
   function closeProjectModal() {
@@ -140,6 +144,11 @@ export function App() {
     saveWorkplaceToMotoko(workplaceState.files);
   }, [workplaceState.files, motokoIsLoaded]);
 
+  useEffect(()=>{
+    // Show Candid UI iframe if there are canisters
+    setShowCandidUI(workplaceState.canisters.length > 0);
+  }, [workplaceState.canisters])
+
   return (
     <main>
       <GlobalStyles />
@@ -152,7 +161,7 @@ export function App() {
           close={closeProjectModal}
           isFirstOpen={isFirstVisit}
         />
-        <AppContainer>
+        <AppContainer candidWidth={showCandidUI? "30vw" : "0"}>
           <Explorer
             state={workplaceState}
             onSelectFile={selectFile}
@@ -167,10 +176,11 @@ export function App() {
             onSave={saveWorkplace}
             onDeploy={deployWorkplace}
           />
+          {showCandidUI ?
           <CandidUI
-            canisterId={workplaceState.canisters[0]?.id.toString()}
-            isOpen={workplaceState.canisters.length === 0?false:true}
-          />
+          canisterId={workplaceState.canisters[0]?.id.toString()}
+          /> : null
+        }
         </AppContainer>
       </WorkplaceDispatchContext.Provider>
     </main>

@@ -20,6 +20,7 @@ const EditorColumn = styled.div`
   border: 1px solid var(--grey300);
   border-top: none;
   border-bottom: none;
+  max-width: calc(100vw - var(--explorerWidth) - var(--candidWidth));
 `;
 
 const EditorContainer = styled.div`
