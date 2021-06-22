@@ -2,7 +2,7 @@ name: Backend
 
 on:
   push:
-    branches: [ main, mvp ]
+    branches: [ main ]
   pull_request:
 
 jobs:

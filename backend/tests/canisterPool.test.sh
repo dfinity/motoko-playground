@@ -5,9 +5,9 @@ let S = id.canister_id;
 
 // Immediately expire
 let init = opt record {
-  cycles_per_canister = 105_000_000_000;
-  max_num_canisters = 2;
-  TTL = 1;
+  cycles_per_canister = 105_000_000_000 : nat;
+  max_num_canisters = 2 : nat;
+  TTL = 1 : nat;
 };
 call ic.install_code(
   record {
@@ -30,9 +30,9 @@ assert c2.id == c4.id;
 
 // Out of capacity
 let init = opt record {
-  cycles_per_canister = 105_000_000_000;
-  max_num_canisters = 2;
-  TTL = 60_000_000_000;
+  cycles_per_canister = 105_000_000_000 : nat;
+  max_num_canisters = 2 : nat;
+  TTL = 60_000_000_000 : nat;
 };
 call ic.install_code(
   record {
@@ -51,9 +51,9 @@ assert _ ~= "No available canister id";
 let id = call ic.provisional_create_canister_with_cycles(record { settings = null; amount = opt 10_000_000 });
 let S = id.canister_id;
 let init = opt record {
-  cycles_per_canister = 105_000_000_000;
-  max_num_canisters = 2;
-  TTL = 60_000_000_000;
+  cycles_per_canister = 105_000_000_000 : nat;
+  max_num_canisters = 2 : nat;
+  TTL = 60_000_000_000 : nat;
 };
 call ic.install_code(
   record {
@@ -64,7 +64,7 @@ call ic.install_code(
   },
 );
 fail call S.getCanisterId();
-assert _ ~= "attempted to send 105000000000 cycles";
+assert _ ~= "105000000000 cycles";
 call ic.provisional_top_up_canister(
   record {
     canister_id = S;
