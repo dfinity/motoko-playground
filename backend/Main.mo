@@ -42,8 +42,10 @@ actor class Self(opt_params : ?Types.InitParams) {
         case (#reuse(info)) {
                  let cid = { canister_id = info.id };
                  let status = await IC.canister_status(cid);
-                 let top_up_cycles : Nat = params.cycles_per_canister - status.cycles;
-                 Cycles.add(top_up_cycles);
+                 if (status.cycles < params.cycles_per_canister) {
+                     let top_up_cycles : Nat = params.cycles_per_canister - status.cycles;
+                     Cycles.add(top_up_cycles);
+                 };
                  await IC.uninstall_code(cid);
                  info
              };

@@ -33,7 +33,7 @@ assert c2.id == c4.id;
 let init = opt record {
   cycles_per_canister = 105_000_000_000 : nat;
   max_num_canisters = 2 : nat;
-  TTL = 60_000_000_000 : nat;
+  TTL = 3600_000_000_000 : nat;
 };
 call ic.install_code(
   record {
@@ -43,10 +43,16 @@ call ic.install_code(
     canister_id = S;
   },
 );
-call S.getCanisterId();
-call S.getCanisterId();
+let c3 = call S.getCanisterId();
+c3;
+let c4 = call S.getCanisterId();
+c4;
 fail call S.getCanisterId();
 assert _ ~= "No available canister id";
+call S.removeCode(c4);
+call S.getCanisterId();
+assert _.id == c4.id;
+assert _.timestamp != c4.timestamp;
 
 // Out of cycle
 let id = call ic.provisional_create_canister_with_cycles(record { settings = null; amount = opt 10_000_000 });
