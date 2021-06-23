@@ -90,6 +90,7 @@ module {
             Iter.toArray(tree.entries())
         };
         public func unshare(list: [CanisterInfo]) {
+            len := list.size();
             tree.fromArray(list);
         };
     };

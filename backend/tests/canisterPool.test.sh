@@ -25,6 +25,7 @@ let c3 = call S.getCanisterId();
 c3;
 let c4 = call S.getCanisterId();
 c4;
+assert c1.id != c2.id;
 assert c1.id == c3.id;
 assert c2.id == c4.id;
 
