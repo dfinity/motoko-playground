@@ -7,17 +7,27 @@ import ICType "./IC";
 
 actor class Self(opt_params : ?Types.InitParams) {
     let IC : ICType.Self = actor "aaaaa-aa";
-
-    stable var stablePool : [Types.CanisterInfo] = [];
-    system func preupgrade() {
-        stablePool := pool.share();
-    };
-    system func postupgrade() {
-        pool.unshare(stablePool);
-    };
-    
     let params = Option.get(opt_params, Types.defaultParams);
     var pool = Types.CanisterPool(params.max_num_canisters, params.TTL);
+    
+    stable var stablePool : [Types.CanisterInfo] = [];
+    stable var previousParam : ?Types.InitParams = null;
+    system func preupgrade() {
+        stablePool := pool.share();
+        previousParam := ?params;
+    };
+    system func postupgrade() {
+        switch previousParam {
+        case (?old) {
+                 if (old.max_num_canisters > params.max_num_canisters) {
+                     //throw Error.reject("Cannot reduce canisterPool for upgrade");
+                     assert false;
+                 };
+             };
+        case null {};
+        };
+        pool.unshare(stablePool);
+    };
     
     // TODO: only playground frontend can call these functions
     public func getCanisterId() : async Types.CanisterInfo {
