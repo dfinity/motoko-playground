@@ -1,16 +1,22 @@
-import Iter "mo:base/Iter";
 import Cycles "mo:base/ExperimentalCycles";
 import Time "mo:base/Time";
 import Error "mo:base/Error";
-import RBTree "mo:base/RBTree";
 import Option "mo:base/Option";
 import Types "./Types";
 import ICType "./IC";
 
 actor class Self(opt_params : ?Types.InitParams) {
     let IC : ICType.Self = actor "aaaaa-aa";
-    let params = Option.get(opt_params, Types.defaultParams);
 
+    stable var stablePool : [Types.CanisterInfo] = [];
+    system func preupgrade() {
+        stablePool := pool.share();
+    };
+    system func postupgrade() {
+        pool.unshare(stablePool);
+    };
+    
+    let params = Option.get(opt_params, Types.defaultParams);
     var pool = Types.CanisterPool(params.max_num_canisters, params.TTL);
     
     // TODO: only playground frontend can call these functions
