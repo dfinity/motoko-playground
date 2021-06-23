@@ -6,37 +6,37 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 In the project directory, you can run:
 
-### `yarn deploy`
+### `npm run deploy`
 
 Spins up the `dfx` server and creates a local deployment by building a production bundle and installing it on the local UI canister.\
 Open [http://localhost:8000/?canisterId=ryjl3-tyaaa-aaaaa-aaaba-cai](http://localhost:8000/?canisterId=ryjl3-tyaaa-aaaaa-aaaba-cai) to view the local canister in your browser.
 
-### `yarn start`
+### `npm start`
 
 Starts the `dfx` server in the background and runs the app in development mode.
 
-> :warning:<span>&nbsp;&nbsp;</span> **Note:** If it's your first time running the app, or you've made any changes to the backend canister code, you'll need to run `yarn deploy` before this command to populate the `.dfx` directory correctly.
+> :warning:<span>&nbsp;&nbsp;</span> **Note:** If it's your first time running the app, or you've made any changes to the backend canister code, you'll need to run `npm run deploy` before this command to populate the `.dfx` directory correctly.
 
 Open [http://localhost:3000/?canisterId=ryjl3-tyaaa-aaaaa-aaaba-cai](http://localhost:3000/?canisterId=ryjl3-tyaaa-aaaaa-aaaba-cai) to view it in the browser.
 
 The page will update if you make edits.\
 You will also see any lint errors in the console.
 
-### `yarn test`
+### `npm run test`
 
 Launches the test runner in the interactive watch mode.\
 See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-### `yarn build`
+### `npm run build`
 
 Builds the app for production to the `build` folder.\
 It correctly bundles React in minimized production mode and optimizes the build for the best performance.\
 
-### `yarn deploy -- --network ic`
+### `npm run deploy -- --network ic`
 
 Sends your minified, production built app to the Internet Computer to live in a real canister on the network! The command returns the canisterId of the newly deployed app ("react-app")
 
-### `yarn eject`
+### `npm run eject`
 
 **Note: this is a one-way operation. Once you `eject`, you can’t go back!**
 

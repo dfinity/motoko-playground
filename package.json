@@ -29,7 +29,7 @@
     "build": "craco build",
     "test": "craco test -- --config=config/jest.config.js",
     "eject": "craco eject",
-    "deploy": "dfx deploy",
+    "deploy": "dfx deploy --argument '(null)'",
     "prestart": "dfx start --background || exit 0",
     "predeploy": "yarn prestart"
   },
