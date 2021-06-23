@@ -53,8 +53,7 @@ actor class Self(opt_params : ?Types.InitParams) {
         };
     };
     
-    public query func dump() : async RBTree.Tree<Types.CanisterInfo, ()> {
-        //Iter.toArray(state.project.entries());
+    public query func dump() : async [Types.CanisterInfo] {
         pool.share()
     };
 }
