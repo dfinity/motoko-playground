@@ -1,10 +1,11 @@
-import styled from "styled-components";
+import styled, { createGlobalStyle } from "styled-components";
 import { PanelHeader } from "./shared/PanelHeader";
 import iconCollapse from "../assets/images/icon-collapse.svg";
 import iconOpen from "../assets/images/icon-open.svg";
 import { uiCanisterUrl } from "../config/actor";
+import React, { useEffect, useState } from "react";
 
-const CandidPanel = styled.div`
+const CandidPanel = styled.div<{ isExpanded: boolean }>`
   width: 40%;
   max-width: 60rem;
   width: var(--candidWidth);
@@ -16,9 +17,10 @@ const CandidFrame = styled.iframe`
   width: var(--candidWidth);
 `;
 
-const CollapseIcon = styled("img")`
+const CollapseIcon = styled("img")<{ isExpanded: boolean }>`
   width: 1.4rem;
   margin-right: 1rem;
+  ${(props) => (props.isExpanded ? "transform: rotate(90deg);" : "")}
 `;
 
 const OpenIcon = styled("img")`
@@ -26,23 +28,46 @@ const OpenIcon = styled("img")`
   margin-left: auto;
 `;
 
+const Button = styled.button`
+  background: none;
+  border: none;
+  box-shadow: none;
+`;
+
 const CANDID_UI_CANISTER_URL = uiCanisterUrl;
 
-export function CandidUI({
-  canisterId = "",
-}) {
+export function CandidUI({ canisterId = "", setCandidWidth }) {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  useEffect(() => {
+    const newSize = isExpanded ? "30vw" : "fit-content";
+    setCandidWidth(newSize);
+  }, [isExpanded, setCandidWidth]);
+
   return (
-    <CandidPanel >
+    <CandidPanel isExpanded={isExpanded}>
       <PanelHeader>
-        <CollapseIcon
-          src={iconCollapse}
-          alt="Collapse icon"
-          onClick={() => {}}
-        />
-        CANDID UI
-        <OpenIcon src={iconOpen} />
+        <Button
+          onClick={() => {
+            setIsExpanded(!isExpanded);
+          }}
+        >
+          <CollapseIcon
+            isExpanded={isExpanded}
+            src={iconCollapse}
+            alt="Collapse icon"
+          />
+          CANDID UI
+        </Button>
+        {isExpanded ? (
+          <Button>
+            <OpenIcon src={iconOpen} />
+          </Button>
+        ) : null}
       </PanelHeader>
-      <CandidFrame src={`${CANDID_UI_CANISTER_URL}/?id=${canisterId}`} />
+      {isExpanded ? (
+        <CandidFrame src={`${CANDID_UI_CANISTER_URL}/?id=${canisterId}`} />
+      ) : null}
     </CandidPanel>
   );
 }

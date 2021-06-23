@@ -3,6 +3,7 @@ import styled from "styled-components";
 export const PanelHeader = styled.header`
   display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
   flex-shrink: 0;
   height: var(--sectionHeaderHeight);

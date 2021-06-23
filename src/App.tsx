@@ -62,6 +62,7 @@ export function App() {
     const [isProjectModalOpen, setIsProjectModalOpen] = useState(true);
     const [isFirstVisit, setIsFirstVisit] = useState(true);
     const [showCandidUI, setShowCandidUI] = useState(false);
+    const [candidWidth, setCandidWidth] = useState("0");
   const logger = useLogging();
 
   function closeProjectModal() {
@@ -146,7 +147,9 @@ export function App() {
 
   useEffect(()=>{
     // Show Candid UI iframe if there are canisters
-    setShowCandidUI(workplaceState.canisters.length > 0);
+    const isCandidReady = workplaceState.canisters.length > 0;
+    setShowCandidUI(isCandidReady);
+    setCandidWidth(isCandidReady? "30vw" : "0");
   }, [workplaceState.canisters])
 
   return (
@@ -161,7 +164,7 @@ export function App() {
           close={closeProjectModal}
           isFirstOpen={isFirstVisit}
         />
-        <AppContainer candidWidth={showCandidUI? "30vw" : "0"}>
+        <AppContainer candidWidth={candidWidth}>
           <Explorer
             state={workplaceState}
             onSelectFile={selectFile}
@@ -178,6 +181,7 @@ export function App() {
           />
           {showCandidUI ?
           <CandidUI
+          setCandidWidth={setCandidWidth}
           canisterId={workplaceState.canisters[0]?.id.toString()}
           /> : null
         }
