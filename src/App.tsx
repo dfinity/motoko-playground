@@ -81,6 +81,14 @@ export function App() {
       },
     });
   };
+  const selectCanister = (selectedCanister: string) => {
+    workplaceDispatch({
+      type: "selectCanister",
+      payload: {
+        name: selectedCanister,
+      },
+    });
+  };
 
   const saveWorkplace = (newCode: string) => {
     if (!workplaceState.selectedFile) {
@@ -147,7 +155,7 @@ export function App() {
 
   useEffect(()=>{
     // Show Candid UI iframe if there are canisters
-    const isCandidReady = Object.keys(workplaceState.canisters).length > 0;
+    const isCandidReady = workplaceState.selectedCanister !== null;
     setShowCandidUI(isCandidReady);
     setCandidWidth(isCandidReady? "30vw" : "0");
   }, [workplaceState.canisters])
@@ -168,6 +176,7 @@ export function App() {
           <Explorer
             state={workplaceState}
             onSelectFile={selectFile}
+            onSelectCanister={selectCanister}
           />
           <Editor
             fileCode={
@@ -182,7 +191,7 @@ export function App() {
           {showCandidUI ?
           <CandidUI
           setCandidWidth={setCandidWidth}
-           canisterId={Object.values(workplaceState.canisters)[0]?.id.toString()}
+          canisterId={workplaceState.canisters[workplaceState.selectedCanister!]?.id.toString()}
           /> : null
         }
         </AppContainer>

@@ -8,6 +8,7 @@ export interface WorkplaceState {
   files: Record<string,string>;
   selectedFile: string|null;
   canisters: Record<string, CanisterInfo>;
+  selectedCanister: string|null;
 }
 
 export type WorkplaceReducerAction =
@@ -31,6 +32,11 @@ export type WorkplaceReducerAction =
     payload: {
       /** path of file that is now selected. Should correspond to a property in state.files */
       path: string
+    }
+  }
+| { type: 'selectCanister',
+    payload: {
+      name: string
     }
   }
 /**
@@ -67,6 +73,7 @@ export const workplaceReducer = {
       files,
       selectedFile,
       canisters,
+      selectedCanister: null,
     }
   },
   /** Return updated state based on an action */
@@ -86,6 +93,11 @@ export const workplaceReducer = {
           ...state,
           selectedFile: action.payload.path
         };
+      case 'selectCanister':
+        return {
+          ...state,
+          selectedCanister: action.payload.name
+        };        
       case 'saveFile':
         return {
           ...state,
@@ -95,11 +107,13 @@ export const workplaceReducer = {
           }
         }
       case 'deployWorkplace':
+        const name = action.payload.canister.name!;
         return {
           ...state,
+          selectedCanister: name,
           canisters: {
             ...state.canisters,
-            [action.payload.canister.name!]: action.payload.canister
+            [name]: action.payload.canister
           }
         }
       default:
