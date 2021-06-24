@@ -25,6 +25,7 @@ yarn-debug.log*
 yarn-error.log*
 
 .eslintcache
+.vessel
 
 # IDEs
 /.idea
