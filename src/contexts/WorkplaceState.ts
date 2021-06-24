@@ -7,7 +7,7 @@ import { CanisterInfo } from "../build"
 export interface WorkplaceState {
   files: Record<string,string>;
   selectedFile: string|null;
-  canisters: CanisterInfo[];
+  canisters: Record<string, CanisterInfo>;
 }
 
 export type WorkplaceReducerAction =
@@ -62,7 +62,7 @@ export const workplaceReducer = {
   init(props: {}): WorkplaceState {
     const files = {...emptyProject.directory}
     const selectedFile = selectFirstFile(emptyProject)
-    const canisters = [];
+    const canisters = {};
     return {
       files,
       selectedFile,
@@ -97,10 +97,10 @@ export const workplaceReducer = {
       case 'deployWorkplace':
         return {
           ...state,
-          canisters: [
+          canisters: {
             ...state.canisters,
-            action.payload.canister
-          ]
+            [action.payload.canister.name!]: action.payload.canister
+          }
         }
       default:
         // this should never be reached. If there is a type error here, add a 'case'

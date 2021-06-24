@@ -147,7 +147,7 @@ export function App() {
 
   useEffect(()=>{
     // Show Candid UI iframe if there are canisters
-    const isCandidReady = workplaceState.canisters.length > 0;
+    const isCandidReady = Object.keys(workplaceState.canisters).length > 0;
     setShowCandidUI(isCandidReady);
     setCandidWidth(isCandidReady? "30vw" : "0");
   }, [workplaceState.canisters])
@@ -182,7 +182,7 @@ export function App() {
           {showCandidUI ?
           <CandidUI
           setCandidWidth={setCandidWidth}
-          canisterId={workplaceState.canisters[0]?.id.toString()}
+           canisterId={Object.values(workplaceState.canisters)[0]?.id.toString()}
           /> : null
         }
         </AppContainer>
