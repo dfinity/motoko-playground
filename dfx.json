@@ -16,7 +16,7 @@
   "defaults": {
     "build": {
       "output": "build",
-      "packtool": ""
+      "packtool": "vessel sources"
     }
   },
   "networks": {

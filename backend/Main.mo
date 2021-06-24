@@ -1,8 +1,6 @@
-import Iter "mo:base/Iter";
 import Cycles "mo:base/ExperimentalCycles";
 import Time "mo:base/Time";
 import Error "mo:base/Error";
-import RBTree "mo:base/RBTree";
 import Option "mo:base/Option";
 import Types "./Types";
 import ICType "./IC";
@@ -10,8 +8,26 @@ import ICType "./IC";
 actor class Self(opt_params : ?Types.InitParams) {
     let IC : ICType.Self = actor "aaaaa-aa";
     let params = Option.get(opt_params, Types.defaultParams);
-
     var pool = Types.CanisterPool(params.max_num_canisters, params.TTL);
+    
+    stable var stablePool : [Types.CanisterInfo] = [];
+    stable var previousParam : ?Types.InitParams = null;
+    system func preupgrade() {
+        stablePool := pool.share();
+        previousParam := ?params;
+    };
+    system func postupgrade() {
+        switch previousParam {
+        case (?old) {
+                 if (old.max_num_canisters > params.max_num_canisters) {
+                     //throw Error.reject("Cannot reduce canisterPool for upgrade");
+                     assert false;
+                 };
+             };
+        case null {};
+        };
+        pool.unshare(stablePool);
+    };
     
     // TODO: only playground frontend can call these functions
     public func getCanisterId() : async Types.CanisterInfo {
@@ -26,8 +42,10 @@ actor class Self(opt_params : ?Types.InitParams) {
         case (#reuse(info)) {
                  let cid = { canister_id = info.id };
                  let status = await IC.canister_status(cid);
-                 let top_up_cycles : Nat = params.cycles_per_canister - status.cycles;
-                 Cycles.add(top_up_cycles);
+                 if (status.cycles < params.cycles_per_canister) {
+                     let top_up_cycles : Nat = params.cycles_per_canister - status.cycles;
+                     Cycles.add(top_up_cycles);
+                 };
                  await IC.uninstall_code(cid);
                  info
              };
@@ -53,8 +71,7 @@ actor class Self(opt_params : ?Types.InitParams) {
         };
     };
     
-    public query func dump() : async RBTree.Tree<Types.CanisterInfo, ()> {
-        //Iter.toArray(state.project.entries());
+    public query func dump() : async [Types.CanisterInfo] {
         pool.share()
     };
 }
