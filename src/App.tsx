@@ -126,13 +126,12 @@ export function App() {
     saveWorkplaceToMotoko(workplaceState.files);
     const info = await deploy(defaultMainFile, logger);
     if (info) {
-    workplaceDispatch({
-      type: 'deployWorkplace',
-      payload: {
-        canister: info,
-      }
-    });
-    console.log('deploy', info);
+      workplaceDispatch({
+        type: 'deployWorkplace',
+        payload: {
+          canister: info,
+        }
+      });
     }
   }
 
@@ -175,7 +174,7 @@ export function App() {
     const isCandidReady = workplaceState.selectedCanister !== null;
     setShowCandidUI(isCandidReady);
     setCandidWidth(isCandidReady? "30vw" : "0");
-  }, [workplaceState.canisters])
+  }, [workplaceState.canisters, workplaceState.selectedCanister])
 
   return (
     <main>
