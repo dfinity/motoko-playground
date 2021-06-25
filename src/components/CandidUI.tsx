@@ -44,6 +44,7 @@ export function CandidUI({ canisterId = "", setCandidWidth }) {
     setCandidWidth(newSize);
   }, [isExpanded, setCandidWidth]);
 
+  const url = `${CANDID_UI_CANISTER_URL}/?id=${canisterId}`;
   return (
     <CandidPanel isExpanded={isExpanded}>
       <PanelHeader>
@@ -60,13 +61,15 @@ export function CandidUI({ canisterId = "", setCandidWidth }) {
           CANDID UI
         </Button>
         {isExpanded ? (
-          <Button>
+          <Button
+          onClick={() => { window.open(url, "_blank") }}
+          >
             <OpenIcon src={iconOpen} />
           </Button>
         ) : null}
       </PanelHeader>
       {isExpanded ? (
-        <CandidFrame src={`${CANDID_UI_CANISTER_URL}/?id=${canisterId}`} />
+        <CandidFrame src={url} />
       ) : null}
     </CandidPanel>
   );
