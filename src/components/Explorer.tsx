@@ -27,7 +27,7 @@ const CloseButton = styled.button`
 `;
 
 // @ts-ignore
-export function Explorer({ state, onSelectFile, onSelectCanister } = {}) {
+export function Explorer({ state, onSelectFile, onCanister } = {}) {
   return (
     <StyledExplorer>
       <CategoryTitle>Files</CategoryTitle>
@@ -52,11 +52,11 @@ export function Explorer({ state, onSelectFile, onSelectCanister } = {}) {
         key={canister}
         isActive={state.selectedCanister == canister}
         disabled={state.selectedCanister == canister}
-        onClick={() => onSelectCanister(canister)}
+        onClick={() => onCanister(canister, 'select')}
         >
           <img src={iconCanister}/>
           {canister}
-          <CloseButton>
+          <CloseButton onClick={() => onCanister(canister, 'delete')}>
           <img src={iconClose} alt="Close icon" />
           </CloseButton>
         </ListButton>

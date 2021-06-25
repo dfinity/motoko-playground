@@ -6,7 +6,7 @@ import { Editor } from "./components/Editor";
 import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
 import { addPackage, saveWorkplaceToMotoko } from "./file";
-import { deploy } from "./build";
+import { deploy, deleteCanister } from "./build";
 import { useLogging } from "./components/Logger";
 import {
   workplaceReducer,
@@ -81,13 +81,30 @@ export function App() {
       },
     });
   };
-  const selectCanister = (selectedCanister: string) => {
-    workplaceDispatch({
-      type: "selectCanister",
-      payload: {
-        name: selectedCanister,
-      },
-    });
+  const onCanister = async (selectedCanister: string, action: string) => {
+    switch (action) {
+      case "select":
+        return workplaceDispatch({
+          type: "selectCanister",
+          payload: {
+            name: selectedCanister,
+          },
+        });
+      case "delete": {
+        const canisterInfo = workplaceState.canisters[selectedCanister];
+        logger.log(`Deleting canister ${selectedCanister} with id: ${canisterInfo.id.toText()}...`);
+        await deleteCanister(canisterInfo);
+        logger.log('Canister deleted');
+        return workplaceDispatch({
+          type: "deleteCanister",
+          payload: {
+            name: selectedCanister,
+          },
+        });
+      }
+      default:
+        throw new Error(`unknown action ${action}`)
+    }
   };
 
   const saveWorkplace = (newCode: string) => {
@@ -176,7 +193,7 @@ export function App() {
           <Explorer
             state={workplaceState}
             onSelectFile={selectFile}
-            onSelectCanister={selectCanister}
+            onCanister={onCanister}
           />
           <Editor
             fileCode={

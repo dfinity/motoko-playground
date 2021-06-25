@@ -39,6 +39,11 @@ export type WorkplaceReducerAction =
       name: string
     }
   }
+| { type: 'deleteCanister',
+    payload: {
+      name: string
+    }
+  }
 /**
  * Call to update the contents of a specific file in the current files
  */
@@ -97,7 +102,15 @@ export const workplaceReducer = {
         return {
           ...state,
           selectedCanister: action.payload.name
-        };        
+        };
+      case 'deleteCanister': {
+        const name = action.payload.name;
+        delete state.canisters[name];
+        return {
+          ...state,
+          selectedCanister: state.selectedCanister === name ? null : state.selectedCanister
+        };
+      }
       case 'saveFile':
         return {
           ...state,
@@ -106,7 +119,7 @@ export const workplaceReducer = {
             [action.payload.path]: action.payload.contents
           }
         }
-      case 'deployWorkplace':
+      case 'deployWorkplace': {
         const name = action.payload.canister.name!;
         return {
           ...state,
@@ -116,6 +129,7 @@ export const workplaceReducer = {
             [name]: action.payload.canister
           }
         }
+      }
       default:
         // this should never be reached. If there is a type error here, add a 'case'
         // eslint-disable-next-line @typescript-eslint/no-unused-vars

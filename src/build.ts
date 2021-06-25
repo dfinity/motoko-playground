@@ -121,6 +121,11 @@ async function createCanister(logger: ILoggingStore): Promise<CanisterInfo> {
   };
 }
 
+export async function deleteCanister(info: CanisterInfo) {
+  const backend = await getActor();
+  await backend.removeCode(info);
+}
+
 async function install(
   canisterInfo: CanisterInfo,
   module: BinaryBlob,
