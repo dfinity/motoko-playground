@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import iconPackage from "../assets/images/icon-package.svg";
 import iconCanister from "../assets/images/icon-canister.svg";
+import iconClose from "../assets/images/icon-close.svg";
 import { ListButton } from "./shared/SelectList";
 
 const StyledExplorer = styled.div`
@@ -17,6 +18,12 @@ const CategoryTitle = styled.div`
   border-bottom: 1px solid var(--grey300);
   text-transform: uppercase;
   pointer-events: none;
+`;
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  box-shadow: none;
+  margin-left: auto;
 `;
 
 // @ts-ignore
@@ -48,7 +55,10 @@ export function Explorer({ state, onSelectFile, onSelectCanister } = {}) {
         onClick={() => onSelectCanister(canister)}
         >
           <img src={iconCanister}/>
-          <p>{canister}</p>
+          {canister}
+          <CloseButton>
+          <img src={iconClose} alt="Close icon" />
+          </CloseButton>
         </ListButton>
       ))}
     </StyledExplorer>
