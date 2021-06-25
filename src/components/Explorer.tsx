@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import iconPackage from "../assets/images/icon-package.svg";
+import iconCanister from "../assets/images/icon-canister.svg";
 import { ListButton } from "./shared/SelectList";
 
 const StyledExplorer = styled.div`
@@ -46,7 +47,8 @@ export function Explorer({ state, onSelectFile, onSelectCanister } = {}) {
         disabled={state.selectedCanister == canister}
         onClick={() => onSelectCanister(canister)}
         >
-          {canister}
+          <img src={iconCanister}/>
+          <p>{canister}</p>
         </ListButton>
       ))}
     </StyledExplorer>
