@@ -7,7 +7,8 @@ import { CanisterInfo } from "../build"
 export interface WorkplaceState {
   files: Record<string,string>;
   selectedFile: string|null;
-  canisters: CanisterInfo[];
+  canisters: Record<string, CanisterInfo>;
+  selectedCanister: string|null;
 }
 
 export type WorkplaceReducerAction =
@@ -31,6 +32,16 @@ export type WorkplaceReducerAction =
     payload: {
       /** path of file that is now selected. Should correspond to a property in state.files */
       path: string
+    }
+  }
+| { type: 'selectCanister',
+    payload: {
+      name: string
+    }
+  }
+| { type: 'deleteCanister',
+    payload: {
+      name: string
     }
   }
 /**
@@ -62,11 +73,12 @@ export const workplaceReducer = {
   init(props: {}): WorkplaceState {
     const files = {...emptyProject.directory}
     const selectedFile = selectFirstFile(emptyProject)
-    const canisters = [];
+    const canisters = {};
     return {
       files,
       selectedFile,
       canisters,
+      selectedCanister: null,
     }
   },
   /** Return updated state based on an action */
@@ -86,6 +98,19 @@ export const workplaceReducer = {
           ...state,
           selectedFile: action.payload.path
         };
+      case 'selectCanister':
+        return {
+          ...state,
+          selectedCanister: action.payload.name
+        };
+      case 'deleteCanister': {
+        const name = action.payload.name;
+        delete state.canisters[name];
+        return {
+          ...state,
+          selectedCanister: state.selectedCanister === name ? null : state.selectedCanister
+        };
+      }
       case 'saveFile':
         return {
           ...state,
@@ -94,14 +119,17 @@ export const workplaceReducer = {
             [action.payload.path]: action.payload.contents
           }
         }
-      case 'deployWorkplace':
+      case 'deployWorkplace': {
+        const name = action.payload.canister.name!;
         return {
           ...state,
-          canisters: [
+          selectedCanister: name,
+          canisters: {
             ...state.canisters,
-            action.payload.canister
-          ]
+            [name]: action.payload.canister
+          }
         }
+      }
       default:
         // this should never be reached. If there is a type error here, add a 'case'
         // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -6,7 +6,7 @@ import { Editor } from "./components/Editor";
 import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
 import { addPackage, saveWorkplaceToMotoko } from "./file";
-import { deploy } from "./build";
+import { deploy, deleteCanister } from "./build";
 import { useLogging } from "./components/Logger";
 import {
   workplaceReducer,
@@ -81,6 +81,31 @@ export function App() {
       },
     });
   };
+  const onCanister = async (selectedCanister: string, action: string) => {
+    switch (action) {
+      case "select":
+        return workplaceDispatch({
+          type: "selectCanister",
+          payload: {
+            name: selectedCanister,
+          },
+        });
+      case "delete": {
+        const canisterInfo = workplaceState.canisters[selectedCanister];
+        logger.log(`Deleting canister ${selectedCanister} with id: ${canisterInfo.id.toText()}...`);
+        await deleteCanister(canisterInfo);
+        logger.log('Canister deleted');
+        return workplaceDispatch({
+          type: "deleteCanister",
+          payload: {
+            name: selectedCanister,
+          },
+        });
+      }
+      default:
+        throw new Error(`unknown action ${action}`)
+    }
+  };
 
   const saveWorkplace = (newCode: string) => {
     if (!workplaceState.selectedFile) {
@@ -101,13 +126,12 @@ export function App() {
     saveWorkplaceToMotoko(workplaceState.files);
     const info = await deploy(defaultMainFile, logger);
     if (info) {
-    workplaceDispatch({
-      type: 'deployWorkplace',
-      payload: {
-        canister: info,
-      }
-    });
-    console.log('deploy', info);
+      workplaceDispatch({
+        type: 'deployWorkplace',
+        payload: {
+          canister: info,
+        }
+      });
     }
   }
 
@@ -147,10 +171,10 @@ export function App() {
 
   useEffect(()=>{
     // Show Candid UI iframe if there are canisters
-    const isCandidReady = workplaceState.canisters.length > 0;
+    const isCandidReady = workplaceState.selectedCanister !== null;
     setShowCandidUI(isCandidReady);
     setCandidWidth(isCandidReady? "30vw" : "0");
-  }, [workplaceState.canisters])
+  }, [workplaceState.canisters, workplaceState.selectedCanister])
 
   return (
     <main>
@@ -168,6 +192,7 @@ export function App() {
           <Explorer
             state={workplaceState}
             onSelectFile={selectFile}
+            onCanister={onCanister}
           />
           <Editor
             fileCode={
@@ -182,7 +207,7 @@ export function App() {
           {showCandidUI ?
           <CandidUI
           setCandidWidth={setCandidWidth}
-          canisterId={workplaceState.canisters[0]?.id.toString()}
+          canisterId={workplaceState.canisters[workplaceState.selectedCanister!]?.id.toString()}
           /> : null
         }
         </AppContainer>

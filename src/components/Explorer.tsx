@@ -1,5 +1,7 @@
 import styled from "styled-components";
 import iconPackage from "../assets/images/icon-package.svg";
+import iconCanister from "../assets/images/icon-canister.svg";
+import iconClose from "../assets/images/icon-close.svg";
 import { ListButton } from "./shared/SelectList";
 
 const StyledExplorer = styled.div`
@@ -17,9 +19,15 @@ const CategoryTitle = styled.div`
   text-transform: uppercase;
   pointer-events: none;
 `;
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  box-shadow: none;
+  margin-left: auto;
+`;
 
 // @ts-ignore
-export function Explorer({ state, onSelectFile } = {}) {
+export function Explorer({ state, onSelectFile, onCanister } = {}) {
   return (
     <StyledExplorer>
       <CategoryTitle>Files</CategoryTitle>
@@ -41,11 +49,18 @@ export function Explorer({ state, onSelectFile } = {}) {
       <CategoryTitle>Canisters</CategoryTitle>
       {Object.keys(state.canisters).map((canister) => (
         <ListButton
-          key={canister}
+        key={canister}
+        isActive={state.selectedCanister == canister}
+        disabled={state.selectedCanister == canister}
+        onClick={() => onCanister(canister, 'select')}
         >
+          <img src={iconCanister}/>
           {canister}
+          <CloseButton onClick={() => onCanister(canister, 'delete')}>
+          <img src={iconClose} alt="Close icon" />
+          </CloseButton>
         </ListButton>
-      ))}      
+      ))}
     </StyledExplorer>
   );
 }

@@ -86,7 +86,6 @@ export async function deploy(file: string, logger: ILoggingStore): Promise<Canis
       let updatedState: CanisterInfo | null = null;
       if (!canisterInfo) {
         canisterInfo = await createCanister(logger);
-        canisterInfo.candid = candid_source;
         updatedState = await install(
           canisterInfo,
           module,
@@ -94,7 +93,6 @@ export async function deploy(file: string, logger: ILoggingStore): Promise<Canis
           logger
         );
       } else {
-        canisterInfo.candid = candid_source;
         updatedState = await install(
           canisterInfo,
           module,
@@ -102,7 +100,8 @@ export async function deploy(file: string, logger: ILoggingStore): Promise<Canis
           logger
         );
       }
-      // updatedState.candid = candid_source;
+      updatedState.candid = candid_source;
+      updatedState.name = getCanisterName(file);
       canisterInfo = updatedState;
       return updatedState;
     } catch (err) {
@@ -120,6 +119,11 @@ async function createCanister(logger: ILoggingStore): Promise<CanisterInfo> {
     id: info.id,
     timestamp: info.timestamp,
   };
+}
+
+export async function deleteCanister(info: CanisterInfo) {
+  const backend = await getActor();
+  await backend.removeCode(info);
 }
 
 async function install(
@@ -146,6 +150,6 @@ async function install(
   return canisterInfo;
 }
 
-function getCanisterName(path) {
-  return path.split("/").pop().slice(0, -3);
+function getCanisterName(path: string): string {
+  return path.split("/").pop()!.slice(0, -3);
 }
