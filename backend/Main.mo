@@ -38,7 +38,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
         if (caller != controller and not nonceCache.checkProofOfWork(nonce)) {
             throw Error.reject("Proof of work check failed");
         };
-        nonceCache.pruneExpired();        
+        nonceCache.pruneExpired();
         if (nonceCache.contains(nonce)) {
             throw Error.reject("Nonce already used");
         };

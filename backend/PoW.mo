@@ -32,7 +32,7 @@ module {
             let now = Time.now();
             if (nonce.timestamp < now - TTL) return false;
             if (nonce.timestamp > now + TTL) return false;
-            let raw = "playground-proof-of-work" # (debug_show nonce.timestamp) # (debug_show nonce.nonce);
+            let raw = "motoko-playground" # (debug_show nonce.timestamp) # (debug_show nonce.nonce);
             let hash = Text.hash(raw);
             if (hash & 0xc0000000 != 0) return false;
             true
