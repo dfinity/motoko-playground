@@ -1,6 +1,7 @@
 import Splay "mo:splay";
 import Time "mo:base/Time";
 import Text "mo:base/Text";
+import Int "mo:base/Int";
 
 module {
     public type Nonce = {
@@ -32,7 +33,7 @@ module {
             let now = Time.now();
             if (nonce.timestamp < now - TTL) return false;
             if (nonce.timestamp > now + TTL) return false;
-            let raw = "motoko-playground" # (debug_show nonce.timestamp) # (debug_show nonce.nonce);
+            let raw = "motoko-playground" # (Int.toText(nonce.timestamp)) # (Int.toText(nonce.nonce));
             let hash = Text.hash(raw);
             if (hash & 0xc0000000 != 0) return false;
             true
