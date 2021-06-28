@@ -16,12 +16,6 @@ export interface CanisterInfo {
   candid?: string | null,
 }
 
-let canisterInfo: CanisterInfo | null = null;
-// map canister name to ui
-// export const canister_ui = {};
-// // map canister name to candid
-// export const canister_candid = null;
-
 export function interpret(file: string, logger: ILoggingStore): void {
   logger.clearLogs();
   logger.log('Running code...');
@@ -57,7 +51,7 @@ function logDiags(diagnostics: Diagnostics[], logger: ILoggingStore) {
   })
 }
 
-export async function deploy(file: string, logger: ILoggingStore): Promise<CanisterInfo | undefined> {
+export async function deploy(canisterName: string, canisterInfo: CanisterInfo|null, file: string, logger: ILoggingStore): Promise<CanisterInfo | undefined> {
   logger.clearLogs();
   logger.log('Compiling code...');
 
@@ -101,7 +95,7 @@ export async function deploy(file: string, logger: ILoggingStore): Promise<Canis
         );
       }
       updatedState.candid = candid_source;
-      updatedState.name = getCanisterName(file);
+      updatedState.name = canisterName;
       canisterInfo = updatedState;
       return updatedState;
     } catch (err) {

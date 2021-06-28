@@ -50,7 +50,7 @@ const MyButton = styled(Button)`
 interface DeployModalProps {
   isOpen: boolean;
   close: () => void;
-  onDeploy: () => void;
+  onDeploy: (string) => void;
   canisters: Record<string, CanisterInfo>;
   fileName: string;
 }
@@ -97,9 +97,9 @@ export function DeployModal({
         </SelectList>
         <ProjectButtonContents>
       {canisters.hasOwnProperty(canisterName)?(<>
-          <MyButton onClick={() => {close(); onDeploy()}}>Upgrade</MyButton>
-          <MyButton onClick={() => {close(); onDeploy()}}>Reinstall</MyButton></>):(<>
-          <MyButton onClick={() => {close(); onDeploy()}}>Install</MyButton></>
+          <MyButton onClick={() => {close(); onDeploy(canisterName)}}>Upgrade</MyButton>
+          <MyButton onClick={() => {close(); onDeploy(canisterName)}}>Reinstall</MyButton></>):(<>
+          <MyButton onClick={() => {close(); onDeploy(canisterName)}}>Install</MyButton></>
       )}
           <MyButton onClick={close}>Cancel</MyButton>
         </ProjectButtonContents>

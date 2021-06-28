@@ -121,10 +121,10 @@ export function App() {
     });
   };
 
-  const deployWorkplace = async () => {
+  const deployWorkplace = async (canisterName: string) => {
     // TODO don't pass readme non-mo files to motoko
     saveWorkplaceToMotoko(workplaceState.files);
-    const info = await deploy(defaultMainFile, logger);
+    const info = await deploy(canisterName, workplaceState.canisters[canisterName], defaultMainFile, logger);
     if (info) {
       workplaceDispatch({
         type: 'deployWorkplace',
