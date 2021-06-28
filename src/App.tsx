@@ -195,12 +195,7 @@ export function App() {
             onCanister={onCanister}
           />
           <Editor
-            fileCode={
-              workplaceState.selectedFile
-                ? workplaceState.files[workplaceState.selectedFile]
-                : ""
-            }
-            fileName={workplaceState.selectedFile}
+            state={workplaceState}
             onSave={saveWorkplace}
             onDeploy={deployWorkplace}
           />

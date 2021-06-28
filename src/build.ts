@@ -152,6 +152,6 @@ async function install(
   return canisterInfo;
 }
 
-function getCanisterName(path: string): string {
+export function getCanisterName(path: string): string {
   return path.split("/").pop()!.slice(0, -3);
 }

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
 import debounce from "lodash.debounce";
@@ -9,6 +9,7 @@ import { RightContainer } from "./shared/RightContainer";
 import { configureMonaco } from "../config/monacoConfig";
 import { Console } from "./Console";
 import iconRabbit from "../assets/images/icon-rabbit.png";
+import { DeployModal } from "./DeployModal";
 
 declare var Motoko: any;
 
@@ -60,7 +61,11 @@ function setMarkers(diags, codeModel, monaco, fileName) {
 }
 
 // @ts-ignore
-export function Editor({ fileCode = "", fileName, onSave, onDeploy } = {}) {
+export function Editor({ state, onSave, onDeploy } = {}) {
+  const [showModal, setShowModal] = useState(false);
+
+  const fileName = state.selectedFile;
+  const fileCode = fileName?state.files[fileName]:"";
   const monaco = useMonaco();
   const checkFileAddMarkers = () => {
     if (!fileName.endsWith('mo') || !Motoko) return;
@@ -95,10 +100,17 @@ export function Editor({ fileCode = "", fileName, onSave, onDeploy } = {}) {
 
   return (
     <EditorColumn>
+      <DeployModal
+        isOpen={showModal}
+        close={() => setShowModal(false)}
+        onDeploy={onDeploy}
+        canisters={state.canisters}
+        fileName={fileName}
+      />
       <PanelHeader>
         Editor
         <RightContainer>
-          <Button onClick={onDeploy} kind="primary" small>
+        <Button onClick={() => {setShowModal(true)}} kind="primary" small>
             <img src={iconRabbit} alt="Rabbit icon" />
             <p>Deploy</p>
           </Button>
