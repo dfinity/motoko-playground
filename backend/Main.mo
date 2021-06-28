@@ -77,7 +77,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
     public func removeCode(info: Types.CanisterInfo) : async () {
         pool.retire(info);
         await IC.uninstall_code({canister_id=info.id});
-    };    
+    };
     public func GCCanisters() {
         let list = pool.gcList();
         for (id in list.vals()) {
