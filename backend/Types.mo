@@ -8,12 +8,14 @@ module {
     public type InitParams = {
         cycles_per_canister: Nat;
         max_num_canisters: Nat;
-        TTL: Nat;
+        canister_time_to_live: Nat;
+        nonce_time_to_live: Nat;
     };
     public let defaultParams : InitParams = {
         cycles_per_canister = 105_000_000_000;
         max_num_canisters = 2;
-        TTL = 5_000_000_000;
+        canister_time_to_live = 120_000_000_000;
+        nonce_time_to_live = 60_000_000_000;
     };
     public type InstallArgs = {
         arg : Blob;

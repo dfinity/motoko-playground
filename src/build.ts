@@ -1,5 +1,5 @@
 import { blobFromUint8Array, BinaryBlob, Principal } from "@dfinity/agent";
-
+import { pow } from './pow';
 import { getActor, didToJs, getUiCanisterUrl } from "./config/actor";
 import { ILoggingStore } from './components/Logger';
 
@@ -113,7 +113,9 @@ export async function deploy(file: string, logger: ILoggingStore): Promise<Canis
 
 async function createCanister(logger: ILoggingStore): Promise<CanisterInfo> {
   const backend = await getActor();
-  const info = await backend.getCanisterId();
+  const timestamp = BigInt(Date.now()) * BigInt(1_000_000);
+  const nonce = pow(timestamp);
+  const info = await backend.getCanisterId(nonce);
   logger.log(`Created canister with id: ${info.id}`);
   return {
     id: info.id,
