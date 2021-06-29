@@ -2,7 +2,8 @@ import styled from "styled-components";
 import { useState } from "react";
 
 import { Modal } from "./shared/Modal";
-import { CanisterInfo, getCanisterName } from "../build";
+import { CanisterInfo, getCanisterName, deploy } from "../build";
+import { ILoggingStore } from './Logger';
 import { ExampleProject } from "../examples/types";
 import { Button } from "./shared/Button";
 import { ListButton, SelectList } from "./shared/SelectList";
@@ -53,6 +54,7 @@ interface DeployModalProps {
   onDeploy: (string) => void;
   canisters: Record<string, CanisterInfo>;
   fileName: string;
+  logger: ILoggingStore;
 }
 
 export function DeployModal({
@@ -61,8 +63,16 @@ export function DeployModal({
   onDeploy,
   canisters,
   fileName,
+  logger,
 }: DeployModalProps) {
   const [canisterName, setCanisterName] = useState(getCanisterName(fileName));
+  const deployClick = async (mode: string) => {
+    close();
+    const info = await deploy(canisterName, canisters[canisterName], fileName, logger);
+    if (info) {
+      onDeploy(info);
+    }
+  };
 
   const welcomeCopy = (
       <>
@@ -97,9 +107,9 @@ export function DeployModal({
         </SelectList>
         <ProjectButtonContents>
       {canisters.hasOwnProperty(canisterName)?(<>
-          <MyButton onClick={() => {close(); onDeploy(canisterName)}}>Upgrade</MyButton>
-          <MyButton onClick={() => {close(); onDeploy(canisterName)}}>Reinstall</MyButton></>):(<>
-          <MyButton onClick={() => {close(); onDeploy(canisterName)}}>Install</MyButton></>
+          <MyButton onClick={() => deployClick("upgrade")}>Upgrade</MyButton>
+          <MyButton onClick={() => deployClick("reinstall")}>Reinstall</MyButton></>):(<>
+          <MyButton onClick={() => deployClick("install")}>Install</MyButton></>
       )}
           <MyButton onClick={close}>Cancel</MyButton>
         </ProjectButtonContents>

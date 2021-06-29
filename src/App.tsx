@@ -6,7 +6,7 @@ import { Editor } from "./components/Editor";
 import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
 import { addPackage, saveWorkplaceToMotoko } from "./file";
-import { deploy, deleteCanister } from "./build";
+import { deploy, deleteCanister, CanisterInfo } from "./build";
 import { useLogging } from "./components/Logger";
 import {
   workplaceReducer,
@@ -49,8 +49,6 @@ const AppContainer = styled.div<{candidWidth: string}>`
   border-top: 1px solid var(--grey400);
   --candidWidth: ${props=>props.candidWidth ?? 0};
 `;
-
-const defaultMainFile = "Main.mo";
 
 export function App() {
   const [workplaceState, workplaceDispatch] = useReducer(
@@ -121,18 +119,13 @@ export function App() {
     });
   };
 
-  const deployWorkplace = async (canisterName: string) => {
-    // TODO don't pass readme non-mo files to motoko
-    saveWorkplaceToMotoko(workplaceState.files);
-    const info = await deploy(canisterName, workplaceState.canisters[canisterName], defaultMainFile, logger);
-    if (info) {
-      workplaceDispatch({
-        type: 'deployWorkplace',
-        payload: {
-          canister: info,
-        }
-      });
-    }
+  const deployWorkplace = (info: CanisterInfo) => {
+    workplaceDispatch({
+      type: 'deployWorkplace',
+      payload: {
+        canister: info,
+      }
+    });
   }
 
   const chooseExampleProject = useCallback(
@@ -198,6 +191,7 @@ export function App() {
             state={workplaceState}
             onSave={saveWorkplace}
             onDeploy={deployWorkplace}
+            logger={logger}
           />
           {showCandidUI ?
           <CandidUI
