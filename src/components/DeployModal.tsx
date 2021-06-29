@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Modal } from "./shared/Modal";
 import { CanisterInfo, getCanisterName, deploy } from "../build";
 import { ILoggingStore } from './Logger';
-import { ExampleProject } from "../examples/types";
 import { Button } from "./shared/Button";
 import { ListButton, SelectList } from "./shared/SelectList";
 import iconCaretRight from "../assets/images/icon-caret-right.svg";
@@ -54,6 +53,7 @@ interface DeployModalProps {
   onDeploy: (string) => void;
   canisters: Record<string, CanisterInfo>;
   fileName: string;
+  candid: string;
   logger: ILoggingStore;
 }
 
@@ -63,13 +63,15 @@ export function DeployModal({
   onDeploy,
   canisters,
   fileName,
+  candid,
   logger,
 }: DeployModalProps) {
   const [canisterName, setCanisterName] = useState(getCanisterName(fileName));
   const deployClick = async (mode: string) => {
     close();
-    const info = await deploy(canisterName, canisters[canisterName], fileName, logger);
+    const info = await deploy(canisterName, canisters[canisterName], mode, fileName, logger);
     if (info) {
+      info.candid = candid;
       onDeploy(info);
     }
   };
@@ -79,9 +81,6 @@ export function DeployModal({
       <p>Deploy your canister to the IC.</p>
       <p>
         <strong>Warning:</strong> Deployed canister expires after 10 minutes.
-      </p>
-      <p>
-        Press <kbd>Esc</kbd> or the "Cancel" button below to go back.
       </p>
     </>
   );

@@ -4,8 +4,6 @@ import { idlFactory, canisterId } from "dfx-generated/backend";
 
 import didjs_idl from "../didjs.did";
 
-// import didjs_idl from "./didjs.did";
-
 // Since we're using webpack-dev-server as part of create-react-app, we need to
 // add its port to our HttpAgent config as the host.
 import dfxConfig from "../../dfx.json";
@@ -43,7 +41,6 @@ export const getActor = async () => {
   return actor;
 };
 
-// TODO how will this work?
 const uiCanisterId = isLocalEnv
   ? "r7inp-6aaaa-aaaaa-aaabq-cai"
   : "a4gq6-oaaaa-aaaab-qaa4q-cai";

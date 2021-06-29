@@ -11,6 +11,8 @@ import { Console } from "./Console";
 import iconRabbit from "../assets/images/icon-rabbit.png";
 import { DeployModal } from "./DeployModal";
 import { saveWorkplaceToMotoko } from "../file";
+import { compileCandid } from "../build";
+import { didToJs } from "../config/actor";
 
 declare var Motoko: any;
 
@@ -64,6 +66,7 @@ function setMarkers(diags, codeModel, monaco, fileName) {
 // @ts-ignore
 export function Editor({ state, onSave, onDeploy, logger } = {}) {
   const [showModal, setShowModal] = useState(false);
+  const [candidCode, setCandidCode] = useState("");
 
   const fileName = state.selectedFile;
   const fileCode = fileName?state.files[fileName]:"";
@@ -94,11 +97,16 @@ export function Editor({ state, onSave, onDeploy, logger } = {}) {
   const onEditorChange = (newValue) => {
     debouncedSaveChanges(newValue);
   };
-  const deployClick = () => {
+  const deployClick = async () => {
     // TODO don't pass readme non-mo files to motoko    
     saveWorkplaceToMotoko(state.files);
-    // TODO candid
-    setShowModal(true);
+    const candid = compileCandid(mainFile, logger);
+    if (candid) {
+      const candidJS = await didToJs(candid);
+      console.log(candidJS);
+      setCandidCode(candid);
+      setShowModal(true);
+    }
   };
 
   useEffect(() => {
@@ -114,6 +122,7 @@ export function Editor({ state, onSave, onDeploy, logger } = {}) {
         onDeploy={onDeploy}
         canisters={state.canisters}
         fileName={mainFile}
+        candid={candidCode}
         logger={logger}
       />
       <PanelHeader>

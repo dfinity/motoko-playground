@@ -50,11 +50,11 @@ export function Explorer({ state, onSelectFile, onCanister } = {}) {
       {Object.keys(state.canisters).map((canister) => (
         <ListButton
         key={canister}
-        isActive={state.selectedCanister == canister}
-        disabled={state.selectedCanister == canister}
+        isActive={state.selectedCanister === canister}
+        disabled={state.selectedCanister === canister}
         onClick={() => onCanister(canister, 'select')}
         >
-          <img src={iconCanister}/>
+          <img src={iconCanister} alt="Canister icon"/>
           {canister}
           <CloseButton onClick={() => onCanister(canister, 'delete')}>
           <img src={iconClose} alt="Close icon" />

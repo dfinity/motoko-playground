@@ -6,7 +6,7 @@ import { Editor } from "./components/Editor";
 import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
 import { addPackage, saveWorkplaceToMotoko } from "./file";
-import { deploy, deleteCanister, CanisterInfo } from "./build";
+import { deleteCanister, CanisterInfo } from "./build";
 import { useLogging } from "./components/Logger";
 import {
   workplaceReducer,
