@@ -60,7 +60,7 @@ export function compileCandid(file: string, logger: ILoggingStore): string|undef
   return candid_source;
 }
 
-export async function deploy(canisterName: string, canisterInfo: CanisterInfo|null, mode: string, file: string, logger: ILoggingStore): Promise<CanisterInfo | undefined> {
+export async function deploy(canisterName: string, canisterInfo: CanisterInfo|null, args: BinaryBlob, mode: string, file: string, logger: ILoggingStore): Promise<CanisterInfo | undefined> {
   logger.clearLogs();
   logger.log('Compiling code...');
 
@@ -87,6 +87,7 @@ export async function deploy(canisterName: string, canisterInfo: CanisterInfo|nu
         updatedState = await install(
           canisterInfo,
           module,
+          args,
           "install",
           logger
         );
@@ -97,6 +98,7 @@ export async function deploy(canisterName: string, canisterInfo: CanisterInfo|nu
         updatedState = await install(
           canisterInfo,
           module,
+          args,
           mode,
           logger
         );
@@ -131,6 +133,7 @@ export async function deleteCanister(info: CanisterInfo) {
 async function install(
   canisterInfo: CanisterInfo,
   module: BinaryBlob,
+  args: BinaryBlob,
   mode: string,
   logger: ILoggingStore): Promise<CanisterInfo>
 {
@@ -139,7 +142,7 @@ async function install(
   }
   const canisterId = canisterInfo.id;
   const installArgs = {
-    arg: [],
+    arg: [...args],
     wasm_module: [...module],
     mode: { [mode]: null },
     canister_id: canisterId,

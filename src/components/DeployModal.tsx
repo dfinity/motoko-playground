@@ -1,5 +1,6 @@
 import styled from "styled-components";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { IDL, renderInput, blobFromUint8Array, InputBox } from "@dfinity/candid";
 
 import { Modal } from "./shared/Modal";
 import { CanisterInfo, getCanisterName, deploy } from "../build";
@@ -54,6 +55,7 @@ interface DeployModalProps {
   canisters: Record<string, CanisterInfo>;
   fileName: string;
   candid: string;
+  initTypes: Array<IDL.Type>;
   logger: ILoggingStore;
 }
 
@@ -64,12 +66,35 @@ export function DeployModal({
   canisters,
   fileName,
   candid,
+  initTypes,
   logger,
 }: DeployModalProps) {
   const [canisterName, setCanisterName] = useState(getCanisterName(fileName));
+  const [inputs, setInputs] = useState([]);
+
+  const initArgs = useCallback((node) => {
+    if (node) {
+      const args = initTypes.map((arg) => renderInput(arg));
+      setInputs(args as any);
+      args.forEach((arg) => arg.render(node));
+    }
+  }, [initTypes]);
+  const parse = () => {
+    const args = inputs.map(arg => (arg as InputBox).parse());
+    const isReject = inputs.some(arg => (arg as InputBox).isRejected());
+    if (isReject) {
+      return undefined;
+    }
+    return blobFromUint8Array(IDL.encode(initTypes, args));
+  };
+  
   const deployClick = async (mode: string) => {
+    const args = parse();
+    if (args === undefined) {
+      return;
+    }
     close();
-    const info = await deploy(canisterName, canisters[canisterName], mode, fileName, logger);
+    const info = await deploy(canisterName, canisters[canisterName], args, mode, fileName, logger);
     if (info) {
       info.candid = candid;
       onDeploy(info);
@@ -102,8 +127,7 @@ export function DeployModal({
         ))}
         </datalist>
       </SelectLabel>
-        <SelectList height="18rem">
-        </SelectList>
+      {initTypes.length > 0?(<><p>Input init argument:</p><div ref={initArgs}></div></>):null}
         <ProjectButtonContents>
       {canisters.hasOwnProperty(canisterName)?(<>
           <MyButton onClick={() => deployClick("upgrade")}>Upgrade</MyButton>

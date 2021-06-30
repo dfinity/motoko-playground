@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
 import debounce from "lodash.debounce";
+import { IDL } from "@dfinity/candid";
 
 import { Button } from "./shared/Button";
 import { PanelHeader } from "./shared/PanelHeader";
@@ -67,6 +68,7 @@ function setMarkers(diags, codeModel, monaco, fileName) {
 export function Editor({ state, onSave, onDeploy, logger } = {}) {
   const [showModal, setShowModal] = useState(false);
   const [candidCode, setCandidCode] = useState("");
+  const [initTypes, setInitTypes] = useState([]);
 
   const fileName = state.selectedFile;
   const fileCode = fileName?state.files[fileName]:"";
@@ -103,9 +105,10 @@ export function Editor({ state, onSave, onDeploy, logger } = {}) {
     const candid = compileCandid(mainFile, logger);
     if (candid) {
       const candidJS = await didToJs(candid);
-      console.log(candidJS);
-      setCandidCode(candid);
-      setShowModal(true);
+      const init = candidJS.init({ IDL });
+      await setInitTypes(init);
+      await setCandidCode(candid);
+      await setShowModal(true);
     }
   };
 
@@ -123,6 +126,7 @@ export function Editor({ state, onSave, onDeploy, logger } = {}) {
         canisters={state.canisters}
         fileName={mainFile}
         candid={candidCode}
+        initTypes={initTypes}
         logger={logger}
       />
       <PanelHeader>
