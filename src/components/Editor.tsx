@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
 import debounce from "lodash.debounce";
+import { IDL } from "@dfinity/candid";
 
 import { Button } from "./shared/Button";
 import { PanelHeader } from "./shared/PanelHeader";
@@ -9,6 +10,10 @@ import { RightContainer } from "./shared/RightContainer";
 import { configureMonaco } from "../config/monacoConfig";
 import { Console } from "./Console";
 import iconRabbit from "../assets/images/icon-rabbit.png";
+import { DeployModal } from "./DeployModal";
+import { saveWorkplaceToMotoko } from "../file";
+import { compileCandid } from "../build";
+import { didToJs } from "../config/actor";
 
 declare var Motoko: any;
 
@@ -60,7 +65,14 @@ function setMarkers(diags, codeModel, monaco, fileName) {
 }
 
 // @ts-ignore
-export function Editor({ fileCode = "", fileName, onSave, onDeploy } = {}) {
+export function Editor({ state, onSave, onDeploy, logger } = {}) {
+  const [showModal, setShowModal] = useState(false);
+  const [candidCode, setCandidCode] = useState("");
+  const [initTypes, setInitTypes] = useState([]);
+
+  const fileName = state.selectedFile;
+  const fileCode = fileName?state.files[fileName]:"";
+  const mainFile = fileName.endsWith('.mo')?fileName:"Main.mo";
   const monaco = useMonaco();
   const checkFileAddMarkers = () => {
     if (!fileName.endsWith('mo') || !Motoko) return;
@@ -87,6 +99,18 @@ export function Editor({ fileCode = "", fileName, onSave, onDeploy } = {}) {
   const onEditorChange = (newValue) => {
     debouncedSaveChanges(newValue);
   };
+  const deployClick = async () => {
+    // TODO don't pass readme non-mo files to motoko    
+    saveWorkplaceToMotoko(state.files);
+    const candid = compileCandid(mainFile, logger);
+    if (candid) {
+      const candidJS = await didToJs(candid);
+      const init = candidJS.init({ IDL });
+      await setInitTypes(init);
+      await setCandidCode(candid);
+      await setShowModal(true);
+    }
+  };
 
   useEffect(() => {
     if (!monaco) return;
@@ -95,10 +119,20 @@ export function Editor({ fileCode = "", fileName, onSave, onDeploy } = {}) {
 
   return (
     <EditorColumn>
+      <DeployModal
+        isOpen={showModal}
+        close={() => setShowModal(false)}
+        onDeploy={onDeploy}
+        canisters={state.canisters}
+        fileName={mainFile}
+        candid={candidCode}
+        initTypes={initTypes}
+        logger={logger}
+      />
       <PanelHeader>
         Editor
         <RightContainer>
-          <Button onClick={onDeploy} kind="primary" small>
+        <Button onClick={deployClick} kind="primary" small>
             <img src={iconRabbit} alt="Rabbit icon" />
             <p>Deploy</p>
           </Button>
