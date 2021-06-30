@@ -15,13 +15,20 @@ const ModalContainer = styled.div`
   justify-content: center;
   align-items: center;
   width: 50rem;
-  font-size: 1.4rem;
 `;
 
 const ProjectButtonContents = styled.div`
   display: flex;
   justify-content: center;
   width: 100%;
+`;
+const InitContainer = styled.div`
+  width: 100%;
+  border: 1px solid var(--grey300);
+  border-radius: 0.8rem;
+  overflow: auto;
+  padding: 1rem;
+  margin-top: 1rem;
 `;
 
 function ProjectButton({ onClick, children }) {
@@ -104,10 +111,12 @@ export function DeployModal({
   const welcomeCopy = (
       <>
       <p>Deploy your canister to the IC.</p>
-      <p>
-        <strong>Warning:</strong> Deployed canister expires after 10 minutes.
-      </p>
     </>
+  );
+  const ttlWarning = (
+      <><p style={{fontSize: "1.4rem", marginTop: "2rem"}}>
+        <strong>Warning:</strong> Deployed canister expires after 10 minutes.
+      </p></>
   );
 
   return (
@@ -126,9 +135,15 @@ export function DeployModal({
           <option>{canister}</option>
         ))}
         </datalist>
-      </SelectLabel>
-      {initTypes.length > 0?(<><p>Input init argument:</p><div ref={initArgs}></div></>):null}
-        <ProjectButtonContents>
+      {initTypes.length > 0 ? (
+          <InitContainer>
+          <p>This service requires the following installation arguments:</p><p>({initTypes.map(arg => arg.name).join(", ")})</p>
+          <div ref={initArgs}></div>
+          </InitContainer>)
+       : null}
+    </SelectLabel>
+      {ttlWarning}
+      <ProjectButtonContents>
       {canisters.hasOwnProperty(canisterName)?(<>
           <MyButton onClick={() => deployClick("upgrade")}>Upgrade</MyButton>
           <MyButton onClick={() => deployClick("reinstall")}>Reinstall</MyButton></>):(<>
