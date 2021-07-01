@@ -60,6 +60,7 @@ interface DeployModalProps {
   close: () => void;
   onDeploy: (string) => void;
   canisters: Record<string, CanisterInfo>;
+  ttl: bigint;
   fileName: string;
   candid: string;
   initTypes: Array<IDL.Type>;
@@ -71,6 +72,7 @@ export function DeployModal({
   close,
   onDeploy,
   canisters,
+  ttl,
   fileName,
   candid,
   initTypes,
@@ -115,7 +117,7 @@ export function DeployModal({
   );
   const ttlWarning = (
       <><p style={{fontSize: "1.4rem", marginTop: "2rem"}}>
-        <strong>Warning:</strong> Deployed canister expires after 10 minutes.
+      <strong>Warning:</strong> Deployed canister expires after {(ttl/BigInt(60_000_000_000)).toString()} minutes.
       </p></>
   );
 

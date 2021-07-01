@@ -65,7 +65,7 @@ function setMarkers(diags, codeModel, monaco, fileName) {
 }
 
 // @ts-ignore
-export function Editor({ state, onSave, onDeploy, logger } = {}) {
+export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
   const [showModal, setShowModal] = useState(false);
   const [candidCode, setCandidCode] = useState("");
   const [initTypes, setInitTypes] = useState([]);
@@ -124,6 +124,7 @@ export function Editor({ state, onSave, onDeploy, logger } = {}) {
         close={() => setShowModal(false)}
         onDeploy={onDeploy}
         canisters={state.canisters}
+        ttl={ttl}
         fileName={mainFile}
         candid={candidCode}
         initTypes={initTypes}

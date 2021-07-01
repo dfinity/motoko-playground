@@ -14,6 +14,7 @@ import {
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
 import { exampleProjects } from "./examples";
+import { getActor } from "./config/actor";
 
 const GlobalStyles = createGlobalStyle`
   :root {
@@ -56,11 +57,13 @@ export function App() {
     {},
     workplaceReducer.init
     );
-    const [motokoIsLoaded, setMotokoIsLoaded] = useState(false);
-    const [isProjectModalOpen, setIsProjectModalOpen] = useState(true);
-    const [isFirstVisit, setIsFirstVisit] = useState(true);
-    const [showCandidUI, setShowCandidUI] = useState(false);
-    const [candidWidth, setCandidWidth] = useState("0");
+  const [motokoIsLoaded, setMotokoIsLoaded] = useState(false);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(true);
+  const [isFirstVisit, setIsFirstVisit] = useState(true);
+  const [showCandidUI, setShowCandidUI] = useState(false);
+  const [candidWidth, setCandidWidth] = useState("0");
+  const [TTL, setTTL] = useState(BigInt(0));
+  
   const logger = useLogging();
 
   function closeProjectModal() {
@@ -153,6 +156,12 @@ export function App() {
     document.body.appendChild(script);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    (async () => {
+      const backend = await getActor();
+      setTTL((await backend.getInitParams()).canister_time_to_live);
+    })();
+  }, []);
 
   useEffect(() => {
     if (!motokoIsLoaded) {
@@ -184,11 +193,13 @@ export function App() {
         <AppContainer candidWidth={candidWidth}>
           <Explorer
             state={workplaceState}
+            ttl={TTL}
             onSelectFile={selectFile}
             onCanister={onCanister}
           />
           <Editor
             state={workplaceState}
+            ttl={TTL}
             onSave={saveWorkplace}
             onDeploy={deployWorkplace}
             logger={logger}

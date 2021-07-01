@@ -31,8 +31,9 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
         };
         pool.unshare(stablePool);
     };
-    
-    // TODO: only playground frontend can call these functions
+    public query func getInitParams() : async Types.InitParams {
+        params
+    };
     public shared({caller}) func getCanisterId(nonce: PoW.Nonce) : async Types.CanisterInfo {
         let now = Time.now();
         if (caller != controller and not nonceCache.checkProofOfWork(nonce)) {
@@ -70,6 +71,9 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
         };
     };
     public func installCode(info: Types.CanisterInfo, args: Types.InstallArgs) : async Types.CanisterInfo {
+        if (info.timestamp == 0) {
+            throw Error.reject("Cannot install removed canister");
+        };
         let new_info = pool.refresh(info);
         await IC.install_code(args);
         new_info
