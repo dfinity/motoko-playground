@@ -64,7 +64,6 @@ export function Explorer({ state, ttl, onSelectFile, onCanister } = {}) {
     return () => clearTimeout(timer);
   }, [state.canisters, timeLeft]);
   useEffect(() => {
-    console.log(isExpired);
     isExpired.forEach((canister) => {
       onCanister(canister, "delete");
     });
