@@ -4,6 +4,7 @@ import iconPackage from "../assets/images/icon-package.svg";
 import iconCanister from "../assets/images/icon-canister.svg";
 import iconClose from "../assets/images/icon-close.svg";
 import { ListButton } from "./shared/SelectList";
+import { WorkplaceState } from "../contexts/WorkplaceState";
 
 const StyledExplorer = styled.div`
   width: var(--explorerWidth);
@@ -27,23 +28,29 @@ const CloseButton = styled.button`
   margin-left: auto;
 `;
 
-// @ts-ignore
-export function Explorer({ state, ttl, onSelectFile, onCanister } = {}) {
+interface ExplorerProps {
+  state: WorkplaceState;
+  ttl: bigint;
+  onSelectFile: (string) => void;
+  onCanister: (name: string, action:string) => void;
+}
+
+export function Explorer({ state, ttl, onSelectFile, onCanister }: ExplorerProps) {
   const [timeLeft, setTimeLeft] = useState<Array<string>>([]);
   const [isExpired, setIsExpired] = useState<Array<string>>([])
 
-  const calcTimeLeft = (timestamp: bigint) => {
+  const calcTimeLeft = (timestamp: bigint) : number => {
     const now = BigInt(Date.now()) * BigInt(1_000_000);
     const left = Number((ttl - (now - timestamp)) / BigInt(1_000_000_000));
     return left;
   };
   useEffect(() => {
-    if (state.canisters.length === 0) {
+    if (Object.keys(state.canisters).length === 0) {
       return;
     }
     const timer = setTimeout(() => {
-      const times = Object.values(state.canisters).map((info) => {
-        return [(info as any).name, calcTimeLeft((info as any).timestamp)];
+      const times: Array<[string, number]> = Object.values(state.canisters).map((info) => {
+        return [info.name!, calcTimeLeft(info.timestamp)];
       });
       const expired = times.filter(([_, left]) => left <= 0).map(([name, _]) => name);
       // Guard setIsExpired because of shallow equality

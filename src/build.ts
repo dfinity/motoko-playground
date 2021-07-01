@@ -8,7 +8,7 @@ declare var Motoko: any;
 
 export interface CanisterInfo {
   id: Principal,
-  timestamp: BigInt,
+  timestamp: bigint,
   name?: string,
   candid?: string | null,
 }
