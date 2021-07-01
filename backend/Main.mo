@@ -34,6 +34,9 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
     public query func getInitParams() : async Types.InitParams {
         params
     };
+    public query func balance() : async Nat {
+        Cycles.balance()
+    };
     public shared({caller}) func getCanisterId(nonce: PoW.Nonce) : async Types.CanisterInfo {
         let now = Time.now();
         if (caller != controller and not nonceCache.checkProofOfWork(nonce)) {

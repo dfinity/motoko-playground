@@ -61,9 +61,9 @@ export function Explorer({ state, ttl, onSelectFile, onCanister }: ExplorerProps
         if (left > 0) {
           const minute = Math.floor(left / 60);
           const second = left % 60;
-          return `${minute}:${second} &nbsp;`;
+          return `${minute}:${second}  `;
         } else {
-          return "Expired &nbsp;";
+          return "Expired  ";
         }
       }));
     }, 1000);
