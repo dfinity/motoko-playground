@@ -13,9 +13,9 @@ module {
     };
     public let defaultParams : InitParams = {
         cycles_per_canister = 105_000_000_000;
-        max_num_canisters = 2;
-        canister_time_to_live = 120_000_000_000;
-        nonce_time_to_live = 60_000_000_000;
+        max_num_canisters = 5;
+        canister_time_to_live = 60_000_000_000;
+        nonce_time_to_live = 300_000_000_000;
     };
     public type InstallArgs = {
         arg : Blob;

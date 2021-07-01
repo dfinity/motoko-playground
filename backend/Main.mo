@@ -31,8 +31,9 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
         };
         pool.unshare(stablePool);
     };
-    
-    // TODO: only playground frontend can call these functions
+    public query func getInitParams() : async Types.InitParams {
+        params
+    };
     public shared({caller}) func getCanisterId(nonce: PoW.Nonce) : async Types.CanisterInfo {
         let now = Time.now();
         if (caller != controller and not nonceCache.checkProofOfWork(nonce)) {
