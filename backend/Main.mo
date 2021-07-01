@@ -71,6 +71,9 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
         };
     };
     public func installCode(info: Types.CanisterInfo, args: Types.InstallArgs) : async Types.CanisterInfo {
+        if (info.timestamp == 0) {
+            throw Error.reject("Cannot install removed canister");
+        };
         let new_info = pool.refresh(info);
         await IC.install_code(args);
         new_info

@@ -30,7 +30,7 @@ const CloseButton = styled.button`
 // @ts-ignore
 export function Explorer({ state, ttl, onSelectFile, onCanister } = {}) {
   const [timeLeft, setTimeLeft] = useState<Array<string>>([]);
-  const [isExpired, setIsExpired] = useState<Record<string, boolean>>({})
+  const [isExpired, setIsExpired] = useState<Array<string>>([])
 
   const calcTimeLeft = (timestamp: bigint) => {
     const now = BigInt(Date.now()) * BigInt(1_000_000);
@@ -38,25 +38,36 @@ export function Explorer({ state, ttl, onSelectFile, onCanister } = {}) {
     return left;
   };
   useEffect(() => {
+    if (state.canisters.length === 0) {
+      return;
+    }
     const timer = setTimeout(() => {
-      setTimeLeft(Object.values(state.canisters).map((info) => {
-        const left = calcTimeLeft((info as any).timestamp);
-        if (left <= 0) {
-          setIsExpired(prev => ({ ...prev, [(info as any).name]: true }));
+      const times = Object.values(state.canisters).map((info) => {
+        return [(info as any).name, calcTimeLeft((info as any).timestamp)];
+      });
+      const expired = times.filter(([_, left]) => left <= 0).map(([name, _]) => name);
+      // Guard setIsExpired because of shallow equality
+      if (expired.length > 0 && JSON.stringify(isExpired) !== JSON.stringify(expired)) {
+        setIsExpired(expired);
+      }
+      setTimeLeft(times.map(([_, left]) => {
+        if (left > 0) {
+          const minute = Math.floor(left / 60);
+          const second = left % 60;
+          return `${minute}:${second} &nbsp;`;
+        } else {
+          return "Expired &nbsp;";
         }
-        const minute = Math.floor(left / 60);
-        const second = left % 60;
-        return ` ${minute}:${second}`;
       }));
     }, 1000);
     // Clear timeout if the component is unmounted
     return () => clearTimeout(timer);
   }, [state.canisters, timeLeft]);
   useEffect(() => {
-    Object.keys(isExpired).forEach((canister) => {
+    console.log(isExpired);
+    isExpired.forEach((canister) => {
       onCanister(canister, "delete");
     });
-    setIsExpired({});
   }, [isExpired]);
   
   return (
@@ -87,8 +98,8 @@ export function Explorer({ state, ttl, onSelectFile, onCanister } = {}) {
         >
           <img src={iconCanister} alt="Canister icon"/>
           {canister}
-          <div style={{marginLeft:"auto"}}>{timeLeft[i]}</div>
           <CloseButton onClick={() => onCanister(canister, 'delete')}>
+          {timeLeft[i]}
           <img src={iconClose} alt="Close icon" />
           </CloseButton>
         </ListButton>
