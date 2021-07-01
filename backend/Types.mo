@@ -12,7 +12,7 @@ module {
         nonce_time_to_live: Nat;
     };
     public let defaultParams : InitParams = {
-        cycles_per_canister = 105_000_000_000;
+        cycles_per_canister = 550_000_000_000;
         max_num_canisters = 5;
         canister_time_to_live = 600_000_000_000;
         nonce_time_to_live = 300_000_000_000;
