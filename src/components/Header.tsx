@@ -1,7 +1,6 @@
 import styled from "styled-components";
 import { Button } from "./shared/Button";
 import { RightContainer } from "./shared/RightContainer";
-import iconSun from "../assets/images/icon-sun.svg";
 import iconPlus from "../assets/images/icon-plus.svg";
 import { MotokoLabLogo } from "./shared/MotokoLabLogo";
 
@@ -61,9 +60,6 @@ export function Header({ openTutorial, darkMode = false }) {
         >
           Internet Computer SDK
         </HeaderLink>
-        <Button width="7.8rem">
-          <img src={iconSun} alt="Sun icon" />
-        </Button>
         <Button width="16.4rem" onClick={openTutorial}>
           <img src={iconPlus} alt="Plus icon" />
           <p>Open Tutorial</p>

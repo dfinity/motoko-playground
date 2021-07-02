@@ -61,9 +61,9 @@ export function Explorer({ state, ttl, onSelectFile, onCanister }: ExplorerProps
         if (left > 0) {
           const minute = Math.floor(left / 60);
           const second = left % 60;
-          return `${minute}:${second} &nbsp;`;
+          return `${minute}:${second.toString().padStart(2, '0')}`;
         } else {
-          return "Expired &nbsp;";
+          return "Expired";
         }
       }));
     }, 1000);
@@ -72,7 +72,7 @@ export function Explorer({ state, ttl, onSelectFile, onCanister }: ExplorerProps
   }, [state.canisters, timeLeft]);
   useEffect(() => {
     isExpired.forEach((canister) => {
-      onCanister(canister, "delete");
+      onCanister(canister, "expired");
     });
   }, [isExpired]);
   
@@ -104,8 +104,8 @@ export function Explorer({ state, ttl, onSelectFile, onCanister }: ExplorerProps
         >
           <img src={iconCanister} alt="Canister icon"/>
           {canister}
+          <div style={{marginLeft: "auto"}}>{timeLeft[i]}</div>
           <CloseButton onClick={() => onCanister(canister, 'delete')}>
-          {timeLeft[i]}
           <img src={iconClose} alt="Close icon" />
           </CloseButton>
         </ListButton>
