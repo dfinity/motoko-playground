@@ -106,9 +106,9 @@ module Utils {
 
   // Show to-do item utility
   public func show(todos : [ToDo]) : Text {
-    var output : Text = "\n___TO-DOs___";
+    var output : Text = "\\n___TO-DOs___";
     for (todo : ToDo in todos.vals()) {
-      output #= "\n(" # Nat.toText(todo.id) # ") " # todo.description;
+      output #= "\\n(" # Nat.toText(todo.id) # ") " # todo.description;
       if (todo.completed) { output #= " ✔"; };
     };
     output
