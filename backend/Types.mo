@@ -17,6 +17,14 @@ module {
         canister_time_to_live = 600_000_000_000;
         nonce_time_to_live = 300_000_000_000;
     };
+    public type Stats = {
+        num_of_canisters: Nat;
+        cycles_used: Nat;
+    };
+    public let defaultStats : Stats = {
+        num_of_canisters = 0;
+        cycles_used = 0;
+    };
     public type InstallArgs = {
         arg : Blob;
         wasm_module : Blob;

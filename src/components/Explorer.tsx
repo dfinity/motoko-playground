@@ -72,7 +72,7 @@ export function Explorer({ state, ttl, onSelectFile, onCanister }: ExplorerProps
   }, [state.canisters, timeLeft]);
   useEffect(() => {
     isExpired.forEach((canister) => {
-      onCanister(canister, "delete");
+      onCanister(canister, "expired");
     });
   }, [isExpired]);
   

@@ -91,11 +91,14 @@ export function App() {
             name: selectedCanister,
           },
         });
-      case "delete": {
-        const canisterInfo = workplaceState.canisters[selectedCanister];
-        logger.log(`Deleting canister ${selectedCanister} with id: ${canisterInfo.id.toText()}...`);
-        await deleteCanister(canisterInfo);
-        logger.log('Canister deleted');
+      case "delete":
+      case "expired": {
+        if (action === "delete") {
+          const canisterInfo = workplaceState.canisters[selectedCanister];
+          logger.log(`Deleting canister ${selectedCanister} with id: ${canisterInfo.id.toText()}...`);
+          await deleteCanister(canisterInfo);
+          logger.log('Canister deleted');
+        }
         return workplaceDispatch({
           type: "deleteCanister",
           payload: {
