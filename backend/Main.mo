@@ -41,6 +41,10 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
     public query func balance() : async Nat {
         Cycles.balance()
     };
+    public func wallet_receive() : async () {
+        let amount = Cycles.available();
+        ignore Cycles.accept(amount);
+    };
     public shared({caller}) func getCanisterId(nonce: PoW.Nonce) : async Types.CanisterInfo {
         let now = Time.now();
         if (caller != controller and not nonceCache.checkProofOfWork(nonce)) {
@@ -60,6 +64,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
                  nonceCache.add(nonce);
                  stats := {
                      num_of_canisters = stats.num_of_canisters + 1;
+                     num_of_installs = stats.num_of_installs;
                      cycles_used = stats.cycles_used + params.cycles_per_canister;
                  };
                  info
@@ -72,11 +77,13 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
                  } else { 0 };
                  if (top_up_cycles > 0) {
                      Cycles.add(top_up_cycles);
+                     await IC.deposit_cycles(cid);
                  };
                  await IC.uninstall_code(cid);
                  nonceCache.add(nonce);
                  stats := {
                      num_of_canisters = stats.num_of_canisters + 1;
+                     num_of_installs = stats.num_of_installs;
                      cycles_used = stats.cycles_used + top_up_cycles;
                  };
                  info
@@ -93,6 +100,11 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
         };
         let new_info = pool.refresh(info);
         await IC.install_code(args);
+        stats := {
+            num_of_canisters = stats.num_of_canisters;
+            num_of_installs = stats.num_of_installs + 1;
+            cycles_used = stats.cycles_used;
+        };        
         new_info
     };
     public func removeCode(info: Types.CanisterInfo) : async () {
@@ -107,8 +119,14 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
     };
     public query({caller}) func dump() : async [Types.CanisterInfo] {
         if (caller != controller) {
-            throw Error.reject("Only called by controller");            
+            throw Error.reject("Only called by controller");
         };
         pool.share()
     };
+    public shared({caller}) func resetStats() : async () {
+        if (caller != controller) {
+            throw Error.reject("Only called by controller");          
+        };
+        stats := Types.defaultStats;
+    }
 }

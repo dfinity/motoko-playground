@@ -19,10 +19,12 @@ module {
     };
     public type Stats = {
         num_of_canisters: Nat;
+        num_of_installs: Nat;
         cycles_used: Nat;
     };
     public let defaultStats : Stats = {
         num_of_canisters = 0;
+        num_of_installs = 0;
         cycles_used = 0;
     };
     public type InstallArgs = {
