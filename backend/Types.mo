@@ -3,6 +3,7 @@ import Splay "mo:splay";
 import Time "mo:base/Time";
 import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
+import Int "mo:base/Int";
 
 module {
     public type InitParams = {
@@ -16,16 +17,6 @@ module {
         max_num_canisters = 5;
         canister_time_to_live = 600_000_000_000;
         nonce_time_to_live = 300_000_000_000;
-    };
-    public type Stats = {
-        num_of_canisters: Nat;
-        num_of_installs: Nat;
-        cycles_used: Nat;
-    };
-    public let defaultStats : Stats = {
-        num_of_canisters = 0;
-        num_of_installs = 0;
-        cycles_used = 0;
     };
     public type InstallArgs = {
         arg : Blob;
@@ -46,16 +37,16 @@ module {
     public class CanisterPool(size: Nat, TTL: Nat) {
         var len = 0;
         var tree = Splay.Splay<CanisterInfo>(canisterInfoCompare);
-        public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Int };
+        public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
         public func getExpiredCanisterId() : NewId {
             if (len < size) {
                 #newId
             } else {
                 switch (tree.entries().next()) {
-                case null #outOfCapacity(-1);
+                case null { assert false; loop(); };
                 case (?info) {
                          let now = Time.now();
-                         let elapsed = now - info.timestamp;
+                         let elapsed : Nat = Int.abs(now) - Int.abs(info.timestamp);
                          if (elapsed >= TTL) {
                              tree.remove(info);
                              let new_info = { timestamp = now; id = info.id };
@@ -75,15 +66,18 @@ module {
             len += 1;
             tree.insert(info);
         };
-        public func refresh(info: CanisterInfo) : CanisterInfo {
+        public func refresh(info: CanisterInfo) : ?CanisterInfo {
+            if (not tree.find(info)) { return null };
             tree.remove(info);
             let new_info = { timestamp = Time.now(); id = info.id };
             tree.insert(new_info);
-            new_info
+            ?new_info
         };
-        public func retire(info: CanisterInfo) {
+        public func retire(info: CanisterInfo) : Bool {
+            if (not tree.find(info)) { return false; };
             tree.remove(info);
             tree.insert({ timestamp = 0; id = info.id });
+            return true;
         };
         public func gcList() : Buffer.Buffer<Principal> {
             let now = Time.now();
@@ -93,7 +87,7 @@ module {
                     // assumes when timestamp == 0, uninstall_code is already done
                     if (info.timestamp > now - TTL) { return result };
                     result.add(info.id);
-                    retire(info);
+                    ignore retire(info);
                 }
             };
             result
