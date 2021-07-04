@@ -5,6 +5,7 @@ import Option "mo:base/Option";
 import Types "./Types";
 import ICType "./IC";
 import PoW "./PoW";
+import Logs "./Logs";
 
 shared(creator) actor class Self(opt_params : ?Types.InitParams) {
     let IC : ICType.Self = actor "aaaaa-aa";
@@ -13,7 +14,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
     let nonceCache = PoW.NonceCache(params.nonce_time_to_live);
 
     stable let controller = creator.caller;
-    stable var stats = Types.defaultStats;
+    stable var stats = Logs.defaultStats;
     stable var stablePool : [Types.CanisterInfo] = [];
     stable var previousParam : ?Types.InitParams = null;
     system func preupgrade() {
@@ -35,7 +36,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
     public query func getInitParams() : async Types.InitParams {
         params
     };
-    public query func getStats() : async Types.Stats {
+    public query func getStats() : async Logs.Stats {
         stats
     };
     public query func balance() : async Nat {
@@ -48,10 +49,12 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
     public shared({caller}) func getCanisterId(nonce: PoW.Nonce) : async Types.CanisterInfo {
         let now = Time.now();
         if (caller != controller and not nonceCache.checkProofOfWork(nonce)) {
+            stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject("Proof of work check failed");
         };
         nonceCache.pruneExpired();
         if (nonceCache.contains(nonce)) {
+            stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject("Nonce already used");
         };
         
@@ -62,11 +65,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
                  let info = { id = cid.canister_id; timestamp = now };
                  pool.add(info);
                  nonceCache.add(nonce);
-                 stats := {
-                     num_of_canisters = stats.num_of_canisters + 1;
-                     num_of_installs = stats.num_of_installs;
-                     cycles_used = stats.cycles_used + params.cycles_per_canister;
-                 };
+                 stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
                  info
              };
         case (#reuse(info)) {
@@ -81,42 +80,46 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
                  };
                  await IC.uninstall_code(cid);
                  nonceCache.add(nonce);
-                 stats := {
-                     num_of_canisters = stats.num_of_canisters + 1;
-                     num_of_installs = stats.num_of_installs;
-                     cycles_used = stats.cycles_used + top_up_cycles;
-                 };
+                 stats := Logs.updateStats(stats, #getId(top_up_cycles));
                  info
              };
         case (#outOfCapacity(time)) {
                  let second = time / 1_000_000_000;
+                 stats := Logs.updateStats(stats, #outOfCapacity(time));
                  throw Error.reject("No available canister id, wait for " # debug_show(second) # " seconds.");
              };
         };
     };
     public func installCode(info: Types.CanisterInfo, args: Types.InstallArgs) : async Types.CanisterInfo {
         if (info.timestamp == 0) {
+            stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject("Cannot install removed canister");
         };
-        let new_info = pool.refresh(info);
-        await IC.install_code(args);
-        stats := {
-            num_of_canisters = stats.num_of_canisters;
-            num_of_installs = stats.num_of_installs + 1;
-            cycles_used = stats.cycles_used;
-        };        
-        new_info
+        switch (pool.refresh(info)) {
+        case null {
+                 stats := Logs.updateStats(stats, #mismatch);
+                 throw Error.reject("Cannot find canister");
+             };
+        case (?new_info) {
+          await IC.install_code(args);
+          stats := Logs.updateStats(stats, #install);
+          new_info
+          };
+        }
     };
     public func removeCode(info: Types.CanisterInfo) : async () {
-        pool.retire(info);
-        await IC.uninstall_code({canister_id=info.id});
+        if (pool.retire(info)) {
+            await IC.uninstall_code({canister_id=info.id});
+        } else {
+            stats := Logs.updateStats(stats, #mismatch);
+        }
     };
-    public func GCCanisters() {
+    /*public func GCCanisters() {
         let list = pool.gcList();
         for (id in list.vals()) {
             await IC.uninstall_code({canister_id=id});
         };
-    };
+    };*/
     public query({caller}) func dump() : async [Types.CanisterInfo] {
         if (caller != controller) {
             throw Error.reject("Only called by controller");
@@ -127,6 +130,6 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
         if (caller != controller) {
             throw Error.reject("Only called by controller");          
         };
-        stats := Types.defaultStats;
+        stats := Logs.defaultStats;
     }
 }
