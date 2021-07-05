@@ -1,8 +1,3 @@
-// map filepath to code session { state, model }
-export const files = {};
-export var current_session_name = "main.mo";
-export const filetab = document.createElement("div");
-
 declare var Motoko: any;
 
 export async function addPackage(name, repo, version, dir, logger) {
@@ -33,6 +28,32 @@ export async function addPackage(name, repo, version, dir, logger) {
     //   // @ts-ignore
     //   ...fetchedFiles.map((s) => `mo:${s.slice(0, -3)}`),
     // ].join("\n");
+  });
+}
+export async function fetchGithub(repo, branch, dir, target_dir, logger) {
+  const meta_url = `https://api.github.com/repos/${repo}/git/trees/${branch}?recursive=1`;
+  const base_url = `https://raw.githubusercontent.com/${repo}/${branch}`;
+  const response = await fetch(meta_url);
+  const json = await response.json();
+  const promises = [];
+  const fetchedFiles = [];
+  for (const f of json.tree) {
+    if (f.path.startsWith(`${dir}/`) && f.type === 'blob' && /\.mo$/.test(f.path)) {
+      const promise = (async () => {
+        const content = await (await fetch(base_url + f.path)).text();
+        const stripped = target_dir + '/' + f.name.slice(dir.length + 1);
+        // @ts-ignore
+        fetchedFiles.push(stripped);
+        Motoko.saveFile(stripped, content);
+      })();
+      // @ts-ignore
+      promises.push(promise);
+    }
+  }
+  Promise.all(promises).then(() => {
+    // @ts-ignore
+    const content = fetchedFiles.join("\n");
+    logger.log(`Load ${promises.length} files: \n${content}\n`);
   });
 }
 
