@@ -1,3 +1,5 @@
+import { WorkplaceState } from "./contexts/WorkplaceState";
+
 declare var Motoko: any;
 
 export async function addPackage(name, repo, version, dir, logger) {
@@ -60,16 +62,14 @@ export async function fetchGithub(repo, branch, dir, target_dir = "") : Promise<
   });
 }
 
-export function saveWorkplaceToMotoko(workplace = {}) {
-  for (const [name, code] of Object.entries(workplace)) {
+export function saveWorkplaceToMotoko(state: WorkplaceState) {
+  for (const [name, code] of Object.entries(state.files)) {
     if (!name.endsWith('mo')) continue;
-    // @ts-ignore
     Motoko.saveFile(name, code);
   }
-  // const aliases = [];
-  // for (const [name, id] of Object.entries(canister)) {
-  //   // @ts-ignore
-  //   aliases.push([name, id.toText()]);
-  // }
-  // Motoko.setActorAliases(aliases);
+  const aliases: Array<[string, string]> = [];
+  for (const [name, info] of Object.entries(state.canisters)) {
+    aliases.push([name, info.id.toText()]);
+  }
+  Motoko.setActorAliases(aliases);
 }

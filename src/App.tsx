@@ -183,8 +183,8 @@ export function App() {
       // saving won't work until the Motoko global is loaded
       return;
     }
-    saveWorkplaceToMotoko(workplaceState.files);
-  }, [workplaceState.files, motokoIsLoaded]);
+    saveWorkplaceToMotoko(workplaceState);
+  }, [workplaceState.canisters, motokoIsLoaded]);
 
   useEffect(()=>{
     // Show Candid UI iframe if there are canisters
