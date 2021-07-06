@@ -52,6 +52,9 @@ export async function fetchGithub(repo, branch, dir, target_dir = "") : Promise<
       promises.push(promise);
     }
   }
+  if (!promises.length) {
+    return;
+  }
   return Promise.all(promises).then(() => {
     return files;
   });

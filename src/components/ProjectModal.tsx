@@ -1,5 +1,5 @@
 import styled from "styled-components";
-
+import { useState } from "react";
 import { Modal } from "./shared/Modal";
 import { ExampleProject } from "../examples/types";
 import { MotokoLabLogo } from "./shared/MotokoLabLogo";
@@ -62,6 +62,7 @@ export function ProjectModal({
   exampleProjects,
   isFirstOpen,
 }: ProjectModalProps) {
+  const [importOpen, setImportOpen] = useState(false);
   function handleSelectProjectAndClose(project: ExampleProject) {
     chooseExampleProject(project);
     close();
@@ -100,7 +101,7 @@ export function ProjectModal({
         <MotokoLabLogo />
         {isFirstOpen ? welcomeCopy : switchProjectCopy}
         <SelectLabel>{labelCopy}</SelectLabel>
-        <SelectList height="18rem">
+        {!importOpen?(<SelectList height="18rem">
           {exampleProjects.map((project) => (
             <ProjectButton
               key={project.name}
@@ -109,8 +110,9 @@ export function ProjectModal({
               {project.name}
             </ProjectButton>
           ))}
-        </SelectList>
-<ImportGitHub importCode={importCode} close={close}></ImportGitHub>
+          <ProjectButton onClick={() => setImportOpen(true)}>Import from Github...</ProjectButton>
+        </SelectList>):
+        (<ImportGitHub importCode={importCode} close={close} back={() => setImportOpen(false)}></ImportGitHub>)}
         {!isFirstOpen && <CancelButton onClick={close}>Cancel</CancelButton>}
       </ModalContainer>
     </Modal>
