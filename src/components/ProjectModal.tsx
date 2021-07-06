@@ -6,6 +6,7 @@ import { MotokoLabLogo } from "./shared/MotokoLabLogo";
 import { Button } from "./shared/Button";
 import { ListButton, SelectList } from "./shared/SelectList";
 import iconCaretRight from "../assets/images/icon-caret-right.svg";
+import { ImportGitHub } from "./ImportGithub";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -47,6 +48,7 @@ const CancelButton = styled(Button)`
 interface ProjectModalProps {
   isOpen: boolean;
   chooseExampleProject: (project: ExampleProject) => void;
+  importCode: (files: Record<string, string>) => void;
   close: () => void;
   exampleProjects: ExampleProject[];
   isFirstOpen: boolean;
@@ -56,6 +58,7 @@ export function ProjectModal({
   isOpen,
   close,
   chooseExampleProject,
+  importCode,
   exampleProjects,
   isFirstOpen,
 }: ProjectModalProps) {
@@ -107,6 +110,7 @@ export function ProjectModal({
             </ProjectButton>
           ))}
         </SelectList>
+<ImportGitHub importCode={importCode} close={close}></ImportGitHub>
         {!isFirstOpen && <CancelButton onClick={close}>Cancel</CancelButton>}
       </ModalContainer>
     </Modal>

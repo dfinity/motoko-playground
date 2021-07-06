@@ -30,30 +30,30 @@ export async function addPackage(name, repo, version, dir, logger) {
     // ].join("\n");
   });
 }
-export async function fetchGithub(repo, branch, dir, target_dir, logger) {
+export async function fetchGithub(repo, branch, dir, target_dir = "") : Promise<Record<string, string>|undefined> {
   const meta_url = `https://api.github.com/repos/${repo}/git/trees/${branch}?recursive=1`;
-  const base_url = `https://raw.githubusercontent.com/${repo}/${branch}`;
+  const base_url = `https://raw.githubusercontent.com/${repo}/${branch}/`;
   const response = await fetch(meta_url);
   const json = await response.json();
+  if (!json.hasOwnProperty('tree')) {
+    return;
+  }
   const promises = [];
-  const fetchedFiles = [];
+  const files = {};
   for (const f of json.tree) {
-    if (f.path.startsWith(`${dir}/`) && f.type === 'blob' && /\.mo$/.test(f.path)) {
+    if (f.path.startsWith(dir?`${dir}/`:'') && f.type === 'blob' && /\.mo$/.test(f.path)) {
       const promise = (async () => {
         const content = await (await fetch(base_url + f.path)).text();
-        const stripped = target_dir + '/' + f.name.slice(dir.length + 1);
-        // @ts-ignore
-        fetchedFiles.push(stripped);
+        const stripped = target_dir + target_dir?'/':'' + f.path.slice(dir?dir.length + 1:0);
         Motoko.saveFile(stripped, content);
+        files[stripped] = content;
       })();
       // @ts-ignore
       promises.push(promise);
     }
   }
-  Promise.all(promises).then(() => {
-    // @ts-ignore
-    const content = fetchedFiles.join("\n");
-    logger.log(`Load ${promises.length} files: \n${content}\n`);
+  return Promise.all(promises).then(() => {
+    return files;
   });
 }
 

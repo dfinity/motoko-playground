@@ -147,6 +147,16 @@ export function App() {
     },
     [workplaceDispatch]
   );
+  const importCode = useCallback(
+    (files: Record<string,string>) => {
+      workplaceDispatch({
+        type: "loadProject",
+        payload: {
+          files,
+        },
+      });
+    }, [workplaceDispatch]
+  );
 
   // Add the Motoko package to allow for compilation / checking
   useEffect(() => {
@@ -192,6 +202,7 @@ export function App() {
           exampleProjects={exampleProjects}
           isOpen={isProjectModalOpen}
           chooseExampleProject={chooseExampleProject}
+          importCode={importCode}
           close={closeProjectModal}
           isFirstOpen={isFirstVisit}
         />
