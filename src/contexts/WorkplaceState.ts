@@ -20,6 +20,11 @@ export type WorkplaceReducerAction =
       project: ExampleProject
     }
   }
+  | { type: 'loadProject',
+      payload: {
+        files: Record<string, string>;
+      }
+  }
 /**
  * Call to reset all state to initial values.
  * Files are reset to an empty project.
@@ -90,6 +95,12 @@ export const workplaceReducer = {
           ...state,
           files: newProjectFiles,
           selectedFile: selectFirstFile(action.payload.project),
+        }
+      case 'loadProject':
+        return {
+          ...state,
+          files: action.payload.files,
+          selectedFile: 'Main.mo',
         }
       case 'reset':
         return this.init(action.payload);

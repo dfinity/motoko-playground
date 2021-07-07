@@ -8,6 +8,8 @@ import { WorkplaceState } from "../contexts/WorkplaceState";
 
 const StyledExplorer = styled.div`
   width: var(--explorerWidth);
+  overflow-y: auto;
+  overflow-wrap: anywhere;
 `;
 
 const CategoryTitle = styled.div`

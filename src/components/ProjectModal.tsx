@@ -1,11 +1,12 @@
 import styled from "styled-components";
-
+import { useState } from "react";
 import { Modal } from "./shared/Modal";
 import { ExampleProject } from "../examples/types";
 import { MotokoLabLogo } from "./shared/MotokoLabLogo";
 import { Button } from "./shared/Button";
 import { ListButton, SelectList } from "./shared/SelectList";
 import iconCaretRight from "../assets/images/icon-caret-right.svg";
+import { ImportGitHub } from "./ImportGithub";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -47,6 +48,7 @@ const CancelButton = styled(Button)`
 interface ProjectModalProps {
   isOpen: boolean;
   chooseExampleProject: (project: ExampleProject) => void;
+  importCode: (files: Record<string, string>) => void;
   close: () => void;
   exampleProjects: ExampleProject[];
   isFirstOpen: boolean;
@@ -56,9 +58,11 @@ export function ProjectModal({
   isOpen,
   close,
   chooseExampleProject,
+  importCode,
   exampleProjects,
   isFirstOpen,
 }: ProjectModalProps) {
+  const [importOpen, setImportOpen] = useState(false);
   function handleSelectProjectAndClose(project: ExampleProject) {
     chooseExampleProject(project);
     close();
@@ -97,7 +101,7 @@ export function ProjectModal({
         <MotokoLabLogo />
         {isFirstOpen ? welcomeCopy : switchProjectCopy}
         <SelectLabel>{labelCopy}</SelectLabel>
-        <SelectList height="18rem">
+        {!importOpen?(<SelectList height="18rem">
           {exampleProjects.map((project) => (
             <ProjectButton
               key={project.name}
@@ -106,7 +110,9 @@ export function ProjectModal({
               {project.name}
             </ProjectButton>
           ))}
-        </SelectList>
+          <ProjectButton onClick={() => setImportOpen(true)}>Import from Github...</ProjectButton>
+        </SelectList>):
+        (<ImportGitHub importCode={importCode} close={close} back={() => setImportOpen(false)}></ImportGitHub>)}
         {!isFirstOpen && <CancelButton onClick={close}>Cancel</CancelButton>}
       </ModalContainer>
     </Modal>

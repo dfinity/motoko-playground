@@ -53,8 +53,11 @@ export function compileCandid(file: string, logger: ILoggingStore): string|undef
   if (candid_result.diagnostics) logDiags(candid_result.diagnostics, logger);
   // setMarkers(candid_result.diagnostics);
   const candid_source = candid_result.code;
-  if (!candid_source || candid_source.trim() === "") {
-    logger.log("cannot deploy: syntax error or empty candid file");
+  if (!candid_source) {
+    logger.log(`cannot deploy: syntax error`);
+    return;
+  } else if (candid_source.trim() === "") {
+    logger.log(`cannot deploy: ${file} has no actor`);
     return;
   }
   return candid_source;
@@ -155,6 +158,12 @@ async function install(
   return canisterInfo;
 }
 
-export function getCanisterName(path: string): string {
-  return path.split("/").pop()!.slice(0, -3);
+export function getCanisterName(file: string): string {
+  const path = file.split("/");
+  const name = path.pop()!;
+  if (name === "Main.mo" && path.length) {
+    return path.pop()!;
+  } else {
+    return name.slice(0, -3);
+  }
 }

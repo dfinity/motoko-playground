@@ -147,6 +147,16 @@ export function App() {
     },
     [workplaceDispatch]
   );
+  const importCode = useCallback(
+    (files: Record<string,string>) => {
+      workplaceDispatch({
+        type: "loadProject",
+        payload: {
+          files,
+        },
+      });
+    }, [workplaceDispatch]
+  );
 
   // Add the Motoko package to allow for compilation / checking
   useEffect(() => {
@@ -173,8 +183,8 @@ export function App() {
       // saving won't work until the Motoko global is loaded
       return;
     }
-    saveWorkplaceToMotoko(workplaceState.files);
-  }, [workplaceState.files, motokoIsLoaded]);
+    saveWorkplaceToMotoko(workplaceState);
+  }, [workplaceState.canisters, motokoIsLoaded]);
 
   useEffect(()=>{
     // Show Candid UI iframe if there are canisters
@@ -192,6 +202,7 @@ export function App() {
           exampleProjects={exampleProjects}
           isOpen={isProjectModalOpen}
           chooseExampleProject={chooseExampleProject}
+          importCode={importCode}
           close={closeProjectModal}
           isFirstOpen={isFirstVisit}
         />

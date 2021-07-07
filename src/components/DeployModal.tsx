@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { IDL, renderInput, blobFromUint8Array, InputBox } from "@dfinity/candid";
 
 import { Modal } from "./shared/Modal";
@@ -8,6 +8,8 @@ import { ILoggingStore } from './Logger';
 import { Button } from "./shared/Button";
 import { ListButton, SelectList } from "./shared/SelectList";
 import iconCaretRight from "../assets/images/icon-caret-right.svg";
+
+declare var Motoko: any;
 
 const ModalContainer = styled.div`
   display: flex;
@@ -78,8 +80,12 @@ export function DeployModal({
   initTypes,
   logger,
 }: DeployModalProps) {
-  const [canisterName, setCanisterName] = useState(getCanisterName(fileName));
+  const [canisterName, setCanisterName] = useState("");
   const [inputs, setInputs] = useState([]);
+
+  useEffect(() => {
+    setCanisterName(getCanisterName(fileName));
+  }, [fileName]);
 
   const initArgs = useCallback((node) => {
     if (node) {
@@ -106,6 +112,7 @@ export function DeployModal({
     const info = await deploy(canisterName, canisters[canisterName], args, mode, fileName, logger);
     if (info) {
       info.candid = candid;
+      Motoko.saveFile(`idl/${info.id}.did`, candid);
       onDeploy(info);
     }
   };

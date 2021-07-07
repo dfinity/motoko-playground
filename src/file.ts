@@ -1,7 +1,4 @@
-// map filepath to code session { state, model }
-export const files = {};
-export var current_session_name = "main.mo";
-export const filetab = document.createElement("div");
+import { WorkplaceState } from "./contexts/WorkplaceState";
 
 declare var Motoko: any;
 
@@ -35,17 +32,44 @@ export async function addPackage(name, repo, version, dir, logger) {
     // ].join("\n");
   });
 }
+export async function fetchGithub(repo, branch, dir, target_dir = "") : Promise<Record<string, string>|undefined> {
+  const meta_url = `https://api.github.com/repos/${repo}/git/trees/${branch}?recursive=1`;
+  const base_url = `https://raw.githubusercontent.com/${repo}/${branch}/`;
+  const response = await fetch(meta_url);
+  const json = await response.json();
+  if (!json.hasOwnProperty('tree')) {
+    return;
+  }
+  const promises = [];
+  const files = {};
+  for (const f of json.tree) {
+    if (f.path.startsWith(dir?`${dir}/`:'') && f.type === 'blob' && /\.mo$/.test(f.path)) {
+      const promise = (async () => {
+        const content = await (await fetch(base_url + f.path)).text();
+        const stripped = target_dir + target_dir?'/':'' + f.path.slice(dir?dir.length + 1:0);
+        Motoko.saveFile(stripped, content);
+        files[stripped] = content;
+      })();
+      // @ts-ignore
+      promises.push(promise);
+    }
+  }
+  if (!promises.length) {
+    return;
+  }
+  return Promise.all(promises).then(() => {
+    return files;
+  });
+}
 
-export function saveWorkplaceToMotoko(workplace = {}) {
-  for (const [name, code] of Object.entries(workplace)) {
+export function saveWorkplaceToMotoko(state: WorkplaceState) {
+  for (const [name, code] of Object.entries(state.files)) {
     if (!name.endsWith('mo')) continue;
-    // @ts-ignore
     Motoko.saveFile(name, code);
   }
-  // const aliases = [];
-  // for (const [name, id] of Object.entries(canister)) {
-  //   // @ts-ignore
-  //   aliases.push([name, id.toText()]);
-  // }
-  // Motoko.setActorAliases(aliases);
+  const aliases: Array<[string, string]> = [];
+  for (const [name, info] of Object.entries(state.canisters)) {
+    aliases.push([name, info.id.toText()]);
+  }
+  Motoko.setActorAliases(aliases);
 }

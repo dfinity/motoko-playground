@@ -100,8 +100,8 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
     debouncedSaveChanges(newValue);
   };
   const deployClick = async () => {
-    // TODO don't pass readme non-mo files to motoko    
-    saveWorkplaceToMotoko(state.files);
+    // TODO don't pass readme non-mo files to motoko
+    saveWorkplaceToMotoko(state);
     const candid = compileCandid(mainFile, logger);
     if (candid) {
       const candidJS = await didToJs(candid);
