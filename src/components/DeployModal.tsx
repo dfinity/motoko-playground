@@ -101,8 +101,8 @@ export function DeployModal({
     if (!initTypes.length) {
       return blobFromUint8Array(IDL.encode(initTypes, []));
     }
-    const args = inputs.map(arg => (arg as InputBox).parse());
-    const isReject = inputs.some(arg => (arg as InputBox).isRejected());
+    const args = inputs.map(arg => arg.parse());
+    const isReject = inputs.some(arg => arg.isRejected());
     if (isReject) {
       return undefined;
     }
