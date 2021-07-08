@@ -5,7 +5,7 @@ import { CandidUI } from "./components/CandidUI";
 import { Editor } from "./components/Editor";
 import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
-import { addPackage, saveWorkplaceToMotoko } from "./file";
+import { addPackage, saveWorkplaceToMotoko, PackageInfo } from "./file";
 import { deleteCanister, CanisterInfo } from "./build";
 import { useLogging } from "./components/Logger";
 import {
@@ -80,6 +80,15 @@ export function App() {
       type: "selectFile",
       payload: {
         path: selectedFile,
+      },
+    });
+  };
+  const loadPackage = (pack: PackageInfo) => {
+    workplaceDispatch({
+      type: "loadPackage",
+      payload: {
+        name: pack.name,
+        package: pack,
       },
     });
   };
@@ -210,6 +219,7 @@ export function App() {
           <Explorer
             state={workplaceState}
             ttl={TTL}
+            loadPackage={loadPackage}
             onSelectFile={selectFile}
             onCanister={onCanister}
           />

@@ -5,6 +5,8 @@ import { Button } from "./shared/Button";
 import { ListButton, SelectList } from "./shared/SelectList";
 import iconCaretRight from "../assets/images/icon-caret-right.svg";
 import { ImportGitHub } from "./ImportGithub";
+import packageSet from "../config/package-set.json";
+import { PackageInfo, fetchPackage } from "../file";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -25,7 +27,7 @@ function ProjectButton({ onClick, children }) {
   return (
     <ListButton onClick={onClick}>
       <ProjectButtonContents>
-        <span>{children}</span>
+      <span style={{whiteSpace: "nowrap"}}>{children}</span>
         <img src={iconCaretRight} alt="Continue" />
       </ProjectButtonContents>
     </ListButton>
@@ -46,40 +48,22 @@ const CancelButton = styled(Button)`
 interface PackageModalProps {
   isOpen: boolean;
   close: () => void;
+  loadPackage: (info: PackageInfo) => void;
 }
 
 export function PackageModal({
   isOpen,
   close,
+  loadPackage,
 }: PackageModalProps) {
   const [importOpen, setImportOpen] = useState(false);
-  const packages = [
-  {
-    "dependencies": [],
-    "name": "base",
-    "repo": "https://github.com/dfinity/motoko-base.git",
-    "version": "927119e172964f4038ebc7018f9cc1b688544bfa"
-  },
-  {
-    "dependencies": [
-      "base"
-    ],
-    "name": "crud",
-    "repo": "https://github.com/matthewhammer/motoko-crud.git",
-    "version": "c9bc6acbb6da81fc20d8ffec8063d9f6b4d01efd"
-  },
-  {
-    "dependencies": [
-      "base"
-    ],
-    "name": "matchers",
-    "repo": "https://github.com/kritzcreek/motoko-matchers.git",
-    "version": "v1.1.0"
-  },    
-  ];
-  function handleSelectPackage(pack) {
-    //importPackage(pack)
-    close();
+  async function handleSelectPackage(pack: PackageInfo) {
+    if (await fetchPackage(pack)) {
+      await loadPackage(pack);
+      await close();
+    } else {
+      throw new Error(`Fail to load package ${pack.name}`);
+    }
   };
 
   return (
@@ -91,13 +75,13 @@ export function PackageModal({
     >
       <ModalContainer>
         <SelectLabel>Select a Motoko package</SelectLabel>
-        {!importOpen?(<SelectList height="18rem">
-          {packages.map((pack) => (
+        {!importOpen?(<SelectList height="24rem">
+          {packageSet.map((pack) => (
             <ProjectButton
               key={pack.name}
               onClick={() => handleSelectPackage(pack)}
             >
-              {pack.name}
+              {pack.name} {pack.description?`-- ${pack.description}`:""}
             </ProjectButton>
           ))}
           <ProjectButton onClick={() => setImportOpen(true)}>Import from Github...</ProjectButton>

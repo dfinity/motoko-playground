@@ -1,0 +1,160 @@
+[
+  {
+    "authors": [
+      "The DFINITY Language Team"
+    ],
+    "dependencies": [],
+    "description": "The Motoko standard library",
+    "homepage": "https://sdk.dfinity.org/docs/base-libraries/stdlib-intro.html",
+    "name": "base",
+    "owners": [
+      "kritzcreek",
+      "dfinity"
+    ],
+    "repo": "https://github.com/dfinity/motoko-base.git",
+    "version": "e0c95f909e17c431921f1be35800242a6ddd4a55"
+  },
+  {
+    "authors": [
+      "Matthew Hammer"
+    ],
+    "dependencies": [
+      "base"
+    ],
+    "description": "A framework for constructing CRUD services in Motoko for the Internet Computer.",
+    "name": "crud",
+    "owners": [
+      "matthewhammer"
+    ],
+    "repo": "https://github.com/matthewhammer/motoko-crud.git",
+    "version": "c9bc6acbb6da81fc20d8ffec8063d9f6b4d01efd"
+  },
+  {
+    "authors": [
+      "Christoph Hegemann"
+    ],
+    "dependencies": [
+      "base"
+    ],
+    "description": "Composable Assertions for unit testing",
+    "homepage": "https://kritzcreek.github.io/motoko-matchers/",
+    "name": "matchers",
+    "owners": [
+      "kritzcreek"
+    ],
+    "repo": "https://github.com/kritzcreek/motoko-matchers.git",
+    "version": "v1.1.0"
+  },
+  {
+    "authors": [
+      "Claudio Russo"
+    ],
+    "dependencies": [
+      "base"
+    ],
+    "description": "A Parsec-based parsing combinator library for Motoko",
+    "homepage": "https://crusso.github.io/mo-parsec/",
+    "name": "parsec",
+    "owners": [
+      "crusso"
+    ],
+    "repo": "https://github.com/crusso/mo-parsec.git",
+    "version": "v1.0.0"
+  },
+  {
+    "authors": [
+      "Joachim Breitner"
+    ],
+    "dependencies": [
+      "base"
+    ],
+    "description": "A Strongly Connected Component library for Motoko",
+    "homepage": "https://nomeata.github.io/motoko-scc/",
+    "name": "scc",
+    "owners": [
+      "nomeata"
+    ],
+    "repo": "https://github.com/nomeata/motoko-scc.git",
+    "version": "v0.1"
+  },
+  {
+    "authors": [
+      "Enzo Haussecker"
+    ],
+    "dependencies": [
+      "base"
+    ],
+    "description": "SHA256 implemented in Motoko",
+    "name": "sha256",
+    "owners": [
+      "enzoh"
+    ],
+    "repo": "https://github.com/enzoh/motoko-sha.git",
+    "version": "9e2468f51ef060ae04fde8d573183191bda30189"
+  },
+  {
+    "authors": [
+      "Inv Lo"
+    ],
+    "dependencies": [
+      "base"
+    ],
+    "description": "The Internet Computer Improvement Protocol library",
+    "homepage": "https://feliciss.github.io/icip",
+    "name": "icip",
+    "owners": [
+      "feliciss"
+    ],
+    "repo": "https://github.com/feliciss/icip.git",
+    "version": "v1.2.0"
+  },
+  {
+    "authors": [
+      "Christoph Hegemann"
+    ],
+    "dependencies": [
+      "base"
+    ],
+    "description": "A pretty printing library",
+    "homepage": "https://kritzcreek.github.io/motoko-pretty/",
+    "name": "pretty",
+    "owners": [
+      "kritzcreek"
+    ],
+    "repo": "https://github.com/kritzcreek/motoko-pretty.git",
+    "version": "v0.1.0"
+  },
+  {
+    "authors": [
+      "Enzo Haussecker",
+      "flyq"
+    ],
+    "dependencies": [
+      "base"
+    ],
+    "description": "SHA224 implemented in Motoko",
+    "homepage": "https://flyq.github.io/motoko-sha224/",
+    "name": "sha224",
+    "owners": [
+      "flyq"
+    ],
+    "repo": "https://github.com/flyq/motoko-sha224.git",
+    "version": "v0.1.0"
+  },
+  {
+    "authors": [
+      "Yan Chen"
+    ],
+    "dependencies": [
+      "base"
+    ],
+    "description": "Splay tree library",
+    "homepage": "https://chenyan2002.github.io/motoko-splay/lib.html",
+    "name": "splay",
+    "owners": [
+      "chenyan2002"
+    ],
+    "repo": "https://github.com/chenyan2002/motoko-splay.git",
+    "version": "v0.1.0"
+  }
+]

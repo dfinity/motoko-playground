@@ -7,6 +7,7 @@ import iconPlus from "../assets/images/icon-plus.svg";
 import { ListButton } from "./shared/SelectList";
 import { WorkplaceState } from "../contexts/WorkplaceState";
 import { PackageModal } from "./PackageModal";
+import { PackageInfo } from "../file";
 
 const StyledExplorer = styled.div`
   width: var(--explorerWidth);
@@ -34,11 +35,12 @@ const MyButton = styled.button`
 interface ExplorerProps {
   state: WorkplaceState;
   ttl: bigint;
-  onSelectFile: (string) => void;
+  loadPackage: (info: PackageInfo) => void;
+  onSelectFile: (name: string) => void;
   onCanister: (name: string, action:string) => void;
 }
 
-export function Explorer({ state, ttl, onSelectFile, onCanister }: ExplorerProps) {
+export function Explorer({ state, ttl, loadPackage, onSelectFile, onCanister }: ExplorerProps) {
   const [timeLeft, setTimeLeft] = useState<Array<string>>([]);
   const [isExpired, setIsExpired] = useState<Array<string>>([])
   const [showPackage, setShowPackage] = useState(false);
@@ -85,6 +87,7 @@ export function Explorer({ state, ttl, onSelectFile, onCanister }: ExplorerProps
       <PackageModal
         isOpen={showPackage}
         close={() => setShowPackage(false)}
+        loadPackage={loadPackage}
       />
       <CategoryTitle>Files</CategoryTitle>
       {Object.keys(state.files).map((filename) => (
@@ -100,10 +103,15 @@ export function Explorer({ state, ttl, onSelectFile, onCanister }: ExplorerProps
       <CategoryTitle>Packages
       <MyButton onClick={() => setShowPackage(true)}><img style={{width:"1.6rem"}} src={iconPlus} alt="Add package"/></MyButton>
       </CategoryTitle>
-      <ListButton disabled>
-        <img src={iconPackage} alt="Package icon" />
-        <p>mo:base</p>
-      </ListButton>
+      {Object.entries(state.packages).map(([_, info]) => (
+          <ListButton
+             onClick={() => { window.open(info.homepage!, "_blank") }}
+             disabled={info.homepage?false:true}
+          >
+          <img src={iconPackage} alt="Package icon" />
+          <p>mo:{info.name}</p>
+          </ListButton>
+      ))}
       <CategoryTitle>Canisters</CategoryTitle>
       {Object.keys(state.canisters).map((canister, i) => (
         <ListButton
