@@ -90,6 +90,7 @@ export const workplaceReducer = {
     const baseInfo = {
       name: "base",
       repo: "https://github.com/dfinity/motoko-base.git",
+      dir: "src",
       version: "placeholder for now",
       homepage: "https://sdk.dfinity.org/docs/base-libraries/stdlib-intro.html",
     };

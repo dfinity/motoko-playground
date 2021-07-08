@@ -52,8 +52,9 @@ export function ImportGitHub({ importCode, close, back, isPackageModal=false }) 
       repo: `https://github.com/${repo}.git`,
       version: branch,
       name,
+      dir,
     };
-    if (await fetchPackage(info, dir)) {
+    if (await fetchPackage(info)) {
       setError("");
       importCode(info);
       close();

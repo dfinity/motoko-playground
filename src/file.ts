@@ -6,15 +6,10 @@ export interface PackageInfo {
   name: string,
   repo: string,
   version: string,
+  dir?: string,
   dependencies?: Array<string>,
   description?: string,
   homepage?: string,
-}
-
-export async function fetchVesselPackageSet(tag = "latest") : Promise<Array<PackageInfo>> {
-  const url = `https://github.com/dfinity/vessel-package-set/releases/download/${tag}/package-set.json`;
-  const json = await (await fetch(url)).json();
-  return json;
 }
 
 export async function addPackage(name, repo, version, dir, logger) {
@@ -48,9 +43,13 @@ export async function addPackage(name, repo, version, dir, logger) {
   });
 }
 
-export async function fetchPackage(info: PackageInfo, dir = "src"): Promise<boolean> {
+export async function fetchPackage(info: PackageInfo): Promise<boolean> {
+  if (!info.repo.startsWith("https://github.com/") || !info.repo.endsWith(".git")) {
+    return false;
+  }
   const repo = info.repo.slice(0, -4).replace(/^(https:\/\/github.com\/)/, "");
   const branch = info.version;
+  const dir = info.dir || "src";
   const result = await fetchGithub(repo, branch, dir, info.name);
   if (result) {
     Motoko.addPackage(info.name, info.name + "/");
