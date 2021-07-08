@@ -81,20 +81,26 @@ export function DeployModal({
   logger,
 }: DeployModalProps) {
   const [canisterName, setCanisterName] = useState("");
-  const [inputs, setInputs] = useState([]);
+  const [inputs, setInputs] = useState<InputBox[]>([]);
 
   useEffect(() => {
     setCanisterName(getCanisterName(fileName));
   }, [fileName]);
 
+  useEffect(() => {
+    const args = initTypes.map((arg) => renderInput(arg));
+    setInputs(args);
+  }, [initTypes]);
+
   const initArgs = useCallback((node) => {
     if (node) {
-      const args = initTypes.map((arg) => renderInput(arg));
-      setInputs(args as any);
-      args.forEach((arg) => arg.render(node));
+      inputs.forEach((arg) => arg.render(node));
     }
-  }, [initTypes]);
+  }, [inputs]);
   const parse = () => {
+    if (!initTypes.length) {
+      return blobFromUint8Array(IDL.encode(initTypes, []));
+    }
     const args = inputs.map(arg => (arg as InputBox).parse());
     const isReject = inputs.some(arg => (arg as InputBox).isRejected());
     if (isReject) {
