@@ -13,7 +13,7 @@ const ModalContainer = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 34rem;
+  width: 46rem;
   font-size: 1.4rem;
 `;
 
@@ -86,7 +86,7 @@ export function PackageModal({
           ))}
           <ProjectButton onClick={() => setImportOpen(true)}>Import from Github...</ProjectButton>
         </SelectList>):
-         (<ImportGitHub importCode={() => {}} close={close} back={() => setImportOpen(false)}></ImportGitHub>)}
+         (<ImportGitHub isPackageModal={true} importCode={loadPackage} close={close} back={() => setImportOpen(false)}></ImportGitHub>)}
         <CancelButton onClick={close}>Cancel</CancelButton>
       </ModalContainer>
     </Modal>
