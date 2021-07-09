@@ -1,7 +1,8 @@
 import * as React from "react";
 import { emptyProject, selectFirstFile, withOnlyUserVisibleFiles } from "../examples";
 import { ExampleProject } from "../examples/types";
-import { CanisterInfo } from "../build"
+import { CanisterInfo } from "../build";
+import { PackageInfo } from "../file";
 
 
 export interface WorkplaceState {
@@ -9,6 +10,7 @@ export interface WorkplaceState {
   selectedFile: string|null;
   canisters: Record<string, CanisterInfo>;
   selectedCanister: string|null;
+  packages: Record<string, PackageInfo>;
 }
 
 export type WorkplaceReducerAction =
@@ -24,7 +26,13 @@ export type WorkplaceReducerAction =
       payload: {
         files: Record<string, string>;
       }
-  }
+    }
+  | { type: 'loadPackage',
+      payload: {
+        name: string,
+        package: PackageInfo,
+      }
+    }
 /**
  * Call to reset all state to initial values.
  * Files are reset to an empty project.
@@ -84,6 +92,7 @@ export const workplaceReducer = {
       selectedFile,
       canisters,
       selectedCanister: null,
+      packages: {},
     }
   },
   /** Return updated state based on an action */
@@ -101,6 +110,14 @@ export const workplaceReducer = {
           ...state,
           files: action.payload.files,
           selectedFile: 'Main.mo',
+        }
+      case 'loadPackage':
+        return {
+          ...state,
+          packages: {
+            ...state.packages,
+            [action.payload.name]: action.payload.package
+          }
         }
       case 'reset':
         return this.init(action.payload);

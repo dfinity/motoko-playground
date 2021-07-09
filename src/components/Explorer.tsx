@@ -3,8 +3,11 @@ import styled from "styled-components";
 import iconPackage from "../assets/images/icon-package.svg";
 import iconCanister from "../assets/images/icon-canister.svg";
 import iconClose from "../assets/images/icon-close.svg";
+import iconPlus from "../assets/images/icon-plus.svg";
 import { ListButton } from "./shared/SelectList";
 import { WorkplaceState } from "../contexts/WorkplaceState";
+import { PackageModal } from "./PackageModal";
+import { PackageInfo } from "../file";
 
 const StyledExplorer = styled.div`
   width: var(--explorerWidth);
@@ -21,9 +24,8 @@ const CategoryTitle = styled.div`
   font-weight: bold;
   border-bottom: 1px solid var(--grey300);
   text-transform: uppercase;
-  pointer-events: none;
 `;
-const CloseButton = styled.button`
+const MyButton = styled.button`
   background: none;
   border: none;
   box-shadow: none;
@@ -33,13 +35,15 @@ const CloseButton = styled.button`
 interface ExplorerProps {
   state: WorkplaceState;
   ttl: bigint;
-  onSelectFile: (string) => void;
+  loadPackage: (info: PackageInfo) => void;
+  onSelectFile: (name: string) => void;
   onCanister: (name: string, action:string) => void;
 }
 
-export function Explorer({ state, ttl, onSelectFile, onCanister }: ExplorerProps) {
+export function Explorer({ state, ttl, loadPackage, onSelectFile, onCanister }: ExplorerProps) {
   const [timeLeft, setTimeLeft] = useState<Array<string>>([]);
   const [isExpired, setIsExpired] = useState<Array<string>>([])
+  const [showPackage, setShowPackage] = useState(false);
 
   const calcTimeLeft = (timestamp: bigint) : number => {
     const now = BigInt(Date.now()) * BigInt(1_000_000);
@@ -80,6 +84,11 @@ export function Explorer({ state, ttl, onSelectFile, onCanister }: ExplorerProps
   
   return (
     <StyledExplorer>
+      <PackageModal
+        isOpen={showPackage}
+        close={() => setShowPackage(false)}
+        loadPackage={loadPackage}
+      />
       <CategoryTitle>Files</CategoryTitle>
       {Object.keys(state.files).map((filename) => (
         <ListButton
@@ -91,11 +100,18 @@ export function Explorer({ state, ttl, onSelectFile, onCanister }: ExplorerProps
           {filename}
         </ListButton>
       ))}
-      <CategoryTitle>Packages</CategoryTitle>
-      <ListButton disabled>
-        <img src={iconPackage} alt="Package icon" />
-        <p>mo:base</p>
-      </ListButton>
+      <CategoryTitle>Packages
+      <MyButton onClick={() => setShowPackage(true)}><img style={{width:"1.6rem"}} src={iconPlus} alt="Add package"/></MyButton>
+      </CategoryTitle>
+      {Object.entries(state.packages).map(([_, info]) => (
+          <ListButton
+             onClick={() => { window.open(info.homepage!, "_blank") }}
+             disabled={info.homepage?false:true}
+          >
+          <img src={iconPackage} alt="Package icon" />
+          <p>mo:{info.name}</p>
+          </ListButton>
+      ))}
       <CategoryTitle>Canisters</CategoryTitle>
       {Object.keys(state.canisters).map((canister, i) => (
         <ListButton
@@ -107,9 +123,9 @@ export function Explorer({ state, ttl, onSelectFile, onCanister }: ExplorerProps
           <img src={iconCanister} alt="Canister icon"/>
           {canister}
           <div style={{marginLeft: "auto"}}>{timeLeft[i]}</div>
-          <CloseButton onClick={() => onCanister(canister, 'delete')}>
+          <MyButton onClick={() => onCanister(canister, 'delete')}>
           <img src={iconClose} alt="Close icon" />
-          </CloseButton>
+          </MyButton>
         </ListButton>
       ))}
     </StyledExplorer>

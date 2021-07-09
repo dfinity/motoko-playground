@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { useState } from "react";
 import { Button } from "./shared/Button";
-import { fetchGithub } from "../file";
+import { fetchGithub, fetchPackage, PackageInfo } from "../file";
 
 const Container = styled.div`
   display: flex;
@@ -27,24 +27,46 @@ const MyButton = styled(Button)`
   margin: 1rem;
 `;
 
-export function ImportGitHub({ importCode, close, back }) {
+export function ImportGitHub({ importCode, close, back, isPackageModal=false }) {
   const [repo, setRepo] = useState("dfinity/examples");
   const [branch, setBranch] = useState("master");
   const [dir, setDir] = useState("motoko/counter/src");
   const [error, setError] = useState("");
+  const [name, setName] = useState("");
   async function fetchCode() {
     const files = await fetchGithub(repo, branch, dir);
     if (files) {
-      setError("")
+      setError("");
       importCode(files);
       close();
     } else {
-      setError(`Cannot find repo or the directory contains no ".mo" files.`)
+      setError(`Cannot find repo or the directory contains no ".mo" files.`);
+    }
+  }
+  async function fetchPackageCode() {
+    if (!name) {
+      setError('Package name cannot be empty');
+      return;
+    }
+    const info : PackageInfo = {
+      repo: `https://github.com/${repo}.git`,
+      version: branch,
+      name,
+      dir,
+    };
+    if (await fetchPackage(info)) {
+      setError("");
+      importCode(info);
+      close();
+    } else {
+      setError(`Cannot find repo or the directory contains no ".mo" files.`);
     }
   }
 
   return (
       <Container>
+      {isPackageModal && (<Item>Package name &nbsp;
+       <input type="text" value={name} onChange={(e) => setName(e.target.value)} /></Item>)}
       <Item>Github repo &nbsp;
       <input type="text" value={repo} onChange={(e) => setRepo(e.target.value)} /></Item>
       <Item>Branch &nbsp;
@@ -53,7 +75,7 @@ export function ImportGitHub({ importCode, close, back }) {
       <input type="text" value={dir} onChange={(e) => setDir(e.target.value)} /></Item>
       <Item>{error}</Item>
       <ButtonContainer>
-        <MyButton onClick={fetchCode}>Import</MyButton>
+        <MyButton onClick={isPackageModal?fetchPackageCode:fetchCode}>Import</MyButton>
         <MyButton onClick={back}>Back</MyButton>
       </ButtonContainer>
       </Container>

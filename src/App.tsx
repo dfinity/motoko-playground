@@ -5,7 +5,7 @@ import { CandidUI } from "./components/CandidUI";
 import { Editor } from "./components/Editor";
 import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
-import { addPackage, saveWorkplaceToMotoko } from "./file";
+import { saveWorkplaceToMotoko, PackageInfo, fetchPackage } from "./file";
 import { deleteCanister, CanisterInfo } from "./build";
 import { useLogging } from "./components/Logger";
 import {
@@ -80,6 +80,15 @@ export function App() {
       type: "selectFile",
       payload: {
         path: selectedFile,
+      },
+    });
+  };
+  const loadPackage = (pack: PackageInfo) => {
+    workplaceDispatch({
+      type: "loadPackage",
+      payload: {
+        name: pack.name,
+        package: pack,
       },
     });
   };
@@ -161,9 +170,23 @@ export function App() {
   // Add the Motoko package to allow for compilation / checking
   useEffect(() => {
     const script = document.createElement("script");
-    script.addEventListener("load", () => {
-      setMotokoIsLoaded(true);
-      addPackage("base", "dfinity/motoko-base", "dfx-0.7.0", "src", logger);
+    script.addEventListener("load", async () => {
+      await setMotokoIsLoaded(true);
+      const baseInfo = {
+        name: "base",
+        repo: "https://github.com/dfinity/motoko-base.git",
+        dir: "src",
+        version: "dfx-0.7.0",
+        homepage: "https://sdk.dfinity.org/docs/base-libraries/stdlib-intro.html",
+      };
+      await fetchPackage(baseInfo);
+      await workplaceDispatch({
+        type: "loadPackage",
+        payload: {
+          name: "base",
+          package: baseInfo,
+        },
+      });
       logger.log("Compiler loaded.");
     });
     script.src =
@@ -210,6 +233,7 @@ export function App() {
           <Explorer
             state={workplaceState}
             ttl={TTL}
+            loadPackage={loadPackage}
             onSelectFile={selectFile}
             onCanister={onCanister}
           />
