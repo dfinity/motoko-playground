@@ -27,13 +27,24 @@ export async function fetchPackage(info: PackageInfo): Promise<boolean> {
 }
 
 export async function fetchGithub(repo, branch, dir, target_dir = "") : Promise<Record<string, string>|undefined> {
-  // always try to load from CDN, fallback to github API if failed
-  const result = await fetchFromCDN(repo, branch, dir, target_dir);
-  if (!result) {
-    return await fetchFromGithub(repo, branch, dir, target_dir);
-  } else {
-    return result;
+  const possiblyCDN = !((branch.length % 2 === 0 && /^[A-F0-9]+$/i.test(branch)) || branch === "master" || branch === "main");
+  if (possiblyCDN) {
+    const result = await fetchFromCDN(repo, branch, dir, target_dir);
+    if (result) { return result; };
   }
+  return await fetchFromGithub(repo, branch, dir, target_dir);
+}
+
+export function saveWorkplaceToMotoko(state: WorkplaceState) {
+  for (const [name, code] of Object.entries(state.files)) {
+    if (!name.endsWith('mo')) continue;
+    Motoko.saveFile(name, code);
+  }
+  const aliases: Array<[string, string]> = [];
+  for (const [name, info] of Object.entries(state.canisters)) {
+    aliases.push([name, info.id.toText()]);
+  }
+  Motoko.setActorAliases(aliases);
 }
 
 async function fetchFromCDN(repo, version, dir, target_dir = "") : Promise<Record<string,string>|undefined> {
@@ -44,7 +55,7 @@ async function fetchFromCDN(repo, version, dir, target_dir = "") : Promise<Recor
   if (!json.hasOwnProperty('files')) {
     return;
   }
-  const promises = [];
+  const promises: any[] = [];
   const files = {};
   for (const f of json.files) {
     if (f.name.startsWith(`/${dir}/`) && /\.mo$/.test(f.name)) {
@@ -54,7 +65,6 @@ async function fetchFromCDN(repo, version, dir, target_dir = "") : Promise<Recor
         Motoko.saveFile(stripped, content);
         files[stripped] = content;
       })();
-      // @ts-ignore
       promises.push(promise);
     }
   }
@@ -74,7 +84,7 @@ async function fetchFromGithub(repo, branch, dir, target_dir = "") : Promise<Rec
   if (!json.hasOwnProperty('tree')) {
     return;
   }
-  const promises = [];
+  const promises: any[] = [];
   const files = {};
   for (const f of json.tree) {
     if (f.path.startsWith(dir?`${dir}/`:'') && f.type === 'blob' && /\.mo$/.test(f.path)) {
@@ -84,7 +94,6 @@ async function fetchFromGithub(repo, branch, dir, target_dir = "") : Promise<Rec
         Motoko.saveFile(stripped, content);
         files[stripped] = content;
       })();
-      // @ts-ignore
       promises.push(promise);
     }
   }
@@ -94,16 +103,4 @@ async function fetchFromGithub(repo, branch, dir, target_dir = "") : Promise<Rec
   return Promise.all(promises).then(() => {
     return files;
   });
-}
-
-export function saveWorkplaceToMotoko(state: WorkplaceState) {
-  for (const [name, code] of Object.entries(state.files)) {
-    if (!name.endsWith('mo')) continue;
-    Motoko.saveFile(name, code);
-  }
-  const aliases: Array<[string, string]> = [];
-  for (const [name, info] of Object.entries(state.canisters)) {
-    aliases.push([name, info.id.toText()]);
-  }
-  Motoko.setActorAliases(aliases);
 }
