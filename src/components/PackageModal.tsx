@@ -27,7 +27,7 @@ function ProjectButton({ onClick, children }) {
   return (
     <ListButton onClick={onClick}>
       <ProjectButtonContents>
-      <span style={{whiteSpace: "nowrap"}}>{children}</span>
+      <span style={{whiteSpace: "nowrap", overflowX: "hidden"}}>{children}</span>
         <img src={iconCaretRight} alt="Continue" />
       </ProjectButtonContents>
     </ListButton>

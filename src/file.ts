@@ -12,37 +12,6 @@ export interface PackageInfo {
   homepage?: string,
 }
 
-export async function addPackage(name, repo, version, dir, logger) {
-  const meta_url = `https://data.jsdelivr.com/v1/package/gh/${repo}@${version}/flat`;
-  const base_url = `https://cdn.jsdelivr.net/gh/${repo}@${version}`;
-  const response = await fetch(meta_url);
-  const json = await response.json();
-  const promises = [];
-  const fetchedFiles = [];
-  for (const f of json.files) {
-    if (f.name.startsWith(`/${dir}/`) && /\.mo$/.test(f.name)) {
-      const promise = (async () => {
-        const content = await (await fetch(base_url + f.name)).text();
-        const stripped = name + f.name.slice(dir.length + 1);
-        // @ts-ignore
-        fetchedFiles.push(stripped);
-        Motoko.saveFile(stripped, content);
-      })();
-      // @ts-ignore
-      promises.push(promise);
-    }
-  }
-  Promise.all(promises).then(() => {
-    Motoko.addPackage(name, name + "/");
-    logger.log(`Package ${name} loaded (${promises.length} files).`);
-    // const content = [
-    //   `// Fetched from ${repo}@${version}/${dir}`,
-    //   // @ts-ignore
-    //   ...fetchedFiles.map((s) => `mo:${s.slice(0, -3)}`),
-    // ].join("\n");
-  });
-}
-
 export async function fetchPackage(info: PackageInfo): Promise<boolean> {
   if (!info.repo.startsWith("https://github.com/") || !info.repo.endsWith(".git")) {
     return false;
@@ -58,6 +27,46 @@ export async function fetchPackage(info: PackageInfo): Promise<boolean> {
 }
 
 export async function fetchGithub(repo, branch, dir, target_dir = "") : Promise<Record<string, string>|undefined> {
+  // always try to load from CDN, fallback to github API if failed
+  const result = await fetchFromCDN(repo, branch, dir, target_dir);
+  if (!result) {
+    return await fetchFromGithub(repo, branch, dir, target_dir);
+  } else {
+    return result;
+  }
+}
+
+async function fetchFromCDN(repo, version, dir, target_dir = "") : Promise<Record<string,string>|undefined> {
+  const meta_url = `https://data.jsdelivr.com/v1/package/gh/${repo}@${version}/flat`;
+  const base_url = `https://cdn.jsdelivr.net/gh/${repo}@${version}`;
+  const response = await fetch(meta_url);
+  const json = await response.json();
+  if (!json.hasOwnProperty('files')) {
+    return;
+  }
+  const promises = [];
+  const files = {};
+  for (const f of json.files) {
+    if (f.name.startsWith(`/${dir}/`) && /\.mo$/.test(f.name)) {
+      const promise = (async () => {
+        const content = await (await fetch(base_url + f.name)).text();
+        const stripped = target_dir + f.name.slice(dir?dir.length + 1:0);
+        Motoko.saveFile(stripped, content);
+        files[stripped] = content;
+      })();
+      // @ts-ignore
+      promises.push(promise);
+    }
+  }
+  if (!promises.length) {
+    return;
+  }
+  return Promise.all(promises).then(() => {
+    return files;
+  });
+}
+  
+async function fetchFromGithub(repo, branch, dir, target_dir = "") : Promise<Record<string, string>|undefined> {
   const meta_url = `https://api.github.com/repos/${repo}/git/trees/${branch}?recursive=1`;
   const base_url = `https://raw.githubusercontent.com/${repo}/${branch}/`;
   const response = await fetch(meta_url);

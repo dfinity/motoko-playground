@@ -87,19 +87,12 @@ export const workplaceReducer = {
     const files = {...emptyProject.directory}
     const selectedFile = selectFirstFile(emptyProject)
     const canisters = {};
-    const baseInfo = {
-      name: "base",
-      repo: "https://github.com/dfinity/motoko-base.git",
-      dir: "src",
-      version: "placeholder for now",
-      homepage: "https://sdk.dfinity.org/docs/base-libraries/stdlib-intro.html",
-    };
     return {
       files,
       selectedFile,
       canisters,
       selectedCanister: null,
-      packages: {"base": baseInfo},
+      packages: {},
     }
   },
   /** Return updated state based on an action */
