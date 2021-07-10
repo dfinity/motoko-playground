@@ -1,6 +1,4 @@
 import * as React from "react";
-import { emptyProject, selectFirstFile, withOnlyUserVisibleFiles } from "../examples";
-import { ExampleProject } from "../examples/types";
 import { CanisterInfo } from "../build";
 import { PackageInfo } from "../file";
 
@@ -17,11 +15,6 @@ export type WorkplaceReducerAction =
 /**
  * Call to replace all current files with files from an ExampleProject
  */
-| { type: 'loadExampleProject',
-    payload: {
-      project: ExampleProject
-    }
-  }
   | { type: 'loadProject',
       payload: {
         files: Record<string, string>;
@@ -84,8 +77,8 @@ export type WorkplaceReducerAction =
 export const workplaceReducer = {
   /** Create initial state */
   init(props: {}): WorkplaceState {
-    const files = {...emptyProject.directory}
-    const selectedFile = selectFirstFile(emptyProject)
+    const files = {"Main.mo":""};
+    const selectedFile = "Main.mo";
     const canisters = {};
     return {
       files,
@@ -98,13 +91,6 @@ export const workplaceReducer = {
   /** Return updated state based on an action */
   reduce(state: WorkplaceState, action: WorkplaceReducerAction): WorkplaceState {
     switch (action.type) {
-      case 'loadExampleProject':
-        const newProjectFiles = withOnlyUserVisibleFiles(action.payload.project.directory);
-        return {
-          ...state,
-          files: newProjectFiles,
-          selectedFile: selectFirstFile(action.payload.project),
-        }
       case 'loadProject':
         return {
           ...state,

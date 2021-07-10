@@ -13,7 +13,6 @@ import {
   WorkplaceDispatchContext,
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
-import { exampleProjects } from "./examples";
 import { getActor } from "./config/actor";
 
 const GlobalStyles = createGlobalStyle`
@@ -145,17 +144,6 @@ export function App() {
     });
   }
 
-  const chooseExampleProject = useCallback(
-    (project) => {
-      workplaceDispatch({
-        type: "loadExampleProject",
-        payload: {
-          project,
-        },
-      });
-    },
-    [workplaceDispatch]
-  );
   const importCode = useCallback(
     (files: Record<string,string>) => {
       workplaceDispatch({
@@ -222,9 +210,7 @@ export function App() {
       <Header openTutorial={() => setIsProjectModalOpen(true)} />
       <WorkplaceDispatchContext.Provider value={workplaceDispatch}>
         <ProjectModal
-          exampleProjects={exampleProjects}
           isOpen={isProjectModalOpen}
-          chooseExampleProject={chooseExampleProject}
           importCode={importCode}
           close={closeProjectModal}
           isFirstOpen={isFirstVisit}
