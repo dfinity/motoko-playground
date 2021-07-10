@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
+import ReactMarkdown from "react-markdown";
 import debounce from "lodash.debounce";
 import { IDL } from "@dfinity/candid";
 
@@ -28,13 +29,18 @@ const EditorColumn = styled.div`
   max-width: calc(100vw - var(--explorerWidth) - var(--candidWidth));
 `;
 
-const EditorContainer = styled.div`
+const EditorContainer = styled.div<{ isHidden: boolean }>`
   height: calc(var(--editorHeight) - 10rem);
 
   .margin {
     background-color: var(--grey200) !important;
     width: 5.5ch !important;
   }
+  ${(props) => (props.isHidden ? "display: none;" : "")}
+`;
+const MarkdownContainer = styled(EditorContainer)`
+  overflow: auto;
+  padding: 2rem;
 `;
 
 function setMarkers(diags, codeModel, monaco, fileName) {
@@ -139,9 +145,12 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
           </Button>
         </RightContainer>
       </PanelHeader>
-      <EditorContainer>
+      <MarkdownContainer isHidden={fileName!=="README"}>
+        <ReactMarkdown>{fileCode}</ReactMarkdown>
+      </MarkdownContainer>
+      <EditorContainer isHidden={fileName==="README"}>
         <MonacoEditor
-          defaultLanguage={fileName === "README" ? "markdown" : "motoko"}
+          defaultLanguage={"motoko"}
           value={fileCode}
           path={fileName}
           onChange={onEditorChange}
@@ -154,7 +163,7 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
             fontSize: 16,
           }}
         />
-      </EditorContainer>
+        </EditorContainer>
       <Console />
     </EditorColumn>
   );
