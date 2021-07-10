@@ -70,6 +70,15 @@ export type WorkplaceReducerAction =
   }
 ;
 
+function selectFirstFile(files: Record<string, string>) : string | null {
+  if ('README' in files) {
+    return 'README';
+  };
+  const fileNames = Object.keys(files);
+  if (fileNames.length) { return fileNames[0] };
+  return null;
+}
+
 /**
  * Reducer to reduce actions that modify state about the Editor 'Workplace'.
  * Meant to be used with `React.useReducer` or similar.
@@ -95,7 +104,7 @@ export const workplaceReducer = {
         return {
           ...state,
           files: action.payload.files,
-          selectedFile: 'Main.mo',
+          selectedFile: selectFirstFile(action.payload.files),
         }
       case 'loadPackage':
         return {
