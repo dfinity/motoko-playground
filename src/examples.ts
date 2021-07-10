@@ -33,7 +33,7 @@ export const exampleProjects: Record<string, ExampleProject> = {
     readme: `${readmeURL}/superheroes/README.md`,    
   },
   "Random Maze": {
-    repo: {dir: "motoko/random_maze/src", ...example},
+    repo: {dir: "motoko/random_maze/src/random_maze", ...example},
     readme: `${readmeURL}/random_maze/README.md`,    
   },
   "Game of Life": {
