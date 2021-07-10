@@ -25,12 +25,12 @@ export const exampleProjects: Record<string, ExampleProject> = {
     readme: `${readmeURL}/whoami/README.md`,    
   },
   "Phone Book": {
-    repo: {dir: "motoko/phone-book/src", ...example},
+    repo: {dir: "motoko/phone-book/src/phone-book", ...example},
     readme: `${readmeURL}/phone-book/README.md`,    
   },
   "Super Heroes": {
     repo: {dir: "motoko/superheroes/src/superheroes", ...example},
-    readme: `${readmeURL}/superheroes/README.md`,    
+    readme: `${readmeURL}/superheroes/README.md`,
   },
   "Random Maze": {
     repo: {dir: "motoko/random_maze/src/random_maze", ...example},

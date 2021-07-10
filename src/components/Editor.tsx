@@ -142,7 +142,7 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
       <EditorContainer>
         <MonacoEditor
           defaultLanguage={fileName === "README" ? "markdown" : "motoko"}
-          defaultValue={fileCode}
+          value={fileCode}
           path={fileName}
           onChange={onEditorChange}
           beforeMount={configureMonaco}
