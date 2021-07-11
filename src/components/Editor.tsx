@@ -78,6 +78,7 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
 
   const fileName = state.selectedFile;
   const fileCode = fileName?state.files[fileName]:"";
+  // TODO
   const mainFile = fileName.endsWith('.mo')?fileName:"Main.mo";
   const monaco = useMonaco();
   const checkFileAddMarkers = () => {
@@ -146,12 +147,12 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
         </RightContainer>
       </PanelHeader>
       <MarkdownContainer isHidden={fileName!=="README"}>
-        <ReactMarkdown>{fileCode}</ReactMarkdown>
+        <ReactMarkdown>{fileName==="README"?fileCode:""}</ReactMarkdown>
       </MarkdownContainer>
       <EditorContainer isHidden={fileName==="README"}>
         <MonacoEditor
           defaultLanguage={"motoko"}
-          value={fileCode}
+          value={fileName==="README"?"":fileCode}
           path={fileName}
           onChange={onEditorChange}
           beforeMount={configureMonaco}
@@ -163,7 +164,7 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
             fontSize: 16,
           }}
         />
-        </EditorContainer>
+      </EditorContainer>
       <Console />
     </EditorColumn>
   );

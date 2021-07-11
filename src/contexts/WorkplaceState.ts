@@ -74,9 +74,13 @@ function selectFirstFile(files: Record<string, string>) : string | null {
   if ('README' in files) {
     return 'README';
   };
+  if ('Main.mo' in files) {
+    return 'Main.mo';
+  }
   const fileNames = Object.keys(files);
-  if (fileNames.length) { return fileNames[0] };
-  return null;
+  if (!fileNames.length) { return null };  
+  const mainFile = fileNames.find((name) => name.endsWith("Main.mo"));
+  return mainFile || fileNames[0];
 }
 
 /**

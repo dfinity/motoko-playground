@@ -41,7 +41,7 @@ export const exampleProjects: Record<string, ExampleProject> = {
     readme: `${readmeURL}/life/README.md`,    
   },
   "Actor classes": {
-    repo: {dir: "motoko/classes", ...example},
+    repo: {dir: "motoko/classes/src", ...example},
     readme: `${readmeURL}/classes/README.md`,
   },
   "Publisher and Subscriber": {

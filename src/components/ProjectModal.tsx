@@ -69,7 +69,7 @@ export function ProjectModal({
 
   const welcomeCopy = (
     <p>
-      Welcome to the Motoko Lab... Lorem ipsum dolor sit amet, consectetur
+      Welcome to the Motoko Playground... Lorem ipsum dolor sit amet, consectetur
       adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
       magna aliqua. <a href="#learn-more">Learn more</a>
     </p>
