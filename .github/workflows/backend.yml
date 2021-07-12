@@ -29,6 +29,7 @@ jobs:
         dfx cache install
         dfx start --background --no-artificial-delay
         dfx canister --no-wallet create backend
+        dfx canister --no-wallet create wasm-utils        
         dfx build backend
     - name: Test
       run: |
