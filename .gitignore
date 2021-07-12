@@ -12,6 +12,7 @@
 /.dfx
 /build
 target/
+Cargo.lock
 
 # misc
 .DS_Store
