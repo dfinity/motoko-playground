@@ -22,10 +22,10 @@ const WordMark = styled("img")<{ horizontal: boolean }>`
     props.horizontal
       ? `
   margin-left: 2.4rem;
-  height: 2.4rem;
+  height: 34px;
 `
       : `
-  width: 21.5rem;
+  width: 350px;
   margin-bottom: 4rem;
 `}
 `;
@@ -41,7 +41,7 @@ export function MotokoLabLogo({ horizontal = false }) {
       <WordMark
         src={motokoLabWordmark}
         horizontal={horizontal}
-        alt="Motoko Lab"
+        alt="Motoko Playground"
       />
     </>
   );
