@@ -4,6 +4,15 @@
       "main": "backend/Main.mo",
       "type": "motoko"
     },
+    "wasm-utils": {
+      "type": "custom",
+      "candid": "wasm-utils/wasm-utils.did",
+      "wasm": "wasm-utils/target/wasm32-unknown-unknown/release/wasm_opt.wasm",
+      "build": [
+        "cd wasm-utils && cargo build --target wasm32-unknown-unknown --release --package wasm-utils",
+        "cd wasm-utils && wasm-opt --strip-debug -Oz target/wasm32-unknown-unknown/release/wasm_utils.wasm -o target/wasm32-unknown-unknown/release/wasm_opt.wasm"
+      ]
+    },
     "react_app": {
       "dependencies": ["backend"],
       "frontend": {
