@@ -1,6 +1,7 @@
 {
   "canisters": {
     "backend": {
+      "dependencies": ["wasm-utils"],
       "main": "backend/Main.mo",
       "type": "motoko"
     },
