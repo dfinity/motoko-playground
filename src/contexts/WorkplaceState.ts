@@ -1,6 +1,4 @@
 import * as React from "react";
-import { emptyProject, selectFirstFile, withOnlyUserVisibleFiles } from "../examples";
-import { ExampleProject } from "../examples/types";
 import { CanisterInfo } from "../build";
 import { PackageInfo } from "../file";
 
@@ -17,11 +15,6 @@ export type WorkplaceReducerAction =
 /**
  * Call to replace all current files with files from an ExampleProject
  */
-| { type: 'loadExampleProject',
-    payload: {
-      project: ExampleProject
-    }
-  }
   | { type: 'loadProject',
       payload: {
         files: Record<string, string>;
@@ -77,6 +70,19 @@ export type WorkplaceReducerAction =
   }
 ;
 
+function selectFirstFile(files: Record<string, string>) : string | null {
+  if ('README' in files) {
+    return 'README';
+  };
+  if ('Main.mo' in files) {
+    return 'Main.mo';
+  }
+  const fileNames = Object.keys(files);
+  if (!fileNames.length) { return null };  
+  const mainFile = fileNames.find((name) => name.endsWith("Main.mo"));
+  return mainFile || fileNames[0];
+}
+
 /**
  * Reducer to reduce actions that modify state about the Editor 'Workplace'.
  * Meant to be used with `React.useReducer` or similar.
@@ -84,8 +90,8 @@ export type WorkplaceReducerAction =
 export const workplaceReducer = {
   /** Create initial state */
   init(props: {}): WorkplaceState {
-    const files = {...emptyProject.directory}
-    const selectedFile = selectFirstFile(emptyProject)
+    const files = {"Main.mo":""};
+    const selectedFile = "Main.mo";
     const canisters = {};
     return {
       files,
@@ -98,18 +104,11 @@ export const workplaceReducer = {
   /** Return updated state based on an action */
   reduce(state: WorkplaceState, action: WorkplaceReducerAction): WorkplaceState {
     switch (action.type) {
-      case 'loadExampleProject':
-        const newProjectFiles = withOnlyUserVisibleFiles(action.payload.project.directory);
-        return {
-          ...state,
-          files: newProjectFiles,
-          selectedFile: selectFirstFile(action.payload.project),
-        }
       case 'loadProject':
         return {
           ...state,
           files: action.payload.files,
-          selectedFile: 'Main.mo',
+          selectedFile: selectFirstFile(action.payload.files),
         }
       case 'loadPackage':
         return {

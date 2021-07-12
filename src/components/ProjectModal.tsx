@@ -1,12 +1,12 @@
 import styled from "styled-components";
 import { useState } from "react";
 import { Modal } from "./shared/Modal";
-import { ExampleProject } from "../examples/types";
 import { MotokoLabLogo } from "./shared/MotokoLabLogo";
 import { Button } from "./shared/Button";
 import { ListButton, SelectList } from "./shared/SelectList";
 import iconCaretRight from "../assets/images/icon-caret-right.svg";
 import { ImportGitHub } from "./ImportGithub";
+import { fetchExample, exampleProjects, ExampleProject } from "../examples";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -47,30 +47,29 @@ const CancelButton = styled(Button)`
 
 interface ProjectModalProps {
   isOpen: boolean;
-  chooseExampleProject: (project: ExampleProject) => void;
   importCode: (files: Record<string, string>) => void;
   close: () => void;
-  exampleProjects: ExampleProject[];
   isFirstOpen: boolean;
 }
 
 export function ProjectModal({
   isOpen,
   close,
-  chooseExampleProject,
   importCode,
-  exampleProjects,
   isFirstOpen,
 }: ProjectModalProps) {
   const [importOpen, setImportOpen] = useState(false);
-  function handleSelectProjectAndClose(project: ExampleProject) {
-    chooseExampleProject(project);
-    close();
+  async function handleSelectProjectAndClose(project: ExampleProject) {
+    const files = await fetchExample(project);
+    if (files) {
+      importCode(files);
+      close();
+    }
   }
 
   const welcomeCopy = (
     <p>
-      Welcome to the Motoko Lab... Lorem ipsum dolor sit amet, consectetur
+      Welcome to the Motoko Playground... Lorem ipsum dolor sit amet, consectetur
       adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
       magna aliqua. <a href="#learn-more">Learn more</a>
     </p>
@@ -102,12 +101,12 @@ export function ProjectModal({
         {isFirstOpen ? welcomeCopy : switchProjectCopy}
         <SelectLabel>{labelCopy}</SelectLabel>
         {!importOpen?(<SelectList height="18rem">
-          {exampleProjects.map((project) => (
+          {Object.entries(exampleProjects).map(([name, project]) => (
             <ProjectButton
-              key={project.name}
+              key={name}
               onClick={() => handleSelectProjectAndClose(project)}
             >
-              {project.name}
+              {name}
             </ProjectButton>
           ))}
           <ProjectButton onClick={() => setImportOpen(true)}>Import from Github...</ProjectButton>

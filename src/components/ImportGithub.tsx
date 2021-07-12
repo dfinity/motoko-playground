@@ -34,7 +34,7 @@ export function ImportGitHub({ importCode, close, back, isPackageModal=false }) 
   const [error, setError] = useState("");
   const [name, setName] = useState("");
   async function fetchCode() {
-    const files = await fetchGithub(repo, branch, dir);
+    const files = await fetchGithub({repo, branch, dir});
     if (files) {
       setError("");
       importCode(files);
