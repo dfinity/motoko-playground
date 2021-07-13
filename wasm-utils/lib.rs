@@ -18,7 +18,7 @@ fn replace_calls_with_unreachable(module: &mut walrus::Module, func_id: walrus::
         fn visit_instr_mut(&mut self, instr: &mut walrus::ir::Instr, _instr_loc: &mut walrus::ir::InstrLocId) {
             if let walrus::ir::Instr::Call(walrus::ir::Call { func }) = instr {
                 if *func == self.0 {
-                    *instr = walrus::ir::Unreachable {}.into();
+                    *instr = walrus::ir::Drop {}.into();
                 }
             }
         }
