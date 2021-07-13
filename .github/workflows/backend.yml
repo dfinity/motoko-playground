@@ -12,6 +12,7 @@ jobs:
       DFX_VERSION: 0.7.2
       IC_REPL_VERSION: 2021-06-17
       VESSEL_VERSION: v0.6.2
+      CI: true
     steps:
     - uses: actions/checkout@v2
     - name: Install

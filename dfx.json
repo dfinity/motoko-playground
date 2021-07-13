@@ -5,8 +5,7 @@
       "candid": "wasm-utils/wasm-utils.did",
       "wasm": "wasm-utils/target/wasm32-unknown-unknown/release/wasm_opt.wasm",
       "build": [
-        "sh -c 'cd wasm-utils && cargo build --target wasm32-unknown-unknown --release --package wasm-utils'",
-        "wasm-opt --strip-debug -Oz wasm-utils/target/wasm32-unknown-unknown/release/wasm_utils.wasm -o wasm-utils/target/wasm32-unknown-unknown/release/wasm_opt.wasm"
+        "sh -c '[ \"$CI\" != \"true\" ] && cd wasm-utils && cargo build --target wasm32-unknown-unknown --release --package wasm-utils && wasm-opt --strip-debug -Oz target/wasm32-unknown-unknown/release/wasm_utils.wasm -o target/wasm32-unknown-unknown/release/wasm_opt.wasm'"
       ]
     },    
     "backend": {
