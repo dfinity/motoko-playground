@@ -20,6 +20,10 @@ export const exampleProjects: Record<string, ExampleProject> = {
     repo: {dir: "motoko/counter/src", ...example},
     readme: `${readmeURL}/counter/README.md`,    
   },
+  "Calculator": {
+    repo: {dir: "motoko/calc/src", ...example},
+    readme: `${readmeURL}/calc/README.md`,
+  },
   "Who am I?": {
     repo: {dir: "motoko/whoami/src", ...example},
     readme: `${readmeURL}/whoami/README.md`,    
@@ -39,10 +43,6 @@ export const exampleProjects: Record<string, ExampleProject> = {
   "Game of Life": {
     repo: {dir: "motoko/life", ...example},
     readme: `${readmeURL}/life/README.md`,    
-  },
-  "Actor classes": {
-    repo: {dir: "motoko/classes/src", ...example},
-    readme: `${readmeURL}/classes/README.md`,
   },
   "Publisher and Subscriber": {
     repo: {dir: "motoko/pub-sub/src", ...example},
