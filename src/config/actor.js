@@ -32,7 +32,7 @@ export const getActor = async () => {
 };
 
 const uiCanisterId = is_local(agent)
-  ? "r7inp-6aaaa-aaaaa-aaabq-cai"
+  ? "rkp4c-7iaaa-aaaaa-aaaca-cai"
   : "a4gq6-oaaaa-aaaab-qaa4q-cai";
 export const uiCanisterUrl = is_local(agent)
   ? `http://${uiCanisterId}.${dfxConfig.networks.local.bind}`
