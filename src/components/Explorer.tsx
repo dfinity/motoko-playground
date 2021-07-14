@@ -90,7 +90,7 @@ export function Explorer({ state, ttl, loadPackage, onSelectFile, onCanister }: 
         loadPackage={loadPackage}
       />
       <CategoryTitle>Files</CategoryTitle>
-      {Object.keys(state.files).map((filename) => (
+      {Object.keys(state.files).sort().map((filename) => (
         <ListButton
           key={filename}
           isActive={state.selectedFile === filename}

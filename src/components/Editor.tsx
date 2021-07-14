@@ -79,7 +79,7 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
   const fileName = state.selectedFile;
   const fileCode = fileName?state.files[fileName]:"";
   // TODO
-  const mainFile = fileName.endsWith('.mo')?fileName:"Main.mo";
+  const mainFile = fileName.endsWith('.mo')?fileName:(state.files["Main.mo"]?"Main.mo":"");
   const monaco = useMonaco();
   const checkFileAddMarkers = () => {
     if (!fileName.endsWith('mo') || !Motoko) return;
@@ -109,6 +109,9 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
   const deployClick = async () => {
     // TODO don't pass readme non-mo files to motoko
     saveWorkplaceToMotoko(state);
+    if (!mainFile) {
+      logger.log('Select a main entry file to deploy');
+    }
     const candid = compileCandid(mainFile, logger);
     if (candid) {
       const candidJS = await didToJs(candid);
