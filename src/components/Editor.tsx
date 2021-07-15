@@ -82,7 +82,7 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
   const mainFile = fileName.endsWith('.mo')?fileName:(state.files["Main.mo"]?"Main.mo":"");
   const monaco = useMonaco();
   const checkFileAddMarkers = () => {
-    if (!fileName.endsWith('mo') || !Motoko) return;
+    if (!fileName.endsWith('mo') || typeof Motoko === "undefined") return;
     const check = Motoko.check(fileName);
     const diags = check.diagnostics;
     setMarkers(
@@ -95,7 +95,7 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
   }
   const saveChanges = (newValue) => {
     onSave(newValue);
-    if (!fileName.endsWith('mo') || !Motoko) return;
+    if (!fileName.endsWith('mo') || typeof Motoko === "undefined") return;
     // This has to happen sync so the check Motoko has updated file when checking.
     Motoko.saveFile(fileName, newValue);
     checkFileAddMarkers();
