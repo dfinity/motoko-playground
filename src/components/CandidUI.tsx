@@ -20,7 +20,7 @@ const CandidFrame = styled.iframe`
 const CollapseIcon = styled("img")<{ isExpanded: boolean }>`
   width: 1.4rem;
   margin-right: 1rem;
-  ${(props) => (props.isExpanded ? "transform: rotate(90deg);" : "")}
+  ${(props) => (!props.isExpanded ? "transform: rotate(180deg);" : "")}
 `;
 
 const OpenIcon = styled("img")`
@@ -43,6 +43,9 @@ export function CandidUI({ canisterId = "", setCandidWidth, forceUpdate }) {
     const newSize = isExpanded ? "30vw" : "fit-content";
     setCandidWidth(newSize);
   }, [isExpanded, setCandidWidth]);
+  useEffect(() => {
+    setIsExpanded(true);
+  }, [canisterId, forceUpdate]);
 
   const url = `${CANDID_UI_CANISTER_URL}/?id=${canisterId}&tag=${forceUpdate}`;
   return (
@@ -58,7 +61,7 @@ export function CandidUI({ canisterId = "", setCandidWidth, forceUpdate }) {
             src={iconCollapse}
             alt="Collapse icon"
           />
-          CANDID UI
+        {isExpanded ? "CANDID UI" : null}
         </Button>
         {isExpanded ? (
           <Button
