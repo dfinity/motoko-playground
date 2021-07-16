@@ -106,7 +106,7 @@ export function App() {
       case "expired": {
         if (action === "delete") {
           const canisterInfo = workplaceState.canisters[selectedCanister];
-          logger.log(`Deleting canister ${selectedCanister} with id: ${canisterInfo.id.toText()}...`);
+          logger.log(`Deleting canister ${selectedCanister} with id ${canisterInfo.id.toText()}...`);
           await deleteCanister(canisterInfo);
           logger.log('Canister deleted');
         }
