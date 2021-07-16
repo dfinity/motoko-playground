@@ -121,7 +121,7 @@ export function DeployModal({
     if (args === undefined) {
       return;
     }
-    close();
+    await close();
     const info = await deploy(canisterName, canisters[canisterName], args, mode, fileName, logger);
     if (info) {
       info.candid = candid;

@@ -68,11 +68,8 @@ export function ProjectModal({
   }
 
   const welcomeCopy = (
-    <p>
-      Welcome to the Motoko Playground... Lorem ipsum dolor sit amet, consectetur
-      adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-      magna aliqua. <a href="#learn-more">Learn more</a>
-    </p>
+      <p>Welcome to the Motoko Playground! Explore Motoko, the native language of the Internet Computer, right in the browser without having to download the SDK.
+      </p>
   );
   const switchProjectCopy = (
     <>

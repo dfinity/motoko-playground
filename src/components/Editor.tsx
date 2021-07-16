@@ -131,7 +131,7 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
     <EditorColumn>
       <DeployModal
         isOpen={showModal}
-        close={() => setShowModal(false)}
+        close={async () => await setShowModal(false)}
         onDeploy={onDeploy}
         canisters={state.canisters}
         ttl={ttl}
