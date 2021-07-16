@@ -150,7 +150,7 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
         </RightContainer>
       </PanelHeader>
       <MarkdownContainer isHidden={fileName!=="README"}>
-        <ReactMarkdown>{fileName==="README"?fileCode:""}</ReactMarkdown>
+        <ReactMarkdown linkTarget="_blank">{fileName==="README"?fileCode:""}</ReactMarkdown>
       </MarkdownContainer>
       <EditorContainer isHidden={fileName==="README"}>
         <MonacoEditor

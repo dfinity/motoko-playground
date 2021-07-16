@@ -8,6 +8,7 @@ import { ILoggingStore } from './Logger';
 import { Button } from "./shared/Button";
 import { ListButton, SelectList } from "./shared/SelectList";
 import iconCaretRight from "../assets/images/icon-caret-right.svg";
+import "../assets/styles/candid.css";
 
 declare var Motoko: any;
 
@@ -153,7 +154,7 @@ export function DeployModal({
       {initTypes.length > 0 ? (
           <InitContainer>
           <p>This service requires the following installation arguments:</p><p>({initTypes.map(arg => arg.name).join(", ")})</p>
-          <div ref={initArgs}></div>
+          <div className="InitArgs" ref={initArgs}></div>
           </InitContainer>)
        : null}
     </SelectLabel>
