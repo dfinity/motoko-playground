@@ -5,15 +5,14 @@ import { RightContainer } from "./shared/RightContainer";
 import { useLogging } from "./Logger";
 import iconCaretDown from "../assets/images/icon-caret-down.svg";
 
-const LogContainer = styled.div`
-  height: 40rem;
-  overflow: auto;
-`;
-
 const LogHeader = styled(PanelHeader)`
   padding: 0 1rem;
   height: 2.4rem;
   border-top: 1px solid var(--grey300);
+`;
+const LogContent = styled.div`
+  height: 24rem;
+  overflow: auto;
 `;
 
 export function Console() {
@@ -26,16 +25,18 @@ export function Console() {
   }, [logger.logLines.length]);
 
   return (
-    <LogContainer>
+    <div>
       <LogHeader>
         Log
         <RightContainer>
           <img src={iconCaretDown} alt="Caret icon" />
         </RightContainer>
       </LogHeader>
+      <LogContent>
       {logger.logLines.map((line, index) => (
           <pre key={index} ref={lastRef}>{line}</pre>
       ))}
-    </LogContainer>
+      </LogContent>
+    </div>
   );
 }
