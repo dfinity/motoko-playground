@@ -67,17 +67,15 @@ export async function deploy(canisterName: string, canisterInfo: CanisterInfo|nu
   logger.clearLogs();
   logger.log('Compiling code...');
 
-  const tStart = Date.now();
   // NOTE: Will change to "ic" in a future moc release
   const out = Motoko.compileWasm("dfinity", file);
-  const duration = (Date.now() - tStart) / 1000;
   if (out.diagnostics) logDiags(out.diagnostics, logger);
   // setMarkers(out.diagnostics);
   if (out.code === null) {
     logger.log("syntax error");
   } else {
     const wasm = out.code;
-    logger.log(`(Compile time: ${duration}s, Wasm size: ${Math.floor(wasm.length/1024)}KB)`);
+    logger.log(`Compiled Wasm size: ${Math.floor(wasm.length/1024)}KB`);
     const module = blobFromUint8Array(wasm);
     try {
       logger.log(`Deploying code...`);

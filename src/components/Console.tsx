@@ -13,7 +13,7 @@ const LogHeader = styled(PanelHeader)`
 const LogContent = styled.div`
   height: var(--consoleHeight);
   overflow: auto;
-  padding-left: 1rem;
+  padding-left: 0.5rem;
 `;
 const Button = styled.button`
   background: none;
