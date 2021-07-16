@@ -40,7 +40,7 @@ const GlobalStyles = createGlobalStyle`
   }
 `;
 
-const AppContainer = styled.div<{candidWidth: string}>`
+const AppContainer = styled.div<{candidWidth: string, consoleHeight: string}>`
   display: flex;
   height: var(--appHeight);
   overflow: hidden;
@@ -48,6 +48,7 @@ const AppContainer = styled.div<{candidWidth: string}>`
   width: 100vw;
   border-top: 1px solid var(--grey400);
   --candidWidth: ${props=>props.candidWidth ?? 0};
+  --consoleHeight: ${props=>props.consoleHeight ?? 0};
 `;
 
 export function App() {
@@ -61,6 +62,7 @@ export function App() {
   const [isFirstVisit, setIsFirstVisit] = useState(true);
   const [showCandidUI, setShowCandidUI] = useState(false);
   const [candidWidth, setCandidWidth] = useState("0");
+  const [consoleHeight, setConsoleHeight] = useState("3rem");
   const [TTL, setTTL] = useState(BigInt(0));
   const [forceUpdate, setForceUpdate] = useReducer(x => (x+1)%10, 0);
   
@@ -215,7 +217,7 @@ export function App() {
           close={closeProjectModal}
           isFirstOpen={isFirstVisit}
         />
-        <AppContainer candidWidth={candidWidth}>
+        <AppContainer candidWidth={candidWidth} consoleHeight={consoleHeight}>
           <Explorer
             state={workplaceState}
             ttl={TTL}
@@ -229,6 +231,7 @@ export function App() {
             onSave={saveWorkplace}
             onDeploy={deployWorkplace}
             logger={logger}
+            setConsoleHeight={setConsoleHeight}
           />
           {showCandidUI ?
           <CandidUI

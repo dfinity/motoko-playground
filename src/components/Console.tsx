@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { PanelHeader } from "./shared/PanelHeader";
 import { RightContainer } from "./shared/RightContainer";
 import { useLogging } from "./Logger";
@@ -11,11 +11,20 @@ const LogHeader = styled(PanelHeader)`
   border-top: 1px solid var(--grey300);
 `;
 const LogContent = styled.div`
-  height: 24rem;
+  height: var(--consoleHeight);
   overflow: auto;
 `;
+const Button = styled.button`
+  background: none;
+  border: none;
+  box-shadow: none;
+`;
+const CollapseIcon = styled("img")<{ isExpanded: boolean }>`
+  ${(props) => (!props.isExpanded ? "transform: rotate(180deg);" : "")}
+`;
 
-export function Console() {
+export function Console({ setConsoleHeight }) {
+  const [isExpanded, setIsExpanded] = useState(true);
   const lastRef = useRef<HTMLInputElement>(null);
   const logger = useLogging();
   useEffect(() => {
@@ -23,13 +32,19 @@ export function Console() {
       lastRef.current.scrollIntoView({behavior: "smooth"});
     }
   }, [logger.logLines.length]);
+  useEffect(() => {
+    const newSize = isExpanded ? "24rem" : "3rem";
+    setConsoleHeight(newSize);
+  }, [isExpanded]);
 
   return (
     <div>
       <LogHeader>
         Log
         <RightContainer>
-          <img src={iconCaretDown} alt="Caret icon" />
+      <Button onClick={() => setIsExpanded(!isExpanded)}>
+      <CollapseIcon isExpanded={isExpanded} src={iconCaretDown} alt="Caret icon" />
+      </Button>
         </RightContainer>
       </LogHeader>
       <LogContent>

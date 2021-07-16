@@ -30,7 +30,7 @@ const EditorColumn = styled.div`
 `;
 
 const EditorContainer = styled.div<{ isHidden: boolean }>`
-  height: calc(var(--editorHeight) - 10rem);
+  height: calc(var(--editorHeight) - var(--consoleHeight) - 2.4rem);
 
   .margin {
     background-color: var(--grey200) !important;
@@ -71,7 +71,7 @@ function setMarkers(diags, codeModel, monaco, fileName) {
 }
 
 // @ts-ignore
-export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
+export function Editor({ state, ttl, onSave, onDeploy, logger, setConsoleHeight } = {}) {
   const [showModal, setShowModal] = useState(false);
   const [candidCode, setCandidCode] = useState("");
   const [initTypes, setInitTypes] = useState([]);
@@ -168,7 +168,7 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
           }}
         />
       </EditorContainer>
-      <Console />
+      <Console setConsoleHeight={setConsoleHeight} />
     </EditorColumn>
   );
 }
