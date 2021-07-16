@@ -1,5 +1,5 @@
 import styled from "styled-components";
-
+import { useRef, useEffect } from "react";
 import { PanelHeader } from "./shared/PanelHeader";
 import { RightContainer } from "./shared/RightContainer";
 import { useLogging } from "./Logger";
@@ -17,7 +17,14 @@ const LogHeader = styled(PanelHeader)`
 `;
 
 export function Console() {
+  const lastRef = useRef<HTMLInputElement>(null);
   const logger = useLogging();
+  useEffect(() => {
+    if (lastRef && lastRef.current) {
+      lastRef.current.scrollIntoView({behavior: "smooth"});
+    }
+  }, [logger.logLines.length]);
+
   return (
     <LogContainer>
       <LogHeader>
@@ -26,10 +33,8 @@ export function Console() {
           <img src={iconCaretDown} alt="Caret icon" />
         </RightContainer>
       </LogHeader>
-      {/*
-         // @ts-ignore */}
       {logger.logLines.map((line, index) => (
-        <pre key={index}>{line}</pre>
+          <pre key={index} ref={lastRef}>{line}</pre>
       ))}
     </LogContainer>
   );
