@@ -70,6 +70,8 @@ interface DeployModalProps {
   logger: ILoggingStore;
 }
 
+const MAX_CANISTERS = 3;
+
 export function DeployModal({
   isOpen,
   close,
@@ -84,8 +86,12 @@ export function DeployModal({
   const [canisterName, setCanisterName] = useState("");
   const [inputs, setInputs] = useState<InputBox[]>([]);
 
+  const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
+
   useEffect(() => {
-    setCanisterName(getCanisterName(fileName));
+    if (!exceedsLimit) {
+      setCanisterName(getCanisterName(fileName));
+    }
   }, [fileName]);
 
   useEffect(() => {
@@ -129,10 +135,26 @@ export function DeployModal({
       <p>Deploy your canister to the IC.</p>
     </>
   );
-  const ttlWarning = (
+  const Warnings = (
       <><p style={{fontSize: "1.4rem", marginTop: "2rem"}}>
-      <strong>Warning:</strong> Deployed canister expires after {(ttl/BigInt(60_000_000_000)).toString()} minutes.
+      {exceedsLimit ? (<p><strong>Warning:</strong> You can deploy at most {MAX_CANISTERS} canisters at the same time.</p>):null}
+      <p><strong>Warning:</strong> Deployed canister expires after {(ttl/BigInt(60_000_000_000)).toString()} minutes.</p>
       </p></>
+  );
+  const newDeploy = (
+      <><input type="text" list="canisters" value={canisterName} onChange={(e) => setCanisterName(e.target.value)} />
+      <datalist id="canisters">
+      {Object.keys(canisters).map((canister) => (
+          <option>{canister}</option>
+      ))}
+      </datalist></>
+  );
+  const selectDeploy = (
+      <><select value={canisterName} onChange={(e) => setCanisterName(e.target.value)}>
+      {Object.keys(canisters).map((canister) => (
+          <option value={canister}>{canister}</option>
+      ))}
+    </select></>
   );
 
   return (
@@ -145,12 +167,7 @@ export function DeployModal({
       <ModalContainer>
         {welcomeCopy}
       <SelectLabel>Select a canister name &nbsp;
-        <input type="text" list="canisters" value={canisterName} onChange={(e) => setCanisterName(e.target.value)} />
-        <datalist id="canisters">
-        {Object.keys(canisters).map((canister) => (
-          <option>{canister}</option>
-        ))}
-        </datalist>
+      {exceedsLimit ? selectDeploy : newDeploy}
       {initTypes.length > 0 ? (
           <InitContainer>
           <p>This service requires the following installation arguments:</p><p>({initTypes.map(arg => arg.name).join(", ")})</p>
@@ -158,7 +175,7 @@ export function DeployModal({
           </InitContainer>)
        : null}
     </SelectLabel>
-      {ttlWarning}
+      {Warnings}
       <ProjectButtonContents>
       {canisters.hasOwnProperty(canisterName)?(<>
           <MyButton onClick={() => deployClick("upgrade")}>Upgrade</MyButton>
