@@ -2,10 +2,13 @@ import Cycles "mo:base/ExperimentalCycles";
 import Time "mo:base/Time";
 import Error "mo:base/Error";
 import Option "mo:base/Option";
+import Nat "mo:base/Nat";
+import Text "mo:base/Text";
 import Types "./Types";
 import ICType "./IC";
 import PoW "./PoW";
 import Logs "./Logs";
+import Metrics "./Metrics";
 import Wasm "canister:wasm-utils";
 
 shared(creator) actor class Self(opt_params : ?Types.InitParams) {
@@ -86,7 +89,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
              };
         case (#outOfCapacity(time)) {
                  let second = time / 1_000_000_000;
-                 stats := Logs.updateStats(stats, #outOfCapacity(time));
+                 stats := Logs.updateStats(stats, #outOfCapacity(second));
                  throw Error.reject("No available canister id, wait for " # debug_show(second) # " seconds.");
              };
         };
@@ -134,5 +137,21 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
             throw Error.reject("Only called by controller");          
         };
         stats := Logs.defaultStats;
-    }
+    };
+    public query func http_request(req: Metrics.HttpRequest): async Metrics.HttpResponse {
+        if (req.url == "/metrics") {
+            let body = Metrics.metrics(stats);
+            {
+                status_code = 200;
+                headers = [("Content-Type", "text/plain; version=0.0.4"), ("Content-Length", Nat.toText(body.size()))];
+                body = body;
+            }
+        } else {
+            {
+                status_code = 404;
+                headers = [];
+                body = Text.encodeUtf8("Not supported");
+            }
+        }
+    };
 }
