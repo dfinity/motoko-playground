@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { MouseEvent, ReactNode } from "react";
+import { MouseEvent } from "react";
 
 export const Button = styled("button")<{
   small?: boolean;

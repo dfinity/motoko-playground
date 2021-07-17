@@ -124,11 +124,13 @@ export function Explorer({ state, ttl, dispatch, logger }: ExplorerProps) {
     }, 1000);
     // Clear timeout if the component is unmounted
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.canisters, timeLeft]);
   useEffect(() => {
     isExpired.forEach((canister) => {
       onCanister(canister, "expired");
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isExpired]);
   
   return (

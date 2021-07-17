@@ -130,6 +130,7 @@ export function Editor({ state, ttl, dispatch, onDeploy, logger, setConsoleHeigh
   useEffect(() => {
     if (!monaco) return;
     checkFileAddMarkers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [monaco, fileName]);
 
   return (

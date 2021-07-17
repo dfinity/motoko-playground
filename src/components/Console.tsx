@@ -36,6 +36,7 @@ export function Console({ setConsoleHeight }) {
   useEffect(() => {
     const newSize = isExpanded ? "24rem" : "3rem";
     setConsoleHeight(newSize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isExpanded]);
 
   return (

@@ -6,8 +6,6 @@ import { Modal } from "./shared/Modal";
 import { CanisterInfo, getCanisterName, deploy } from "../build";
 import { ILoggingStore } from './Logger';
 import { Button } from "./shared/Button";
-import { ListButton, SelectList } from "./shared/SelectList";
-import iconCaretRight from "../assets/images/icon-caret-right.svg";
 import "../assets/styles/candid.css";
 
 declare var Motoko: any;
@@ -33,17 +31,6 @@ const InitContainer = styled.div`
   padding: 1rem;
   margin-top: 1rem;
 `;
-
-function ProjectButton({ onClick, children }) {
-  return (
-    <ListButton onClick={onClick}>
-      <ProjectButtonContents>
-        <span>{children}</span>
-        <img src={iconCaretRight} alt="Continue" />
-      </ProjectButtonContents>
-    </ListButton>
-  );
-}
 
 const SelectLabel = styled.div`
   margin: 1rem 0 0.5rem;
@@ -92,6 +79,7 @@ export function DeployModal({
     if (!exceedsLimit) {
       setCanisterName(getCanisterName(fileName));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileName]);
 
   useEffect(() => {

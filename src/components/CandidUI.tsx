@@ -1,4 +1,4 @@
-import styled, { createGlobalStyle } from "styled-components";
+import styled from "styled-components";
 import { PanelHeader } from "./shared/PanelHeader";
 import iconCollapse from "../assets/images/icon-collapse.svg";
 import iconOpen from "../assets/images/icon-open.svg";

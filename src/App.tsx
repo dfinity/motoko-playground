@@ -5,8 +5,8 @@ import { CandidUI } from "./components/CandidUI";
 import { Editor } from "./components/Editor";
 import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
-import { saveWorkplaceToMotoko, PackageInfo, fetchPackage } from "./file";
-import { deleteCanister, CanisterInfo } from "./build";
+import { saveWorkplaceToMotoko, fetchPackage } from "./file";
+import { CanisterInfo } from "./build";
 import { useLogging } from "./components/Logger";
 import {
   workplaceReducer,
@@ -137,6 +137,7 @@ export function App() {
       return;
     }
     saveWorkplaceToMotoko(workplaceState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workplaceState.canisters, motokoIsLoaded]);
 
   useEffect(()=>{

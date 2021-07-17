@@ -1,7 +1,7 @@
 import { blobFromUint8Array, BinaryBlob } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 import { pow } from './pow';
-import { getActor, getUiCanisterUrl } from "./config/actor";
+import { getActor } from "./config/actor";
 import { ILoggingStore } from './components/Logger';
 
 declare var Motoko: any;
