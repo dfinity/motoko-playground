@@ -126,6 +126,7 @@ export function DeployModal({
   const Warnings = (
       <><p style={{fontSize: "1.4rem", marginTop: "2rem"}}>
       {exceedsLimit ? (<p><strong>Warning:</strong> You can deploy at most {MAX_CANISTERS} canisters at the same time.</p>):null}
+      <p><strong>Warning:</strong> Cycle transfer instructions are silently ignored by the system.</p>
       <p><strong>Warning:</strong> Deployed canister expires after {(ttl/BigInt(60_000_000_000)).toString()} minutes.</p>
       </p></>
   );
