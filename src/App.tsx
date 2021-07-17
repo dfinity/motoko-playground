@@ -76,66 +76,6 @@ export function App() {
     }
   }
 
-  const selectFile = (selectedFile: string) => {
-    workplaceDispatch({
-      type: "selectFile",
-      payload: {
-        path: selectedFile,
-      },
-    });
-  };
-  const loadPackage = (pack: PackageInfo) => {
-    workplaceDispatch({
-      type: "loadPackage",
-      payload: {
-        name: pack.name,
-        package: pack,
-      },
-    });
-  };
-  const onCanister = async (selectedCanister: string, action: string) => {
-    switch (action) {
-      case "select":
-        return workplaceDispatch({
-          type: "selectCanister",
-          payload: {
-            name: selectedCanister,
-          },
-        });
-      case "delete":
-      case "expired": {
-        if (action === "delete") {
-          const canisterInfo = workplaceState.canisters[selectedCanister];
-          logger.log(`Deleting canister ${selectedCanister} with id ${canisterInfo.id.toText()}...`);
-          await deleteCanister(canisterInfo);
-          logger.log('Canister deleted');
-        }
-        return workplaceDispatch({
-          type: "deleteCanister",
-          payload: {
-            name: selectedCanister,
-          },
-        });
-      }
-      default:
-        throw new Error(`unknown action ${action}`)
-    }
-  };
-
-  const saveWorkplace = (newCode: string) => {
-    if (!workplaceState.selectedFile) {
-      console.warn("Called saveWorkplace with no selectedFile");
-      return;
-    }
-    workplaceDispatch({
-      type: "saveFile",
-      payload: {
-        path: workplaceState.selectedFile,
-        contents: newCode,
-      },
-    });
-  };
-
   const deployWorkplace = (info: CanisterInfo) => {
     setForceUpdate();
     workplaceDispatch({
@@ -221,14 +161,13 @@ export function App() {
           <Explorer
             state={workplaceState}
             ttl={TTL}
-            loadPackage={loadPackage}
-            onSelectFile={selectFile}
-            onCanister={onCanister}
+            dispatch={workplaceDispatch}
+            logger={logger}
           />
           <Editor
             state={workplaceState}
             ttl={TTL}
-            onSave={saveWorkplace}
+            dispatch={workplaceDispatch}
             onDeploy={deployWorkplace}
             logger={logger}
             setConsoleHeight={setConsoleHeight}

@@ -70,8 +70,7 @@ function setMarkers(diags, codeModel, monaco, fileName) {
   monaco.editor.setModelMarkers(codeModel, "moc", markers);
 }
 
-// @ts-ignore
-export function Editor({ state, ttl, onSave, onDeploy, logger, setConsoleHeight } = {}) {
+export function Editor({ state, ttl, dispatch, onDeploy, logger, setConsoleHeight }) {
   const [showModal, setShowModal] = useState(false);
   const [candidCode, setCandidCode] = useState("");
   const [initTypes, setInitTypes] = useState([]);
@@ -94,7 +93,13 @@ export function Editor({ state, ttl, onSave, onDeploy, logger, setConsoleHeight 
     );
   }
   const saveChanges = (newValue) => {
-    onSave(newValue);
+    dispatch({
+      type: "saveFile",
+      payload: {
+        path: fileName,
+        contents: newValue,
+      }
+    });
     if (!fileName.endsWith('mo') || typeof Motoko === "undefined") return;
     // This has to happen sync so the check Motoko has updated file when checking.
     Motoko.saveFile(fileName, newValue);
