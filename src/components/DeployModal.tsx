@@ -6,8 +6,7 @@ import { Modal } from "./shared/Modal";
 import { CanisterInfo, getCanisterName, deploy } from "../build";
 import { ILoggingStore } from './Logger';
 import { Button } from "./shared/Button";
-import { ListButton, SelectList } from "./shared/SelectList";
-import iconCaretRight from "../assets/images/icon-caret-right.svg";
+import "../assets/styles/candid.css";
 
 declare var Motoko: any;
 
@@ -32,17 +31,6 @@ const InitContainer = styled.div`
   padding: 1rem;
   margin-top: 1rem;
 `;
-
-function ProjectButton({ onClick, children }) {
-  return (
-    <ListButton onClick={onClick}>
-      <ProjectButtonContents>
-        <span>{children}</span>
-        <img src={iconCaretRight} alt="Continue" />
-      </ProjectButtonContents>
-    </ListButton>
-  );
-}
 
 const SelectLabel = styled.div`
   margin: 1rem 0 0.5rem;
@@ -69,6 +57,8 @@ interface DeployModalProps {
   logger: ILoggingStore;
 }
 
+const MAX_CANISTERS = 3;
+
 export function DeployModal({
   isOpen,
   close,
@@ -83,8 +73,13 @@ export function DeployModal({
   const [canisterName, setCanisterName] = useState("");
   const [inputs, setInputs] = useState<InputBox[]>([]);
 
+  const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
+
   useEffect(() => {
-    setCanisterName(getCanisterName(fileName));
+    if (!exceedsLimit) {
+      setCanisterName(getCanisterName(fileName));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileName]);
 
   useEffect(() => {
@@ -114,7 +109,7 @@ export function DeployModal({
     if (args === undefined) {
       return;
     }
-    close();
+    await close();
     const info = await deploy(canisterName, canisters[canisterName], args, mode, fileName, logger);
     if (info) {
       info.candid = candid;
@@ -128,10 +123,26 @@ export function DeployModal({
       <p>Deploy your canister to the IC.</p>
     </>
   );
-  const ttlWarning = (
+  const Warnings = (
       <><p style={{fontSize: "1.4rem", marginTop: "2rem"}}>
-      <strong>Warning:</strong> Deployed canister expires after {(ttl/BigInt(60_000_000_000)).toString()} minutes.
+      {exceedsLimit ? (<p><strong>Warning:</strong> You can deploy at most {MAX_CANISTERS} canisters at the same time.</p>):null}
+      <p><strong>Warning:</strong> Deployed canister expires after {(ttl/BigInt(60_000_000_000)).toString()} minutes.</p>
       </p></>
+  );
+  const newDeploy = (
+      <><input type="text" list="canisters" value={canisterName} onChange={(e) => setCanisterName(e.target.value)} />
+      <datalist id="canisters">
+      {Object.keys(canisters).map((canister) => (
+          <option>{canister}</option>
+      ))}
+      </datalist></>
+  );
+  const selectDeploy = (
+      <><select value={canisterName} onChange={(e) => setCanisterName(e.target.value)}>
+      {Object.keys(canisters).map((canister) => (
+          <option value={canister}>{canister}</option>
+      ))}
+    </select></>
   );
 
   return (
@@ -144,20 +155,15 @@ export function DeployModal({
       <ModalContainer>
         {welcomeCopy}
       <SelectLabel>Select a canister name &nbsp;
-        <input type="text" list="canisters" value={canisterName} onChange={(e) => setCanisterName(e.target.value)} />
-        <datalist id="canisters">
-        {Object.keys(canisters).map((canister) => (
-          <option>{canister}</option>
-        ))}
-        </datalist>
+      {exceedsLimit ? selectDeploy : newDeploy}
       {initTypes.length > 0 ? (
           <InitContainer>
           <p>This service requires the following installation arguments:</p><p>({initTypes.map(arg => arg.name).join(", ")})</p>
-          <div ref={initArgs}></div>
+          <div className="InitArgs" ref={initArgs}></div>
           </InitContainer>)
        : null}
     </SelectLabel>
-      {ttlWarning}
+      {Warnings}
       <ProjectButtonContents>
       {canisters.hasOwnProperty(canisterName)?(<>
           <MyButton onClick={() => deployClick("upgrade")}>Upgrade</MyButton>

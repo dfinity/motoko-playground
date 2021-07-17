@@ -30,7 +30,7 @@ const EditorColumn = styled.div`
 `;
 
 const EditorContainer = styled.div<{ isHidden: boolean }>`
-  height: calc(var(--editorHeight) - 10rem);
+  height: calc(var(--editorHeight) - var(--consoleHeight) - 2.4rem);
 
   .margin {
     background-color: var(--grey200) !important;
@@ -70,8 +70,7 @@ function setMarkers(diags, codeModel, monaco, fileName) {
   monaco.editor.setModelMarkers(codeModel, "moc", markers);
 }
 
-// @ts-ignore
-export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
+export function Editor({ state, ttl, dispatch, onDeploy, logger, setConsoleHeight }) {
   const [showModal, setShowModal] = useState(false);
   const [candidCode, setCandidCode] = useState("");
   const [initTypes, setInitTypes] = useState([]);
@@ -94,7 +93,13 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
     );
   }
   const saveChanges = (newValue) => {
-    onSave(newValue);
+    dispatch({
+      type: "saveFile",
+      payload: {
+        path: fileName,
+        contents: newValue,
+      }
+    });
     if (!fileName.endsWith('mo') || typeof Motoko === "undefined") return;
     // This has to happen sync so the check Motoko has updated file when checking.
     Motoko.saveFile(fileName, newValue);
@@ -125,13 +130,14 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
   useEffect(() => {
     if (!monaco) return;
     checkFileAddMarkers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [monaco, fileName]);
 
   return (
     <EditorColumn>
       <DeployModal
         isOpen={showModal}
-        close={() => setShowModal(false)}
+        close={async () => await setShowModal(false)}
         onDeploy={onDeploy}
         canisters={state.canisters}
         ttl={ttl}
@@ -150,7 +156,7 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
         </RightContainer>
       </PanelHeader>
       <MarkdownContainer isHidden={fileName!=="README"}>
-        <ReactMarkdown>{fileName==="README"?fileCode:""}</ReactMarkdown>
+        <ReactMarkdown linkTarget="_blank">{fileName==="README"?fileCode:""}</ReactMarkdown>
       </MarkdownContainer>
       <EditorContainer isHidden={fileName==="README"}>
         <MonacoEditor
@@ -168,7 +174,7 @@ export function Editor({ state, ttl, onSave, onDeploy, logger } = {}) {
           }}
         />
       </EditorContainer>
-      <Console />
+      <Console setConsoleHeight={setConsoleHeight} />
     </EditorColumn>
   );
 }

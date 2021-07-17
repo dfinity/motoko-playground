@@ -12,7 +12,7 @@
       "dfinity"
     ],
     "repo": "https://github.com/dfinity/motoko-base.git",
-    "version": "e0c95f909e17c431921f1be35800242a6ddd4a55"
+    "version": "927119e172964f4038ebc7018f9cc1b688544bfa"
   },
   {
     "authors": [
@@ -156,5 +156,21 @@
     ],
     "repo": "https://github.com/chenyan2002/motoko-splay.git",
     "version": "v0.1.0"
+  },
+  {
+    "authors": [
+      "Matthew Hammer"
+    ],
+    "dependencies": [
+      "base"
+    ],
+    "description": "Persistent sequence representation and algorithms.",
+    "homepage": "http://matthewhammer.org/motoko-sequence/",
+    "name": "sequence",
+    "owners": [
+      "matthewhammer"
+    ],
+    "repo": "https://github.com/matthewhammer/motoko-sequence.git",
+    "version": "v0.1.1"
   }
 ]

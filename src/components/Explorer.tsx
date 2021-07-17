@@ -5,9 +5,11 @@ import iconCanister from "../assets/images/icon-canister.svg";
 import iconClose from "../assets/images/icon-close.svg";
 import iconPlus from "../assets/images/icon-plus.svg";
 import { ListButton } from "./shared/SelectList";
-import { WorkplaceState } from "../contexts/WorkplaceState";
+import { WorkplaceState, WorkplaceReducerAction } from "../contexts/WorkplaceState";
 import { PackageModal } from "./PackageModal";
 import { PackageInfo } from "../file";
+import { ILoggingStore } from './Logger';
+import { deleteCanister } from "../build";
 
 const StyledExplorer = styled.div`
   width: var(--explorerWidth);
@@ -35,15 +37,62 @@ const MyButton = styled.button`
 interface ExplorerProps {
   state: WorkplaceState;
   ttl: bigint;
-  loadPackage: (info: PackageInfo) => void;
-  onSelectFile: (name: string) => void;
-  onCanister: (name: string, action:string) => void;
+  logger: ILoggingStore;
+  dispatch: (action: WorkplaceReducerAction) => void;
 }
 
-export function Explorer({ state, ttl, loadPackage, onSelectFile, onCanister }: ExplorerProps) {
+export function Explorer({ state, ttl, dispatch, logger }: ExplorerProps) {
   const [timeLeft, setTimeLeft] = useState<Array<string>>([]);
   const [isExpired, setIsExpired] = useState<Array<string>>([])
   const [showPackage, setShowPackage] = useState(false);
+
+  const onSelectFile = (selectedFile: string) => {
+    dispatch({
+      type: "selectFile",
+      payload: {
+        path: selectedFile,
+      },
+    });
+  };
+  const loadPackage = (pack: PackageInfo) => {
+    dispatch({
+      type: "loadPackage",
+      payload: {
+        name: pack.name,
+        package: pack,
+      },
+    });
+  };
+  const onCanister = async (selectedCanister: string, action: string) => {
+    switch (action) {
+      case "select":
+        return dispatch({
+          type: "selectCanister",
+          payload: {
+            name: selectedCanister,
+          },
+        });
+      case "delete":
+      case "expired": {
+        if (action === "delete") {
+          const canisterInfo = state.canisters[selectedCanister];
+          logger.log(`Deleting canister ${selectedCanister} with id ${canisterInfo.id.toText()}...`);
+          await deleteCanister(canisterInfo);
+          logger.log('Canister deleted');
+        } else {
+          logger.log(`Canister ${selectedCanister} expired`);
+        }
+        return dispatch({
+          type: "deleteCanister",
+          payload: {
+            name: selectedCanister,
+          },
+        });
+      }
+      default:
+        throw new Error(`unknown action ${action}`)
+    }
+  };
 
   const calcTimeLeft = (timestamp: bigint) : number => {
     const now = BigInt(Date.now()) * BigInt(1_000_000);
@@ -75,11 +124,13 @@ export function Explorer({ state, ttl, loadPackage, onSelectFile, onCanister }: 
     }, 1000);
     // Clear timeout if the component is unmounted
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.canisters, timeLeft]);
   useEffect(() => {
     isExpired.forEach((canister) => {
       onCanister(canister, "expired");
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isExpired]);
   
   return (

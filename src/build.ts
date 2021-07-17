@@ -1,7 +1,7 @@
 import { blobFromUint8Array, BinaryBlob } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 import { pow } from './pow';
-import { getActor, getUiCanisterUrl } from "./config/actor";
+import { getActor } from "./config/actor";
 import { ILoggingStore } from './components/Logger';
 
 declare var Motoko: any;
@@ -67,17 +67,15 @@ export async function deploy(canisterName: string, canisterInfo: CanisterInfo|nu
   logger.clearLogs();
   logger.log('Compiling code...');
 
-  const tStart = Date.now();
   // NOTE: Will change to "ic" in a future moc release
   const out = Motoko.compileWasm("dfinity", file);
-  const duration = (Date.now() - tStart) / 1000;
   if (out.diagnostics) logDiags(out.diagnostics, logger);
   // setMarkers(out.diagnostics);
   if (out.code === null) {
     logger.log("syntax error");
   } else {
-    logger.log(`(compile time: ${duration}s)`);
     const wasm = out.code;
+    logger.log(`Compiled Wasm size: ${Math.floor(wasm.length/1024)}KB`);
     const module = blobFromUint8Array(wasm);
     try {
       logger.log(`Deploying code...`);
@@ -86,6 +84,7 @@ export async function deploy(canisterName: string, canisterInfo: CanisterInfo|nu
         if (mode !== "install") {
           throw new Error(`Cannot ${mode} for new canister`);
         }
+        logger.log(`Requesting a new canister id...`);
         canisterInfo = await createCanister(logger);
         updatedState = await install(
           canisterInfo,
@@ -110,7 +109,7 @@ export async function deploy(canisterName: string, canisterInfo: CanisterInfo|nu
       updatedState.name = canisterName;
       return updatedState;
     } catch (err) {
-      logger.log("IC Exception:\n" + err.stack);
+      logger.log(err.message);
       throw err;
     }
   }
@@ -121,7 +120,7 @@ async function createCanister(logger: ILoggingStore): Promise<CanisterInfo> {
   const timestamp = BigInt(Date.now()) * BigInt(1_000_000);
   const nonce = pow(timestamp);
   const info = await backend.getCanisterId(nonce);
-  logger.log(`Created canister with id: ${info.id}`);
+  logger.log(`Get canister id ${info.id}`);
   return {
     id: info.id,
     timestamp: info.timestamp,
@@ -153,7 +152,7 @@ async function install(
   const backend = await getActor();
   const new_info = await backend.installCode(canisterInfo, installArgs);
   canisterInfo = new_info;
-  logger.log(`Code installed at canister with id: ${canisterInfo.id}`);
+  logger.log(`Code installed at canister id ${canisterInfo.id}`);
   return canisterInfo;
 }
 

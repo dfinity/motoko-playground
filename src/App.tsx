@@ -5,8 +5,8 @@ import { CandidUI } from "./components/CandidUI";
 import { Editor } from "./components/Editor";
 import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
-import { saveWorkplaceToMotoko, PackageInfo, fetchPackage } from "./file";
-import { deleteCanister, CanisterInfo } from "./build";
+import { saveWorkplaceToMotoko, fetchPackage } from "./file";
+import { CanisterInfo } from "./build";
 import { useLogging } from "./components/Logger";
 import {
   workplaceReducer,
@@ -40,7 +40,7 @@ const GlobalStyles = createGlobalStyle`
   }
 `;
 
-const AppContainer = styled.div<{candidWidth: string}>`
+const AppContainer = styled.div<{candidWidth: string, consoleHeight: string}>`
   display: flex;
   height: var(--appHeight);
   overflow: hidden;
@@ -48,6 +48,7 @@ const AppContainer = styled.div<{candidWidth: string}>`
   width: 100vw;
   border-top: 1px solid var(--grey400);
   --candidWidth: ${props=>props.candidWidth ?? 0};
+  --consoleHeight: ${props=>props.consoleHeight ?? 0};
 `;
 
 export function App() {
@@ -61,6 +62,7 @@ export function App() {
   const [isFirstVisit, setIsFirstVisit] = useState(true);
   const [showCandidUI, setShowCandidUI] = useState(false);
   const [candidWidth, setCandidWidth] = useState("0");
+  const [consoleHeight, setConsoleHeight] = useState("3rem");
   const [TTL, setTTL] = useState(BigInt(0));
   const [forceUpdate, setForceUpdate] = useReducer(x => (x+1)%10, 0);
   
@@ -73,66 +75,6 @@ export function App() {
       setTimeout(() => setIsFirstVisit(false), 750);
     }
   }
-
-  const selectFile = (selectedFile: string) => {
-    workplaceDispatch({
-      type: "selectFile",
-      payload: {
-        path: selectedFile,
-      },
-    });
-  };
-  const loadPackage = (pack: PackageInfo) => {
-    workplaceDispatch({
-      type: "loadPackage",
-      payload: {
-        name: pack.name,
-        package: pack,
-      },
-    });
-  };
-  const onCanister = async (selectedCanister: string, action: string) => {
-    switch (action) {
-      case "select":
-        return workplaceDispatch({
-          type: "selectCanister",
-          payload: {
-            name: selectedCanister,
-          },
-        });
-      case "delete":
-      case "expired": {
-        if (action === "delete") {
-          const canisterInfo = workplaceState.canisters[selectedCanister];
-          logger.log(`Deleting canister ${selectedCanister} with id: ${canisterInfo.id.toText()}...`);
-          await deleteCanister(canisterInfo);
-          logger.log('Canister deleted');
-        }
-        return workplaceDispatch({
-          type: "deleteCanister",
-          payload: {
-            name: selectedCanister,
-          },
-        });
-      }
-      default:
-        throw new Error(`unknown action ${action}`)
-    }
-  };
-
-  const saveWorkplace = (newCode: string) => {
-    if (!workplaceState.selectedFile) {
-      console.warn("Called saveWorkplace with no selectedFile");
-      return;
-    }
-    workplaceDispatch({
-      type: "saveFile",
-      payload: {
-        path: workplaceState.selectedFile,
-        contents: newCode,
-      },
-    });
-  };
 
   const deployWorkplace = (info: CanisterInfo) => {
     setForceUpdate();
@@ -195,6 +137,7 @@ export function App() {
       return;
     }
     saveWorkplaceToMotoko(workplaceState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workplaceState.canisters, motokoIsLoaded]);
 
   useEffect(()=>{
@@ -215,20 +158,20 @@ export function App() {
           close={closeProjectModal}
           isFirstOpen={isFirstVisit}
         />
-        <AppContainer candidWidth={candidWidth}>
+        <AppContainer candidWidth={candidWidth} consoleHeight={consoleHeight}>
           <Explorer
             state={workplaceState}
             ttl={TTL}
-            loadPackage={loadPackage}
-            onSelectFile={selectFile}
-            onCanister={onCanister}
+            dispatch={workplaceDispatch}
+            logger={logger}
           />
           <Editor
             state={workplaceState}
             ttl={TTL}
-            onSave={saveWorkplace}
+            dispatch={workplaceDispatch}
             onDeploy={deployWorkplace}
             logger={logger}
+            setConsoleHeight={setConsoleHeight}
           />
           {showCandidUI ?
           <CandidUI
