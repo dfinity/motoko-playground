@@ -15,13 +15,10 @@ The Motoko playground consists of
   + A code import module that allows to import any Motoko code from Github.
 * its backend, a canister on the IC that controlls all canisters deployed by the users.
   + Each deployed canister has an initial cycle of 0.5T and is available for 10 minutes.
-  + The deployed canister is not allowed to transfer cycles. The cycle transfer instructions will be removed by the backend at the Wasm level.
+  + To avoid wasting cycles, the deployed canister is not allowed to transfer cycles. The cycle transfer instructions will be removed by the backend at the Wasm level.
   + To ensure resource fairness, we require a proof of work when the user requests for a canister id.
-  + [TODO] Deploy user owned canisters when users provide their own wallets
-  + [TODO] Code sharing and storage
 
-We plan on adding many more features to make playground a full-featured web IDE for the Internet Computer.
-Community contributions are highly welcomed!
+We plan on adding many more features to make playground a full-featured web IDE for the Internet Computer. See our [issues](https://github.com/dfinity/motoko-playground/issues) for more details. Community contributions are highly welcomed!
 
 ## Running Locally
 
