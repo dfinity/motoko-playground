@@ -17,8 +17,11 @@ The Motoko playground consists of
   + Each deployed canister has an initial cycle of 0.5T and is available for 10 minutes.
   + The deployed canister is not allowed to transfer cycles. The cycle transfer instruction will be removed by the backend at the Wasm level.
   + To ensure resource fairness, we require a proof of work when the user requests for a canister id.
-  + (TODO) Deploy user owned canisters when users provide their own wallets
-  + (TODO) Code sharing and storage
+  + [TODO] Deploy user owned canisters when users provide their own wallets
+  + [TODO] Code sharing and storage
+
+We plan on adding many more features to make playground a full featured web IDE for the Internet Computer.
+Community contributions are highly welcomed!
 
 ## Running Locally
 
