@@ -1,8 +1,12 @@
 import { blobFromUint8Array, BinaryBlob } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
-import { pow } from './pow';
 import { getActor } from "./config/actor";
 import { ILoggingStore } from './components/Logger';
+// @ts-ignore
+// eslint-disable-next-line import/no-webpack-loader-syntax
+import MocWorker from "comlink-loader!./workers/moc";
+
+const worker = new MocWorker();
 
 declare var Motoko: any;
 
@@ -118,7 +122,9 @@ export async function deploy(canisterName: string, canisterInfo: CanisterInfo|nu
 async function createCanister(logger: ILoggingStore): Promise<CanisterInfo> {
   const backend = await getActor();
   const timestamp = BigInt(Date.now()) * BigInt(1_000_000);
-  const nonce = pow(timestamp);
+  console.log(timestamp);
+  const nonce = await worker.generateNonce(timestamp);
+  console.log(nonce);
   const info = await backend.getCanisterId(nonce);
   logger.log(`Get canister id ${info.id}`);
   return {

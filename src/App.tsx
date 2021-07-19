@@ -56,9 +56,6 @@ const AppContainer = styled.div<{candidWidth: string, consoleHeight: string}>`
 `;
 
 const worker = new MocWorker();
-(async () => {
-  console.log(await worker.test());
-})();
 
 export function App() {
   const [workplaceState, workplaceDispatch] = useReducer(
