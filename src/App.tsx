@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 
+// @ts-ignore
+// eslint-disable-next-line import/no-webpack-loader-syntax
+import MocWorker from "comlink-loader!./workers/moc";
+
 import { CandidUI } from "./components/CandidUI";
 import { Editor } from "./components/Editor";
 import { Explorer } from "./components/Explorer";
@@ -50,6 +54,11 @@ const AppContainer = styled.div<{candidWidth: string, consoleHeight: string}>`
   --candidWidth: ${props=>props.candidWidth ?? 0};
   --consoleHeight: ${props=>props.consoleHeight ?? 0};
 `;
+
+const worker = new MocWorker();
+(async () => {
+  console.log(await worker.test());
+})();
 
 export function App() {
   const [workplaceState, workplaceDispatch] = useReducer(
