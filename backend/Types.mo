@@ -21,12 +21,32 @@ module {
     public type InstallArgs = {
         arg : Blob;
         wasm_module : Blob;
+        motoko_project: ?MotokoProject;
         mode : { #reinstall; #upgrade; #install };
-        canister_id : Principal;        
+        canister_id : Principal;
+    };
+    public type MotokoProject = {
+      name : Text;
+      files : [File];
+    };
+    public type File = {
+      #text : TextFile;
+      #directory : Directory;
+    };
+    public type TextFile = {
+      name : Text;
+      content : Text;
+    };
+    public type Directory = {
+      name : Text;
+      files : [File];
     };
     public type CanisterInfo = {
         id: Principal;
         timestamp: Int;
+        /// When motoko_project in InstallArgs is non-null, this id is non-null.
+        /// The non-null id recovers the Motoko project with a query call.
+        motoko_project_id: ?Nat;
     };
     func canisterInfoCompare(x: CanisterInfo, y: CanisterInfo): {#less;#equal;#greater} {
         if (x.timestamp < y.timestamp) { #less }
