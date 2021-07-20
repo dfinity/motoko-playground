@@ -13,16 +13,6 @@ export interface CanisterInfo {
   candid?: string | null,
 }
 
-export interface File {
-  name: Text,
-  file: File,
-}
-
-export interface MotokoProject {
-  name: Text,
-  file: File,
-}
-
 export function interpret(file: string, logger: ILoggingStore): void {
   logger.clearLogs();
   logger.log('Running code...');
@@ -79,7 +69,6 @@ export async function deploy(canisterName: string, canisterInfo: CanisterInfo|nu
 
   // NOTE: Will change to "ic" in a future moc release
   const out = Motoko.compileWasm("dfinity", file);
-  const proj = Motoko.packageProject(file);
   if (out.diagnostics) logDiags(out.diagnostics, logger);
   // setMarkers(out.diagnostics);
   if (out.code === null) {
@@ -146,7 +135,6 @@ export async function deleteCanister(info: CanisterInfo) {
 async function install(
   canisterInfo: CanisterInfo,
   module: BinaryBlob,
-  proj: MotokoProject,
   args: BinaryBlob,
   mode: string,
   logger: ILoggingStore): Promise<CanisterInfo>
