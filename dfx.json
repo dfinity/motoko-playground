@@ -13,6 +13,10 @@
       "main": "backend/Main.mo",
       "type": "motoko"
     },
+    "saved": {
+      "main": "backend/Saved.mo",
+      "type": "motoko"
+    },
     "react_app": {
       "dependencies": ["backend"],
       "frontend": {

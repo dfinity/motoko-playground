@@ -50,9 +50,6 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
         let amount = Cycles.available();
         ignore Cycles.accept(amount);
     };
-    public func getMotokoProject(id : Nat) : async Types.MotokoProject {
-      throw Error.reject("to do");
-    };
     public shared({caller}) func getCanisterId(nonce: PoW.Nonce) : async Types.CanisterInfo {
         let now = Time.now();
         if (caller != controller and not nonceCache.checkProofOfWork(nonce)) {
@@ -69,7 +66,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
         case (#newId) {
                  Cycles.add(params.cycles_per_canister);
                  let cid = await IC.create_canister({ settings = null });
-                 let info = { id = cid.canister_id; timestamp = now; motoko_project_id = null };
+                 let info = { id = cid.canister_id; timestamp = now };
                  pool.add(info);
                  nonceCache.add(nonce);
                  stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
