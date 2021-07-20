@@ -69,7 +69,8 @@ module {
                          let elapsed : Nat = Int.abs(now) - Int.abs(info.timestamp);
                          if (elapsed >= TTL) {
                              tree.remove(info);
-                             let new_info = { timestamp = now; id = info.id };
+                             let new_info = { timestamp = now; id = info.id ;
+                                              motoko_project_id = null };
                              tree.insert(new_info);
                              #reuse(new_info)
                          } else {
@@ -89,14 +90,16 @@ module {
         public func refresh(info: CanisterInfo) : ?CanisterInfo {
             if (not tree.find(info)) { return null };
             tree.remove(info);
-            let new_info = { timestamp = Time.now(); id = info.id };
+            let new_info = { timestamp = Time.now(); id = info.id ;
+                             motoko_project_id = null };
             tree.insert(new_info);
             ?new_info
         };
         public func retire(info: CanisterInfo) : Bool {
             if (not tree.find(info)) { return false; };
             tree.remove(info);
-            tree.insert({ timestamp = 0; id = info.id });
+            tree.insert({ timestamp = 0; id = info.id ;
+                          motoko_project_id = null });
             return true;
         };
         public func gcList() : Buffer.Buffer<Principal> {

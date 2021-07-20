@@ -69,7 +69,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
         case (#newId) {
                  Cycles.add(params.cycles_per_canister);
                  let cid = await IC.create_canister({ settings = null });
-                 let info = { id = cid.canister_id; timestamp = now };
+                 let info = { id = cid.canister_id; timestamp = now; motoko_project_id = null };
                  pool.add(info);
                  nonceCache.add(nonce);
                  stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
