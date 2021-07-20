@@ -16,8 +16,6 @@ import { saveWorkplaceToMotoko } from "../file";
 import { compileCandid } from "../build";
 import { didToJs } from "../config/actor";
 
-declare var Motoko: any;
-
 const EditorColumn = styled.div`
   display: flex;
   flex-direction: column;
@@ -80,9 +78,9 @@ export function Editor({ state, worker, ttl, dispatch, onDeploy, logger, setCons
   // TODO
   const mainFile = fileName.endsWith('.mo')?fileName:(state.files["Main.mo"]?"Main.mo":"");
   const monaco = useMonaco();
-  const checkFileAddMarkers = () => {
-    if (!fileName.endsWith('mo') || typeof Motoko === "undefined") return;
-    const check = Motoko.check(fileName);
+  const checkFileAddMarkers = async () => {
+    if (!fileName.endsWith('mo')) return;
+    const check = await worker.Moc({ type: "check", file: fileName });
     const diags = check.diagnostics;
     setMarkers(
       diags,
@@ -92,7 +90,7 @@ export function Editor({ state, worker, ttl, dispatch, onDeploy, logger, setCons
       fileName
     );
   }
-  const saveChanges = (newValue) => {
+  const saveChanges = async (newValue) => {
     dispatch({
       type: "saveFile",
       payload: {
@@ -100,10 +98,9 @@ export function Editor({ state, worker, ttl, dispatch, onDeploy, logger, setCons
         contents: newValue,
       }
     });
-    if (!fileName.endsWith('mo') || typeof Motoko === "undefined") return;
-    // This has to happen sync so the check Motoko has updated file when checking.
-    Motoko.saveFile(fileName, newValue);
-    checkFileAddMarkers();
+    if (!fileName.endsWith('mo')) return;
+    await worker.Moc({ type: "save", file: fileName, content: newValue });
+    await checkFileAddMarkers();
   };
 
   const debouncedSaveChanges = debounce(saveChanges, 1000, { leading: false });
@@ -114,7 +111,6 @@ export function Editor({ state, worker, ttl, dispatch, onDeploy, logger, setCons
   const deployClick = async () => {
     const aliases = Object.entries(state.canisters).map(([name, info]) => [name, (info as any).id.toText()]);
     await worker.saveWorkplaceToMotoko({files:state.files, aliases});
-    saveWorkplaceToMotoko(state);
     if (!mainFile) {
       logger.log('Select a main entry file to deploy');
     }
