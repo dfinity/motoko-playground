@@ -27,19 +27,15 @@ module {
     };
     public type MotokoProject = {
       name : Text;
-      files : [File];
+      files : [NamedFile];
+    };
+    public type NamedFile = {
+      name : Text;
+      file : File;
     };
     public type File = {
-      #text : TextFile;
-      #directory : Directory;
-    };
-    public type TextFile = {
-      name : Text;
-      content : Text;
-    };
-    public type Directory = {
-      name : Text;
-      files : [File];
+      #text : Text;
+      #directory : [NamedFile];
     };
     public type CanisterInfo = {
         id: Principal;
