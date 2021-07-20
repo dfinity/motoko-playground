@@ -46,6 +46,7 @@ const MyButton = styled(Button)`
 `;
 
 interface DeployModalProps {
+  worker: any;
   isOpen: boolean;
   close: () => void;
   onDeploy: (string) => void;
@@ -60,6 +61,7 @@ interface DeployModalProps {
 const MAX_CANISTERS = 3;
 
 export function DeployModal({
+  worker,
   isOpen,
   close,
   onDeploy,
@@ -110,7 +112,7 @@ export function DeployModal({
       return;
     }
     await close();
-    const info = await deploy(canisterName, canisters[canisterName], args, mode, fileName, logger);
+    const info = await deploy(worker, canisterName, canisters[canisterName], args, mode, fileName, logger);
     if (info) {
       info.candid = candid;
       Motoko.saveFile(`idl/${info.id}.did`, candid);

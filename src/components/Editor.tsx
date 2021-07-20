@@ -70,7 +70,7 @@ function setMarkers(diags, codeModel, monaco, fileName) {
   monaco.editor.setModelMarkers(codeModel, "moc", markers);
 }
 
-export function Editor({ state, ttl, dispatch, onDeploy, logger, setConsoleHeight }) {
+export function Editor({ state, worker, ttl, dispatch, onDeploy, logger, setConsoleHeight }) {
   const [showModal, setShowModal] = useState(false);
   const [candidCode, setCandidCode] = useState("");
   const [initTypes, setInitTypes] = useState([]);
@@ -112,7 +112,8 @@ export function Editor({ state, ttl, dispatch, onDeploy, logger, setConsoleHeigh
     debouncedSaveChanges(newValue);
   };
   const deployClick = async () => {
-    // TODO don't pass readme non-mo files to motoko
+    const aliases = Object.entries(state.canisters).map(([name, info]) => [name, (info as any).id.toText()]);
+    await worker.saveWorkplaceToMotoko({files:state.files, aliases});
     saveWorkplaceToMotoko(state);
     if (!mainFile) {
       logger.log('Select a main entry file to deploy');
@@ -136,6 +137,7 @@ export function Editor({ state, ttl, dispatch, onDeploy, logger, setConsoleHeigh
   return (
     <EditorColumn>
       <DeployModal
+        worker={worker}
         isOpen={showModal}
         close={async () => await setShowModal(false)}
         onDeploy={onDeploy}

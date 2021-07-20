@@ -2,11 +2,6 @@ import { blobFromUint8Array, BinaryBlob } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 import { getActor } from "./config/actor";
 import { ILoggingStore } from './components/Logger';
-// @ts-ignore
-// eslint-disable-next-line import/no-webpack-loader-syntax
-import MocWorker from "comlink-loader!./workers/moc";
-
-const worker = new MocWorker();
 
 declare var Motoko: any;
 
@@ -67,12 +62,12 @@ export function compileCandid(file: string, logger: ILoggingStore): string|undef
   return candid_source;
 }
 
-export async function deploy(canisterName: string, canisterInfo: CanisterInfo|null, args: BinaryBlob, mode: string, file: string, logger: ILoggingStore): Promise<CanisterInfo | undefined> {
+export async function deploy(worker, canisterName: string, canisterInfo: CanisterInfo|null, args: BinaryBlob, mode: string, file: string, logger: ILoggingStore): Promise<CanisterInfo | undefined> {
   logger.clearLogs();
   logger.log('Compiling code...');
 
   // NOTE: Will change to "ic" in a future moc release
-  const out = Motoko.compileWasm("dfinity", file);
+  const out = await worker.Moc({ type:"compile", file });  //Motoko.compileWasm("dfinity", file);
   if (out.diagnostics) logDiags(out.diagnostics, logger);
   // setMarkers(out.diagnostics);
   if (out.code === null) {
@@ -89,7 +84,7 @@ export async function deploy(canisterName: string, canisterInfo: CanisterInfo|nu
           throw new Error(`Cannot ${mode} for new canister`);
         }
         logger.log(`Requesting a new canister id...`);
-        canisterInfo = await createCanister(logger);
+        canisterInfo = await createCanister(worker, logger);
         updatedState = await install(
           canisterInfo,
           module,
@@ -119,7 +114,7 @@ export async function deploy(canisterName: string, canisterInfo: CanisterInfo|nu
   }
 }
 
-async function createCanister(logger: ILoggingStore): Promise<CanisterInfo> {
+async function createCanister(worker, logger: ILoggingStore): Promise<CanisterInfo> {
   const backend = await getActor();
   const timestamp = BigInt(Date.now()) * BigInt(1_000_000);
   console.log(timestamp);

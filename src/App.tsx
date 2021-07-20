@@ -173,6 +173,7 @@ export function App() {
           />
           <Editor
             state={workplaceState}
+            worker={worker}
             ttl={TTL}
             dispatch={workplaceDispatch}
             onDeploy={deployWorkplace}
