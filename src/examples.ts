@@ -1,4 +1,4 @@
-import { RepoInfo, fetchGithub } from "./file";
+import { RepoInfo } from "./workers/file";
 
 export interface ExampleProject {
   repo: RepoInfo;
@@ -50,8 +50,8 @@ export const exampleProjects: Record<string, ExampleProject> = {
   },
 };
 
-export async function fetchExample(proj: ExampleProject) : Promise<Record<string, string>|undefined> {
-  let files = await fetchGithub(proj.repo);
+export async function fetchExample(worker, proj: ExampleProject) : Promise<Record<string, string>|undefined> {
+  let files = await worker.fetchGithub(proj.repo);
   if (files && proj.readme) {
     const content = await (await fetch(proj.readme)).text();
     files = { "README":content, ...files };

@@ -46,6 +46,7 @@ const CancelButton = styled(Button)`
 `;
 
 interface ProjectModalProps {
+  worker: any;
   isOpen: boolean;
   importCode: (files: Record<string, string>) => void;
   close: () => void;
@@ -53,6 +54,7 @@ interface ProjectModalProps {
 }
 
 export function ProjectModal({
+  worker,
   isOpen,
   close,
   importCode,
@@ -60,7 +62,7 @@ export function ProjectModal({
 }: ProjectModalProps) {
   const [importOpen, setImportOpen] = useState(false);
   async function handleSelectProjectAndClose(project: ExampleProject) {
-    const files = await fetchExample(project);
+    const files = await fetchExample(worker, project);
     if (files) {
       importCode(files);
       close();
@@ -108,7 +110,7 @@ export function ProjectModal({
           ))}
           <ProjectButton onClick={() => setImportOpen(true)}>Import from Github...</ProjectButton>
         </SelectList>):
-        (<ImportGitHub importCode={importCode} close={close} back={() => setImportOpen(false)}></ImportGitHub>)}
+        (<ImportGitHub worker={worker} importCode={importCode} close={close} back={() => setImportOpen(false)}></ImportGitHub>)}
         {!isFirstOpen && <CancelButton onClick={close}>Cancel</CancelButton>}
       </ModalContainer>
     </Modal>

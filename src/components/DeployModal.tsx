@@ -8,8 +8,6 @@ import { ILoggingStore } from './Logger';
 import { Button } from "./shared/Button";
 import "../assets/styles/candid.css";
 
-declare var Motoko: any;
-
 const ModalContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -115,7 +113,7 @@ export function DeployModal({
     const info = await deploy(worker, canisterName, canisters[canisterName], args, mode, fileName, logger);
     if (info) {
       info.candid = candid;
-      Motoko.saveFile(`idl/${info.id}.did`, candid);
+      await worker.Moc({ type:"save", file: `idl/${info.id}.did`, content: candid });
       onDeploy(info);
     }
   };

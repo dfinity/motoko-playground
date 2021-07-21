@@ -12,7 +12,7 @@ import { configureMonaco } from "../config/monacoConfig";
 import { Console } from "./Console";
 import iconRabbit from "../assets/images/icon-rabbit.png";
 import { DeployModal } from "./DeployModal";
-import { saveWorkplaceToMotoko } from "../file";
+import { getActorAliases } from "../contexts/WorkplaceState";
 import { compileCandid } from "../build";
 import { didToJs } from "../config/actor";
 
@@ -109,12 +109,13 @@ export function Editor({ state, worker, ttl, dispatch, onDeploy, logger, setCons
     debouncedSaveChanges(newValue);
   };
   const deployClick = async () => {
-    const aliases = Object.entries(state.canisters).map(([name, info]) => [name, (info as any).id.toText()]);
-    await worker.saveWorkplaceToMotoko({files:state.files, aliases});
+    const aliases = getActorAliases(state.canisters);
+    await worker.saveWorkplaceToMotoko(state.files);
+    await worker.Moc({ type:"setActorAliases", list: aliases });
     if (!mainFile) {
       logger.log('Select a main entry file to deploy');
     }
-    const candid = compileCandid(mainFile, logger);
+    const candid = await compileCandid(worker, mainFile, logger);
     if (candid) {
       const candidJS = await didToJs(candid);
       const init = candidJS.init({ IDL });

@@ -1,6 +1,8 @@
-import { pow } from "./pow";
 // @ts-ignore
 importScripts("https://download.dfinity.systems/motoko/0.6.2/js/moc-0.6.2.js");
+
+export * from "./pow";
+export * from "./file";
 
 declare var Motoko: any;
 
@@ -8,6 +10,9 @@ export type MocAction =
   | { type: "save", file: string, content: string }
   | { type: "check", file: string }
   | { type: "compile", file: string }
+  | { type: "candid", file: string }
+  | { type: "addPackage", name: string, path: string }
+  | { type: "setActorAliases", list: Array<[string, string]> }
 
 // Export as you would in a normal module:
 export function Moc(action: MocAction) {
@@ -19,17 +24,19 @@ export function Moc(action: MocAction) {
       return Motoko.check(action.file);
     case "compile":
       return Motoko.compileWasm("dfinity", action.file);
+    case "candid":
+      return Motoko.candid(action.file);
+    case "addPackage":
+      return Motoko.addPackage(action.name, action.path);
+    case "setActorAliases":
+      return Motoko.setActorAliases(action.list);
   }
 }
 
-export function saveWorkplaceToMotoko({files, aliases}) {
-  for (const [name, code] of Object.entries(files)) {
-    if (!name.endsWith('mo')) continue;
-    Motoko.saveFile(name, code);
+export function isReadyCallBack(callback) {
+  if (typeof Motoko === 'undefined') {
+    callback(false);
+  } else {
+    callback(true);
   }
-  Motoko.setActorAliases(aliases);
-}
-
-export function generateNonce(timestamp: bigint) {
-  return pow(timestamp);
 }

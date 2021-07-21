@@ -3,15 +3,13 @@ import { Principal } from "@dfinity/principal";
 import { getActor } from "./config/actor";
 import { ILoggingStore } from './components/Logger';
 
-declare var Motoko: any;
-
 export interface CanisterInfo {
   id: Principal,
   timestamp: bigint,
   name?: string,
   candid?: string | null,
 }
-
+/*
 export function interpret(file: string, logger: ILoggingStore): void {
   logger.clearLogs();
   logger.log('Running code...');
@@ -26,7 +24,7 @@ export function interpret(file: string, logger: ILoggingStore): void {
     logger.log("Exception:\n" + err);
     throw err;
   }
-}
+}*/
 
 interface Diagnostics {
   message: String,
@@ -47,8 +45,8 @@ function logDiags(diagnostics: Diagnostics[], logger: ILoggingStore) {
   })
 }
 
-export function compileCandid(file: string, logger: ILoggingStore): string|undefined {
-  const candid_result = Motoko.candid(file);
+export async function compileCandid(worker, file: string, logger: ILoggingStore): Promise<string|undefined> {
+  const candid_result = await worker.Moc({ type:"candid", file });
   if (candid_result.diagnostics) logDiags(candid_result.diagnostics, logger);
   // setMarkers(candid_result.diagnostics);
   const candid_source = candid_result.code;
@@ -67,7 +65,7 @@ export async function deploy(worker, canisterName: string, canisterInfo: Caniste
   logger.log('Compiling code...');
 
   // NOTE: Will change to "ic" in a future moc release
-  const out = await worker.Moc({ type:"compile", file });  //Motoko.compileWasm("dfinity", file);
+  const out = await worker.Moc({ type:"compile", file });
   if (out.diagnostics) logDiags(out.diagnostics, logger);
   // setMarkers(out.diagnostics);
   if (out.code === null) {
@@ -118,7 +116,7 @@ async function createCanister(worker, logger: ILoggingStore): Promise<CanisterIn
   const backend = await getActor();
   const timestamp = BigInt(Date.now()) * BigInt(1_000_000);
   console.log(timestamp);
-  const nonce = await worker.generateNonce(timestamp);
+  const nonce = await worker.pow(timestamp);
   console.log(nonce);
   const info = await backend.getCanisterId(nonce);
   logger.log(`Get canister id ${info.id}`);

@@ -9,12 +9,12 @@ import { CandidUI } from "./components/CandidUI";
 import { Editor } from "./components/Editor";
 import { Explorer } from "./components/Explorer";
 import { Header } from "./components/Header";
-import { saveWorkplaceToMotoko, fetchPackage } from "./file";
 import { CanisterInfo } from "./build";
 import { useLogging } from "./components/Logger";
 import {
   workplaceReducer,
   WorkplaceDispatchContext,
+  getActorAliases,
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
 import { getActor } from "./config/actor";
@@ -44,6 +44,9 @@ const GlobalStyles = createGlobalStyle`
   }
 `;
 
+const worker = new MocWorker();
+
+
 const AppContainer = styled.div<{candidWidth: string, consoleHeight: string}>`
   display: flex;
   height: var(--appHeight);
@@ -55,15 +58,13 @@ const AppContainer = styled.div<{candidWidth: string, consoleHeight: string}>`
   --consoleHeight: ${props=>props.consoleHeight ?? 0};
 `;
 
-const worker = new MocWorker();
-
 export function App() {
   const [workplaceState, workplaceDispatch] = useReducer(
     workplaceReducer.reduce,
     {},
     workplaceReducer.init
     );
-  const [motokoIsLoaded, setMotokoIsLoaded] = useState(false);
+  const [motokoIsLoaded, setMotokoIsLoaded] = useState(true);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(true);
   const [isFirstVisit, setIsFirstVisit] = useState(true);
   const [showCandidUI, setShowCandidUI] = useState(false);
@@ -73,6 +74,7 @@ export function App() {
   const [forceUpdate, setForceUpdate] = useReducer(x => (x+1)%10, 0);
   
   const logger = useLogging();
+  //worker.isReadyCallBack(setMotokoIsLoaded);
 
   function closeProjectModal() {
     setIsProjectModalOpen(false);
@@ -104,7 +106,7 @@ export function App() {
   );
 
   // Add the Motoko package to allow for compilation / checking
-  useEffect(() => {
+  /*useEffect(() => {
     const script = document.createElement("script");
     script.addEventListener("load", async () => {
       await setMotokoIsLoaded(true);
@@ -115,7 +117,7 @@ export function App() {
         version: "dfx-0.7.0",
         homepage: "https://sdk.dfinity.org/docs/base-libraries/stdlib-intro.html",
       };
-      await fetchPackage(baseInfo);
+      await worker.fetchPackage(baseInfo);
       await workplaceDispatch({
         type: "loadPackage",
         payload: {
@@ -129,7 +131,28 @@ export function App() {
       "https://download.dfinity.systems/motoko/0.6.2/js/moc-0.6.2.js";
     document.body.appendChild(script);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    }, []);*/
+  useEffect(() => {
+    if (!motokoIsLoaded) return;
+    const baseInfo = {
+      name: "base",
+      repo: "https://github.com/dfinity/motoko-base.git",
+      dir: "src",
+      version: "dfx-0.7.0",
+      homepage: "https://sdk.dfinity.org/docs/base-libraries/stdlib-intro.html",
+    };
+    (async () => {
+      await worker.fetchPackage(baseInfo);
+      await workplaceDispatch({
+        type: "loadPackage",
+        payload: {
+          name: "base",
+          package: baseInfo,
+        },
+      });
+      logger.log("Compiler loaded.");
+    })();
+  }, [motokoIsLoaded]);
   useEffect(() => {
     (async () => {
       const backend = await getActor();
@@ -142,7 +165,7 @@ export function App() {
       // saving won't work until the Motoko global is loaded
       return;
     }
-    saveWorkplaceToMotoko(workplaceState);
+    worker.Moc({ type:"setActorAliases", list: getActorAliases(workplaceState.canisters) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workplaceState.canisters, motokoIsLoaded]);
 
@@ -159,6 +182,7 @@ export function App() {
       <Header openTutorial={() => setIsProjectModalOpen(true)} />
       <WorkplaceDispatchContext.Provider value={workplaceDispatch}>
         <ProjectModal
+          worker={worker}
           isOpen={isProjectModalOpen}
           importCode={importCode}
           close={closeProjectModal}
@@ -166,6 +190,7 @@ export function App() {
         />
         <AppContainer candidWidth={candidWidth} consoleHeight={consoleHeight}>
           <Explorer
+            worker={worker}
             state={workplaceState}
             ttl={TTL}
             dispatch={workplaceDispatch}
