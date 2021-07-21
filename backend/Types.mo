@@ -24,14 +24,14 @@ module {
         mode : { #reinstall; #upgrade; #install };
         canister_id : Principal;
     };
-    public type PackageInfo {
-      name: Text,
-      repo: Text,
-      version: Text,
-      dir: ?Text,
-      dependencies: ?[Text],
-      description: ?Text,
-      homepage: ?Text,
+    public type PackageInfo = {
+      name: Text;
+      repo: Text;
+      version: Text;
+      dir: ?Text;
+      dependencies: ?[Text];
+      description: ?Text;
+      homepage: ?Text;
     };
     public type MotokoProject = {
       files : [NamedFile];
