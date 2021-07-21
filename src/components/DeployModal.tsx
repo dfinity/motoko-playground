@@ -48,6 +48,7 @@ interface DeployModalProps {
   isOpen: boolean;
   close: () => void;
   onDeploy: (string) => void;
+  isDeploy: (tag: boolean) => void;
   canisters: Record<string, CanisterInfo>;
   ttl: bigint;
   fileName: string;
@@ -63,6 +64,7 @@ export function DeployModal({
   isOpen,
   close,
   onDeploy,
+  isDeploy,
   canisters,
   ttl,
   fileName,
@@ -110,11 +112,18 @@ export function DeployModal({
       return;
     }
     await close();
-    const info = await deploy(worker, canisterName, canisters[canisterName], args, mode, fileName, logger);
-    if (info) {
-      info.candid = candid;
-      await worker.Moc({ type:"save", file: `idl/${info.id}.did`, content: candid });
-      onDeploy(info);
+    try {
+      await isDeploy(true);
+      const info = await deploy(worker, canisterName, canisters[canisterName], args, mode, fileName, logger);
+      await isDeploy(false);
+      if (info) {
+        info.candid = candid;
+        await worker.Moc({ type:"save", file: `idl/${info.id}.did`, content: candid });
+        onDeploy(info);
+      }
+    } catch (err) {
+      isDeploy(false);
+      throw err;
     }
   };
 

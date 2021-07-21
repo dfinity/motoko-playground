@@ -11,6 +11,7 @@ import { RightContainer } from "./shared/RightContainer";
 import { configureMonaco } from "../config/monacoConfig";
 import { Console } from "./Console";
 import iconRabbit from "../assets/images/icon-rabbit.png";
+import iconSpin from "../assets/images/icon-spin.gif";
 import { DeployModal } from "./DeployModal";
 import { getActorAliases } from "../contexts/WorkplaceState";
 import { compileCandid } from "../build";
@@ -70,6 +71,7 @@ function setMarkers(diags, codeModel, monaco, fileName) {
 
 export function Editor({ state, worker, ttl, dispatch, onDeploy, logger, setConsoleHeight }) {
   const [showModal, setShowModal] = useState(false);
+  const [isDeploying, setIsDeploying] = useState(false);
   const [candidCode, setCandidCode] = useState("");
   const [initTypes, setInitTypes] = useState([]);
 
@@ -136,8 +138,9 @@ export function Editor({ state, worker, ttl, dispatch, onDeploy, logger, setCons
       <DeployModal
         worker={worker}
         isOpen={showModal}
-        close={async () => await setShowModal(false)}
+        close={() => setShowModal(false)}
         onDeploy={onDeploy}
+        isDeploy={setIsDeploying}
         canisters={state.canisters}
         ttl={ttl}
         fileName={mainFile}
@@ -148,9 +151,9 @@ export function Editor({ state, worker, ttl, dispatch, onDeploy, logger, setCons
       <PanelHeader>
         Editor
         <RightContainer>
-        <Button onClick={deployClick} kind="primary" small>
-            <img src={iconRabbit} alt="Rabbit icon" />
-            <p>Deploy</p>
+          <Button onClick={deployClick} disabled={isDeploying} kind="primary" small>
+            <img src={isDeploying?iconSpin:iconRabbit} alt="Rabbit icon" />
+            <p>{isDeploying?"Deploying...":"Deploy"}</p>
           </Button>
         </RightContainer>
       </PanelHeader>

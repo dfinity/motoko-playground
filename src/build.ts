@@ -115,9 +115,7 @@ export async function deploy(worker, canisterName: string, canisterInfo: Caniste
 async function createCanister(worker, logger: ILoggingStore): Promise<CanisterInfo> {
   const backend = await getActor();
   const timestamp = BigInt(Date.now()) * BigInt(1_000_000);
-  console.log(timestamp);
   const nonce = await worker.pow(timestamp);
-  console.log(nonce);
   const info = await backend.getCanisterId(nonce);
   logger.log(`Get canister id ${info.id}`);
   return {
