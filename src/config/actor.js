@@ -1,6 +1,7 @@
 import { Actor, HttpAgent } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, canisterId } from "dfx-generated/backend";
+import { savedIdlFactory, savedCanisterId } from "dfx-generated/Saved";
 
 import didjs_idl from "../didjs.did";
 import dfxConfig from "../../dfx.json";
@@ -11,6 +12,7 @@ function is_local(agent) {
 }
 
 let _actor = null;
+let _savedActor = null;
 export const agent = new HttpAgent({});
 
 export async function createActor() {
@@ -25,6 +27,24 @@ export async function createActor() {
 }
 
 export const getActor = async () => {
+  if (_savedActor) return Promise.resolve(_savedActor);
+  const actor = await createSavedActor();
+  _savedActor = actor;
+  return actor;
+};
+
+export async function createSavedActor() {
+  if (is_local(agent)) {
+    await agent.fetchRootKey();
+  }
+  const actor = Actor.createActor(savedIdlFactory, {
+    agent,
+    savedCanisterId,
+  });
+  return actor;
+}
+
+export const getSavedActor = async () => {
   if (_actor) return Promise.resolve(_actor);
   const actor = await createActor();
   _actor = actor;
