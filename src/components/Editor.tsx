@@ -79,7 +79,7 @@ export function Editor({ state, worker, ttl, dispatch, onDeploy, logger, setCons
   const mainFile = fileName.endsWith('.mo')?fileName:(state.files["Main.mo"]?"Main.mo":"");
   const monaco = useMonaco();
   const checkFileAddMarkers = async () => {
-    if (!fileName.endsWith('mo')) return;
+    if (!fileName || !fileName.endsWith('mo')) return;
     const check = await worker.Moc({ type: "check", file: fileName });
     const diags = check.diagnostics;
     setMarkers(
