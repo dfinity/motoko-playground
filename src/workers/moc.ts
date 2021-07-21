@@ -34,11 +34,3 @@ export function Moc(action: MocAction) {
 }
 
 Motoko.saveFile("Main.mo", "");
-
-export function isReadyCallBack(callback) {
-  if (typeof Motoko === 'undefined') {
-    callback(false);
-  } else {
-    callback(true);
-  }
-}
