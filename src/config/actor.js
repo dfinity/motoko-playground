@@ -1,7 +1,7 @@
 import { Actor, HttpAgent } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, canisterId } from "dfx-generated/backend";
-import { savedIdlFactory, savedCanisterId } from "dfx-generated/Saved";
+import { idlFactory as savedIdlFactory, canisterId as savedCanisterId } from "dfx-generated/saved";
 
 import didjs_idl from "../didjs.did";
 import dfxConfig from "../../dfx.json";
