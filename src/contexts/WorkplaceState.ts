@@ -1,6 +1,7 @@
 import * as React from "react";
 import { CanisterInfo } from "../build";
 import { PackageInfo } from "../file";
+import { getSavedActor } from "./config/actor";
 
 
 export interface WorkplaceState {
@@ -138,14 +139,19 @@ export const workplaceReducer = {
           selectedCanister: state.selectedCanister === name ? null : state.selectedCanister
         };
       }
-      case 'saveFile':
+      case 'saveFile': {
+        const newFiles = {
+          ...state.files,
+          [action.payload.path]: action.payload.contents
+        };
+        const Saved = getSavedActor();
+        const proj = {files:newFiles, packages:state.packages};
+        Saved.putProject(proj);
         return {
           ...state,
-          files: {
-            ...state.files,
-            [action.payload.path]: action.payload.contents
-          }
+          files: newFiles
         }
+      }
       case 'deployWorkplace': {
         const name = action.payload.canister.name!;
         return {
