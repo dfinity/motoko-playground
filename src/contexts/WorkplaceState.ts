@@ -144,9 +144,11 @@ export const workplaceReducer = {
           ...state.files,
           [action.payload.path]: action.payload.contents
         };
-        const Saved = getSavedActor();
-        const proj = {files:newFiles, packages:state.packages};
-        Saved.putProject(proj);
+        const _ignore = async () => {
+          const Saved = await getSavedActor();
+          const proj = {files:newFiles, packages:state.packages};
+          Saved.putProject(proj);
+        };
         return {
           ...state,
           files: newFiles
