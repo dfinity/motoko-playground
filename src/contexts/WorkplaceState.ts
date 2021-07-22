@@ -139,7 +139,7 @@ export const workplaceReducer = {
           selectedCanister: state.selectedCanister === name ? null : state.selectedCanister
         };
       }
-      case 'saveFile': {
+      case 'saveFile':
         return {
           ...state,
           files: {
@@ -147,7 +147,6 @@ export const workplaceReducer = {
             [action.payload.path]: action.payload.contents
           }
         }
-      }
       case 'deployWorkplace': {
         const name = action.payload.canister.name!;
         return {
