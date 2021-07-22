@@ -70,7 +70,7 @@ export function ProjectModal({
   }
 
   const welcomeCopy = (
-      <p>Welcome to the Motoko Playground! Explore Motoko, the native language of the Internet Computer, right in the browser without having to download the SDK.
+      <p>Welcome to the Motoko Playground! Explore Motoko, the native language of the Internet Computer, right in the browser without having to download the SDK. See our open source repository to <a target="_blank" href="https://github.com/dfinity/motoko-playground">learn more</a>.
       </p>
   );
   const switchProjectCopy = (

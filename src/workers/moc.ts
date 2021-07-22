@@ -1,5 +1,5 @@
 // @ts-ignore
-importScripts("https://download.dfinity.systems/motoko/0.6.2/js/moc-0.6.2.js");
+importScripts("./moc-0.6.5.js");
 
 export * from "./pow";
 export * from "./file";
@@ -23,7 +23,7 @@ export function Moc(action: MocAction) {
     case "check":
       return Motoko.check(action.file);
     case "compile":
-      return Motoko.compileWasm("dfinity", action.file);
+      return Motoko.compileWasm("ic", action.file);
     case "candid":
       return Motoko.candid(action.file);
     case "addPackage":

@@ -108,7 +108,7 @@ export function App() {
       name: "base",
       repo: "https://github.com/dfinity/motoko-base.git",
       dir: "src",
-      version: "dfx-0.7.0",
+      version: "dfx-0.8.0",
       homepage: "https://sdk.dfinity.org/docs/base-libraries/stdlib-intro.html",
     };
     (async () => {
