@@ -61,7 +61,7 @@ function setMarkers(diags, codeModel, monaco, fileName) {
       message: d.message,
       severity,
     };
-    // TODO we're currently only saving marks for current file is that OK?
+    // Okay to push error for current file only, because we run checkFile when selectedFile changes
     // @ts-ignore
     markers.push(marker);
   });
