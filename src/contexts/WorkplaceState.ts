@@ -1,8 +1,6 @@
 import * as React from "react";
 import { CanisterInfo } from "../build";
 import { PackageInfo } from "../file";
-import { getSavedActor } from "../config/actor";
-
 
 export interface WorkplaceState {
   files: Record<string,string>;
