@@ -140,18 +140,12 @@ export const workplaceReducer = {
         };
       }
       case 'saveFile': {
-        const newFiles = {
-          ...state.files,
-          [action.payload.path]: action.payload.contents
-        };
-        const _ignore = async () => {
-          const Saved = await getSavedActor();
-          const proj = {files:newFiles, packages:state.packages};
-          Saved.putProject(proj);
-        };
         return {
           ...state,
-          files: newFiles
+          files: {
+            ...state.files,
+            [action.payload.path]: action.payload.contents
+          }
         }
       }
       case 'deployWorkplace': {
