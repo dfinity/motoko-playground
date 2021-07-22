@@ -36,11 +36,6 @@ actor class Self() {
       x := hashCont(x, file.name);
       x := hashCont(x, file.content);
     };
-    for (pack in p.packages.vals()) {
-      x := hashCont(x, pack.1.name);
-      x := hashCont(x, pack.1.repo);
-      x := hashCont(x, pack.1.version);
-    };
     x
   };
 
