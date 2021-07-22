@@ -7,7 +7,7 @@ import iconPlus from "../assets/images/icon-plus.svg";
 import { ListButton } from "./shared/SelectList";
 import { WorkplaceState, WorkplaceReducerAction } from "../contexts/WorkplaceState";
 import { PackageModal } from "./PackageModal";
-import { PackageInfo } from "../file";
+import { PackageInfo } from "../workers/file";
 import { ILoggingStore } from './Logger';
 import { deleteCanister } from "../build";
 
@@ -35,13 +35,14 @@ const MyButton = styled.button`
 `;
 
 interface ExplorerProps {
+  worker: any;
   state: WorkplaceState;
   ttl: bigint;
   logger: ILoggingStore;
   dispatch: (action: WorkplaceReducerAction) => void;
 }
 
-export function Explorer({ state, ttl, dispatch, logger }: ExplorerProps) {
+export function Explorer({ worker, state, ttl, dispatch, logger }: ExplorerProps) {
   const [timeLeft, setTimeLeft] = useState<Array<string>>([]);
   const [isExpired, setIsExpired] = useState<Array<string>>([])
   const [showPackage, setShowPackage] = useState(false);
@@ -136,6 +137,7 @@ export function Explorer({ state, ttl, dispatch, logger }: ExplorerProps) {
   return (
     <StyledExplorer>
       <PackageModal
+        worker={worker}
         isOpen={showPackage}
         close={() => setShowPackage(false)}
         loadPackage={loadPackage}

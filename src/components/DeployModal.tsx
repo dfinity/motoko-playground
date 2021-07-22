@@ -8,8 +8,6 @@ import { ILoggingStore } from './Logger';
 import { Button } from "./shared/Button";
 import "../assets/styles/candid.css";
 
-declare var Motoko: any;
-
 const ModalContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -46,9 +44,11 @@ const MyButton = styled(Button)`
 `;
 
 interface DeployModalProps {
+  worker: any;
   isOpen: boolean;
   close: () => void;
   onDeploy: (string) => void;
+  isDeploy: (tag: boolean) => void;
   canisters: Record<string, CanisterInfo>;
   ttl: bigint;
   fileName: string;
@@ -60,9 +60,11 @@ interface DeployModalProps {
 const MAX_CANISTERS = 3;
 
 export function DeployModal({
+  worker,
   isOpen,
   close,
   onDeploy,
+  isDeploy,
   canisters,
   ttl,
   fileName,
@@ -110,11 +112,18 @@ export function DeployModal({
       return;
     }
     await close();
-    const info = await deploy(canisterName, canisters[canisterName], args, mode, fileName, logger);
-    if (info) {
-      info.candid = candid;
-      Motoko.saveFile(`idl/${info.id}.did`, candid);
-      onDeploy(info);
+    try {
+      await isDeploy(true);
+      const info = await deploy(worker, canisterName, canisters[canisterName], args, mode, fileName, logger);
+      await isDeploy(false);
+      if (info) {
+        info.candid = candid;
+        await worker.Moc({ type:"save", file: `idl/${info.id}.did`, content: candid });
+        onDeploy(info);
+      }
+    } catch (err) {
+      isDeploy(false);
+      throw err;
     }
   };
 
