@@ -1,10 +1,7 @@
 import { blobFromUint8Array, BinaryBlob } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
-import { pow } from './pow';
 import { getActor } from "./config/actor";
 import { ILoggingStore } from './components/Logger';
-
-declare var Motoko: any;
 
 export interface CanisterInfo {
   id: Principal,
@@ -12,7 +9,7 @@ export interface CanisterInfo {
   name?: string,
   candid?: string | null,
 }
-
+/*
 export function interpret(file: string, logger: ILoggingStore): void {
   logger.clearLogs();
   logger.log('Running code...');
@@ -27,7 +24,7 @@ export function interpret(file: string, logger: ILoggingStore): void {
     logger.log("Exception:\n" + err);
     throw err;
   }
-}
+}*/
 
 interface Diagnostics {
   message: String,
@@ -48,8 +45,8 @@ function logDiags(diagnostics: Diagnostics[], logger: ILoggingStore) {
   })
 }
 
-export function compileCandid(file: string, logger: ILoggingStore): string|undefined {
-  const candid_result = Motoko.candid(file);
+export async function compileCandid(worker, file: string, logger: ILoggingStore): Promise<string|undefined> {
+  const candid_result = await worker.Moc({ type:"candid", file });
   if (candid_result.diagnostics) logDiags(candid_result.diagnostics, logger);
   // setMarkers(candid_result.diagnostics);
   const candid_source = candid_result.code;
@@ -63,12 +60,12 @@ export function compileCandid(file: string, logger: ILoggingStore): string|undef
   return candid_source;
 }
 
-export async function deploy(canisterName: string, canisterInfo: CanisterInfo|null, args: BinaryBlob, mode: string, file: string, logger: ILoggingStore): Promise<CanisterInfo | undefined> {
+export async function deploy(worker, canisterName: string, canisterInfo: CanisterInfo|null, args: BinaryBlob, mode: string, file: string, logger: ILoggingStore): Promise<CanisterInfo | undefined> {
   logger.clearLogs();
   logger.log('Compiling code...');
 
   // NOTE: Will change to "ic" in a future moc release
-  const out = Motoko.compileWasm("dfinity", file);
+  const out = await worker.Moc({ type:"compile", file });
   if (out.diagnostics) logDiags(out.diagnostics, logger);
   // setMarkers(out.diagnostics);
   if (out.code === null) {
@@ -85,7 +82,7 @@ export async function deploy(canisterName: string, canisterInfo: CanisterInfo|nu
           throw new Error(`Cannot ${mode} for new canister`);
         }
         logger.log(`Requesting a new canister id...`);
-        canisterInfo = await createCanister(logger);
+        canisterInfo = await createCanister(worker, logger);
         updatedState = await install(
           canisterInfo,
           module,
@@ -115,10 +112,10 @@ export async function deploy(canisterName: string, canisterInfo: CanisterInfo|nu
   }
 }
 
-async function createCanister(logger: ILoggingStore): Promise<CanisterInfo> {
+async function createCanister(worker, logger: ILoggingStore): Promise<CanisterInfo> {
   const backend = await getActor();
   const timestamp = BigInt(Date.now()) * BigInt(1_000_000);
-  const nonce = pow(timestamp);
+  const nonce = await worker.pow(timestamp);
   const info = await backend.getCanisterId(nonce);
   logger.log(`Get canister id ${info.id}`);
   return {

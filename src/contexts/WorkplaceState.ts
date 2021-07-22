@@ -1,6 +1,6 @@
 import * as React from "react";
 import { CanisterInfo } from "../build";
-import { PackageInfo } from "../file";
+import { PackageInfo } from "../workers/file";
 
 
 export interface WorkplaceState {
@@ -9,6 +9,9 @@ export interface WorkplaceState {
   canisters: Record<string, CanisterInfo>;
   selectedCanister: string|null;
   packages: Record<string, PackageInfo>;
+}
+export function getActorAliases(canisters: Record<string, CanisterInfo>) : Array<[string, string]> {
+  return Object.entries(canisters).map(([name, info]) => [name, (info as any).id.toText()]);
 }
 
 export type WorkplaceReducerAction =

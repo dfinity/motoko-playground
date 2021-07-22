@@ -11,12 +11,11 @@ import { RightContainer } from "./shared/RightContainer";
 import { configureMonaco } from "../config/monacoConfig";
 import { Console } from "./Console";
 import iconRabbit from "../assets/images/icon-rabbit.png";
+import iconSpin from "../assets/images/icon-spin.gif";
 import { DeployModal } from "./DeployModal";
-import { saveWorkplaceToMotoko } from "../file";
+import { getActorAliases } from "../contexts/WorkplaceState";
 import { compileCandid } from "../build";
 import { didToJs } from "../config/actor";
-
-declare var Motoko: any;
 
 const EditorColumn = styled.div`
   display: flex;
@@ -62,7 +61,7 @@ function setMarkers(diags, codeModel, monaco, fileName) {
       message: d.message,
       severity,
     };
-    // TODO we're currently only saving marks for current file is that OK?
+    // Okay to push error for current file only, because we run checkFile when selectedFile changes
     // @ts-ignore
     markers.push(marker);
   });
@@ -70,8 +69,9 @@ function setMarkers(diags, codeModel, monaco, fileName) {
   monaco.editor.setModelMarkers(codeModel, "moc", markers);
 }
 
-export function Editor({ state, ttl, dispatch, onDeploy, logger, setConsoleHeight }) {
+export function Editor({ state, worker, ttl, dispatch, onDeploy, logger, setConsoleHeight }) {
   const [showModal, setShowModal] = useState(false);
+  const [isDeploying, setIsDeploying] = useState(false);
   const [candidCode, setCandidCode] = useState("");
   const [initTypes, setInitTypes] = useState([]);
 
@@ -80,9 +80,9 @@ export function Editor({ state, ttl, dispatch, onDeploy, logger, setConsoleHeigh
   // TODO
   const mainFile = fileName.endsWith('.mo')?fileName:(state.files["Main.mo"]?"Main.mo":"");
   const monaco = useMonaco();
-  const checkFileAddMarkers = () => {
-    if (!fileName.endsWith('mo') || typeof Motoko === "undefined") return;
-    const check = Motoko.check(fileName);
+  const checkFileAddMarkers = async () => {
+    if (!fileName || !fileName.endsWith('mo')) return;
+    const check = await worker.Moc({ type: "check", file: fileName });
     const diags = check.diagnostics;
     setMarkers(
       diags,
@@ -92,7 +92,7 @@ export function Editor({ state, ttl, dispatch, onDeploy, logger, setConsoleHeigh
       fileName
     );
   }
-  const saveChanges = (newValue) => {
+  const saveChanges = async (newValue) => {
     dispatch({
       type: "saveFile",
       payload: {
@@ -100,10 +100,9 @@ export function Editor({ state, ttl, dispatch, onDeploy, logger, setConsoleHeigh
         contents: newValue,
       }
     });
-    if (!fileName.endsWith('mo') || typeof Motoko === "undefined") return;
-    // This has to happen sync so the check Motoko has updated file when checking.
-    Motoko.saveFile(fileName, newValue);
-    checkFileAddMarkers();
+    if (!fileName.endsWith('mo')) return;
+    await worker.Moc({ type: "save", file: fileName, content: newValue });
+    await checkFileAddMarkers();
   };
 
   const debouncedSaveChanges = debounce(saveChanges, 1000, { leading: false });
@@ -112,12 +111,13 @@ export function Editor({ state, ttl, dispatch, onDeploy, logger, setConsoleHeigh
     debouncedSaveChanges(newValue);
   };
   const deployClick = async () => {
-    // TODO don't pass readme non-mo files to motoko
-    saveWorkplaceToMotoko(state);
+    const aliases = getActorAliases(state.canisters);
+    await worker.saveWorkplaceToMotoko(state.files);
+    await worker.Moc({ type:"setActorAliases", list: aliases });
     if (!mainFile) {
       logger.log('Select a main entry file to deploy');
     }
-    const candid = compileCandid(mainFile, logger);
+    const candid = await compileCandid(worker, mainFile, logger);
     if (candid) {
       const candidJS = await didToJs(candid);
       const init = candidJS.init({ IDL });
@@ -136,9 +136,11 @@ export function Editor({ state, ttl, dispatch, onDeploy, logger, setConsoleHeigh
   return (
     <EditorColumn>
       <DeployModal
+        worker={worker}
         isOpen={showModal}
-        close={async () => await setShowModal(false)}
+        close={() => setShowModal(false)}
         onDeploy={onDeploy}
+        isDeploy={setIsDeploying}
         canisters={state.canisters}
         ttl={ttl}
         fileName={mainFile}
@@ -149,9 +151,9 @@ export function Editor({ state, ttl, dispatch, onDeploy, logger, setConsoleHeigh
       <PanelHeader>
         Editor
         <RightContainer>
-        <Button onClick={deployClick} kind="primary" small>
-            <img src={iconRabbit} alt="Rabbit icon" />
-            <p>Deploy</p>
+          <Button onClick={deployClick} disabled={isDeploying} kind="primary" small>
+            <img src={isDeploying?iconSpin:iconRabbit} alt="Rabbit icon" />
+            <p>{isDeploying?"Deploying...":"Deploy"}</p>
           </Button>
         </RightContainer>
       </PanelHeader>

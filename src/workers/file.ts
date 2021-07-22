@@ -1,4 +1,3 @@
-import { WorkplaceState } from "./contexts/WorkplaceState";
 
 declare var Motoko: any;
 
@@ -43,16 +42,11 @@ export async function fetchGithub(repo: RepoInfo, target_dir = "") : Promise<Rec
   return await fetchFromGithub(repo, target_dir);
 }
 
-export function saveWorkplaceToMotoko(state: WorkplaceState) {
-  for (const [name, code] of Object.entries(state.files)) {
+export function saveWorkplaceToMotoko(files: Record<string,string>) {
+  for (const [name, code] of Object.entries(files)) {
     if (!name.endsWith('mo')) continue;
     Motoko.saveFile(name, code);
   }
-  const aliases: Array<[string, string]> = [];
-  for (const [name, info] of Object.entries(state.canisters)) {
-    aliases.push([name, info.id.toText()]);
-  }
-  Motoko.setActorAliases(aliases);
 }
 
 async function fetchFromCDN(repo: RepoInfo, target_dir = "") : Promise<Record<string,string>|undefined> {
