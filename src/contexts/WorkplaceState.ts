@@ -2,6 +2,7 @@ import * as React from "react";
 import { CanisterInfo } from "../build";
 import { PackageInfo } from "../file";
 
+
 export interface WorkplaceState {
   files: Record<string,string>;
   selectedFile: string|null;
