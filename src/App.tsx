@@ -56,6 +56,19 @@ const AppContainer = styled.div<{candidWidth: string, consoleHeight: string}>`
 `;
 
 const worker = new MocWorker();
+const hasUrlParams = new URLSearchParams(window.location.search).get("git") ? true : false;
+async function fetchFromUrlParams() : Promise<Record<string,string>|undefined> {
+  const params = new URLSearchParams(window.location.search);
+  const git = params.get("git");
+  if (git) {
+    const repo = {
+      repo: git,
+      branch: params.get("branch") || "main",
+      dir: params.get("dir") || "",
+    };
+    return await worker.fetchGithub(repo);
+  }
+}
 
 export function App() {
   const [workplaceState, workplaceDispatch] = useReducer(
@@ -63,8 +76,8 @@ export function App() {
     {},
     workplaceReducer.init
     );
-  const [isProjectModalOpen, setIsProjectModalOpen] = useState(true);
-  const [isFirstVisit, setIsFirstVisit] = useState(true);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(!hasUrlParams);
+  const [isFirstVisit, setIsFirstVisit] = useState(!hasUrlParams);
   const [showCandidUI, setShowCandidUI] = useState(false);
   const [candidWidth, setCandidWidth] = useState("0");
   const [consoleHeight, setConsoleHeight] = useState("3rem");
@@ -120,7 +133,7 @@ export function App() {
           package: baseInfo,
         },
       });
-      logger.log("Compiler loaded.");
+      logger.log("Base library loaded.");
     })();
   }, []);
   useEffect(() => {
@@ -128,6 +141,18 @@ export function App() {
       const backend = await getActor();
       setTTL((await backend.getInitParams()).canister_time_to_live);
     })();
+  }, []);
+  useEffect(() => {
+    if (hasUrlParams) {
+      (async () => {
+        const files = await fetchFromUrlParams();
+        if (files) {
+          importCode(files);
+        } else {
+          logger.log(`Failed to fetch files from "${window.location.search}"`);
+        }
+      })();
+    }
   }, []);
 
   useEffect(() => {
