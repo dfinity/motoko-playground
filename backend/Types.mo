@@ -24,13 +24,6 @@ module {
         mode : { #reinstall; #upgrade; #install };
         canister_id : Principal;
     };
-    public type MotokoProject = {
-      files : [NamedFile];
-    };
-    public type NamedFile = {
-      name : Text;
-      content : Text;
-    };
     public type CanisterInfo = {
         id: Principal;
         timestamp: Int;
