@@ -68,15 +68,8 @@ actor {
     key.key
   };
 
-  public query func getProject(hashId : HashId) : async SavedProject {
+  public query func getProject(hashId : HashId) : async ?SavedProject {
     let key = { hash = Nat32.fromNat(hashId); key = hashId };
-    switch (Trie.find<Nat, SavedProject>(stableProjects, key, Nat.equal)) {
-      case null {
-             throw Error.reject("Unknown hash identifier.")
-           };
-      case (?saved) {
-             saved
-           }
-    }
+    Trie.find<Nat, SavedProject>(stableProjects, key, Nat.equal)
   };
 }
