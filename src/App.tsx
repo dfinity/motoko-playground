@@ -134,6 +134,15 @@ export function App() {
         },
       });
       logger.log("Base library loaded.");
+      // fetch code after loading base library
+      if (hasUrlParams) {
+        const files = await fetchFromUrlParams();
+        if (files) {
+          importCode(files);
+        } else {
+          logger.log(`Failed to fetch files from "${window.location.search}"`);
+        }
+      }
     })();
   }, []);
   useEffect(() => {
@@ -141,18 +150,6 @@ export function App() {
       const backend = await getActor();
       setTTL((await backend.getInitParams()).canister_time_to_live);
     })();
-  }, []);
-  useEffect(() => {
-    if (hasUrlParams) {
-      (async () => {
-        const files = await fetchFromUrlParams();
-        if (files) {
-          importCode(files);
-        } else {
-          logger.log(`Failed to fetch files from "${window.location.search}"`);
-        }
-      })();
-    }
   }, []);
 
   useEffect(() => {

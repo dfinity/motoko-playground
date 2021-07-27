@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      DFX_VERSION: 0.7.2
+      DFX_VERSION: 0.8.0
       IC_REPL_VERSION: 2021-06-17
       VESSEL_VERSION: v0.6.2
       CI: true

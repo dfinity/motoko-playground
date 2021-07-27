@@ -14,7 +14,7 @@ function generateAliases() {
     )
     return {
       ...result,
-      ['dfx-generated/' + name]: path.join(outputRoot, name + '.js'),
+      ['dfx-generated/' + name]: path.join(outputRoot),
     }
   }, {})
 }
