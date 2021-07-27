@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useContext } from "react";
 import { IDL, renderInput, blobFromUint8Array, InputBox } from "@dfinity/candid";
 
 import { Modal } from "./shared/Modal";
@@ -7,6 +7,7 @@ import { CanisterInfo, getCanisterName, deploy } from "../build";
 import { ILoggingStore } from './Logger';
 import { Button } from "./shared/Button";
 import "../assets/styles/candid.css";
+import { WorkerContext } from "../contexts/WorkplaceState";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -44,7 +45,6 @@ const MyButton = styled(Button)`
 `;
 
 interface DeployModalProps {
-  worker: any;
   isOpen: boolean;
   close: () => void;
   onDeploy: (string) => void;
@@ -60,7 +60,6 @@ interface DeployModalProps {
 const MAX_CANISTERS = 3;
 
 export function DeployModal({
-  worker,
   isOpen,
   close,
   onDeploy,
@@ -74,6 +73,7 @@ export function DeployModal({
 }: DeployModalProps) {
   const [canisterName, setCanisterName] = useState("");
   const [inputs, setInputs] = useState<InputBox[]>([]);
+  const worker = useContext(WorkerContext);
 
   const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
 

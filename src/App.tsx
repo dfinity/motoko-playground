@@ -14,6 +14,7 @@ import { useLogging } from "./components/Logger";
 import {
   workplaceReducer,
   WorkplaceDispatchContext,
+  WorkerContext,
   getActorAliases,
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
@@ -144,6 +145,7 @@ export function App() {
         }
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     (async () => {
@@ -169,8 +171,8 @@ export function App() {
       <GlobalStyles />
       <Header openTutorial={() => setIsProjectModalOpen(true)} />
       <WorkplaceDispatchContext.Provider value={workplaceDispatch}>
+      <WorkerContext.Provider value={worker}>
         <ProjectModal
-          worker={worker}
           isOpen={isProjectModalOpen}
           importCode={importCode}
           close={closeProjectModal}
@@ -178,17 +180,13 @@ export function App() {
         />
         <AppContainer candidWidth={candidWidth} consoleHeight={consoleHeight}>
           <Explorer
-            worker={worker}
             state={workplaceState}
             ttl={TTL}
-            dispatch={workplaceDispatch}
             logger={logger}
           />
           <Editor
             state={workplaceState}
-            worker={worker}
             ttl={TTL}
-            dispatch={workplaceDispatch}
             onDeploy={deployWorkplace}
             logger={logger}
             setConsoleHeight={setConsoleHeight}
@@ -201,6 +199,7 @@ export function App() {
           /> : null
         }
         </AppContainer>
+      </WorkerContext.Provider>
       </WorkplaceDispatchContext.Provider>
     </main>
   );

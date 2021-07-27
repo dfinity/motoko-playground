@@ -25,6 +25,7 @@ function initCanisterIds() {
 
   for (const canister in canisters) {
     const canisterName = canister.toUpperCase() + "_CANISTER_ID";
+    process.env[canisterName] = canisters[canister][network];
     canisterEnv = { ...canisterEnv, [canisterName]: canisters[canister][network] };
   }
 }
