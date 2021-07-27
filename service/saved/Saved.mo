@@ -59,11 +59,7 @@ actor {
       timestamp = Time.now();
       project = p;
     };
-    let (ps, existing) = Trie.replace<Nat, SavedProject>(stableProjects, key, Nat.equal, ?saved);
-    switch existing {
-      case (?_) { throw Error.reject("This project already exists.") };
-      case null { };
-    };
+    let (ps, _) = Trie.replace<Nat, SavedProject>(stableProjects, key, Nat.equal, ?saved);
     stableProjects := ps;
     key.key
   };
