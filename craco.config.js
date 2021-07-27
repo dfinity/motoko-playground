@@ -19,9 +19,7 @@ function initCanisterIds() {
     console.log("No production canister_ids.json found. Continuing with local");
   }
 
-  const network =
-    process.env.DFX_NETWORK ||
-    (process.env.NODE_ENV === "production" ? "ic" : "local");
+  const network = process.env.DFX_NETWORK;
 
   canisters = network === "local" ? localCanisters : prodCanisters;
 
