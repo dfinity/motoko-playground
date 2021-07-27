@@ -8,7 +8,7 @@ import Prim "mo:⛔";
 
 import Types "Types";
 
-actor class Self() {
+actor {
 
   public type Project = Types.MotokoProject;
 
@@ -19,8 +19,19 @@ actor class Self() {
     project : Project;
   };
 
-  public type StableProjects =
+  // Represents a set of saved projects, using their hashes.
+  // (But rather than store this type directly, we use ProjectTable instead.)
+  public type Projects =
+    Trie.Trie<SavedProject, ()>;
+
+  /// Indexes a set of Projects; permits lookup by hash,
+  /// without knowing the "full project" as a key.
+  public type ProjectTable =
     Trie.Trie<HashId, SavedProject>;
+
+  func equalProject(p1 : Project, p2 : Project) : Bool {
+    p1 == p2
+  };
 
   func hashProject(p : Project) : Nat32 {
     var x : Nat32 = 5381;
@@ -39,7 +50,7 @@ actor class Self() {
     x
   };
 
-  stable var stableProjects : StableProjects = Trie.empty();
+  stable var stableProjects : ProjectTable = Trie.empty();
 
   public func putProject(p : Project) : async HashId {
     let hashId  = hashProject(p);

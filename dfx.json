@@ -14,7 +14,7 @@
       "type": "motoko"
     },
     "saved": {
-      "main": "backend/Saved.mo",
+      "main": "service/Saved.mo",
       "type": "motoko"
     },
     "react_app": {
