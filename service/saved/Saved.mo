@@ -29,10 +29,6 @@ actor {
   public type ProjectTable =
     Trie.Trie<HashId, SavedProject>;
 
-  func equalProject(p1 : Project, p2 : Project) : Bool {
-    p1 == p2
-  };
-
   func hashProject(p : Project) : Nat32 {
     var x : Nat32 = 5381;
     func hashCont(x_ : Nat32, text : Text) : Nat32 {
