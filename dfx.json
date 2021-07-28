@@ -18,7 +18,7 @@
       "type": "motoko"
     },
     "react_app": {
-      "dependencies": ["backend"],
+      "dependencies": ["backend", "saved"],
       "frontend": {
         "entrypoint": "public/index.html"
       },

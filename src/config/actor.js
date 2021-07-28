@@ -11,48 +11,21 @@ function is_local(agent) {
   return hostname === '127.0.0.1' || hostname.endsWith('localhost');  
 }
 
-let _actor = null;
-let _savedActor = null;
 export const agent = new HttpAgent({});
-
-export async function createActor() {
-  if (is_local(agent)) {
-    await agent.fetchRootKey();
-  }
-  const actor = Actor.createActor(idlFactory, {
-    agent,
-    canisterId,
-  });
-  return actor;
+if (is_local(agent)) {
+  agent.fetchRootKey();
 }
-
-export const getActor = async () => {
-  if (_savedActor) return Promise.resolve(_savedActor);
-  const actor = await createSavedActor();
-  _savedActor = actor;
-  return actor;
-};
-
-export async function createSavedActor() {
-  if (is_local(agent)) {
-    await agent.fetchRootKey();
-  }
-  const actor = Actor.createActor(savedIdlFactory, {
-    agent,
-    savedCanisterId,
-  });
-  return actor;
-}
-
-export const getSavedActor = async () => {
-  if (_actor) return Promise.resolve(_actor);
-  const actor = await createActor();
-  _actor = actor;
-  return actor;
-};
+/**
+ * @type {import("@dfinity/agent").ActorSubclass<import("./backend.did.js")._SERVICE>}
+ */
+export const backend = Actor.createActor(idlFactory, { agent, canisterId });
+/**
+ * @type {import("@dfinity/agent").ActorSubclass<import("./saved.did.js")._SERVICE>}
+ */
+export const saved = Actor.createActor(savedIdlFactory, { agent, savedCanisterId });
 
 const uiCanisterId = is_local(agent)
-  ? "rkp4c-7iaaa-aaaaa-aaaca-cai"
+  ? "rno2w-sqaaa-aaaaa-aaacq-cai"
   : "a4gq6-oaaaa-aaaab-qaa4q-cai";
 export const uiCanisterUrl = is_local(agent)
   ? `http://${uiCanisterId}.${dfxConfig.networks.local.bind}`

@@ -18,7 +18,7 @@ import {
   getActorAliases,
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
-import { getActor } from "./config/actor";
+import { backend } from "./config/actor";
 
 const GlobalStyles = createGlobalStyle`
   :root {
@@ -149,7 +149,6 @@ export function App() {
   }, []);
   useEffect(() => {
     (async () => {
-      const backend = await getActor();
       setTTL((await backend.getInitParams()).canister_time_to_live);
     })();
   }, []);
