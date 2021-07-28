@@ -13,7 +13,7 @@ let init = opt record {
 call ic.install_code(
   record {
     arg = encode (init);
-    wasm_module = file "../../.dfx/local/canisters/backend/backend.wasm";
+    wasm_module = file "../../../.dfx/local/canisters/backend/backend.wasm";
     mode = variant { install };
     canister_id = S;
   },
