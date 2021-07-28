@@ -73,8 +73,10 @@ async function fetchFromUrlParams() : Promise<Record<string,string>|undefined> {
   if (tag) {
     const opt = await saved.getProject(BigInt(tag));
     if (opt.length === 1) {
-      // TODO save to Moc
-      return Object.fromEntries(opt[0].project.files.map((file) => [file.name, file.content]));
+      return Object.fromEntries(opt[0].project.files.map((file) => {
+        worker.Moc({ type: "save", file: file.name, content: file.content });
+        return [file.name, file.content];
+      }));
     }
   }
 }

@@ -2,8 +2,6 @@ import Time "mo:base/Time";
 import Trie "mo:base/Trie";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
-import Hash "mo:base/Hash";
-import Error "mo:base/Error";
 import Prim "mo:⛔";
 
 import Types "Types";
