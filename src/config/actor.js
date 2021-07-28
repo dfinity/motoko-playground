@@ -22,7 +22,7 @@ export const backend = Actor.createActor(idlFactory, { agent, canisterId });
 /**
  * @type {import("@dfinity/agent").ActorSubclass<import("./saved.did.js")._SERVICE>}
  */
-export const saved = Actor.createActor(savedIdlFactory, { agent, savedCanisterId });
+export const saved = Actor.createActor(savedIdlFactory, { agent, canisterId: savedCanisterId });
 
 const uiCanisterId = is_local(agent)
   ? "rno2w-sqaaa-aaaaa-aaacq-cai"
