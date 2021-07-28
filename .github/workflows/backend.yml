@@ -33,7 +33,7 @@ jobs:
         dfx build backend
     - name: Test
       run: |
-        (for f in backend/tests/*.test.sh; do
+        (for f in service/pool/tests/*.test.sh; do
           echo "==== Run test $f ===="
           ic-repl -r http://localhost:8000 "$f" || exit
         done)
