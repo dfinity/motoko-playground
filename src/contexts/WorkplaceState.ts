@@ -177,4 +177,5 @@ export const workplaceReducer = {
  */
 export const WorkplaceDispatchContext = React.createContext<React.Dispatch<WorkplaceReducerAction>>(() => {
   console.warn('using default WorkplaceDispathcContext. Make sure to Provide one in your component tree')
-})
+});
+export const WorkerContext = React.createContext<any>(() => { console.warn('provide a value for worker') });

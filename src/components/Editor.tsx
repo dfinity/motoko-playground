@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
 import ReactMarkdown from "react-markdown";
@@ -13,7 +13,7 @@ import { Console } from "./Console";
 import iconRabbit from "../assets/images/icon-rabbit.png";
 import iconSpin from "../assets/images/icon-spin.gif";
 import { DeployModal } from "./DeployModal";
-import { getActorAliases } from "../contexts/WorkplaceState";
+import { getActorAliases, WorkerContext, WorkplaceDispatchContext } from "../contexts/WorkplaceState";
 import { compileCandid } from "../build";
 import { didToJs } from "../config/actor";
 
@@ -69,11 +69,13 @@ function setMarkers(diags, codeModel, monaco, fileName) {
   monaco.editor.setModelMarkers(codeModel, "moc", markers);
 }
 
-export function Editor({ state, worker, ttl, dispatch, onDeploy, logger, setConsoleHeight }) {
+export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
   const [showModal, setShowModal] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [candidCode, setCandidCode] = useState("");
   const [initTypes, setInitTypes] = useState([]);
+  const worker = useContext(WorkerContext);
+  const dispatch = useContext(WorkplaceDispatchContext);
 
   const fileName = state.selectedFile;
   const fileCode = fileName?state.files[fileName]:"";
@@ -136,7 +138,6 @@ export function Editor({ state, worker, ttl, dispatch, onDeploy, logger, setCons
   return (
     <EditorColumn>
       <DeployModal
-        worker={worker}
         isOpen={showModal}
         close={() => setShowModal(false)}
         onDeploy={onDeploy}

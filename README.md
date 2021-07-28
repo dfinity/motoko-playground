@@ -22,7 +22,7 @@ We plan on adding many more features to make playground a full-featured web IDE 
 
 ## Running Locally
 
-Prerequisites: dfx, npm, vessel, rust.
+Prerequisites: dfx, npm, vessel, rust, binaryen.
 
 To run the Motoko playground locally, proceed as follows after cloning the respository.
 

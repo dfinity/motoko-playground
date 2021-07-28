@@ -1,7 +1,8 @@
 import styled from "styled-components";
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Button } from "./shared/Button";
 import { PackageInfo } from "../workers/file";
+import { WorkerContext } from "../contexts/WorkplaceState";
 
 const Container = styled.div`
   display: flex;
@@ -27,12 +28,13 @@ const MyButton = styled(Button)`
   margin: 1rem;
 `;
 
-export function ImportGitHub({ worker, importCode, close, back, isPackageModal=false }) {
+export function ImportGitHub({ importCode, close, back, isPackageModal=false }) {
   const [repo, setRepo] = useState("dfinity/examples");
   const [branch, setBranch] = useState("master");
   const [dir, setDir] = useState("motoko/counter/src");
   const [error, setError] = useState("");
   const [name, setName] = useState("");
+  const worker = useContext(WorkerContext);
   async function fetchCode() {
     const files = await worker.fetchGithub({repo, branch, dir});
     if (files) {

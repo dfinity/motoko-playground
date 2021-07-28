@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Modal } from "./shared/Modal";
 import { MotokoLabLogo } from "./shared/MotokoLabLogo";
 import { Button } from "./shared/Button";
@@ -7,6 +7,7 @@ import { ListButton, SelectList } from "./shared/SelectList";
 import iconCaretRight from "../assets/images/icon-caret-right.svg";
 import { ImportGitHub } from "./ImportGithub";
 import { fetchExample, exampleProjects, ExampleProject } from "../examples";
+import { WorkerContext } from "../contexts/WorkplaceState";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -46,7 +47,6 @@ const CancelButton = styled(Button)`
 `;
 
 interface ProjectModalProps {
-  worker: any;
   isOpen: boolean;
   importCode: (files: Record<string, string>) => void;
   close: () => void;
@@ -54,13 +54,13 @@ interface ProjectModalProps {
 }
 
 export function ProjectModal({
-  worker,
   isOpen,
   close,
   importCode,
   isFirstOpen,
 }: ProjectModalProps) {
   const [importOpen, setImportOpen] = useState(false);
+  const worker = useContext(WorkerContext);
   async function handleSelectProjectAndClose(project: ExampleProject) {
     const files = await fetchExample(worker, project);
     if (files) {
@@ -70,7 +70,7 @@ export function ProjectModal({
   }
 
   const welcomeCopy = (
-      <p>Welcome to the Motoko Playground! Explore Motoko, the native language of the Internet Computer, right in the browser without having to download the SDK. See our open source repository to <a target="_blank" href="https://github.com/dfinity/motoko-playground">learn more</a>.
+      <p>Welcome to the Motoko Playground! Explore Motoko, the native language of the Internet Computer, right in the browser without having to download the SDK. See our open source repository to <a target="_blank" rel="noreferrer" href="https://github.com/dfinity/motoko-playground">learn more</a>.
       </p>
   );
   const switchProjectCopy = (
@@ -110,7 +110,7 @@ export function ProjectModal({
           ))}
           <ProjectButton onClick={() => setImportOpen(true)}>Import from Github...</ProjectButton>
         </SelectList>):
-        (<ImportGitHub worker={worker} importCode={importCode} close={close} back={() => setImportOpen(false)}></ImportGitHub>)}
+        (<ImportGitHub importCode={importCode} close={close} back={() => setImportOpen(false)}></ImportGitHub>)}
         {!isFirstOpen && <CancelButton onClick={close}>Cancel</CancelButton>}
       </ModalContainer>
     </Modal>

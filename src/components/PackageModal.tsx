@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Modal } from "./shared/Modal";
 import { Button } from "./shared/Button";
 import { ListButton, SelectList } from "./shared/SelectList";
@@ -7,6 +7,7 @@ import iconCaretRight from "../assets/images/icon-caret-right.svg";
 import { ImportGitHub } from "./ImportGithub";
 import packageSet from "../config/package-set.json";
 import { PackageInfo } from "../workers/file";
+import { WorkerContext } from "../contexts/WorkplaceState";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -46,19 +47,18 @@ const CancelButton = styled(Button)`
 `;
 
 interface PackageModalProps {
-  worker: any;
   isOpen: boolean;
   close: () => void;
   loadPackage: (info: PackageInfo) => void;
 }
 
 export function PackageModal({
-  worker,
   isOpen,
   close,
   loadPackage,
 }: PackageModalProps) {
   const [importOpen, setImportOpen] = useState(false);
+  const worker = useContext(WorkerContext);
   async function handleSelectPackage(pack: PackageInfo) {
     if (await worker.fetchPackage(pack)) {
       await loadPackage(pack);
@@ -88,7 +88,7 @@ export function PackageModal({
           ))}
           <ProjectButton onClick={() => setImportOpen(true)}>Import from Github...</ProjectButton>
         </SelectList>):
-         (<ImportGitHub worker={worker} isPackageModal={true} importCode={loadPackage} close={close} back={() => setImportOpen(false)}></ImportGitHub>)}
+         (<ImportGitHub isPackageModal={true} importCode={loadPackage} close={close} back={() => setImportOpen(false)}></ImportGitHub>)}
         <CancelButton onClick={close}>Cancel</CancelButton>
       </ModalContainer>
     </Modal>
