@@ -2,6 +2,7 @@ import styled from "styled-components";
 import { Button } from "./shared/Button";
 import { RightContainer } from "./shared/RightContainer";
 import iconPlus from "../assets/images/icon-plus.svg";
+import iconSave from "../assets/images/icon-save.svg"
 import { MotokoLabLogo } from "./shared/MotokoLabLogo";
 
 const StyledHeader = styled("header")<{ darkMode?: boolean }>`
@@ -39,7 +40,7 @@ const HeaderLink = styled.a`
   }
 `;
 
-export function Header({ openTutorial, darkMode = false }) {
+export function Header({ shareProject, openTutorial, darkMode = false }) {
   return (
     <StyledHeader darkMode={darkMode}>
       <BrandContainer>
@@ -60,6 +61,10 @@ export function Header({ openTutorial, darkMode = false }) {
         >
           Internet Computer SDK
         </HeaderLink>
+        <Button width="15.6rem" onClick={shareProject}>
+          <img src={iconSave} alt="Save icon" />
+          <p>Save & Share</p>
+        </Button>
         <Button width="16.4rem" onClick={openTutorial}>
           <img src={iconPlus} alt="Plus icon" />
           <p>Open Tutorial</p>

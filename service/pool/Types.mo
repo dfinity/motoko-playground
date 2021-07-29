@@ -22,7 +22,7 @@ module {
         arg : Blob;
         wasm_module : Blob;
         mode : { #reinstall; #upgrade; #install };
-        canister_id : Principal;        
+        canister_id : Principal;
     };
     public type CanisterInfo = {
         id: Principal;

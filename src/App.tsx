@@ -18,7 +18,7 @@ import {
   getActorAliases,
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
-import { getActor } from "./config/actor";
+import { backend, saved } from "./config/actor";
 
 const GlobalStyles = createGlobalStyle`
   :root {
@@ -57,17 +57,27 @@ const AppContainer = styled.div<{candidWidth: string, consoleHeight: string}>`
 `;
 
 const worker = new MocWorker();
-const hasUrlParams = new URLSearchParams(window.location.search).get("git") ? true : false;
+const urlParams = new URLSearchParams(window.location.search);
+const hasUrlParams = urlParams.get("git") || urlParams.get("tag") ? true : false;
 async function fetchFromUrlParams() : Promise<Record<string,string>|undefined> {
-  const params = new URLSearchParams(window.location.search);
-  const git = params.get("git");
+  const git = urlParams.get("git");
+  const tag = urlParams.get("tag");
   if (git) {
     const repo = {
       repo: git,
-      branch: params.get("branch") || "main",
-      dir: params.get("dir") || "",
+      branch: urlParams.get("branch") || "main",
+      dir: urlParams.get("dir") || "",
     };
     return await worker.fetchGithub(repo);
+  }
+  if (tag) {
+    const opt = await saved.getProject(BigInt(tag));
+    if (opt.length === 1) {
+      return Object.fromEntries(opt[0].project.files.map((file) => {
+        worker.Moc({ type: "save", file: file.name, content: file.content });
+        return [file.name, file.content];
+      }));
+    }
   }
 }
 
@@ -93,6 +103,12 @@ export function App() {
       // The modal takes 750ms to animate out, so we wait to set isFirstVisit.
       setTimeout(() => setIsFirstVisit(false), 750);
     }
+  }
+  async function shareProject() {
+    logger.log("Sharing project code...");
+    const files = Object.entries(workplaceState.files).filter(([name,_]) => name.endsWith(".mo")).map(([name,content]) => { return { name, content } });
+    const hash = await saved.putProject({files});
+    logger.log(`Use this link to access the code:\n${window.location.origin}/?tag=${hash.toString()}`);
   }
 
   const deployWorkplace = (info: CanisterInfo) => {
@@ -149,7 +165,6 @@ export function App() {
   }, []);
   useEffect(() => {
     (async () => {
-      const backend = await getActor();
       setTTL((await backend.getInitParams()).canister_time_to_live);
     })();
   }, []);
@@ -169,7 +184,7 @@ export function App() {
   return (
     <main>
       <GlobalStyles />
-      <Header openTutorial={() => setIsProjectModalOpen(true)} />
+      <Header shareProject={shareProject} openTutorial={() => setIsProjectModalOpen(true)} />
       <WorkplaceDispatchContext.Provider value={workplaceDispatch}>
       <WorkerContext.Provider value={worker}>
         <ProjectModal

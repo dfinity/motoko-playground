@@ -2,19 +2,23 @@
   "canisters": {
     "wasm-utils": {
       "type": "custom",
-      "candid": "wasm-utils/wasm-utils.did",
-      "wasm": "wasm-utils/target/wasm32-unknown-unknown/release/wasm_opt.wasm",
+      "candid": "service/wasm-utils/wasm-utils.did",
+      "wasm": "service/wasm-utils/target/wasm32-unknown-unknown/release/wasm_opt.wasm",
       "build": [
-        "sh -c 'cd wasm-utils && ./build.sh'"
+        "sh -c 'cd service/wasm-utils && ./build.sh'"
       ]
     },
     "backend": {
       "dependencies": ["wasm-utils"],
-      "main": "backend/Main.mo",
+      "main": "service/pool/Main.mo",
+      "type": "motoko"
+    },
+    "saved": {
+      "main": "service/saved/Saved.mo",
       "type": "motoko"
     },
     "react_app": {
-      "dependencies": ["backend"],
+      "dependencies": ["backend", "saved"],
       "frontend": {
         "entrypoint": "public/index.html"
       },

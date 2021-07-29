@@ -7,6 +7,7 @@ import iconPlus from "../assets/images/icon-plus.svg";
 import { ListButton } from "./shared/SelectList";
 import { WorkplaceState, WorkplaceDispatchContext } from "../contexts/WorkplaceState";
 import { PackageModal } from "./PackageModal";
+import { FileModal } from "./FileModal";
 import { PackageInfo } from "../workers/file";
 import { ILoggingStore } from './Logger';
 import { deleteCanister } from "../build";
@@ -44,6 +45,7 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
   const [timeLeft, setTimeLeft] = useState<Array<string>>([]);
   const [isExpired, setIsExpired] = useState<Array<string>>([])
   const [showPackage, setShowPackage] = useState(false);
+  const [showFileModal, setShowFileModal] = useState(false);
   const dispatch = useContext(WorkplaceDispatchContext);
 
   const onSelectFile = (selectedFile: string) => {
@@ -135,12 +137,15 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
   
   return (
     <StyledExplorer>
+      <FileModal isOpen={showFileModal} close={() => setShowFileModal(false)} />
       <PackageModal
         isOpen={showPackage}
         close={() => setShowPackage(false)}
         loadPackage={loadPackage}
       />
-      <CategoryTitle>Files</CategoryTitle>
+      <CategoryTitle>Files
+      <MyButton onClick={() => setShowFileModal(true)}><img style={{width:"1.6rem"}} src={iconPlus} alt="Add file"/></MyButton>
+      </CategoryTitle>
       {Object.keys(state.files).sort().map((filename) => (
         <ListButton
           key={filename}

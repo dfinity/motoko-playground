@@ -1,6 +1,6 @@
 import { blobFromUint8Array, BinaryBlob } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
-import { getActor } from "./config/actor";
+import { backend } from "./config/actor";
 import { ILoggingStore } from './components/Logger';
 
 export interface CanisterInfo {
@@ -113,7 +113,6 @@ export async function deploy(worker, canisterName: string, canisterInfo: Caniste
 }
 
 async function createCanister(worker, logger: ILoggingStore): Promise<CanisterInfo> {
-  const backend = await getActor();
   const timestamp = BigInt(Date.now()) * BigInt(1_000_000);
   const nonce = await worker.pow(timestamp);
   const info = await backend.getCanisterId(nonce);
@@ -125,7 +124,6 @@ async function createCanister(worker, logger: ILoggingStore): Promise<CanisterIn
 }
 
 export async function deleteCanister(info: CanisterInfo) {
-  const backend = await getActor();
   await backend.removeCode(info);
 }
 
@@ -146,7 +144,6 @@ async function install(
     mode: { [mode]: null },
     canister_id: canisterId,
   };
-  const backend = await getActor();
   const new_info = await backend.installCode(canisterInfo, installArgs);
   canisterInfo = new_info;
   logger.log(`Code installed at canister id ${canisterInfo.id}`);
