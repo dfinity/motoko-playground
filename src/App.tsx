@@ -106,7 +106,7 @@ export function App() {
   }
   async function shareProject() {
     logger.log("Sharing project code...");
-    const files = Object.entries(workplaceState.files).map(([name,content]) => { return { name, content } });
+    const files = Object.entries(workplaceState.files).filter(([name,_]) => name.endsWith(".mo")).map(([name,content]) => { return { name, content } });
     const hash = await saved.putProject({files});
     logger.log(`Use this link to access the code:\n${window.location.origin}/?tag=${hash.toString()}`);
   }

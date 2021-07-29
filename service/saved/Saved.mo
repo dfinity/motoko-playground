@@ -27,7 +27,9 @@ actor {
   public type ProjectTable =
     Trie.Trie<HashId, SavedProject>;
 
-  func hashProject(p : Project) : Nat32 {
+  func hashProject(p : Project) : (Nat32, Nat) {
+    // TODO input validation, e.g. duplicate filenames
+    var size = 0;
     var x : Nat32 = 5381;
     func hashCont(x_ : Nat32, text : Text) : Nat32 {
       var x = x_;
@@ -40,21 +42,28 @@ actor {
     for (file in p.files.vals()) {
       x := hashCont(x, file.name);
       x := hashCont(x, file.content);
+      size += file.content.size() + file.name.size();
     };
-    x
+    (x, size)
   };
 
   stable var stableProjects : ProjectTable = Trie.empty();
+  stable var byteSize : Nat = 0;
 
   public func putProject(p : Project) : async HashId {
-    // TODO input validation, e.g. duplicate filenames
-    let hashId  = hashProject(p);
+    let (hashId, size)  = hashProject(p);
     let key = { key = Nat32.toNat(hashId); hash = hashId };
     let saved = {
       timestamp = Time.now();
       project = p;
     };
-    let (ps, _) = Trie.replace<Nat, SavedProject>(stableProjects, key, Nat.equal, ?saved);
+    let (ps, existing) = Trie.replace<Nat, SavedProject>(stableProjects, key, Nat.equal, ?saved);
+    switch existing {
+    case (?_) {};
+    case null {
+             byteSize += size;
+         };
+    };
     stableProjects := ps;
     key.key
   };
@@ -63,4 +72,15 @@ actor {
     let key = { hash = Nat32.fromNat(hashId); key = hashId };
     Trie.find<Nat, SavedProject>(stableProjects, key, Nat.equal)
   };
+
+  type StatResult = {
+      num_projects: Nat;
+      byte_size: Nat;
+  };
+  public query func getStats() : async StatResult {
+      {
+          num_projects = Trie.size(stableProjects);
+          byte_size = byteSize;
+      }
+  }
 }
