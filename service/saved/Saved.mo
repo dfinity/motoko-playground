@@ -47,6 +47,7 @@ actor {
   stable var stableProjects : ProjectTable = Trie.empty();
 
   public func putProject(p : Project) : async HashId {
+    // TODO input validation, e.g. duplicate filenames
     let hashId  = hashProject(p);
     let key = { key = Nat32.toNat(hashId); hash = hashId };
     let saved = {

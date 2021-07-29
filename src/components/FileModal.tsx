@@ -40,8 +40,8 @@ export function FileModal({ isOpen, close }) {
   return (
       <Modal isOpen={isOpen} close={close} label="Add file" shouldCloseOnEsc={true}>
       <ModalContainer>
-      <p>Input a new file name</p>
-      <input type="text" value={fileName} onChange={(e) => setFileName(e.target.value)} />
+      <p>Add a new file name</p>
+      <input type="text" value={fileName} autoFocus={true} onChange={(e) => setFileName(e.target.value)} />
       <ButtonContainer>
       <MyButton onClick={addFile}>Add</MyButton>
       <MyButton onClick={close}>Cancel</MyButton>      

@@ -64,9 +64,13 @@ export function ProjectModal({
   async function handleSelectProjectAndClose(project: ExampleProject) {
     const files = await fetchExample(worker, project);
     if (files) {
-      importCode(files);
+      await importCode(files);
       close();
     }
+  }
+  async function emptyProject() {
+    await importCode({"Main.mo":""});
+    close();
   }
 
   const welcomeCopy = (
@@ -100,6 +104,7 @@ export function ProjectModal({
         {isFirstOpen ? welcomeCopy : switchProjectCopy}
         <SelectLabel>{labelCopy}</SelectLabel>
         {!importOpen?(<SelectList height="18rem">
+          <ProjectButton onClick={emptyProject}>Empty Motoko project</ProjectButton>
           {Object.entries(exampleProjects).map(([name, project]) => (
             <ProjectButton
               key={name}
