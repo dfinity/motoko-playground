@@ -61,7 +61,7 @@ export function Header({ shareProject, openTutorial, darkMode = false }) {
         >
           Internet Computer SDK
         </HeaderLink>
-        <Button width="16.4rem" onClick={shareProject}>
+        <Button width="15.6rem" onClick={shareProject}>
           <img src={iconSave} alt="Save icon" />
           <p>Save & Share</p>
         </Button>
