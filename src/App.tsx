@@ -16,6 +16,7 @@ import {
   WorkplaceDispatchContext,
   WorkerContext,
   getActorAliases,
+  getShareableProject,
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
 import { backend, saved } from "./config/actor";
@@ -59,7 +60,7 @@ const AppContainer = styled.div<{candidWidth: string, consoleHeight: string}>`
 const worker = new MocWorker();
 const urlParams = new URLSearchParams(window.location.search);
 const hasUrlParams = urlParams.get("git") || urlParams.get("tag") ? true : false;
-async function fetchFromUrlParams() : Promise<Record<string,string>|undefined> {
+async function fetchFromUrlParams(dispatch) : Promise<Record<string,string>|undefined> {
   const git = urlParams.get("git");
   const tag = urlParams.get("tag");
   if (git) {
@@ -73,10 +74,23 @@ async function fetchFromUrlParams() : Promise<Record<string,string>|undefined> {
   if (tag) {
     const opt = await saved.getProject(BigInt(tag));
     if (opt.length === 1) {
-      return Object.fromEntries(opt[0].project.files.map((file) => {
+      const project = opt[0].project;
+      const files = Object.fromEntries(project.files.map((file) => {
         worker.Moc({ type: "save", file: file.name, content: file.content });
         return [file.name, file.content];
       }));
+      for (const pack of project.packages) {
+        const info = { name: pack.name, repo: pack.repo, version: pack.version, dir: pack.dir.length?pack.dir[0]:undefined, homepage: pack.homepage.length?pack.homepage[0]:undefined };
+        if (await worker.fetchPackage(info)) {
+          await dispatch({type: "loadPackage", payload: { name: info.name, package: info }});
+        }
+      }
+      for (const canister of project.canisters) {
+        const info = { id: canister.id, isExternal: true, name: canister.name, candid: canister.candid };
+        await worker.Moc({type: "save", file: `idl/${info.id}.did`, content: info.candid });
+        await dispatch({type: "deployWorkplace", payload: { canister: info }});
+      }
+      return files;
     }
   }
 }
@@ -105,8 +119,8 @@ export function App() {
   }
   async function shareProject() {
     logger.log("Sharing project code...");
-    const files = Object.entries(workplaceState.files).filter(([name,_]) => name.endsWith(".mo")).map(([name,content]) => { return { name, content } });
-    const hash = await saved.putProject({files});
+    const project = getShareableProject(workplaceState);
+    const hash = await saved.putProject(project);
     logger.log(`Use this link to access the code:\n${window.location.origin}/?tag=${hash.toString()}`);
   }
 
@@ -151,7 +165,7 @@ export function App() {
       logger.log("Base library loaded.");
       // fetch code after loading base library
       if (hasUrlParams) {
-        const files = await fetchFromUrlParams();
+        const files = await fetchFromUrlParams(workplaceDispatch);
         if (files) {
           importCode(files);
         } else {
