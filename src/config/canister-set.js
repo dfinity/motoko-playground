@@ -58,40 +58,101 @@ service ic : {
     (record { canister_id: canister_id; amount: nat }) -> ();
 }`
   },
-  "rwlgt-iiaaa-aaaaa-aaaaa-cai": {
-    name: "registry"
-  },
   "rrkah-fqaaa-aaaaa-aaaaq-cai": {
     name: "governance"
   },
   "ryjl3-tyaaa-aaaaa-aaaba-cai": {
-    name: "ledger"
-  },
-  "r7inp-6aaaa-aaaaa-aaabq-cai": {
-    name: "root"
-  },
-  "rkp4c-7iaaa-aaaaa-aaaca-cai": {
-    name: "cycles-minting"
+    name: "ledger",
+    candid: `type AccountBalanceArgs = record {
+  account: AccountIdentifier;
+};
+type AccountIdentifier = text;
+type ArchiveOptions = record {
+  node_max_memory_size_bytes: opt nat32;
+  max_message_size_bytes: opt nat32;
+  controller_id: principal;
+};
+type CanisterId = principal;
+type BlockHeight = nat64;
+type Duration = record {
+  secs: nat64;
+  nanos: nat32;
+};
+type ICPTs = record {
+  e8s : nat64;
+};
+type LedgerCanisterInitPayload = record {
+  minting_account: AccountIdentifier;
+  initial_values: vec record {AccountIdentifier; ICPTs};
+  max_message_size_bytes: opt nat32;
+  transaction_window: opt Duration;
+  archive_options: opt ArchiveOptions;
+  send_whitelist: vec record {principal};
+};
+type Memo = nat64;
+type NotifyCanisterArgs = record {
+  block_height: BlockHeight;
+  max_fee: ICPTs;
+  from_subaccount: opt SubAccount;
+  to_canister: principal;
+  to_subaccount: opt SubAccount;
+};
+type SendArgs = record {
+  memo: Memo;
+  amount: ICPTs;
+  fee: ICPTs;
+  from_subaccount: opt SubAccount;
+  to: AccountIdentifier;
+  created_at_time: opt TimeStamp;
+};
+type SubAccount = vec nat8;
+type TimeStamp = record {
+  timestamp_nanos: nat64;
+};
+type Transaction = record {
+  transfer: Transfer;
+  memo: Memo;
+  created_at: BlockHeight;
+};
+type Transfer = variant {
+  Burn: record {
+    from: AccountIdentifier;
+    amount: ICPTs;
+  };
+  Mint: record {
+    to: AccountIdentifier;
+    amount: ICPTs;
+  };
+  Send: record {
+    from: AccountIdentifier;
+    to: AccountIdentifier;
+    amount: ICPTs;
+  };
+};
+type HeaderField = record {text; text};
+type HttpRequest = record {
+  url: text;
+  method: text;
+  body: vec nat8;
+  headers: vec HeaderField;
+};
+type HttpResponse = record {
+  body: vec nat8;
+  headers: vec HeaderField;
+  status_code: nat16;
+};
+service: (LedgerCanisterInitPayload) -> {
+  send_dfx : (SendArgs) -> (BlockHeight);
+  notify_dfx: (NotifyCanisterArgs) -> ();
+  account_balance_dfx : (AccountBalanceArgs) -> (ICPTs) query;
+  get_nodes : () -> (vec CanisterId) query;
+  http_request: (HttpRequest) -> (HttpResponse) query;
+}`
   },
   "rno2w-sqaaa-aaaaa-aaacq-cai": {
     name: "lifeline"
   },
-  "renrk-eyaaa-aaaaa-aaada-cai": {
-    name: "genesis-token"
-  },
   "rdmx6-jaaaa-aaaaa-aaadq-cai": {
     name: "identity"
   },
-  "qoctq-giaaa-aaaaa-aaaea-cai": {
-    name: "nns-ui"
-  },
-  "a4gq6-oaaaa-aaaab-qaa4q-cai": {
-    name: "candid-ui"
-  },
-  "h5aet-waaaa-aaaab-qaamq-cai": {
-    name: "dscvr.one"
-  },
-  "7e6iv-biaaa-aaaaf-aaada-cai": {
-    name: "openchat"
-  }
 }
