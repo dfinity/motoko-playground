@@ -69,7 +69,6 @@ export function CanisterModal({ isOpen, close }) {
     if (error || !canisterName || !canisterId || !candid) {
       return;
     }
-    console.log(candid);
     const id = Principal.fromText(canisterId);
     const info: CanisterInfo = {
       id,
@@ -78,11 +77,6 @@ export function CanisterModal({ isOpen, close }) {
     };
     await worker.Moc({ type: "save", file: `idl/${canisterId}.did`, content: candid });
     await dispatch({ type: "deployWorkplace", payload: { canister: info } });
-    /*const name = fileName.endsWith(".mo") ? fileName : `${fileName}.mo`;
-    await worker.Moc({ type: "save", file: name, content: "" });
-    await dispatch({ type: "saveFile", payload: { path: name, contents: "" } });
-    await dispatch({ type: "selectFile", payload: { path: name } });
-    */
     await close();
   }
   

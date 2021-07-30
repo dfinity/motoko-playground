@@ -93,7 +93,6 @@ export function App() {
   const [candidWidth, setCandidWidth] = useState("0");
   const [consoleHeight, setConsoleHeight] = useState("3rem");
   const [TTL, setTTL] = useState(BigInt(0));
-  const [forceUpdate, setForceUpdate] = useReducer(x => (x+1)%10, 0);
   
   const logger = useLogging();
 
@@ -112,7 +111,6 @@ export function App() {
   }
 
   const deployWorkplace = (info: CanisterInfo) => {
-    setForceUpdate();
     workplaceDispatch({
       type: 'deployWorkplace',
       payload: {
@@ -209,8 +207,7 @@ export function App() {
           {showCandidUI ?
           <CandidUI
            setCandidWidth={setCandidWidth}
-           canisterId={workplaceState.canisters[workplaceState.selectedCanister!]?.id.toString()}
-           forceUpdate={forceUpdate}
+           canisterInfo={workplaceState.canisters[workplaceState.selectedCanister!]}
           /> : null
         }
         </AppContainer>

@@ -78,13 +78,15 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
         });
       case "delete":
       case "expired": {
-        if (action === "delete") {
-          const canisterInfo = state.canisters[selectedCanister];
-          logger.log(`Deleting canister ${selectedCanister} with id ${canisterInfo.id.toText()}...`);
-          await deleteCanister(canisterInfo);
-          logger.log('Canister deleted');
-        } else {
-          logger.log(`Canister ${selectedCanister} expired`);
+        if (state.canisters[selectedCanister].timestamp) {
+          if (action === "delete") {
+            const canisterInfo = state.canisters[selectedCanister];
+            logger.log(`Deleting canister ${selectedCanister} with id ${canisterInfo.id.toText()}...`);
+            await deleteCanister(canisterInfo);
+            logger.log('Canister deleted');
+          } else {
+            logger.log(`Canister ${selectedCanister} expired`);
+          }
         }
         return dispatch({
           type: "deleteCanister",
@@ -187,7 +189,7 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
         onClick={() => onCanister(canister, 'select')}
         >
           <img src={iconCanister} alt="Canister icon"/>
-          {canister}
+          canister:{canister}
           <div style={{marginLeft: "auto"}}>{timeLeft[i]}</div>
           <MyButton onClick={() => onCanister(canister, 'delete')}>
           <img src={iconClose} alt="Close icon" />
