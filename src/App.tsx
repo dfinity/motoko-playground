@@ -207,7 +207,8 @@ export function App() {
           {showCandidUI ?
           <CandidUI
            setCandidWidth={setCandidWidth}
-           canisterInfo={workplaceState.canisters[workplaceState.selectedCanister!]}
+           canisterId={workplaceState.canisters[workplaceState.selectedCanister!]?.id.toString()}
+           candid={workplaceState.canisters[workplaceState.selectedCanister!]?.candid}
           /> : null
         }
         </AppContainer>
