@@ -81,6 +81,7 @@ export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
   const fileCode = fileName?state.files[fileName]:"";
   // TODO
   const mainFile = fileName.endsWith('.mo')?fileName:(state.files["Main.mo"]?"Main.mo":"");
+  const internalCanisters = Object.fromEntries(Object.entries(state.canisters).filter(([_, info]) => info.hasOwnProperty("timestamp")));
   const monaco = useMonaco();
   const checkFileAddMarkers = async () => {
     if (!fileName || !fileName.endsWith('mo')) return;
@@ -142,7 +143,7 @@ export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
         close={() => setShowModal(false)}
         onDeploy={onDeploy}
         isDeploy={setIsDeploying}
-        canisters={state.canisters}
+        canisters={internalCanisters}
         ttl={ttl}
         fileName={mainFile}
         candid={candidCode}

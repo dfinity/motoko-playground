@@ -154,8 +154,8 @@ export function getCanisterName(file: string): string {
   const path = file.split("/");
   const name = path.pop()!;
   if (name === "Main.mo" && path.length) {
-    return path.pop()!;
+    return path.pop()!.toLowerCase();
   } else {
-    return name.slice(0, -3);
+    return name.slice(0, -3).toLowerCase();
   }
 }
