@@ -79,16 +79,20 @@ async function fetchFromUrlParams(dispatch) : Promise<Record<string,string>|unde
         worker.Moc({ type: "save", file: file.name, content: file.content });
         return [file.name, file.content];
       }));
-      for (const pack of project.packages) {
-        const info = { name: pack.name, repo: pack.repo, version: pack.version, dir: pack.dir.length?pack.dir[0]:undefined, homepage: pack.homepage.length?pack.homepage[0]:undefined };
-        if (await worker.fetchPackage(info)) {
-          await dispatch({type: "loadPackage", payload: { name: info.name, package: info }});
+      if (project.packages.length) {
+        for (const pack of project.packages[0]) {
+          const info = { name: pack.name, repo: pack.repo, version: pack.version, dir: pack.dir.length?pack.dir[0]:undefined, homepage: pack.homepage.length?pack.homepage[0]:undefined };
+          if (await worker.fetchPackage(info)) {
+            await dispatch({type: "loadPackage", payload: { name: info.name, package: info }});
+          }
         }
       }
-      for (const canister of project.canisters) {
-        const info = { id: canister.id, isExternal: true, name: canister.name, candid: canister.candid };
-        await worker.Moc({type: "save", file: `idl/${info.id}.did`, content: info.candid });
-        await dispatch({type: "deployWorkplace", payload: { canister: info }});
+      if (project.canisters.length) {
+        for (const canister of project.canisters[0]) {
+          const info = { id: canister.id, isExternal: true, name: canister.name, candid: canister.candid };
+          await worker.Moc({type: "save", file: `idl/${info.id}.did`, content: info.candid });
+          await dispatch({type: "deployWorkplace", payload: { canister: info }});
+        }
       }
       return files;
     }

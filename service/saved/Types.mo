@@ -2,8 +2,8 @@
 module {
   public type MotokoProject = {
       files : [NamedFile];
-      packages : [PackageInfo];
-      canisters : [CanisterInfo];
+      packages : ?[PackageInfo];
+      canisters : ?[CanisterInfo];
   };
   public type NamedFile = {
       name : Text;
