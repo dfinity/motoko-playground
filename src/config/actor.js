@@ -1,5 +1,6 @@
-import { Actor, HttpAgent } from "@dfinity/agent";
+import { Actor, HttpAgent, ActorSubclass } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
+import { IDL } from "@dfinity/candid";
 import { idlFactory, canisterId } from "dfx-generated/backend";
 import { idlFactory as savedIdlFactory, canisterId as savedCanisterId } from "dfx-generated/saved";
 
@@ -39,6 +40,15 @@ export function getUiCanisterUrl(canisterId) {
   return is_local(agent)
     ? `http://${canisterId}.${dfxConfig.networks.local.bind}`
     : `https://${canisterId}.raw.ic0.app/?`;
+}
+
+export async function fetchCandidInterface(canisterId) {
+  const common_interface: IDL.InterfaceFactory = ({ IDL }) => IDL.Service({
+    __get_candid_interface_tmp_hack: IDL.Func([], [IDL.Text], ['query']),
+  });
+  const actor: ActorSubclass = Actor.createActor(common_interface, { agent, canisterId });
+  const candid_source = await actor.__get_candid_interface_tmp_hack();
+  return candid_source;
 }
 
 export async function didToJs(source) {

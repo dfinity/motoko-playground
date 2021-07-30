@@ -21,7 +21,7 @@ const ButtonContainer = styled.div`
   width: 100%;
 `;
 const MyButton = styled(Button)`
-  margin: 2rem;
+  margin: 2rem 2rem 0 0;
 `;
 
 export function FileModal({ isOpen, close }) {

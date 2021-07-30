@@ -5,7 +5,8 @@ import { ILoggingStore } from './components/Logger';
 
 export interface CanisterInfo {
   id: Principal,
-  timestamp: bigint,
+  isExternal: bool,
+  timestamp?: bigint,
   name?: string,
   candid?: string | null,
 }
@@ -119,6 +120,7 @@ async function createCanister(worker, logger: ILoggingStore): Promise<CanisterIn
   logger.log(`Get canister id ${info.id}`);
   return {
     id: info.id,
+    isExternal: false,
     timestamp: info.timestamp,
   };
 }
@@ -154,8 +156,8 @@ export function getCanisterName(file: string): string {
   const path = file.split("/");
   const name = path.pop()!;
   if (name === "Main.mo" && path.length) {
-    return path.pop()!;
+    return path.pop()!.toLowerCase();
   } else {
-    return name.slice(0, -3);
+    return name.slice(0, -3).toLowerCase();
   }
 }

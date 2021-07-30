@@ -39,6 +39,8 @@ actor {
       };
       x
     };
+    // Hash is only computed based on files. Packages and canisters
+    // are considered as configs which can be updated with the same code.
     for (file in p.files.vals()) {
       x := hashCont(x, file.name);
       x := hashCont(x, file.content);

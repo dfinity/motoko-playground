@@ -13,6 +13,18 @@ export interface WorkplaceState {
 export function getActorAliases(canisters: Record<string, CanisterInfo>) : Array<[string, string]> {
   return Object.entries(canisters).map(([name, info]) => [name, (info as any).id.toText()]);
 }
+export function getExternalCanisters(canisters: Record<string, CanisterInfo>) : Record<string, CanisterInfo> {
+  return Object.fromEntries(Object.entries(canisters).filter(([_, info]) => info.isExternal));
+}
+export function getDeployedCanisters(canisters: Record<string, CanisterInfo>) : Record<string, CanisterInfo> {
+  return Object.fromEntries(Object.entries(canisters).filter(([_, info]) => !info.isExternal));
+}
+export function getShareableProject(state: WorkplaceState) {
+  const files = Object.entries(state.files).filter(([name,_]) => name.endsWith(".mo")).map(([name,content]) => { return { name, content } });
+  const packages = [Object.entries(state.packages).filter(([name,_]) => name !== "base").map(([_, info]) => { return { name: info.name, repo: info.repo, version: info.version, dir: info.dir?[info.dir]:[], homepage: info.homepage?[info.homepage]:[] } })];
+  const canisters = [Object.values(state.canisters).filter((info) => info.isExternal && info.name && info.candid).map((info) => { return { id: info.id, name: info.name, candid: info.candid } })];
+  return {files, packages, canisters};
+}
 
 export type WorkplaceReducerAction =
 /**
