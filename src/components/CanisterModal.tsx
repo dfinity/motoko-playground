@@ -7,6 +7,7 @@ import { Principal } from "@dfinity/principal";
 import { WorkerContext, WorkplaceDispatchContext } from "../contexts/WorkplaceState";
 import { fetchCandidInterface } from "../config/actor";
 import { CanisterInfo } from "../build";
+import { canisterSet } from "../config/canister-set";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -45,9 +46,17 @@ export function CanisterModal({ isOpen, close }) {
   async function validateAndSetId(e) {
     const id = e.target.value;
     await setCanisterId(id);
+    let candid;
     try {
       const cid = Principal.fromText(id);
-      const candid = await fetchCandidInterface(cid);
+      if (canisterSet.hasOwnProperty(id)) {
+        const canister = canisterSet[id];
+        setCanisterName(canister.name);
+        candid = canister.candid;
+      }
+      if (!candid) {
+        candid = await fetchCandidInterface(cid);
+      }
       setCandid(candid);
       setError("");
     } catch (err) {
@@ -84,10 +93,13 @@ export function CanisterModal({ isOpen, close }) {
       <Modal isOpen={isOpen} close={close} label="Import canister" shouldCloseOnEsc={true}>
       <ModalContainer>
       <Item>Import an external canister</Item>
+      <Item>Canister ID &nbsp;
+      <input type="text" list="canisters" style={{width: "25rem"}} value={canisterId} onChange={validateAndSetId} /></Item>
+      <datalist id="canisters">
+      {Object.entries(canisterSet).map(([id, info]) => (<option value={id}>{info.name}</option>))}
+      </datalist>
       <Item>Canister name &nbsp;
       <input type="text" value={canisterName} onChange={(e) => setCanisterName(e.target.value)} /></Item>
-      <Item>Canister ID &nbsp;
-      <input type="text" value={canisterId} onChange={validateAndSetId} /></Item>
       {error ? (<Item>{error}</Item>) : null}
       {uploadDid ? (
           <Item>Upload did file &nbsp;
