@@ -1,5 +1,5 @@
 // @ts-ignore
-importScripts("./moc-0.6.5.js");
+importScripts("./moc-0.6.6.js");
 
 export * from "./pow";
 export * from "./file";
