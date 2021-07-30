@@ -5,7 +5,7 @@ import { ILoggingStore } from './components/Logger';
 
 export interface CanisterInfo {
   id: Principal,
-  timestamp: bigint,
+  timestamp?: bigint,
   name?: string,
   candid?: string | null,
 }

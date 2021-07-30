@@ -8,6 +8,7 @@ import { ListButton } from "./shared/SelectList";
 import { WorkplaceState, WorkplaceDispatchContext } from "../contexts/WorkplaceState";
 import { PackageModal } from "./PackageModal";
 import { FileModal } from "./FileModal";
+import { CanisterModal } from "./CanisterModal";
 import { PackageInfo } from "../workers/file";
 import { ILoggingStore } from './Logger';
 import { deleteCanister } from "../build";
@@ -46,6 +47,7 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
   const [isExpired, setIsExpired] = useState<Array<string>>([])
   const [showPackage, setShowPackage] = useState(false);
   const [showFileModal, setShowFileModal] = useState(false);
+  const [showCanisterModal, setShowCanisterModal] = useState(false);
   const dispatch = useContext(WorkplaceDispatchContext);
 
   const onSelectFile = (selectedFile: string) => {
@@ -96,25 +98,30 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
     }
   };
 
-  const calcTimeLeft = (timestamp: bigint) : number => {
-    const now = BigInt(Date.now()) * BigInt(1_000_000);
-    const left = Number((ttl - (now - timestamp)) / BigInt(1_000_000_000));
-    return left;
+  const calcTimeLeft = (timestamp: bigint|undefined) : number|undefined => {
+    if (timestamp) {
+      const now = BigInt(Date.now()) * BigInt(1_000_000);
+      const left = Number((ttl - (now - timestamp)) / BigInt(1_000_000_000));
+      return left;
+    }
   };
   useEffect(() => {
     if (Object.keys(state.canisters).length === 0) {
       return;
     }
     const timer = setTimeout(() => {
-      const times: Array<[string, number]> = Object.values(state.canisters).map((info) => {
+      const times: Array<[string, number|undefined]> = Object.values(state.canisters).map((info) => {
         return [info.name!, calcTimeLeft(info.timestamp)];
       });
-      const expired = times.filter(([_, left]) => left <= 0).map(([name, _]) => name);
+      const expired = times.filter(([_, left]) => left && left <= 0).map(([name, _]) => name);
       // Guard setIsExpired because of shallow equality
       if (expired.length > 0 && JSON.stringify(isExpired) !== JSON.stringify(expired)) {
         setIsExpired(expired);
       }
       setTimeLeft(times.map(([_, left]) => {
+        if (!left) {
+          return "";
+        }
         if (left > 0) {
           const minute = Math.floor(left / 60);
           const second = left % 60;
@@ -143,6 +150,7 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
         close={() => setShowPackage(false)}
         loadPackage={loadPackage}
       />
+      <CanisterModal isOpen={showCanisterModal} close={() => setShowCanisterModal(false)} />
       <CategoryTitle>Files
       <MyButton onClick={() => setShowFileModal(true)}><img style={{width:"1.6rem"}} src={iconPlus} alt="Add file"/></MyButton>
       </CategoryTitle>
@@ -168,7 +176,9 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
           <p>mo:{info.name}</p>
           </ListButton>
       ))}
-      <CategoryTitle>Canisters</CategoryTitle>
+      <CategoryTitle>Canisters
+      <MyButton onClick={() => setShowCanisterModal(true)}><img style={{width:"1.6rem"}} src={iconPlus} alt="Add canister"/></MyButton>
+      </CategoryTitle>
       {Object.keys(state.canisters).map((canister, i) => (
         <ListButton
         key={canister}
