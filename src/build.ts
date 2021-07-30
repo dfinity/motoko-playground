@@ -5,6 +5,7 @@ import { ILoggingStore } from './components/Logger';
 
 export interface CanisterInfo {
   id: Principal,
+  isExternal: bool,
   timestamp?: bigint,
   name?: string,
   candid?: string | null,
@@ -119,6 +120,7 @@ async function createCanister(worker, logger: ILoggingStore): Promise<CanisterIn
   logger.log(`Get canister id ${info.id}`);
   return {
     id: info.id,
+    isExternal: false,
     timestamp: info.timestamp,
   };
 }

@@ -81,6 +81,7 @@ export function CanisterModal({ isOpen, close }) {
     const id = Principal.fromText(canisterId);
     const info: CanisterInfo = {
       id,
+      isExternal: true,
       name: canisterName,
       candid,
     };

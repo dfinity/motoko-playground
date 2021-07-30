@@ -13,7 +13,7 @@ import { Console } from "./Console";
 import iconRabbit from "../assets/images/icon-rabbit.png";
 import iconSpin from "../assets/images/icon-spin.gif";
 import { DeployModal } from "./DeployModal";
-import { getActorAliases, WorkerContext, WorkplaceDispatchContext } from "../contexts/WorkplaceState";
+import { getActorAliases, getDeployedCanisters, WorkerContext, WorkplaceDispatchContext } from "../contexts/WorkplaceState";
 import { compileCandid } from "../build";
 import { didToJs } from "../config/actor";
 
@@ -81,7 +81,7 @@ export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
   const fileCode = fileName?state.files[fileName]:"";
   // TODO
   const mainFile = fileName.endsWith('.mo')?fileName:(state.files["Main.mo"]?"Main.mo":"");
-  const internalCanisters = Object.fromEntries(Object.entries(state.canisters).filter(([_, info]) => info.hasOwnProperty("timestamp")));
+  const internalCanisters = getDeployedCanisters(state.canisters);
   const monaco = useMonaco();
   const checkFileAddMarkers = async () => {
     if (!fileName || !fileName.endsWith('mo')) return;

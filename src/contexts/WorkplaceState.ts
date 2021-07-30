@@ -13,6 +13,12 @@ export interface WorkplaceState {
 export function getActorAliases(canisters: Record<string, CanisterInfo>) : Array<[string, string]> {
   return Object.entries(canisters).map(([name, info]) => [name, (info as any).id.toText()]);
 }
+export function getExternalCanisters(canisters: Record<string, CanisterInfo>) : Record<string, CanisterInfo> {
+  return Object.fromEntries(Object.entries(canisters).filter(([_, info]) => info.isExternal));
+}
+export function getDeployedCanisters(canisters: Record<string, CanisterInfo>) : Record<string, CanisterInfo> {
+  return Object.fromEntries(Object.entries(canisters).filter(([_, info]) => !info.isExternal));
+}
 
 export type WorkplaceReducerAction =
 /**
