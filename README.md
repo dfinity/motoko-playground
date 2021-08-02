@@ -22,9 +22,26 @@ We plan on adding many more features to make playground a full-featured web IDE 
 
 ## Running Locally
 
-Prerequisites: dfx, npm, vessel, rust, binaryen.
+### Prerequisites: 
+- [Install node/npm](https://nodejs.org/en/download/)
+- [Install DFX](https://sdk.dfinity.org/docs/quickstart/local-quickstart.html)
+- [Install Rust](https://www.rust-lang.org/tools/install)
+- [Install rustup](https://rustup.rs/)
+- Install binaryen
+  ```
+  apt install binaryen
+  ```
+- Install yarn
+  ```
+  sudo npm install -g yarn
+  ```
+- Add rustup target
+  ```
+  rustup target add wasm32-unknown-unknown
+  ```
 
-To run the Motoko playground locally, proceed as follows after cloning the respository.
+
+### To run the Motoko playground locally, proceed as follows after cloning the respository.
 
 ```
 npm install
