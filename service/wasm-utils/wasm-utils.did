@@ -1,4 +1,5 @@
-service : {
-  transform : (blob) -> (blob);
-}
+type Config = record { profiling: bool; remove_cycles_add: bool };
 
+service : {
+  transform : (blob, Config) -> (blob);
+}
