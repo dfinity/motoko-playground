@@ -174,7 +174,7 @@ export function DeployModal({
           </InitContainer>)
        : null}
       </SelectLabel>
-      <p><input type="checkbox" onChange={(e) => setProfiling(e.target.checked)} /> Enable profiling (experimental)</p>
+      <p><input type="checkbox" checked={profiling} onChange={(e) => setProfiling(e.target.checked)} /> Enable profiling (experimental)</p>
       {Warnings}
       <ProjectButtonContents>
       {canisters.hasOwnProperty(canisterName)?(<>

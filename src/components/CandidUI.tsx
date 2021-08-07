@@ -36,7 +36,7 @@ const Button = styled.button`
 
 const CANDID_UI_CANISTER_URL = uiCanisterUrl;
 
-export function CandidUI({ canisterId, candid, setCandidWidth }) {
+export function CandidUI({ canisterId, candid, setCandidWidth, forceUpdate }) {
   const [isExpanded, setIsExpanded] = useState(true);
   const didParam = candid ? `&did=${encodeURIComponent(btoa(candid))}` : "";
 
@@ -46,9 +46,9 @@ export function CandidUI({ canisterId, candid, setCandidWidth }) {
   }, [isExpanded, setCandidWidth]);
   useEffect(() => {
     setIsExpanded(true);
-  }, [canisterId, candid]);
+  }, [canisterId, candid, forceUpdate]);
 
-  const url = `${CANDID_UI_CANISTER_URL}/?id=${canisterId}` + didParam;
+  const url = `${CANDID_UI_CANISTER_URL}/?id=${canisterId}&tag=${forceUpdate}` + didParam;
   return (
     <CandidPanel isExpanded={isExpanded}>
       <PanelHeader>
