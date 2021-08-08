@@ -8,11 +8,11 @@ struct InjectionPoint {
     is_gc: bool,
 }
 impl InjectionPoint {
-    fn new(is_gc: bool) -> Self {
+    fn new() -> Self {
         InjectionPoint {
             position: 0,
             cost: 0,
-            is_gc,
+            is_gc: false,
         }
     }
 }
@@ -57,7 +57,7 @@ fn inject_metering(
         let seq = func.block(seq_id);
         // Finding injection points
         let mut injection_points = vec![];
-        let mut curr = InjectionPoint::new(false);
+        let mut curr = InjectionPoint::new();
         for (pos, (instr, _)) in seq.instrs.iter().enumerate() {
             curr.position = pos;
             match instr {
@@ -69,7 +69,7 @@ fn inject_metering(
                     }
                     stack.push(*seq);
                     injection_points.push(curr);
-                    curr = InjectionPoint::new(false);
+                    curr = InjectionPoint::new();
                 }
                 Instr::IfElse(IfElse {
                     consequent,
@@ -79,25 +79,25 @@ fn inject_metering(
                     stack.push(*consequent);
                     stack.push(*alternative);
                     injection_points.push(curr);
-                    curr = InjectionPoint::new(false);
+                    curr = InjectionPoint::new();
                 }
                 Instr::Br(_) | Instr::BrIf(_) | Instr::BrTable(_) => {
                     // br always points to a block, so we don't need to push the br block to stack for traversal
                     curr.cost += 1;
                     injection_points.push(curr);
-                    curr = InjectionPoint::new(false);
+                    curr = InjectionPoint::new();
                 }
                 Instr::Return(_) | Instr::Unreachable(_) => {
                     curr.cost += 1;
                     injection_points.push(curr);
-                    curr = InjectionPoint::new(false);
+                    curr = InjectionPoint::new();
                 }
                 Instr::Call(Call { func }) => {
                     curr.cost += 1;
                     if *func == gc_func {
                         curr.is_gc = true;
                         injection_points.push(curr);
-                        curr = InjectionPoint::new(false);
+                        curr = InjectionPoint::new();
                     }
                 }
                 _ => {
@@ -113,103 +113,32 @@ fn inject_metering(
         let mut instrs = vec![];
         let mut last_injection_position = 0;
         for point in injection_points {
-            // injection happens one instruction before the injection_points, so the cost contains
-            // the control flow instruction.
             instrs.extend_from_slice(&original[last_injection_position..point.position]);
+            #[rustfmt::skip]
             if point.is_gc {
                 instrs.extend_from_slice(&[
-                    (
-                        GlobalGet {
-                            global: counters.total,
-                        }
-                        .into(),
-                        Default::default(),
-                    ),
-                    (
-                        LocalSet {
-                            local: gc_local_counter,
-                        }
-                        .into(),
-                        Default::default(),
-                    ),
+                    (GlobalGet { global: counters.total }.into(), Default::default()),
+                    (LocalSet { local: gc_local_counter }.into(), Default::default()),
                     original[point.position].clone(),
-                    (
-                        GlobalGet {
-                            global: counters.total,
-                        }
-                        .into(),
-                        Default::default(),
-                    ),
-                    (
-                        LocalGet {
-                            local: gc_local_counter,
-                        }
-                        .into(),
-                        Default::default(),
-                    ),
-                    (
-                        Binop {
-                            op: BinaryOp::I64Sub,
-                        }
-                        .into(),
-                        Default::default(),
-                    ),
-                    (
-                        GlobalGet {
-                            global: counters.gc,
-                        }
-                        .into(),
-                        Default::default(),
-                    ),
-                    (
-                        Binop {
-                            op: BinaryOp::I64Add,
-                        }
-                        .into(),
-                        Default::default(),
-                    ),
-                    (
-                        GlobalSet {
-                            global: counters.gc,
-                        }
-                        .into(),
-                        Default::default(),
-                    ),
+                    (GlobalGet { global: counters.total }.into(), Default::default()),
+                    (LocalGet { local: gc_local_counter }.into(), Default::default()),
+                    (Binop { op: BinaryOp::I64Sub }.into(), Default::default()),
+                    (GlobalGet { global: counters.gc }.into(), Default::default()),
+                    (Binop { op: BinaryOp::I64Add }.into(), Default::default()),
+                    (GlobalSet { global: counters.gc }.into(), Default::default()),
                 ]);
                 last_injection_position = point.position + 1;
             } else {
+                // injection happens one instruction before the injection_points, so the cost contains
+                // the control flow instruction.
                 instrs.extend_from_slice(&[
-                    (
-                        GlobalGet {
-                            global: counters.total,
-                        }
-                        .into(),
-                        Default::default(),
-                    ),
-                    (
-                        Const {
-                            value: Value::I64(point.cost),
-                        }
-                        .into(),
-                        Default::default(),
-                    ),
-                    (
-                        Binop {
-                            op: BinaryOp::I64Add,
-                        }
-                        .into(),
-                        Default::default(),
-                    ),
-                    (
-                        GlobalSet {
-                            global: counters.total,
-                        }
-                        .into(),
-                        Default::default(),
-                    ),
+                    (GlobalGet { global: counters.total }.into(), Default::default()),
+                    (Const { value: Value::I64(point.cost) }.into(), Default::default()),
+                    (Binop { op: BinaryOp::I64Add }.into(), Default::default()),
+                    (GlobalSet { global: counters.total }.into(), Default::default()),
                 ]);
                 last_injection_position = point.position;
-            }
+            };
         }
         instrs.extend_from_slice(&original[last_injection_position..]);
         *original = instrs;
@@ -231,6 +160,7 @@ fn inject_getter(m: &mut Module, counters: &Counters) {
     );
     let mut getter = FunctionBuilder::new(&mut m.types, &[], &[]);
     getter.name("__get_cycles".to_string());
+    #[rustfmt::skip]
     getter
         .func_body()
         .i32_const(8)
@@ -238,20 +168,14 @@ fn inject_getter(m: &mut Module, counters: &Counters) {
         .store(
             memory,
             StoreKind::I64 { atomic: false },
-            MemArg {
-                offset: 0,
-                align: 8,
-            },
+            MemArg { offset: 0, align: 8 },
         )
         .i32_const(16)
         .global_get(counters.gc)
         .store(
             memory,
             StoreKind::I64 { atomic: false },
-            MemArg {
-                offset: 0,
-                align: 8,
-            },
+            MemArg { offset: 0, align: 8 },
         )
         .i32_const(0)
         .i32_const(8 * 3)
