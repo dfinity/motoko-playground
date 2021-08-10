@@ -20,7 +20,7 @@ impl InjectionPoint {
 struct Variables {
     total_counter: GlobalId,
     gc_counter: GlobalId,
-    gc_func: FunctionId,
+    gc_funcs: Vec<FunctionId>,
     gc_local_var: LocalId,
 }
 
@@ -32,12 +32,14 @@ pub fn instrument(m: &mut Module) {
     let gc_counter = m
         .globals
         .add_local(ValType::I64, true, InitExpr::Value(Value::I64(0)));
-    let gc_func = m.funcs.by_name("schedule_copying_gc").unwrap();
+    let mut gc_funcs = Vec::new();
+    m.funcs.by_name("schedule_copying_gc").and_then(|id| Some(gc_funcs.push(id)));
+    m.funcs.by_name("schedule_compacting_gc").and_then(|id| Some(gc_funcs.push(id)));
     let gc_local_var = m.locals.add(ValType::I64);
     let vars = Variables {
         total_counter,
         gc_counter,
-        gc_func,
+        gc_funcs,
         gc_local_var,
     };
     for (_, func) in m.funcs.iter_local_mut() {
@@ -89,7 +91,7 @@ fn inject_metering(func: &mut LocalFunction, start: InstrSeqId, vars: &Variables
                 }
                 Instr::Call(Call { func }) => {
                     curr.cost += 1;
-                    if *func == vars.gc_func {
+                    if vars.gc_funcs.contains(func) {
                         curr.is_gc = true;
                         injection_points.push(curr);
                         curr = InjectionPoint::new();
