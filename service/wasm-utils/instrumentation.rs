@@ -17,41 +17,36 @@ impl InjectionPoint {
     }
 }
 
-struct Counters {
-    total: GlobalId,
-    gc: GlobalId,
+struct Variables {
+    total_counter: GlobalId,
+    gc_counter: GlobalId,
+    gc_func: FunctionId,
+    gc_local_var: LocalId,
 }
 
 pub fn instrument(m: &mut Module) {
     // TODO put counter in stable memory so that we can profile upgrades.
-    let total = m
+    let total_counter = m
         .globals
         .add_local(ValType::I64, true, InitExpr::Value(Value::I64(0)));
-    let gc = m
+    let gc_counter = m
         .globals
         .add_local(ValType::I64, true, InitExpr::Value(Value::I64(0)));
-    let counters = Counters { total, gc };
     let gc_func = m.funcs.by_name("schedule_copying_gc").unwrap();
-    let gc_local_counter = m.locals.add(ValType::I64);
+    let gc_local_var = m.locals.add(ValType::I64);
+    let vars = Variables {
+        total_counter,
+        gc_counter,
+        gc_func,
+        gc_local_var,
+    };
     for (_, func) in m.funcs.iter_local_mut() {
-        inject_metering(
-            func,
-            func.entry_block(),
-            gc_func,
-            gc_local_counter,
-            &counters,
-        );
+        inject_metering(func, func.entry_block(), &vars);
     }
-    inject_getter(m, &counters);
+    inject_getter(m, &vars);
 }
 
-fn inject_metering(
-    func: &mut LocalFunction,
-    start: InstrSeqId,
-    gc_func: FunctionId,
-    gc_local_counter: LocalId,
-    counters: &Counters,
-) {
+fn inject_metering(func: &mut LocalFunction, start: InstrSeqId, vars: &Variables) {
     let mut stack = vec![start];
     while let Some(seq_id) = stack.pop() {
         let seq = func.block(seq_id);
@@ -94,7 +89,7 @@ fn inject_metering(
                 }
                 Instr::Call(Call { func }) => {
                     curr.cost += 1;
-                    if *func == gc_func {
+                    if *func == vars.gc_func {
                         curr.is_gc = true;
                         injection_points.push(curr);
                         curr = InjectionPoint::new();
@@ -117,25 +112,25 @@ fn inject_metering(
             #[rustfmt::skip]
             if point.is_gc {
                 instrs.extend_from_slice(&[
-                    (GlobalGet { global: counters.total }.into(), Default::default()),
-                    (LocalSet { local: gc_local_counter }.into(), Default::default()),
+                    (GlobalGet { global: vars.total_counter }.into(), Default::default()),
+                    (LocalSet { local: vars.gc_local_var }.into(), Default::default()),
                     original[point.position].clone(),
-                    (GlobalGet { global: counters.total }.into(), Default::default()),
-                    (LocalGet { local: gc_local_counter }.into(), Default::default()),
+                    (GlobalGet { global: vars.total_counter }.into(), Default::default()),
+                    (LocalGet { local: vars.gc_local_var }.into(), Default::default()),
                     (Binop { op: BinaryOp::I64Sub }.into(), Default::default()),
-                    (GlobalGet { global: counters.gc }.into(), Default::default()),
+                    (GlobalGet { global: vars.gc_counter }.into(), Default::default()),
                     (Binop { op: BinaryOp::I64Add }.into(), Default::default()),
-                    (GlobalSet { global: counters.gc }.into(), Default::default()),
+                    (GlobalSet { global: vars.gc_counter }.into(), Default::default()),
                 ]);
                 last_injection_position = point.position + 1;
             } else {
                 // injection happens one instruction before the injection_points, so the cost contains
                 // the control flow instruction.
                 instrs.extend_from_slice(&[
-                    (GlobalGet { global: counters.total }.into(), Default::default()),
+                    (GlobalGet { global: vars.total_counter }.into(), Default::default()),
                     (Const { value: Value::I64(point.cost) }.into(), Default::default()),
                     (Binop { op: BinaryOp::I64Add }.into(), Default::default()),
-                    (GlobalSet { global: counters.total }.into(), Default::default()),
+                    (GlobalSet { global: vars.total_counter }.into(), Default::default()),
                 ]);
                 last_injection_position = point.position;
             };
@@ -145,7 +140,7 @@ fn inject_metering(
     }
 }
 
-fn inject_getter(m: &mut Module, counters: &Counters) {
+fn inject_getter(m: &mut Module, vars: &Variables) {
     let memory = get_memory_id(m);
     let reply_data = get_ic_func_id(m, "msg_reply_data_append");
     let reply = get_ic_func_id(m, "msg_reply");
@@ -164,14 +159,14 @@ fn inject_getter(m: &mut Module, counters: &Counters) {
     getter
         .func_body()
         .i32_const(8)
-        .global_get(counters.total)
+        .global_get(vars.total_counter)
         .store(
             memory,
             StoreKind::I64 { atomic: false },
             MemArg { offset: 0, align: 8 },
         )
         .i32_const(16)
-        .global_get(counters.gc)
+        .global_get(vars.gc_counter)
         .store(
             memory,
             StoreKind::I64 { atomic: false },
