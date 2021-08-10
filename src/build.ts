@@ -61,7 +61,7 @@ export async function compileCandid(worker, file: string, logger: ILoggingStore)
   return candid_source;
 }
 
-export async function deploy(worker, canisterName: string, canisterInfo: CanisterInfo|null, args: BinaryBlob, mode: string, file: string, logger: ILoggingStore): Promise<CanisterInfo | undefined> {
+export async function deploy(worker, canisterName: string, canisterInfo: CanisterInfo|null, args: BinaryBlob, mode: string, file: string, profiling: boolean, logger: ILoggingStore): Promise<CanisterInfo | undefined> {
   logger.clearLogs();
   logger.log('Compiling code...');
 
@@ -89,6 +89,7 @@ export async function deploy(worker, canisterName: string, canisterInfo: Caniste
           module,
           args,
           "install",
+          profiling,
           logger
         );
       } else {
@@ -100,6 +101,7 @@ export async function deploy(worker, canisterName: string, canisterInfo: Caniste
           module,
           args,
           mode,
+          profiling,
           logger
         );
       }
@@ -134,6 +136,7 @@ async function install(
   module: BinaryBlob,
   args: BinaryBlob,
   mode: string,
+  profiling: boolean,
   logger: ILoggingStore): Promise<CanisterInfo>
 {
   if (!canisterInfo) {
@@ -146,7 +149,7 @@ async function install(
     mode: { [mode]: null },
     canister_id: canisterId,
   };
-  const new_info = await backend.installCode(canisterInfo, installArgs);
+  const new_info = await backend.installCode(canisterInfo, installArgs, profiling);
   canisterInfo = new_info;
   logger.log(`Code installed at canister id ${canisterInfo.id}`);
   return canisterInfo;

@@ -73,6 +73,7 @@ export function DeployModal({
 }: DeployModalProps) {
   const [canisterName, setCanisterName] = useState("");
   const [inputs, setInputs] = useState<InputBox[]>([]);
+  const [profiling, setProfiling] = useState(false);
   const worker = useContext(WorkerContext);
 
   const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
@@ -114,7 +115,7 @@ export function DeployModal({
     await close();
     try {
       await isDeploy(true);
-      const info = await deploy(worker, canisterName, canisters[canisterName], args, mode, fileName, logger);
+      const info = await deploy(worker, canisterName, canisters[canisterName], args, mode, fileName, profiling, logger);
       await isDeploy(false);
       if (info) {
         info.candid = candid;
@@ -172,7 +173,8 @@ export function DeployModal({
           <div className="InitArgs" ref={initArgs}></div>
           </InitContainer>)
        : null}
-    </SelectLabel>
+      </SelectLabel>
+      <p><input type="checkbox" checked={profiling} onChange={(e) => setProfiling(e.target.checked)} /> Enable profiling (experimental)</p>
       {Warnings}
       <ProjectButtonContents>
       {canisters.hasOwnProperty(canisterName)?(<>
