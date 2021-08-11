@@ -8,6 +8,7 @@ import { ILoggingStore } from './Logger';
 import { Button } from "./shared/Button";
 import "../assets/styles/candid.css";
 import { WorkerContext } from "../contexts/WorkplaceState";
+import { didjs } from "../config/actor";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -114,12 +115,29 @@ export function DeployModal({
     }
     await close();
     try {
+      logger.clearLogs();
+      let candid_src = candid;
+      if (initTypes.length) {
+        candid_src = (await didjs.binding(candid, "installed_did"))[0];
+      }
+      if (mode === "upgrade") {
+        // TODO subtype check for init args
+        if (canisters[canisterName].candid) {
+          const old = canisters[canisterName].candid;
+          const result = await didjs.subtype(candid_src, old);
+          if (result.hasOwnProperty("Err")) {
+            const err = result.Err.replaceAll("expected type", "pre-upgrade interface");
+            logger.log("Warning: upgrade is not backward compatible:\n" + err);
+            // TODO show the warning modal
+          }
+        }
+      }
       await isDeploy(true);
       const info = await deploy(worker, canisterName, canisters[canisterName], args, mode, fileName, profiling, logger);
       await isDeploy(false);
       if (info) {
-        info.candid = candid;
-        await worker.Moc({ type:"save", file: `idl/${info.id}.did`, content: candid });
+        info.candid = candid_src;
+        await worker.Moc({ type:"save", file: `idl/${info.id}.did`, content: candid_src });
         onDeploy(info);
       }
     } catch (err) {

@@ -5,7 +5,7 @@ import { Button } from "./shared/Button";
 import { Principal } from "@dfinity/principal";
 
 import { WorkerContext, WorkplaceDispatchContext } from "../contexts/WorkplaceState";
-import { fetchCandidInterface } from "../config/actor";
+import { fetchCandidInterface, didjs } from "../config/actor";
 import { CanisterInfo } from "../build";
 import { canisterSet } from "../config/canister-set";
 
@@ -36,6 +36,7 @@ export function CanisterModal({ isOpen, close }) {
   const [candid, setCandid] = useState("");
   const [uploadDid, setUploadDid] = useState(false);
   const [error, setError] = useState("");
+  const [genBinding, setGenBinding] = useState(false);
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
 
@@ -87,6 +88,12 @@ export function CanisterModal({ isOpen, close }) {
     };
     await worker.Moc({ type: "save", file: `idl/${canisterId}.did`, content: candid });
     await dispatch({ type: "deployWorkplace", payload: { canister: info } });
+    if (genBinding) {
+      const file = canisterName + ".mo";
+      const content = (await didjs.binding(candid ,"mo"))[0];
+      await worker.Moc({ type: "save", file, content });
+      await dispatch({ type: "saveFile", payload: { path: file, contents: content } });
+    }
     await close();
   }
   
@@ -101,6 +108,7 @@ export function CanisterModal({ isOpen, close }) {
       </datalist>
       <Item>Canister name &nbsp;
       <input type="text" value={canisterName} onChange={(e) => setCanisterName(e.target.value)} /></Item>
+      <Item><input type="checkbox" checked={genBinding} onChange={(e) => setGenBinding(e.target.checked)} /> Generate Motoko binding</Item>
       {error ? (<Item>{error}</Item>) : null}
       {uploadDid ? (
           <Item>Upload did file &nbsp;

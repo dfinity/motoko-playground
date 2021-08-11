@@ -4,7 +4,7 @@ import { IDL } from "@dfinity/candid";
 import { idlFactory, canisterId } from "dfx-generated/backend";
 import { idlFactory as savedIdlFactory, canisterId as savedCanisterId } from "dfx-generated/saved";
 
-import didjs_idl from "../didjs.did";
+import { idlFactory as didjs_idl } from "../didjs.did";
 import dfxConfig from "../../dfx.json";
 
 function is_local(agent) {
@@ -26,12 +26,12 @@ export const backend = Actor.createActor(idlFactory, { agent, canisterId });
 export const saved = Actor.createActor(savedIdlFactory, { agent, canisterId: savedCanisterId });
 
 const uiCanisterId = is_local(agent)
-  ? "rno2w-sqaaa-aaaaa-aaacq-cai"
+  ? "qvhpv-4qaaa-aaaaa-aaagq-cai" //"rno2w-sqaaa-aaaaa-aaacq-cai"
   : "a4gq6-oaaaa-aaaab-qaa4q-cai";
 export const uiCanisterUrl = is_local(agent)
   ? `http://${uiCanisterId}.${dfxConfig.networks.local.bind}`
   : `https://${uiCanisterId}.raw.ic0.app`;
-const didjs = Actor.createActor(didjs_idl, {
+export const didjs = Actor.createActor(didjs_idl, {
   agent,
   canisterId: Principal.fromText(uiCanisterId),
 });

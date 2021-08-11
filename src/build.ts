@@ -62,7 +62,6 @@ export async function compileCandid(worker, file: string, logger: ILoggingStore)
 }
 
 export async function deploy(worker, canisterName: string, canisterInfo: CanisterInfo|null, args: BinaryBlob, mode: string, file: string, profiling: boolean, logger: ILoggingStore): Promise<CanisterInfo | undefined> {
-  logger.clearLogs();
   logger.log('Compiling code...');
 
   // NOTE: Will change to "ic" in a future moc release
