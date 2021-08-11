@@ -2,13 +2,13 @@
 module {
   public type canister_id = Principal;
   public type canister_settings = {
-    controller : ?Principal;
+    controllers : ?[Principal];
     freezing_threshold : ?Nat;
     memory_allocation : ?Nat;
     compute_allocation : ?Nat;
   };
   public type definite_canister_settings = {
-    controller : Principal;
+    controllers : [Principal];
     freezing_threshold : Nat;
     memory_allocation : Nat;
     compute_allocation : Nat;

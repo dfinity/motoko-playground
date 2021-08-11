@@ -1,21 +1,20 @@
 export const canisterSet = {
   "aaaaa-aa": {
     name: "ic",
-    candid: `// from spec 0.17.0
+    candid: `// from spec 0.18.0
 type canister_id = principal;
 type user_id = principal;
 type wasm_module = blob;
-type unit = blob;
 
 type canister_settings = record {
-  controller : opt principal;
+  controllers : opt vec principal;
   compute_allocation : opt nat;
   memory_allocation : opt nat;
   freezing_threshold : opt nat;
 };
 
 type definite_canister_settings = record {
-  controller : principal;
+  controllers : vec principal;
   compute_allocation : nat;
   memory_allocation : nat;
   freezing_threshold : nat;
