@@ -26,7 +26,7 @@ export const backend = Actor.createActor(idlFactory, { agent, canisterId });
 export const saved = Actor.createActor(savedIdlFactory, { agent, canisterId: savedCanisterId });
 
 const uiCanisterId = is_local(agent)
-  ? "qvhpv-4qaaa-aaaaa-aaagq-cai" //"rno2w-sqaaa-aaaaa-aaacq-cai"
+  ? "rno2w-sqaaa-aaaaa-aaacq-cai"
   : "a4gq6-oaaaa-aaaab-qaa4q-cai";
 export const uiCanisterUrl = is_local(agent)
   ? `http://${uiCanisterId}.${dfxConfig.networks.local.bind}`
