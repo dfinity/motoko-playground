@@ -149,10 +149,4 @@ service: (LedgerCanisterInitPayload) -> {
   http_request: (HttpRequest) -> (HttpResponse) query;
 }`
   },
-  "rno2w-sqaaa-aaaaa-aaacq-cai": {
-    name: "lifeline"
-  },
-  "rdmx6-jaaaa-aaaaa-aaadq-cai": {
-    name: "identity"
-  },
 }
