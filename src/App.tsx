@@ -46,21 +46,24 @@ const GlobalStyles = createGlobalStyle`
   }
 `;
 
-const AppContainer = styled.div<{candidWidth: string, consoleHeight: string}>`
+const AppContainer = styled.div<{ candidWidth: string; consoleHeight: string }>`
   display: flex;
   height: var(--appHeight);
   overflow: hidden;
 
   width: 100vw;
   border-top: 1px solid var(--grey400);
-  --candidWidth: ${props=>props.candidWidth ?? 0};
-  --consoleHeight: ${props=>props.consoleHeight ?? 0};
+  --candidWidth: ${(props) => props.candidWidth ?? 0};
+  --consoleHeight: ${(props) => props.consoleHeight ?? 0};
 `;
 
 const worker = new MocWorker();
 const urlParams = new URLSearchParams(window.location.search);
-const hasUrlParams = urlParams.get("git") || urlParams.get("tag") ? true : false;
-async function fetchFromUrlParams(dispatch) : Promise<Record<string,string>|undefined> {
+const hasUrlParams =
+  urlParams.get("git") || urlParams.get("tag") ? true : false;
+async function fetchFromUrlParams(
+  dispatch
+): Promise<Record<string, string> | undefined> {
   const git = urlParams.get("git");
   const tag = urlParams.get("tag");
   if (git) {
@@ -75,23 +78,46 @@ async function fetchFromUrlParams(dispatch) : Promise<Record<string,string>|unde
     const opt = await saved.getProject(BigInt(tag));
     if (opt.length === 1) {
       const project = opt[0].project;
-      const files = Object.fromEntries(project.files.map((file) => {
-        worker.Moc({ type: "save", file: file.name, content: file.content });
-        return [file.name, file.content];
-      }));
+      const files = Object.fromEntries(
+        project.files.map((file) => {
+          worker.Moc({ type: "save", file: file.name, content: file.content });
+          return [file.name, file.content];
+        })
+      );
       if (project.packages.length) {
         for (const pack of project.packages[0]) {
-          const info = { name: pack.name, repo: pack.repo, version: pack.version, dir: pack.dir.length?pack.dir[0]:undefined, homepage: pack.homepage.length?pack.homepage[0]:undefined };
+          const info = {
+            name: pack.name,
+            repo: pack.repo,
+            version: pack.version,
+            dir: pack.dir.length ? pack.dir[0] : undefined,
+            homepage: pack.homepage.length ? pack.homepage[0] : undefined,
+          };
           if (await worker.fetchPackage(info)) {
-            await dispatch({type: "loadPackage", payload: { name: info.name, package: info }});
+            await dispatch({
+              type: "loadPackage",
+              payload: { name: info.name, package: info },
+            });
           }
         }
       }
       if (project.canisters.length) {
         for (const canister of project.canisters[0]) {
-          const info = { id: canister.id, isExternal: true, name: canister.name, candid: canister.candid };
-          await worker.Moc({type: "save", file: `idl/${info.id}.did`, content: info.candid });
-          await dispatch({type: "deployWorkplace", payload: { canister: info }});
+          const info = {
+            id: canister.id,
+            isExternal: true,
+            name: canister.name,
+            candid: canister.candid,
+          };
+          await worker.Moc({
+            type: "save",
+            file: `idl/${info.id}.did`,
+            content: info.candid,
+          });
+          await dispatch({
+            type: "deployWorkplace",
+            payload: { canister: info },
+          });
         }
       }
       return files;
@@ -104,15 +130,15 @@ export function App() {
     workplaceReducer.reduce,
     {},
     workplaceReducer.init
-    );
+  );
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(!hasUrlParams);
   const [isFirstVisit, setIsFirstVisit] = useState(!hasUrlParams);
   const [showCandidUI, setShowCandidUI] = useState(false);
   const [candidWidth, setCandidWidth] = useState("0");
   const [consoleHeight, setConsoleHeight] = useState("3rem");
   const [TTL, setTTL] = useState(BigInt(0));
-  const [forceUpdate, setForceUpdate] = useReducer(x => (x+1)%10, 0);
-  
+  const [forceUpdate, setForceUpdate] = useReducer((x) => (x + 1) % 10, 0);
+
   const logger = useLogging();
 
   function closeProjectModal() {
@@ -126,28 +152,33 @@ export function App() {
     logger.log("Sharing project code...");
     const project = getShareableProject(workplaceState);
     const hash = await saved.putProject(project);
-    logger.log(`Use this link to access the code:\n${window.location.origin}/?tag=${hash.toString()}`);
+    logger.log(
+      `Use this link to access the code:\n${
+        window.location.origin
+      }/?tag=${hash.toString()}`
+    );
   }
 
   const deployWorkplace = (info: CanisterInfo) => {
     setForceUpdate();
     workplaceDispatch({
-      type: 'deployWorkplace',
+      type: "deployWorkplace",
       payload: {
         canister: info,
-      }
+      },
     });
-  }
+  };
 
   const importCode = useCallback(
-    (files: Record<string,string>) => {
+    (files: Record<string, string>) => {
       workplaceDispatch({
         type: "loadProject",
         payload: {
           files,
         },
       });
-    }, [workplaceDispatch]
+    },
+    [workplaceDispatch]
   );
 
   // Add the Motoko package to allow for compilation / checking
@@ -188,52 +219,61 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    worker.Moc({ type:"setActorAliases", list: getActorAliases(workplaceState.canisters) });
+    worker.Moc({
+      type: "setActorAliases",
+      list: getActorAliases(workplaceState.canisters),
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workplaceState.canisters]);
 
-  useEffect(()=>{
+  useEffect(() => {
     // Show Candid UI iframe if there are canisters
-    const isCandidReady = workplaceState.selectedCanister && workplaceState.canisters[workplaceState.selectedCanister];
+    const isCandidReady =
+      workplaceState.selectedCanister &&
+      workplaceState.canisters[workplaceState.selectedCanister];
     setShowCandidUI(isCandidReady);
-    setCandidWidth(isCandidReady? "30vw" : "0");
-  }, [workplaceState.canisters, workplaceState.selectedCanister])
+    setCandidWidth(isCandidReady ? "30vw" : "0");
+  }, [workplaceState.canisters, workplaceState.selectedCanister]);
 
   return (
     <main>
       <GlobalStyles />
-      <Header shareProject={shareProject} openTutorial={() => setIsProjectModalOpen(true)} />
+      <Header
+        shareProject={shareProject}
+        openTutorial={() => setIsProjectModalOpen(true)}
+      />
       <WorkplaceDispatchContext.Provider value={workplaceDispatch}>
-      <WorkerContext.Provider value={worker}>
-        <ProjectModal
-          isOpen={isProjectModalOpen}
-          importCode={importCode}
-          close={closeProjectModal}
-          isFirstOpen={isFirstVisit}
-        />
-        <AppContainer candidWidth={candidWidth} consoleHeight={consoleHeight}>
-          <Explorer
-            state={workplaceState}
-            ttl={TTL}
-            logger={logger}
+        <WorkerContext.Provider value={worker}>
+          <ProjectModal
+            isOpen={isProjectModalOpen}
+            importCode={importCode}
+            close={closeProjectModal}
+            isFirstOpen={isFirstVisit}
           />
-          <Editor
-            state={workplaceState}
-            ttl={TTL}
-            onDeploy={deployWorkplace}
-            logger={logger}
-            setConsoleHeight={setConsoleHeight}
-          />
-          {showCandidUI ?
-          <CandidUI
-           setCandidWidth={setCandidWidth}
-           canisterId={workplaceState.canisters[workplaceState.selectedCanister!]?.id.toString()}
-           candid={workplaceState.canisters[workplaceState.selectedCanister!]?.candid}
-           forceUpdate={forceUpdate}
-          /> : null
-        }
-        </AppContainer>
-      </WorkerContext.Provider>
+          <AppContainer candidWidth={candidWidth} consoleHeight={consoleHeight}>
+            <Explorer state={workplaceState} ttl={TTL} logger={logger} />
+            <Editor
+              state={workplaceState}
+              ttl={TTL}
+              onDeploy={deployWorkplace}
+              logger={logger}
+              setConsoleHeight={setConsoleHeight}
+            />
+            {showCandidUI ? (
+              <CandidUI
+                setCandidWidth={setCandidWidth}
+                canisterId={workplaceState.canisters[
+                  workplaceState.selectedCanister!
+                ]?.id.toString()}
+                candid={
+                  workplaceState.canisters[workplaceState.selectedCanister!]
+                    ?.candid
+                }
+                forceUpdate={forceUpdate}
+              />
+            ) : null}
+          </AppContainer>
+        </WorkerContext.Provider>
       </WorkplaceDispatchContext.Provider>
     </main>
   );
