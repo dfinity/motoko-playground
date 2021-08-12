@@ -27,14 +27,22 @@ We plan on adding many more features to make playground a full-featured web IDE 
 - [Install Internet Computer SDK](https://sdk.dfinity.org/docs/quickstart/local-quickstart.html)
 - [Install npm](https://nodejs.org/en/download/)
 - [Install Vessel](https://github.com/dfinity/vessel/releases)
+  - Download the latest release to your `/usr/local/bin` folder
+  - Rename from `vessel-{platform}` to `vessel`
+  - Run `chmod +x /usr/local/bin/vessel`
 - [Install Rust](https://www.rust-lang.org/tools/install)
 - Add wasm32 target to Rust
   ```
   rustup target add wasm32-unknown-unknown
   ```
 - Install binaryen
+
   ```
   apt install binaryen
+
+  #OR
+
+  brew install binaryen
   ```
 
 ### To run the Motoko playground locally, proceed as follows after cloning the respository.
@@ -48,5 +56,5 @@ dfx deploy --argument '(null)'
 ### Update Vessel package list
 
 - Clone the package-set repo: https://github.com/dfinity/vessel-package-set
-- `dhall resolve --file vessel-package-set/src/packages.dhall | dhall > /tmp/normalized`
-- `dhall-to-json --file /tmp/normalized > motoko-playground/src/config/package-set.json`
+- Make sure [`dhall` and `dhall-to-json` are installed](https://docs.dhall-lang.org/tutorials/Getting-started_Generate-JSON-or-YAML.html#os-x) with `apt` or `brew`
+- `dhall-to-json --file vessel-package-set/src/packages.dhall > motoko-playground/src/config/package-set.json`
