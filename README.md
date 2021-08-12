@@ -7,22 +7,23 @@ without downloading SDK, setting up a local dev environment, and without a walle
 
 The Motoko playground consists of
 
-* its frontend, a web application served by the asset canister, which consists of the following components,
-  + A Motoko compiler produced by `js-of-ocaml`.
-  + A Monaco editor that supports Motoko syntax validation.
-  + A Vessel package manager that loads libraries from the vessel package set.
-  + A deploy module that integrates canister upgrade, actor class and Candid UI.
-  + A code import module that allows to import any Motoko code from Github.
-* its backend, a canister on the IC that controlls all canisters deployed by the users.
-  + Each deployed canister has an initial cycle of 0.5T and is available for 10 minutes.
-  + To avoid wasting cycles, the deployed canister is not allowed to transfer cycles. The cycle transfer instructions will be removed by the backend at the Wasm level.
-  + To ensure resource fairness, we require a proof of work when the user requests for a canister id.
+- its frontend, a web application served by the asset canister, which consists of the following components,
+  - A Motoko compiler produced by `js-of-ocaml`.
+  - A Monaco editor that supports Motoko syntax validation.
+  - A Vessel package manager that loads libraries from the vessel package set.
+  - A deploy module that integrates canister upgrade, actor class and Candid UI.
+  - A code import module that allows to import any Motoko code from Github.
+- its backend, a canister on the IC that controlls all canisters deployed by the users.
+  - Each deployed canister has an initial cycle of 0.5T and is available for 10 minutes.
+  - To avoid wasting cycles, the deployed canister is not allowed to transfer cycles. The cycle transfer instructions will be removed by the backend at the Wasm level.
+  - To ensure resource fairness, we require a proof of work when the user requests for a canister id.
 
 We plan on adding many more features to make playground a full-featured web IDE for the Internet Computer. See our [issues](https://github.com/dfinity/motoko-playground/issues) for more details. Community contributions are highly welcomed!
 
 ## Running Locally
 
-### Prerequisites: 
+### Prerequisites:
+
 - [Install Internet Computer SDK](https://sdk.dfinity.org/docs/quickstart/local-quickstart.html)
 - [Install npm](https://nodejs.org/en/download/)
 - [Install Vessel](https://github.com/dfinity/vessel/releases)
@@ -46,6 +47,6 @@ dfx deploy --argument '(null)'
 
 ### Update Vessel package list
 
-* Clone the package-set repo: https://github.com/dfinity/vessel-package-set
-* `dhall resolve --file vessel-package-set/src/packages.dhall | dhall > /tmp/normalized`
-* `dhall-to-json --file /tmp/normalized > motoko-playground/src/config/package-set.json`
+- Clone the package-set repo: https://github.com/dfinity/vessel-package-set
+- `dhall resolve --file vessel-package-set/src/packages.dhall | dhall > /tmp/normalized`
+- `dhall-to-json --file /tmp/normalized > motoko-playground/src/config/package-set.json`

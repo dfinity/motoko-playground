@@ -69,13 +69,24 @@ export function ProjectModal({
     }
   }
   async function emptyProject() {
-    await importCode({"Main.mo":""});
+    await importCode({ "Main.mo": "" });
     close();
   }
 
   const welcomeCopy = (
-      <p>Welcome to the Motoko Playground! Explore Motoko, the native language of the Internet Computer, right in the browser without having to download the SDK. See our open source repository to <a target="_blank" rel="noreferrer" href="https://github.com/dfinity/motoko-playground">learn more</a>.
-      </p>
+    <p>
+      Welcome to the Motoko Playground! Explore Motoko, the native language of
+      the Internet Computer, right in the browser without having to download the
+      SDK. See our open source repository to{" "}
+      <a
+        target="_blank"
+        rel="noreferrer"
+        href="https://github.com/dfinity/motoko-playground"
+      >
+        learn more
+      </a>
+      .
+    </p>
   );
   const switchProjectCopy = (
     <>
@@ -103,19 +114,30 @@ export function ProjectModal({
         <MotokoLabLogo />
         {isFirstOpen ? welcomeCopy : switchProjectCopy}
         <SelectLabel>{labelCopy}</SelectLabel>
-        {!importOpen?(<SelectList height="18rem">
-          <ProjectButton onClick={emptyProject}>Empty Motoko project</ProjectButton>
-          {Object.entries(exampleProjects).map(([name, project]) => (
-            <ProjectButton
-              key={name}
-              onClick={() => handleSelectProjectAndClose(project)}
-            >
-              {name}
+        {!importOpen ? (
+          <SelectList height="18rem">
+            <ProjectButton onClick={emptyProject}>
+              Empty Motoko project
             </ProjectButton>
-          ))}
-          <ProjectButton onClick={() => setImportOpen(true)}>Import from Github...</ProjectButton>
-        </SelectList>):
-        (<ImportGitHub importCode={importCode} close={close} back={() => setImportOpen(false)}></ImportGitHub>)}
+            {Object.entries(exampleProjects).map(([name, project]) => (
+              <ProjectButton
+                key={name}
+                onClick={() => handleSelectProjectAndClose(project)}
+              >
+                {name}
+              </ProjectButton>
+            ))}
+            <ProjectButton onClick={() => setImportOpen(true)}>
+              Import from Github...
+            </ProjectButton>
+          </SelectList>
+        ) : (
+          <ImportGitHub
+            importCode={importCode}
+            close={close}
+            back={() => setImportOpen(false)}
+          ></ImportGitHub>
+        )}
         {!isFirstOpen && <CancelButton onClick={close}>Cancel</CancelButton>}
       </ModalContainer>
     </Modal>

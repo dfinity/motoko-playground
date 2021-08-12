@@ -30,7 +30,7 @@ export function Console({ setConsoleHeight }) {
   const logger = useLogging();
   useEffect(() => {
     if (lastRef && lastRef.current) {
-      lastRef.current.scrollIntoView({behavior: "smooth"});
+      lastRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [logger.logLines.length]);
   useEffect(() => {
@@ -44,15 +44,21 @@ export function Console({ setConsoleHeight }) {
       <LogHeader>
         Log
         <RightContainer>
-      <Button onClick={() => setIsExpanded(!isExpanded)}>
-      <CollapseIcon isExpanded={isExpanded} src={iconCaretDown} alt="Caret icon" />
-      </Button>
+          <Button onClick={() => setIsExpanded(!isExpanded)}>
+            <CollapseIcon
+              isExpanded={isExpanded}
+              src={iconCaretDown}
+              alt="Caret icon"
+            />
+          </Button>
         </RightContainer>
       </LogHeader>
       <LogContent>
-      {logger.logLines.map((line, index) => (
-          <pre key={index} ref={lastRef}>{line}</pre>
-      ))}
+        {logger.logLines.map((line, index) => (
+          <pre key={index} ref={lastRef}>
+            {line}
+          </pre>
+        ))}
       </LogContent>
     </div>
   );

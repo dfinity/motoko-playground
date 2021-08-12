@@ -1,14 +1,14 @@
 import { blobFromUint8Array, BinaryBlob } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 import { backend } from "./config/actor";
-import { ILoggingStore } from './components/Logger';
+import { ILoggingStore } from "./components/Logger";
 
 export interface CanisterInfo {
-  id: Principal,
-  isExternal: bool,
-  timestamp?: bigint,
-  name?: string,
-  candid?: string | null,
+  id: Principal;
+  isExternal: bool;
+  timestamp?: bigint;
+  name?: string;
+  candid?: string | null;
 }
 /*
 export function interpret(file: string, logger: ILoggingStore): void {
@@ -28,26 +28,35 @@ export function interpret(file: string, logger: ILoggingStore): void {
 }*/
 
 interface Diagnostics {
-  message: String,
+  message: String;
   range: {
-    start: { line: number, character: number },
-    end: { line: number, character: number },
-  },
-  severity: number,
-  source: string,
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
+  severity: number;
+  source: string;
 }
 
 function logDiags(diagnostics: Diagnostics[], logger: ILoggingStore) {
-  diagnostics.forEach(d => {
-    const { message,severity, source, range: { start } } = d;
+  diagnostics.forEach((d) => {
+    const {
+      message,
+      severity,
+      source,
+      range: { start },
+    } = d;
     const severityText = severity === 1 ? "Error" : "Warning";
-    const out = `${severityText} in file ${source}:${start.line}:${start.character}   ${message}`
+    const out = `${severityText} in file ${source}:${start.line}:${start.character}   ${message}`;
     logger.log(out);
-  })
+  });
 }
 
-export async function compileCandid(worker, file: string, logger: ILoggingStore): Promise<string|undefined> {
-  const candid_result = await worker.Moc({ type:"candid", file });
+export async function compileCandid(
+  worker,
+  file: string,
+  logger: ILoggingStore
+): Promise<string | undefined> {
+  const candid_result = await worker.Moc({ type: "candid", file });
   if (candid_result.diagnostics) logDiags(candid_result.diagnostics, logger);
   // setMarkers(candid_result.diagnostics);
   const candid_source = candid_result.code;
@@ -61,18 +70,27 @@ export async function compileCandid(worker, file: string, logger: ILoggingStore)
   return candid_source;
 }
 
-export async function deploy(worker, canisterName: string, canisterInfo: CanisterInfo|null, args: BinaryBlob, mode: string, file: string, profiling: boolean, logger: ILoggingStore): Promise<CanisterInfo | undefined> {
-  logger.log('Compiling code...');
+export async function deploy(
+  worker,
+  canisterName: string,
+  canisterInfo: CanisterInfo | null,
+  args: BinaryBlob,
+  mode: string,
+  file: string,
+  profiling: boolean,
+  logger: ILoggingStore
+): Promise<CanisterInfo | undefined> {
+  logger.log("Compiling code...");
 
   // NOTE: Will change to "ic" in a future moc release
-  const out = await worker.Moc({ type:"compile", file });
+  const out = await worker.Moc({ type: "compile", file });
   if (out.diagnostics) logDiags(out.diagnostics, logger);
   // setMarkers(out.diagnostics);
   if (out.code === null) {
     logger.log("syntax error");
   } else {
     const wasm = out.code;
-    logger.log(`Compiled Wasm size: ${Math.floor(wasm.length/1024)}KB`);
+    logger.log(`Compiled Wasm size: ${Math.floor(wasm.length / 1024)}KB`);
     const module = blobFromUint8Array(wasm);
     try {
       logger.log(`Deploying code...`);
@@ -114,7 +132,10 @@ export async function deploy(worker, canisterName: string, canisterInfo: Caniste
   }
 }
 
-async function createCanister(worker, logger: ILoggingStore): Promise<CanisterInfo> {
+async function createCanister(
+  worker,
+  logger: ILoggingStore
+): Promise<CanisterInfo> {
   const timestamp = BigInt(Date.now()) * BigInt(1_000_000);
   const nonce = await worker.pow(timestamp);
   const info = await backend.getCanisterId(nonce);
@@ -136,8 +157,8 @@ async function install(
   args: BinaryBlob,
   mode: string,
   profiling: boolean,
-  logger: ILoggingStore): Promise<CanisterInfo>
-{
+  logger: ILoggingStore
+): Promise<CanisterInfo> {
   if (!canisterInfo) {
     throw new Error("no canister id");
   }
@@ -148,7 +169,11 @@ async function install(
     mode: { [mode]: null },
     canister_id: canisterId,
   };
-  const new_info = await backend.installCode(canisterInfo, installArgs, profiling);
+  const new_info = await backend.installCode(
+    canisterInfo,
+    installArgs,
+    profiling
+  );
   canisterInfo = new_info;
   logger.log(`Code installed at canister id ${canisterInfo.id}`);
   return canisterInfo;

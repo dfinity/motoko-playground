@@ -28,7 +28,9 @@ function ProjectButton({ onClick, children }) {
   return (
     <ListButton onClick={onClick}>
       <ProjectButtonContents>
-      <span style={{whiteSpace: "nowrap", overflowX: "hidden"}}>{children}</span>
+        <span style={{ whiteSpace: "nowrap", overflowX: "hidden" }}>
+          {children}
+        </span>
         <img src={iconCaretRight} alt="Continue" />
       </ProjectButtonContents>
     </ListButton>
@@ -66,7 +68,7 @@ export function PackageModal({
     } else {
       throw new Error(`Fail to load package ${pack.name}`);
     }
-  };
+  }
 
   return (
     <Modal
@@ -77,18 +79,28 @@ export function PackageModal({
     >
       <ModalContainer>
         <SelectLabel>Select a Motoko package</SelectLabel>
-        {!importOpen?(<SelectList height="24rem">
-          {packageSet.map((pack) => (
-            <ProjectButton
-              key={pack.name}
-              onClick={() => handleSelectPackage(pack)}
-            >
-              {pack.name} {pack.description?`-- ${pack.description}`:""}
+        {!importOpen ? (
+          <SelectList height="24rem">
+            {packageSet.map((pack) => (
+              <ProjectButton
+                key={pack.name}
+                onClick={() => handleSelectPackage(pack)}
+              >
+                {pack.name} {pack.description ? `-- ${pack.description}` : ""}
+              </ProjectButton>
+            ))}
+            <ProjectButton onClick={() => setImportOpen(true)}>
+              Import from Github...
             </ProjectButton>
-          ))}
-          <ProjectButton onClick={() => setImportOpen(true)}>Import from Github...</ProjectButton>
-        </SelectList>):
-         (<ImportGitHub isPackageModal={true} importCode={loadPackage} close={close} back={() => setImportOpen(false)}></ImportGitHub>)}
+          </SelectList>
+        ) : (
+          <ImportGitHub
+            isPackageModal={true}
+            importCode={loadPackage}
+            close={close}
+            back={() => setImportOpen(false)}
+          ></ImportGitHub>
+        )}
         <CancelButton onClick={close}>Cancel</CancelButton>
       </ModalContainer>
     </Modal>

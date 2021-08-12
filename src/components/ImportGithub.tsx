@@ -28,7 +28,12 @@ const MyButton = styled(Button)`
   margin: 1rem;
 `;
 
-export function ImportGitHub({ importCode, close, back, isPackageModal=false }) {
+export function ImportGitHub({
+  importCode,
+  close,
+  back,
+  isPackageModal = false,
+}) {
   const [repo, setRepo] = useState("dfinity/examples");
   const [branch, setBranch] = useState("master");
   const [dir, setDir] = useState("motoko/counter/src");
@@ -36,7 +41,7 @@ export function ImportGitHub({ importCode, close, back, isPackageModal=false }) 
   const [name, setName] = useState("");
   const worker = useContext(WorkerContext);
   async function fetchCode() {
-    const files = await worker.fetchGithub({repo, branch, dir});
+    const files = await worker.fetchGithub({ repo, branch, dir });
     if (files) {
       setError("");
       importCode(files);
@@ -47,10 +52,10 @@ export function ImportGitHub({ importCode, close, back, isPackageModal=false }) 
   }
   async function fetchPackageCode() {
     if (!name) {
-      setError('Package name cannot be empty');
+      setError("Package name cannot be empty");
       return;
     }
-    const info : PackageInfo = {
+    const info: PackageInfo = {
       repo: `https://github.com/${repo}.git`,
       version: branch,
       name,
@@ -66,20 +71,48 @@ export function ImportGitHub({ importCode, close, back, isPackageModal=false }) 
   }
 
   return (
-      <Container>
-      {isPackageModal && (<Item>Package name &nbsp;
-       <input type="text" value={name} onChange={(e) => setName(e.target.value)} /></Item>)}
-      <Item>Github repo &nbsp;
-      <input type="text" value={repo} onChange={(e) => setRepo(e.target.value)} /></Item>
-      <Item>Branch &nbsp;
-      <input type="text" value={branch} onChange={(e) => setBranch(e.target.value)} /></Item>      
-      <Item>Directory &nbsp;
-      <input type="text" value={dir} onChange={(e) => setDir(e.target.value)} /></Item>
+    <Container>
+      {isPackageModal && (
+        <Item>
+          Package name &nbsp;
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </Item>
+      )}
+      <Item>
+        Github repo &nbsp;
+        <input
+          type="text"
+          value={repo}
+          onChange={(e) => setRepo(e.target.value)}
+        />
+      </Item>
+      <Item>
+        Branch &nbsp;
+        <input
+          type="text"
+          value={branch}
+          onChange={(e) => setBranch(e.target.value)}
+        />
+      </Item>
+      <Item>
+        Directory &nbsp;
+        <input
+          type="text"
+          value={dir}
+          onChange={(e) => setDir(e.target.value)}
+        />
+      </Item>
       <Item>{error}</Item>
       <ButtonContainer>
-        <MyButton onClick={isPackageModal?fetchPackageCode:fetchCode}>Import</MyButton>
+        <MyButton onClick={isPackageModal ? fetchPackageCode : fetchCode}>
+          Import
+        </MyButton>
         <MyButton onClick={back}>Back</MyButton>
       </ButtonContainer>
-      </Container>
+    </Container>
   );
 }

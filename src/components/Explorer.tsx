@@ -5,12 +5,15 @@ import iconCanister from "../assets/images/icon-canister.svg";
 import iconClose from "../assets/images/icon-close.svg";
 import iconPlus from "../assets/images/icon-plus.svg";
 import { ListButton } from "./shared/SelectList";
-import { WorkplaceState, WorkplaceDispatchContext } from "../contexts/WorkplaceState";
+import {
+  WorkplaceState,
+  WorkplaceDispatchContext,
+} from "../contexts/WorkplaceState";
 import { PackageModal } from "./PackageModal";
 import { FileModal } from "./FileModal";
 import { CanisterModal } from "./CanisterModal";
 import { PackageInfo } from "../workers/file";
-import { ILoggingStore } from './Logger';
+import { ILoggingStore } from "./Logger";
 import { deleteCanister } from "../build";
 
 const StyledExplorer = styled.div`
@@ -44,7 +47,7 @@ interface ExplorerProps {
 
 export function Explorer({ state, ttl, logger }: ExplorerProps) {
   const [timeLeft, setTimeLeft] = useState<Array<string>>([]);
-  const [isExpired, setIsExpired] = useState<Array<string>>([])
+  const [isExpired, setIsExpired] = useState<Array<string>>([]);
   const [showPackage, setShowPackage] = useState(false);
   const [showFileModal, setShowFileModal] = useState(false);
   const [showCanisterModal, setShowCanisterModal] = useState(false);
@@ -81,9 +84,11 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
         if (state.canisters[selectedCanister].timestamp) {
           if (action === "delete") {
             const canisterInfo = state.canisters[selectedCanister];
-            logger.log(`Deleting canister ${selectedCanister} with id ${canisterInfo.id.toText()}...`);
+            logger.log(
+              `Deleting canister ${selectedCanister} with id ${canisterInfo.id.toText()}...`
+            );
             await deleteCanister(canisterInfo);
-            logger.log('Canister deleted');
+            logger.log("Canister deleted");
           } else {
             logger.log(`Canister ${selectedCanister} expired`);
           }
@@ -96,11 +101,11 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
         });
       }
       default:
-        throw new Error(`unknown action ${action}`)
+        throw new Error(`unknown action ${action}`);
     }
   };
 
-  const calcTimeLeft = (timestamp: bigint|undefined) : number|undefined => {
+  const calcTimeLeft = (timestamp: bigint | undefined): number | undefined => {
     if (timestamp) {
       const now = BigInt(Date.now()) * BigInt(1_000_000);
       const left = Number((ttl - (now - timestamp)) / BigInt(1_000_000_000));
@@ -112,26 +117,35 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
       return;
     }
     const timer = setTimeout(() => {
-      const times: Array<[string, number|undefined]> = Object.values(state.canisters).map((info) => {
+      const times: Array<[string, number | undefined]> = Object.values(
+        state.canisters
+      ).map((info) => {
         return [info.name!, calcTimeLeft(info.timestamp)];
       });
-      const expired = times.filter(([_, left]) => left && left <= 0).map(([name, _]) => name);
+      const expired = times
+        .filter(([_, left]) => left && left <= 0)
+        .map(([name, _]) => name);
       // Guard setIsExpired because of shallow equality
-      if (expired.length > 0 && JSON.stringify(isExpired) !== JSON.stringify(expired)) {
+      if (
+        expired.length > 0 &&
+        JSON.stringify(isExpired) !== JSON.stringify(expired)
+      ) {
         setIsExpired(expired);
       }
-      setTimeLeft(times.map(([_, left]) => {
-        if (!left) {
-          return "";
-        }
-        if (left > 0) {
-          const minute = Math.floor(left / 60);
-          const second = left % 60;
-          return `${minute}:${second.toString().padStart(2, '0')}`;
-        } else {
-          return "Expired";
-        }
-      }));
+      setTimeLeft(
+        times.map(([_, left]) => {
+          if (!left) {
+            return "";
+          }
+          if (left > 0) {
+            const minute = Math.floor(left / 60);
+            const second = left % 60;
+            return `${minute}:${second.toString().padStart(2, "0")}`;
+          } else {
+            return "Expired";
+          }
+        })
+      );
     }, 1000);
     // Clear timeout if the component is unmounted
     return () => clearTimeout(timer);
@@ -143,7 +157,7 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isExpired]);
-  
+
   return (
     <StyledExplorer>
       <FileModal isOpen={showFileModal} close={() => setShowFileModal(false)} />
@@ -152,47 +166,63 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
         close={() => setShowPackage(false)}
         loadPackage={loadPackage}
       />
-      <CanisterModal isOpen={showCanisterModal} close={() => setShowCanisterModal(false)} />
-      <CategoryTitle>Files
-      <MyButton onClick={() => setShowFileModal(true)}><img style={{width:"1.6rem"}} src={iconPlus} alt="Add file"/></MyButton>
+      <CanisterModal
+        isOpen={showCanisterModal}
+        close={() => setShowCanisterModal(false)}
+      />
+      <CategoryTitle>
+        Files
+        <MyButton onClick={() => setShowFileModal(true)}>
+          <img style={{ width: "1.6rem" }} src={iconPlus} alt="Add file" />
+        </MyButton>
       </CategoryTitle>
-      {Object.keys(state.files).sort().map((filename) => (
-        <ListButton
-          key={filename}
-          isActive={state.selectedFile === filename}
-          disabled={state.selectedFile === filename}
-          onClick={() => onSelectFile(filename)}
-        >
-          {filename}
-        </ListButton>
-      ))}
-      <CategoryTitle>Packages
-      <MyButton onClick={() => setShowPackage(true)}><img style={{width:"1.6rem"}} src={iconPlus} alt="Add package"/></MyButton>
+      {Object.keys(state.files)
+        .sort()
+        .map((filename) => (
+          <ListButton
+            key={filename}
+            isActive={state.selectedFile === filename}
+            disabled={state.selectedFile === filename}
+            onClick={() => onSelectFile(filename)}
+          >
+            {filename}
+          </ListButton>
+        ))}
+      <CategoryTitle>
+        Packages
+        <MyButton onClick={() => setShowPackage(true)}>
+          <img style={{ width: "1.6rem" }} src={iconPlus} alt="Add package" />
+        </MyButton>
       </CategoryTitle>
       {Object.entries(state.packages).map(([_, info]) => (
-          <ListButton
-             onClick={() => { window.open(info.homepage!, "_blank") }}
-             disabled={info.homepage?false:true}
-          >
+        <ListButton
+          onClick={() => {
+            window.open(info.homepage!, "_blank");
+          }}
+          disabled={info.homepage ? false : true}
+        >
           <img src={iconPackage} alt="Package icon" />
           <p>mo:{info.name}</p>
-          </ListButton>
+        </ListButton>
       ))}
-      <CategoryTitle>Canisters
-      <MyButton onClick={() => setShowCanisterModal(true)}><img style={{width:"1.6rem"}} src={iconPlus} alt="Add canister"/></MyButton>
+      <CategoryTitle>
+        Canisters
+        <MyButton onClick={() => setShowCanisterModal(true)}>
+          <img style={{ width: "1.6rem" }} src={iconPlus} alt="Add canister" />
+        </MyButton>
       </CategoryTitle>
       {Object.keys(state.canisters).map((canister, i) => (
         <ListButton
-        key={canister}
-        isActive={state.selectedCanister === canister}
-        disabled={state.selectedCanister === canister}
-        onClick={() => onCanister(canister, 'select')}
+          key={canister}
+          isActive={state.selectedCanister === canister}
+          disabled={state.selectedCanister === canister}
+          onClick={() => onCanister(canister, "select")}
         >
-          <img src={iconCanister} alt="Canister icon"/>
+          <img src={iconCanister} alt="Canister icon" />
           canister:{canister}
-          <div style={{marginLeft: "auto"}}>{timeLeft[i]}</div>
-          <MyButton onClick={() => onCanister(canister, 'delete')}>
-          <img src={iconClose} alt="Close icon" />
+          <div style={{ marginLeft: "auto" }}>{timeLeft[i]}</div>
+          <MyButton onClick={() => onCanister(canister, "delete")}>
+            <img src={iconClose} alt="Close icon" />
           </MyButton>
         </ListButton>
       ))}

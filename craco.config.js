@@ -9,7 +9,11 @@ let canisterEnv;
 function initCanisterIds() {
   let localCanisters, prodCanisters, canisters;
   try {
-    localCanisters = require(path.resolve(".dfx", "local", "canister_ids.json"));
+    localCanisters = require(path.resolve(
+      ".dfx",
+      "local",
+      "canister_ids.json"
+    ));
   } catch (error) {
     console.log("No local canister_ids.json found. Continuing production");
   }
@@ -26,7 +30,10 @@ function initCanisterIds() {
   for (const canister in canisters) {
     const canisterName = canister.toUpperCase() + "_CANISTER_ID";
     process.env[canisterName] = canisters[canister][network];
-    canisterEnv = { ...canisterEnv, [canisterName]: canisters[canister][network] };
+    canisterEnv = {
+      ...canisterEnv,
+      [canisterName]: canisters[canister][network],
+    };
   }
 }
 initCanisterIds();
@@ -40,7 +47,7 @@ const overrideWebpackConfig = ({ webpackConfig }) => {
   );
   webpackConfig.plugins = [
     ...webpackConfig.plugins,
-    new webpack.EnvironmentPlugin(canisterEnv)
+    new webpack.EnvironmentPlugin(canisterEnv),
   ];
 
   return webpackConfig;

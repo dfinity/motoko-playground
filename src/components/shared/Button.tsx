@@ -4,7 +4,7 @@ import { MouseEvent } from "react";
 export const Button = styled("button")<{
   small?: boolean;
   kind?: "primary" | "secondary";
-  onClick?: (ev: MouseEvent<HTMLButtonElement>) => void,
+  onClick?: (ev: MouseEvent<HTMLButtonElement>) => void;
   width?: string;
 }>`
   display: flex;
