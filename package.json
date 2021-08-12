@@ -27,6 +27,9 @@
     "@testing-library/user-event": "^12.1.10",
     "@types/jest": "^26.0.19",
     "comlink-loader": "^2.0.0",
+    "husky": "^7.0.1",
+    "lint-staged": "^11.1.2",
+    "prettier": "^2.3.2",
     "react-scripts": "4.0.3"
   },
   "scripts": {
@@ -36,7 +39,8 @@
     "eject": "craco eject",
     "deploy": "dfx deploy --argument '(null)'",
     "prestart": "dfx start --background || exit 0",
-    "predeploy": "yarn prestart"
+    "predeploy": "yarn prestart",
+    "prepare": "husky install"
   },
   "eslintConfig": {
     "extends": [
@@ -51,5 +55,10 @@
     "last 1 chrome version",
     "last 1 firefox version",
     "last 1 safari version"
-  ]
+  ],
+  "lint-staged": {
+    "src/**/*.{js,ts,jsx,tsx,json,css,scss,htm,html,md,mdx}": [
+      "prettier --write"
+    ]
+  }
 }
