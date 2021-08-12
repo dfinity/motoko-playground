@@ -12,7 +12,7 @@
       "dfinity"
     ],
     "repo": "https://github.com/dfinity/motoko-base.git",
-    "version": "927119e172964f4038ebc7018f9cc1b688544bfa"
+    "version": "2a46463287b18ee4300617fc282cdabc395625c3"
   },
   {
     "authors": [
@@ -43,7 +43,7 @@
       "kritzcreek"
     ],
     "repo": "https://github.com/kritzcreek/motoko-matchers.git",
-    "version": "v1.1.0"
+    "version": "v1.2.0"
   },
   {
     "authors": [
@@ -171,6 +171,22 @@
       "matthewhammer"
     ],
     "repo": "https://github.com/matthewhammer/motoko-sequence.git",
+    "version": "v0.1.1"
+  },
+  {
+    "authors": [
+      "flyq"
+    ],
+    "dependencies": [
+      "base"
+    ],
+    "description": "Base32 implemented in Motoko",
+    "homepage": "https://flyq.github.io/motoko-base32/",
+    "name": "base32",
+    "owners": [
+      "flyq"
+    ],
+    "repo": "https://github.com/flyq/motoko-base32.git",
     "version": "v0.1.1"
   }
 ]
