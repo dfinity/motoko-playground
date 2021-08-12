@@ -57,5 +57,4 @@ dfx deploy --argument '(null)'
 
 - Clone the package-set repo: https://github.com/dfinity/vessel-package-set
 - Make sure [`dhall` and `dhall-to-json` are installed](https://docs.dhall-lang.org/tutorials/Getting-started_Generate-JSON-or-YAML.html#os-x) with `apt` or `brew`
-- `dhall resolve --file vessel-package-set/src/packages.dhall | dhall > /tmp/normalized`
-- `dhall-to-json --file /tmp/normalized > motoko-playground/src/config/package-set.json`
+- `dhall-to-json --file vessel-package-set/src/packages.dhall > motoko-playground/src/config/package-set.json`
