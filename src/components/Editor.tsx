@@ -13,7 +13,12 @@ import { Console } from "./Console";
 import iconRabbit from "../assets/images/icon-rabbit.png";
 import iconSpin from "../assets/images/icon-spin.gif";
 import { DeployModal } from "./DeployModal";
-import { getActorAliases, getDeployedCanisters, WorkerContext, WorkplaceDispatchContext } from "../contexts/WorkplaceState";
+import {
+  getActorAliases,
+  getDeployedCanisters,
+  WorkerContext,
+  WorkplaceDispatchContext,
+} from "../contexts/WorkplaceState";
 import { compileCandid } from "../build";
 import { didToJs } from "../config/actor";
 
@@ -78,13 +83,17 @@ export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
   const dispatch = useContext(WorkplaceDispatchContext);
 
   const fileName = state.selectedFile;
-  const fileCode = fileName?state.files[fileName]:"";
+  const fileCode = fileName ? state.files[fileName] : "";
   // TODO
-  const mainFile = fileName.endsWith('.mo')?fileName:(state.files["Main.mo"]?"Main.mo":"");
+  const mainFile = fileName.endsWith(".mo")
+    ? fileName
+    : state.files["Main.mo"]
+    ? "Main.mo"
+    : "";
   const internalCanisters = getDeployedCanisters(state.canisters);
   const monaco = useMonaco();
   const checkFileAddMarkers = async () => {
-    if (!fileName || !fileName.endsWith('mo')) return;
+    if (!fileName || !fileName.endsWith("mo")) return;
     const check = await worker.Moc({ type: "check", file: fileName });
     const diags = check.diagnostics;
     setMarkers(
@@ -94,16 +103,16 @@ export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
       monaco,
       fileName
     );
-  }
+  };
   const saveChanges = async (newValue) => {
     dispatch({
       type: "saveFile",
       payload: {
         path: fileName,
         contents: newValue,
-      }
+      },
     });
-    if (!fileName.endsWith('mo')) return;
+    if (!fileName.endsWith("mo")) return;
     await worker.Moc({ type: "save", file: fileName, content: newValue });
     await checkFileAddMarkers();
   };
@@ -116,9 +125,9 @@ export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
   const deployClick = async () => {
     const aliases = getActorAliases(state.canisters);
     await worker.saveWorkplaceToMotoko(state.files);
-    await worker.Moc({ type:"setActorAliases", list: aliases });
+    await worker.Moc({ type: "setActorAliases", list: aliases });
     if (!mainFile) {
-      logger.log('Select a main entry file to deploy');
+      logger.log("Select a main entry file to deploy");
     }
     const candid = await compileCandid(worker, mainFile, logger);
     if (candid) {
@@ -153,19 +162,26 @@ export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
       <PanelHeader>
         Editor
         <RightContainer>
-          <Button onClick={deployClick} disabled={isDeploying} kind="primary" small>
-            <img src={isDeploying?iconSpin:iconRabbit} alt="Rabbit icon" />
-            <p>{isDeploying?"Deploying...":"Deploy"}</p>
+          <Button
+            onClick={deployClick}
+            disabled={isDeploying}
+            kind="primary"
+            small
+          >
+            <img src={isDeploying ? iconSpin : iconRabbit} alt="Rabbit icon" />
+            <p>{isDeploying ? "Deploying..." : "Deploy"}</p>
           </Button>
         </RightContainer>
       </PanelHeader>
-      <MarkdownContainer isHidden={fileName!=="README"}>
-        <ReactMarkdown linkTarget="_blank">{fileName==="README"?fileCode:""}</ReactMarkdown>
+      <MarkdownContainer isHidden={fileName !== "README"}>
+        <ReactMarkdown linkTarget="_blank">
+          {fileName === "README" ? fileCode : ""}
+        </ReactMarkdown>
       </MarkdownContainer>
-      <EditorContainer isHidden={fileName==="README"}>
+      <EditorContainer isHidden={fileName === "README"}>
         <MonacoEditor
           defaultLanguage={"motoko"}
-          value={fileName==="README"?"":fileCode}
+          value={fileName === "README" ? "" : fileCode}
           path={fileName}
           onChange={onEditorChange}
           beforeMount={configureMonaco}

@@ -2,7 +2,7 @@ name: Backend
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
 
 jobs:
@@ -14,30 +14,30 @@ jobs:
       VESSEL_VERSION: v0.6.2
       CI: true
     steps:
-    - uses: actions/checkout@v2
-    - name: Install
-      run: |
-        echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
-        wget https://github.com/chenyan2002/ic-repl/releases/download/$IC_REPL_VERSION/ic-repl-linux64
-        cp ./ic-repl-linux64 /usr/local/bin/ic-repl
-        chmod a+x /usr/local/bin/ic-repl
-        wget https://github.com/dfinity/vessel/releases/download/$VESSEL_VERSION/vessel-linux64
-        cp ./vessel-linux64 /usr/local/bin/vessel
-        chmod a+x /usr/local/bin/vessel
-    - name: Build
-      run: |
-        dfx cache install
-        dfx start --background --no-artificial-delay
-        dfx canister --no-wallet create backend
-        dfx canister --no-wallet create wasm-utils        
-        dfx build backend
-    - name: Test
-      run: |
-        (for f in service/pool/tests/*.test.sh; do
-          echo "==== Run test $f ===="
-          ic-repl -r http://localhost:8000 "$f" || exit
-        done)
-    - name: stop dfx
-      run: |
-        echo "dfx stop"
-        dfx stop
+      - uses: actions/checkout@v2
+      - name: Install
+        run: |
+          echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+          wget https://github.com/chenyan2002/ic-repl/releases/download/$IC_REPL_VERSION/ic-repl-linux64
+          cp ./ic-repl-linux64 /usr/local/bin/ic-repl
+          chmod a+x /usr/local/bin/ic-repl
+          wget https://github.com/dfinity/vessel/releases/download/$VESSEL_VERSION/vessel-linux64
+          cp ./vessel-linux64 /usr/local/bin/vessel
+          chmod a+x /usr/local/bin/vessel
+      - name: Build
+        run: |
+          dfx cache install
+          dfx start --background --no-artificial-delay
+          dfx canister --no-wallet create backend
+          dfx canister --no-wallet create wasm-utils        
+          dfx build backend
+      - name: Test
+        run: |
+          (for f in service/pool/tests/*.test.sh; do
+            echo "==== Run test $f ===="
+            ic-repl -r http://localhost:8000 "$f" || exit
+          done)
+      - name: stop dfx
+        run: |
+          echo "dfx stop"
+          dfx stop

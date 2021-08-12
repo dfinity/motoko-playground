@@ -55,10 +55,10 @@ service ic : {
   }) -> (record {canister_id : canister_id});
   provisional_top_up_canister :
     (record { canister_id: canister_id; amount: nat }) -> ();
-}`
+}`,
   },
   "rrkah-fqaaa-aaaaa-aaaaq-cai": {
-    name: "governance"
+    name: "governance",
   },
   "ryjl3-tyaaa-aaaaa-aaaba-cai": {
     name: "ledger",
@@ -146,6 +146,6 @@ service: (LedgerCanisterInitPayload) -> {
   account_balance_dfx : (AccountBalanceArgs) -> (ICPTs) query;
   get_nodes : () -> (vec CanisterId) query;
   http_request: (HttpRequest) -> (HttpResponse) query;
-}`
+}`,
   },
-}
+};

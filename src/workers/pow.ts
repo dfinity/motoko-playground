@@ -1,4 +1,3 @@
-
 const DOMAIN = "motoko-playground";
 
 export function pow(timestamp: bigint) {
@@ -19,12 +18,12 @@ export function pow(timestamp: bigint) {
   };
 }
 
-function motokoHash(message: string) : number {
+function motokoHash(message: string): number {
   const base = 2 ** 32;
   var x = 5381;
   for (let i = 0; i < message.length; i++) {
     const c = message.charCodeAt(i);
-    x = (((x<<5)+x) % base + c) % base;
+    x = ((((x << 5) + x) % base) + c) % base;
   }
   return x;
 }

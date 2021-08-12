@@ -1,5 +1,4 @@
-
-import {useState, createContext, useContext} from "react";
+import { useState, createContext, useContext } from "react";
 
 export interface ILoggingStore {
   clearLogs(): void;
@@ -12,13 +11,13 @@ const useLoggingStore = (): ILoggingStore => {
   const clearLogs = () => setLogLines([]);
   const log = (line: string) => {
     const time = new Date(Date.now()).toLocaleTimeString();
-    setLogLines(prevLines => [...prevLines, `[${time}] ${line}`]);
+    setLogLines((prevLines) => [...prevLines, `[${time}] ${line}`]);
   };
   return {
     clearLogs,
     log,
     logLines,
-  }
+  };
 };
 
 /**
@@ -29,13 +28,17 @@ const noopLoggingStore: ILoggingStore = {
   clearLogs() {},
   log(line: string) {},
   logLines: [],
-}
+};
 
 const LoggingContext = createContext<ILoggingStore>(noopLoggingStore);
 
-export function ProvideLogging({children}) {
+export function ProvideLogging({ children }) {
   const logging = useLoggingStore();
-  return <LoggingContext.Provider value={logging}>{children}</LoggingContext.Provider>;
+  return (
+    <LoggingContext.Provider value={logging}>
+      {children}
+    </LoggingContext.Provider>
+  );
 }
 
 export const useLogging = () => {

@@ -3,7 +3,10 @@ import { useState, useContext } from "react";
 import { Modal } from "./shared/Modal";
 import { Button } from "./shared/Button";
 
-import { WorkerContext, WorkplaceDispatchContext } from "../contexts/WorkplaceState";
+import {
+  WorkerContext,
+  WorkplaceDispatchContext,
+} from "../contexts/WorkplaceState";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -36,17 +39,27 @@ export function FileModal({ isOpen, close }) {
     await dispatch({ type: "selectFile", payload: { path: name } });
     await close();
   }
-  
+
   return (
-      <Modal isOpen={isOpen} close={close} label="Add file" shouldCloseOnEsc={true}>
+    <Modal
+      isOpen={isOpen}
+      close={close}
+      label="Add file"
+      shouldCloseOnEsc={true}
+    >
       <ModalContainer>
-      <p>Add a new file name</p>
-      <input type="text" value={fileName} autoFocus={true} onChange={(e) => setFileName(e.target.value)} />
-      <ButtonContainer>
-      <MyButton onClick={addFile}>Add</MyButton>
-      <MyButton onClick={close}>Cancel</MyButton>      
-      </ButtonContainer>
+        <p>Add a new file name</p>
+        <input
+          type="text"
+          value={fileName}
+          autoFocus={true}
+          onChange={(e) => setFileName(e.target.value)}
+        />
+        <ButtonContainer>
+          <MyButton onClick={addFile}>Add</MyButton>
+          <MyButton onClick={close}>Cancel</MyButton>
+        </ButtonContainer>
       </ModalContainer>
-      </Modal>
+    </Modal>
   );
 }

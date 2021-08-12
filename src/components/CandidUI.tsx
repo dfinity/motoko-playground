@@ -48,7 +48,8 @@ export function CandidUI({ canisterId, candid, setCandidWidth, forceUpdate }) {
     setIsExpanded(true);
   }, [canisterId, candid, forceUpdate]);
 
-  const url = `${CANDID_UI_CANISTER_URL}/?id=${canisterId}&tag=${forceUpdate}` + didParam;
+  const url =
+    `${CANDID_UI_CANISTER_URL}/?id=${canisterId}&tag=${forceUpdate}` + didParam;
   return (
     <CandidPanel isExpanded={isExpanded}>
       <PanelHeader>
@@ -62,19 +63,19 @@ export function CandidUI({ canisterId, candid, setCandidWidth, forceUpdate }) {
             src={iconCollapse}
             alt="Collapse icon"
           />
-        {isExpanded ? "CANDID UI" : null}
+          {isExpanded ? "CANDID UI" : null}
         </Button>
         {isExpanded ? (
           <Button
-          onClick={() => { window.open(url, "_blank") }}
+            onClick={() => {
+              window.open(url, "_blank");
+            }}
           >
             <OpenIcon src={iconOpen} />
           </Button>
         ) : null}
       </PanelHeader>
-      {isExpanded ? (
-        <CandidFrame src={url} />
-      ) : null}
+      {isExpanded ? <CandidFrame src={url} /> : null}
     </CandidPanel>
   );
 }

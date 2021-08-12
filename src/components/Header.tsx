@@ -2,7 +2,7 @@ import styled from "styled-components";
 import { Button } from "./shared/Button";
 import { RightContainer } from "./shared/RightContainer";
 import iconPlus from "../assets/images/icon-plus.svg";
-import iconSave from "../assets/images/icon-save.svg"
+import iconSave from "../assets/images/icon-save.svg";
 import { MotokoLabLogo } from "./shared/MotokoLabLogo";
 
 const StyledHeader = styled("header")<{ darkMode?: boolean }>`

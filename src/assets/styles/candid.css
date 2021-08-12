@@ -1,10 +1,9 @@
-
 .InitArgs input,
 .InitArgs select,
 .InitArgs label {
-    margin-right: 0.8rem;
-    margin-bottom: 0.8rem;
+  margin-right: 0.8rem;
+  margin-bottom: 0.8rem;
 }
 .InitArgs .status {
-    color: var(--colorError);
+  color: var(--colorError);
 }

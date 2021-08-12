@@ -82,7 +82,7 @@ export function barebonesWASI() {
       //   void* buf,
       //   size_t buf_len,
       // }
-      var buffers = Array.from({length: iovsLen}, function (_, i) {
+      var buffers = Array.from({ length: iovsLen }, function (_, i) {
         var ptr = iovs + i * 8;
         var buf = view.getUint32(ptr, !0);
         var bufLen = view.getUint32(ptr + 4, !0);
@@ -118,8 +118,7 @@ export function barebonesWASI() {
     return WASI_ENOSYS;
   }
 
-  function fd_seek(fd, offset, whence, newOffsetPtr) {
-  }
+  function fd_seek(fd, offset, whence, newOffsetPtr) {}
 
   function fd_close(fd) {
     return WASI_ENOSYS;
@@ -140,12 +139,16 @@ export function barebonesWASI() {
     proc_exit: proc_exit,
     fd_close: fd_close,
     fd_seek: fd_seek,
-  }
+  };
 }
 
 export function importWasmModule(code, wasiPolyfill, output) {
-  var memory = new WebAssembly.Memory({initial: 2, maximum: 10});
-  const moduleImports = {wasi_unstable: wasiPolyfill, env: {}, js: {mem: memory}};
+  var memory = new WebAssembly.Memory({ initial: 2, maximum: 10 });
+  const moduleImports = {
+    wasi_unstable: wasiPolyfill,
+    env: {},
+    js: { mem: memory },
+  };
 
   (async () => {
     let tStart = Date.now();
@@ -160,7 +163,7 @@ export function importWasmModule(code, wasiPolyfill, output) {
     instance.exports._start();
     duration = (Date.now() - tStart) / 1000;
     output(`(run time: ${duration}s)`);
-  })().catch(err => {
+  })().catch((err) => {
     output("Wasm exception:\n" + err.stack);
     throw err;
   });
