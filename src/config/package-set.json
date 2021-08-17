@@ -108,19 +108,23 @@
     "version": "v0.1.1"
   },
   {
-    "authors": [
-      "flyq"
-    ],
-    "dependencies": [
-      "base"
-    ],
+    "authors": ["flyq"],
+    "dependencies": ["base"],
     "description": "Base32 implemented in Motoko",
     "homepage": "https://flyq.github.io/motoko-base32/",
     "name": "base32",
-    "owners": [
-      "flyq"
-    ],
+    "owners": ["flyq"],
     "repo": "https://github.com/flyq/motoko-base32.git",
+    "version": "v0.1.1"
+  },
+  {
+    "authors": ["Matthew Hammer"],
+    "dependencies": ["base"],
+    "description": "Incremental computation, dependency graphs and change propagation.",
+    "homepage": "http://matthewhammer.org/motoko-adapton/",
+    "name": "adapton",
+    "owners": ["matthewhammer"],
+    "repo": "https://github.com/matthewhammer/motoko-adapton.git",
     "version": "v0.1.1"
   }
 ]
