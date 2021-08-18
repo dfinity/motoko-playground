@@ -38,7 +38,10 @@ const CANDID_UI_CANISTER_URL = uiCanisterUrl;
 
 export function CandidUI({ canisterId, candid, setCandidWidth, forceUpdate }) {
   const [isExpanded, setIsExpanded] = useState(true);
-  const didParam = candid ? `&did=${encodeURIComponent(btoa(candid))}` : "";
+  const didParam =
+    candid && candid.length < 2048
+      ? `&did=${encodeURIComponent(btoa(candid))}`
+      : "";
 
   useEffect(() => {
     const newSize = isExpanded ? "30vw" : "fit-content";
