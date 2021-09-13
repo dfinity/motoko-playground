@@ -139,7 +139,7 @@ async function createCanister(
   const timestamp = BigInt(Date.now()) * BigInt(1_000_000);
   const nonce = await worker.pow(timestamp);
   const info = await backend.getCanisterId(nonce);
-  logger.log(`Get canister id ${info.id}`);
+  logger.log(`Got canister id ${info.id}`);
   return {
     id: info.id,
     isExternal: false,
