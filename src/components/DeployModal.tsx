@@ -14,20 +14,23 @@ import { Button } from "./shared/Button";
 import "../assets/styles/candid.css";
 import { WorkerContext } from "../contexts/WorkplaceState";
 import { didjs } from "../config/actor";
+import { Field } from "./shared/Field";
+import { Confirm } from "./shared/Confirm";
 
 const ModalContainer = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  width: 50rem;
+  width: 46rem;
 `;
 
-const ProjectButtonContents = styled.div`
-  display: flex;
-  justify-content: center;
+const FormContainer = styled.div`
   width: 100%;
+  margin-top: 2rem;
+  padding: 0 4rem;
 `;
+
 const InitContainer = styled.div`
   width: 100%;
   border: 1px solid var(--grey300);
@@ -37,17 +40,35 @@ const InitContainer = styled.div`
   margin-top: 1rem;
 `;
 
-const SelectLabel = styled.div`
-  margin: 1rem 0 0.5rem;
-  font-size: 1.6rem;
-  font-weight: 500;
+const WarningContainer = styled.div`
   width: 100%;
+  background-color: var(--colorWarning);
+  border-radius: 1.5rem;
+  margin-top: 2rem;
+  padding: 1rem 2rem;
+  font-size: 1.4rem;
+
+  ul {
+    padding-left: 1.4rem;
+  }
+`;
+
+const WarningLabel = styled.strong`
+  display: block;
+  text-align: center;
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 3rem;
 `;
 
 const MyButton = styled(Button)`
-  width: 14rem;
-  margin-top: 3rem;
-  margin-right: 1.5rem;
+  width: 12rem;
 `;
 
 interface DeployModalProps {
@@ -79,6 +100,8 @@ export function DeployModal({
 }: DeployModalProps) {
   const [canisterName, setCanisterName] = useState("");
   const [inputs, setInputs] = useState<InputBox[]>([]);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [upgradeWarning, setUpgradeWarning] = useState("");
   const [profiling, setProfiling] = useState(false);
   const worker = useContext(WorkerContext);
 
@@ -116,32 +139,15 @@ export function DeployModal({
     return blobFromUint8Array(IDL.encode(initTypes, args));
   };
 
-  const deployClick = async (mode: string) => {
+  async function handleDeploy(mode: string) {
     const args = parse();
     if (args === undefined) {
       return;
     }
-    await close();
     try {
-      logger.clearLogs();
       let candid_src = candid;
       if (initTypes.length) {
         candid_src = (await didjs.binding(candid, "installed_did"))[0];
-      }
-      if (mode === "upgrade") {
-        // TODO subtype check for init args
-        if (canisters[canisterName].candid) {
-          const old = canisters[canisterName].candid;
-          const result = await didjs.subtype(candid_src, old);
-          if (result.hasOwnProperty("Err")) {
-            const err = result.Err.replaceAll(
-              "expected type",
-              "pre-upgrade interface"
-            );
-            logger.log("Warning: upgrade is not backward compatible:\n" + err);
-            // TODO show the warning modal
-          }
-        }
       }
       await isDeploy(true);
       const info = await deploy(
@@ -168,37 +174,70 @@ export function DeployModal({
       isDeploy(false);
       throw err;
     }
+  }
+
+  const deployClick = async (mode: string) => {
+    const args = parse();
+    if (args === undefined) {
+      return;
+    }
+    await close();
+    try {
+      logger.clearLogs();
+      let candid_src = candid;
+      if (initTypes.length) {
+        candid_src = (await didjs.binding(candid, "installed_did"))[0];
+      }
+      if (mode === "upgrade") {
+        // TODO subtype check for init args
+        if (canisters[canisterName].candid) {
+          const old = canisters[canisterName].candid;
+          const result = await didjs.subtype(candid_src, old);
+          if (result.hasOwnProperty("Err")) {
+            const err = result.Err.replaceAll(
+              "expected type",
+              "pre-upgrade interface"
+            );
+            // logger.log("Warning: upgrade is not backward compatible:\n" + err);
+            setUpgradeWarning(err);
+            setIsConfirmOpen(true);
+            return;
+          }
+        }
+      }
+      await handleDeploy(mode);
+    } catch (err) {
+      isDeploy(false);
+      throw err;
+    }
   };
 
-  const welcomeCopy = (
-    <>
-      <p>Deploy your canister to the IC.</p>
-    </>
-  );
+  const welcomeText = <p>Deploy your canister to the IC</p>;
+
   const Warnings = (
-    <>
-      <p style={{ fontSize: "1.4rem", marginTop: "2rem" }}>
-        {exceedsLimit ? (
-          <p>
-            <strong>Warning:</strong> You can deploy at most {MAX_CANISTERS}{" "}
-            canisters at the same time.
-          </p>
-        ) : null}
-        <p>
-          <strong>Warning:</strong> Cycle transfer instructions are silently
-          ignored by the system.
-        </p>
-        <p>
-          <strong>Warning:</strong> Deployed canister expires after{" "}
+    <WarningContainer>
+      <WarningLabel>Note:</WarningLabel>
+      <ul>
+        {exceedsLimit && (
+          <li>
+            You can deploy at most {MAX_CANISTERS} canisters at the same time.
+          </li>
+        )}
+        <li>Cycle transfer instructions are silently ignored by the system.</li>
+        <li>
+          Deployed canister expires after{" "}
           {(ttl / BigInt(60_000_000_000)).toString()} minutes.
-        </p>
-      </p>
-    </>
+        </li>
+      </ul>
+    </WarningContainer>
   );
+  const deployLabelText = "Select a canister name";
   const newDeploy = (
     <>
-      <input
+      <Field
+        required
         type="text"
+        labelText={deployLabelText}
         list="canisters"
         value={canisterName}
         onChange={(e) => setCanisterName(e.target.value)}
@@ -211,67 +250,88 @@ export function DeployModal({
     </>
   );
   const selectDeploy = (
-    <>
-      <select
-        value={canisterName}
-        onChange={(e) => setCanisterName(e.target.value)}
-      >
-        {Object.keys(canisters).map((canister) => (
-          <option value={canister}>{canister}</option>
-        ))}
-      </select>
-    </>
+    <Field
+      required
+      type="select"
+      labelText={deployLabelText}
+      value={canisterName}
+      onChange={(e) => setCanisterName(e.target.value)}
+    >
+      {Object.keys(canisters).map((canister) => (
+        <option value={canister}>{canister}</option>
+      ))}
+    </Field>
   );
 
   return (
-    <Modal
-      isOpen={isOpen}
-      close={close}
-      label="Deploy Canister"
-      shouldCloseOnEsc={true}
-    >
-      <ModalContainer>
-        {welcomeCopy}
-        <SelectLabel>
-          Select a canister name &nbsp;
-          {exceedsLimit ? selectDeploy : newDeploy}
-          {initTypes.length > 0 ? (
-            <InitContainer>
-              <p>This service requires the following installation arguments:</p>
-              <p>({initTypes.map((arg) => arg.name).join(", ")})</p>
-              <div className="InitArgs" ref={initArgs}></div>
-            </InitContainer>
-          ) : null}
-        </SelectLabel>
-        <p>
-          <input
-            type="checkbox"
-            checked={profiling}
-            onChange={(e) => setProfiling(e.target.checked)}
-          />{" "}
-          Enable profiling (experimental)
+    <>
+      <Modal
+        isOpen={isOpen}
+        close={close}
+        label="Deploy Canister"
+        shouldCloseOnEsc
+        shouldCloseOnOverlayClick
+      >
+        <ModalContainer>
+          {welcomeText}
+          <FormContainer>
+            {exceedsLimit ? selectDeploy : newDeploy}
+            {initTypes.length > 0 && (
+              <InitContainer>
+                <p>
+                  This service requires the following installation arguments:
+                </p>
+                <p>({initTypes.map((arg) => arg.name).join(", ")})</p>
+                <div className="InitArgs" ref={initArgs} />
+              </InitContainer>
+            )}
+            <Field
+              type="checkbox"
+              labelText="Enable profiling (experimental)"
+              checked={profiling}
+              onChange={(e) => setProfiling(e.target.checked)}
+            />
+          </FormContainer>
+          {Warnings}
+          <ButtonContainer>
+            {canisters.hasOwnProperty(canisterName) ? (
+              <>
+                <MyButton
+                  variant="primary"
+                  onClick={() => deployClick("upgrade")}
+                >
+                  Upgrade
+                </MyButton>
+                <MyButton onClick={() => deployClick("reinstall")}>
+                  Reinstall
+                </MyButton>
+              </>
+            ) : (
+              <MyButton
+                variant="primary"
+                onClick={() => deployClick("install")}
+              >
+                Deploy
+              </MyButton>
+            )}
+            <MyButton onClick={close}>Cancel</MyButton>
+          </ButtonContainer>
+        </ModalContainer>
+      </Modal>
+      <Confirm
+        isOpen={isConfirmOpen}
+        close={() => setIsConfirmOpen(false)}
+        onConfirm={() => handleDeploy("upgrade")}
+      >
+        <h3 style={{ width: "100%", textAlign: "center" }}>Warning</h3>
+        <WarningContainer>
+          <strong>Upgrade is not backward compatible:</strong> {upgradeWarning}
+        </WarningContainer>
+        <p style={{ fontSize: "1.4rem", marginTop: "2rem" }}>
+          Press "Continue" to upgrade canister anyway. Existing canister state
+          will be lost.
         </p>
-        {Warnings}
-        <ProjectButtonContents>
-          {canisters.hasOwnProperty(canisterName) ? (
-            <>
-              <MyButton onClick={() => deployClick("upgrade")}>
-                Upgrade
-              </MyButton>
-              <MyButton onClick={() => deployClick("reinstall")}>
-                Reinstall
-              </MyButton>
-            </>
-          ) : (
-            <>
-              <MyButton onClick={() => deployClick("install")}>
-                Install
-              </MyButton>
-            </>
-          )}
-          <MyButton onClick={close}>Cancel</MyButton>
-        </ProjectButtonContents>
-      </ModalContainer>
-    </Modal>
+      </Confirm>
+    </>
   );
 }
