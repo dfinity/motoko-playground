@@ -11,7 +11,7 @@ const LogHeader = styled(PanelHeader)`
   border-top: 1px solid var(--grey300);
 `;
 const LogContent = styled.div`
-  height: var(--consoleHeight);
+  flex: 1;
   overflow: auto;
   padding-left: 0.5rem;
 `;
@@ -20,7 +20,7 @@ const Button = styled.button`
   border: none;
   box-shadow: none;
 `;
-const CollapseIcon = styled("img")<{ isExpanded: boolean }>`
+const CollapseIcon = styled.img<{ isExpanded: boolean }>`
   ${(props) => (!props.isExpanded ? "transform: rotate(180deg);" : "")}
 `;
 
@@ -40,7 +40,7 @@ export function Console({ setConsoleHeight }) {
   }, [isExpanded]);
 
   return (
-    <div>
+    <>
       <LogHeader>
         Log
         <RightContainer>
@@ -55,11 +55,11 @@ export function Console({ setConsoleHeight }) {
       </LogHeader>
       <LogContent>
         {logger.logLines.map((line, index) => (
-          <pre key={index} ref={lastRef}>
+          <pre key={index} ref={lastRef} style={{ whiteSpace: "normal" }}>
             {line}
           </pre>
         ))}
       </LogContent>
-    </div>
+    </>
   );
 }
