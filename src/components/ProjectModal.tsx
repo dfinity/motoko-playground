@@ -73,7 +73,7 @@ export function ProjectModal({
     close();
   }
 
-  const welcomeCopy = (
+  const welcomeText = (
     <p>
       Welcome to the Motoko Playground! Explore Motoko, the native language of
       the Internet Computer, right in the browser without having to download the
@@ -88,7 +88,7 @@ export function ProjectModal({
       .
     </p>
   );
-  const switchProjectCopy = (
+  const switchProjectText = (
     <>
       <p>
         <strong>Warning:</strong> Any edits you've made will be lost when
@@ -99,7 +99,7 @@ export function ProjectModal({
       </p>
     </>
   );
-  const labelCopy = isFirstOpen
+  const labelText = isFirstOpen
     ? "Select a project to get started"
     : "Select a project to continue";
 
@@ -109,11 +109,12 @@ export function ProjectModal({
       close={close}
       label="Welcome to Motoko Lab"
       shouldCloseOnEsc={!isFirstOpen}
+      shouldCloseOnOverlayClick={!isFirstOpen}
     >
       <ModalContainer>
         <MotokoLabLogo />
-        {isFirstOpen ? welcomeCopy : switchProjectCopy}
-        <SelectLabel>{labelCopy}</SelectLabel>
+        {isFirstOpen ? welcomeText : switchProjectText}
+        <SelectLabel>{labelText}</SelectLabel>
         {!importOpen ? (
           <SelectList height="18rem">
             <ProjectButton onClick={emptyProject}>
@@ -136,7 +137,7 @@ export function ProjectModal({
             importCode={importCode}
             close={close}
             back={() => setImportOpen(false)}
-          ></ImportGitHub>
+          />
         )}
         {!isFirstOpen && <CancelButton onClick={close}>Cancel</CancelButton>}
       </ModalContainer>

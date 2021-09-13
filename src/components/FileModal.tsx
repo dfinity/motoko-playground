@@ -7,13 +7,14 @@ import {
   WorkerContext,
   WorkplaceDispatchContext,
 } from "../contexts/WorkplaceState";
+import { Field } from "./shared/Field";
 
 const ModalContainer = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 25rem;
+  width: 34rem;
   font-size: 1.6rem;
   font-weight: 500;
 `;
@@ -22,9 +23,7 @@ const ButtonContainer = styled.div`
   display: flex;
   justify-content: center;
   width: 100%;
-`;
-const MyButton = styled(Button)`
-  margin: 2rem 2rem 0 0;
+  margin-top: 3rem;
 `;
 
 export function FileModal({ isOpen, close }) {
@@ -45,19 +44,23 @@ export function FileModal({ isOpen, close }) {
       isOpen={isOpen}
       close={close}
       label="Add file"
-      shouldCloseOnEsc={true}
+      shouldCloseOnEsc
+      shouldCloseOnOverlayClick
     >
       <ModalContainer>
-        <p>Add a new file name</p>
-        <input
+        <p style={{ marginBottom: "2rem" }}>Add a new file</p>
+        <Field
           type="text"
+          labelText="Filename"
           value={fileName}
-          autoFocus={true}
           onChange={(e) => setFileName(e.target.value)}
+          autoFocus
         />
         <ButtonContainer>
-          <MyButton onClick={addFile}>Add</MyButton>
-          <MyButton onClick={close}>Cancel</MyButton>
+          <Button variant="primary" onClick={addFile}>
+            Add
+          </Button>
+          <Button onClick={close}>Cancel</Button>
         </ButtonContainer>
       </ModalContainer>
     </Modal>
