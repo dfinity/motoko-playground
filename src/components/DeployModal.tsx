@@ -11,11 +11,11 @@ import { Modal } from "./shared/Modal";
 import { CanisterInfo, getCanisterName, deploy } from "../build";
 import { ILoggingStore } from "./Logger";
 import { Button } from "./shared/Button";
-import "../assets/styles/candid.css";
 import { WorkerContext } from "../contexts/WorkplaceState";
 import { didjs } from "../config/actor";
 import { Field } from "./shared/Field";
 import { Confirm } from "./shared/Confirm";
+import "../assets/styles/candid.css";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -144,35 +144,30 @@ export function DeployModal({
     if (args === undefined) {
       return;
     }
-    try {
-      let candid_src = candid;
-      if (initTypes.length) {
-        candid_src = (await didjs.binding(candid, "installed_did"))[0];
-      }
-      await isDeploy(true);
-      const info = await deploy(
-        worker,
-        canisterName,
-        canisters[canisterName],
-        args,
-        mode,
-        fileName,
-        profiling,
-        logger
-      );
-      await isDeploy(false);
-      if (info) {
-        info.candid = candid_src;
-        await worker.Moc({
-          type: "save",
-          file: `idl/${info.id}.did`,
-          content: candid_src,
-        });
-        onDeploy(info);
-      }
-    } catch (err) {
-      isDeploy(false);
-      throw err;
+    let candid_src = candid;
+    if (initTypes.length) {
+      candid_src = (await didjs.binding(candid, "installed_did"))[0];
+    }
+    await isDeploy(true);
+    const info = await deploy(
+      worker,
+      canisterName,
+      canisters[canisterName],
+      args,
+      mode,
+      fileName,
+      profiling,
+      logger
+    );
+    await isDeploy(false);
+    if (info) {
+      info.candid = candid_src;
+      await worker.Moc({
+        type: "save",
+        file: `idl/${info.id}.did`,
+        content: candid_src,
+      });
+      onDeploy(info);
     }
   }
 
@@ -328,8 +323,7 @@ export function DeployModal({
           <strong>Upgrade is not backward compatible:</strong> {upgradeWarning}
         </WarningContainer>
         <p style={{ fontSize: "1.4rem", marginTop: "2rem" }}>
-          Press "Continue" to upgrade canister anyway. Existing canister state
-          will be lost.
+          Press "Continue" to upgrade canister anyway.
         </p>
       </Confirm>
     </>

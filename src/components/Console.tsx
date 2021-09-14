@@ -12,6 +12,7 @@ const LogHeader = styled(PanelHeader)`
 `;
 const LogContent = styled.div`
   flex: 1;
+  height: var(--consoleHeight);
   overflow: auto;
   padding-left: 0.5rem;
 `;
