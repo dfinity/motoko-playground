@@ -230,7 +230,6 @@ export function DeployModal({
   const newDeploy = (
     <>
       <Field
-        required
         type="text"
         labelText={deployLabelText}
         list="canisters"
