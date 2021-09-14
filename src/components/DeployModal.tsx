@@ -305,7 +305,7 @@ export function DeployModal({
                 variant="primary"
                 onClick={() => deployClick("install")}
               >
-                Deploy
+                Install
               </MyButton>
             )}
             <MyButton onClick={close}>Cancel</MyButton>
