@@ -139,14 +139,20 @@ export function DeployModal({
     return blobFromUint8Array(IDL.encode(initTypes, args));
   };
 
-  async function handleDeploy(mode: string) {
+  async function getArgsAndCandidSrc() {
     const args = parse();
-    if (args === undefined) {
-      return;
-    }
     let candid_src = candid;
     if (initTypes.length) {
       candid_src = (await didjs.binding(candid, "installed_did"))[0];
+    }
+
+    return { args, candid_src };
+  }
+
+  async function handleDeploy(mode: string) {
+    const { args, candid_src } = await getArgsAndCandidSrc();
+    if (args === undefined) {
+      return;
     }
     await isDeploy(true);
     const info = await deploy(
@@ -172,17 +178,13 @@ export function DeployModal({
   }
 
   const deployClick = async (mode: string) => {
-    const args = parse();
+    const { args, candid_src } = await getArgsAndCandidSrc();
     if (args === undefined) {
       return;
     }
     await close();
     try {
       logger.clearLogs();
-      let candid_src = candid;
-      if (initTypes.length) {
-        candid_src = (await didjs.binding(candid, "installed_did"))[0];
-      }
       if (mode === "upgrade") {
         // TODO subtype check for init args
         if (canisters[canisterName].candid) {
@@ -193,7 +195,6 @@ export function DeployModal({
               "expected type",
               "pre-upgrade interface"
             );
-            // logger.log("Warning: upgrade is not backward compatible:\n" + err);
             setUpgradeWarning(err);
             setIsConfirmOpen(true);
             return;
