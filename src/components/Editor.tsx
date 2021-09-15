@@ -165,7 +165,7 @@ export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
           <Button
             onClick={deployClick}
             disabled={isDeploying}
-            kind="primary"
+            variant="primary"
             small
           >
             <img src={isDeploying ? iconSpin : iconRabbit} alt="Rabbit icon" />

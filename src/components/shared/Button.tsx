@@ -3,7 +3,7 @@ import { MouseEvent } from "react";
 
 export const Button = styled("button")<{
   small?: boolean;
-  kind?: "primary" | "secondary";
+  variant?: "primary" | "secondary";
   onClick?: (ev: MouseEvent<HTMLButtonElement>) => void;
   width?: string;
 }>`
@@ -17,22 +17,28 @@ export const Button = styled("button")<{
   min-width: ${(props) => (props.small ? "5.6rem" : "7.8rem")};
   ${(props) => (props.width ? `width: ${props.width}` : "")};
   background-color: ${(props) =>
-    props.kind
-      ? props.kind === "primary"
+    props.variant
+      ? props.variant === "primary"
         ? "var(--colorPrimary)"
         : "white"
       : "var(--grey200)"};
   color: ${(props) =>
-    props.kind === "primary"
+    props.variant === "primary"
       ? "white"
-      : props.kind === "secondary"
+      : props.variant === "secondary"
       ? "var(--grey500)"
       : "var(--grey600)"};
   border: ${(props) =>
-    props.kind === "secondary" ? "1px solid var(--grey400)" : "none"};
+    `1px solid ${
+      props.variant === "secondary" ? "var(--grey400)" : "transparent"
+    }`};
   border-radius: ${(props) => (props.small ? "1.7rem" : "2.3rem")};
 
-  > :not(:last-child) {
+  &:not(:last-child) {
+    margin-right: 2rem;
+  }
+
+  > *:not(:last-child) {
     margin-right: 0.8rem;
   }
 
@@ -42,9 +48,11 @@ export const Button = styled("button")<{
 
   &:hover {
     background-color: ${(props) =>
-      props.kind === "primary" ? "var(--colorPrimaryDark)" : "var(--grey100)"};
+      props.variant === "primary"
+        ? "var(--colorPrimaryDark)"
+        : "var(--grey100)"};
     ${(props) =>
-      !props.kind
+      !props.variant
         ? `color: var(--colorPrimary);
            border: 1px solid var(--grey300);
 

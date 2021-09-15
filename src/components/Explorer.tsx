@@ -38,6 +38,11 @@ const MyButton = styled.button`
   box-shadow: none;
   margin-left: auto;
 `;
+const CloseButton = styled(MyButton)`
+  padding: 0;
+  margin-right: -1.1rem;
+  margin-left: -0.3rem;
+`;
 
 interface ExplorerProps {
   state: WorkplaceState;
@@ -45,8 +50,14 @@ interface ExplorerProps {
   logger: ILoggingStore;
 }
 
+type TimeStatus = {
+  status?: "Active" | "Expired";
+  minutes?: string;
+  seconds?: string;
+};
+
 export function Explorer({ state, ttl, logger }: ExplorerProps) {
-  const [timeLeft, setTimeLeft] = useState<Array<string>>([]);
+  const [timeLeft, setTimeLeft] = useState<Array<TimeStatus>>([]);
   const [isExpired, setIsExpired] = useState<Array<string>>([]);
   const [showPackage, setShowPackage] = useState(false);
   const [showFileModal, setShowFileModal] = useState(false);
@@ -135,14 +146,18 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
       setTimeLeft(
         times.map(([_, left]) => {
           if (!left) {
-            return "";
+            return {};
           }
           if (left > 0) {
             const minute = Math.floor(left / 60);
             const second = left % 60;
-            return `${minute}:${second.toString().padStart(2, "0")}`;
+            return {
+              status: "Active",
+              minutes: minute.toString(),
+              seconds: second.toString().padStart(2, "0"),
+            };
           } else {
-            return "Expired";
+            return { status: "Expired" };
           }
         })
       );
@@ -172,8 +187,8 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
       />
       <CategoryTitle>
         Files
-        <MyButton onClick={() => setShowFileModal(true)}>
-          <img style={{ width: "1.6rem" }} src={iconPlus} alt="Add file" />
+        <MyButton onClick={() => setShowFileModal(true)} aria-label="Add file">
+          <img style={{ width: "1.6rem" }} src={iconPlus} alt="" />
         </MyButton>
       </CategoryTitle>
       {Object.keys(state.files)
@@ -184,14 +199,15 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
             isActive={state.selectedFile === filename}
             disabled={state.selectedFile === filename}
             onClick={() => onSelectFile(filename)}
+            aria-label={`File`}
           >
             {filename}
           </ListButton>
         ))}
       <CategoryTitle>
         Packages
-        <MyButton onClick={() => setShowPackage(true)}>
-          <img style={{ width: "1.6rem" }} src={iconPlus} alt="Add package" />
+        <MyButton onClick={() => setShowPackage(true)} aria-label="Add package">
+          <img style={{ width: "1.6rem" }} src={iconPlus} alt="" />
         </MyButton>
       </CategoryTitle>
       {Object.entries(state.packages).map(([_, info]) => (
@@ -199,16 +215,20 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
           onClick={() => {
             window.open(info.homepage!, "_blank");
           }}
-          disabled={info.homepage ? false : true}
+          disabled={!!info.homepage}
+          aria-label="Select motoko package"
         >
-          <img src={iconPackage} alt="Package icon" />
+          <img src={iconPackage} alt="" />
           <p>mo:{info.name}</p>
         </ListButton>
       ))}
       <CategoryTitle>
         Canisters
-        <MyButton onClick={() => setShowCanisterModal(true)}>
-          <img style={{ width: "1.6rem" }} src={iconPlus} alt="Add canister" />
+        <MyButton
+          onClick={() => setShowCanisterModal(true)}
+          aria-label="Add canister"
+        >
+          <img style={{ width: "1.6rem" }} src={iconPlus} alt="" />
         </MyButton>
       </CategoryTitle>
       {Object.keys(state.canisters).map((canister, i) => (
@@ -217,13 +237,27 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
           isActive={state.selectedCanister === canister}
           disabled={state.selectedCanister === canister}
           onClick={() => onCanister(canister, "select")}
+          aria-label="Select canister"
         >
-          <img src={iconCanister} alt="Canister icon" />
+          <img src={iconCanister} alt="" />
           canister:{canister}
-          <div style={{ marginLeft: "auto" }}>{timeLeft[i]}</div>
-          <MyButton onClick={() => onCanister(canister, "delete")}>
-            <img src={iconClose} alt="Close icon" />
-          </MyButton>
+          {timeLeft[i]?.status === "Active" && (
+            <div style={{ marginLeft: "auto" }}>
+              <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                {timeLeft[i]?.minutes}
+              </span>
+              :
+              <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                {timeLeft[i]?.seconds}
+              </span>
+            </div>
+          )}
+          <CloseButton
+            onClick={() => onCanister(canister, "delete")}
+            aria-label={`Delete canister ${canister}`}
+          >
+            <img src={iconClose} alt="" />
+          </CloseButton>
         </ListButton>
       ))}
     </StyledExplorer>

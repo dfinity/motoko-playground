@@ -75,7 +75,8 @@ export function PackageModal({
       isOpen={isOpen}
       close={close}
       label="Load package"
-      shouldCloseOnEsc={true}
+      shouldCloseOnEsc
+      shouldCloseOnOverlayClick
     >
       <ModalContainer>
         <SelectLabel>Select a Motoko package</SelectLabel>
@@ -99,7 +100,7 @@ export function PackageModal({
             importCode={loadPackage}
             close={close}
             back={() => setImportOpen(false)}
-          ></ImportGitHub>
+          />
         )}
         <CancelButton onClick={close}>Cancel</CancelButton>
       </ModalContainer>

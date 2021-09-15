@@ -11,26 +11,34 @@ import {
 import { fetchCandidInterface, didjs } from "../config/actor";
 import { CanisterInfo } from "../build";
 import { canisterSet } from "../config/canister-set";
+import { Field } from "./shared/Field";
 
 const ModalContainer = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 40rem;
+  width: 34rem;
   font-size: 1.6rem;
   font-weight: 500;
 `;
-const Item = styled.div`
-  margin: 1rem;
+const Title = styled.div`
+  margin: 1rem 0;
+`;
+const FormContainer = styled.div`
+  margin-top: 2rem;
+  padding: 0 2rem;
+  width: 100%;
 `;
 const ButtonContainer = styled.div`
   display: flex;
   justify-content: center;
   width: 100%;
+  margin-top: 3rem;
 `;
+
 const MyButton = styled(Button)`
-  margin: 2rem 2rem 0 0;
+  width: 10rem;
 `;
 
 export function CanisterModal({ isOpen, close }) {
@@ -107,66 +115,65 @@ export function CanisterModal({ isOpen, close }) {
     await close();
   }
 
+  function handleFileUpload(e) {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      if (typeof reader.result === "string") {
+        setCandid(reader.result);
+      }
+    });
+    reader.readAsText(e.target.files[0]);
+  }
+
   return (
     <Modal
       isOpen={isOpen}
       close={close}
       label="Import canister"
-      shouldCloseOnEsc={true}
+      shouldCloseOnEsc
+      shouldCloseOnOverlayClick
     >
       <ModalContainer>
-        <Item>Import an external canister</Item>
-        <Item>
-          Canister ID &nbsp;
-          <input
+        <Title>Import an external canister</Title>
+        <FormContainer>
+          <Field
             type="text"
+            labelText="Canister ID"
             list="canisters"
-            style={{ width: "25rem" }}
             value={canisterId}
             onChange={validateAndSetId}
           />
-        </Item>
-        <datalist id="canisters">
-          {Object.entries(canisterSet).map(([id, info]) => (
-            <option value={id}>{info.name}</option>
-          ))}
-        </datalist>
-        <Item>
-          Canister name &nbsp;
-          <input
+          <datalist id="canisters">
+            {Object.entries(canisterSet).map(([id, info]) => (
+              <option value={id}>{info.name}</option>
+            ))}
+          </datalist>
+          <Field
             type="text"
+            labelText="Canister name"
             value={canisterName}
             onChange={(e) => setCanisterName(e.target.value)}
           />
-        </Item>
-        <Item>
-          <input
+          <Field
             type="checkbox"
+            labelText="Generate Motoko binding"
             checked={genBinding}
             onChange={(e) => setGenBinding(e.target.checked)}
-          />{" "}
-          Generate Motoko binding
-        </Item>
-        {error ? <Item>{error}</Item> : null}
-        {uploadDid ? (
-          <Item>
-            Upload did file &nbsp;
-            <input
+          />
+          {error && <Title>{error}</Title>}
+          {uploadDid && (
+            <Field
               type="file"
-              style={{ width: "25rem" }}
+              labelText="Upload .did file"
               accept=".did"
-              onChange={(e) => {
-                const reader = new FileReader();
-                reader.addEventListener("load", () => {
-                  setCandid(reader.result);
-                });
-                reader.readAsText(e.target.files[0]);
-              }}
+              onChange={handleFileUpload}
             />
-          </Item>
-        ) : null}
+          )}
+        </FormContainer>
         <ButtonContainer>
-          <MyButton onClick={addCanister}>Add</MyButton>
+          <MyButton variant="primary" onClick={addCanister}>
+            Add
+          </MyButton>
           <MyButton onClick={close}>Cancel</MyButton>
         </ButtonContainer>
       </ModalContainer>

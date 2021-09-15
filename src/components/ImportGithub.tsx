@@ -3,29 +3,27 @@ import { useState, useContext } from "react";
 import { Button } from "./shared/Button";
 import { PackageInfo } from "../workers/file";
 import { WorkerContext } from "../contexts/WorkplaceState";
+import { Field } from "./shared/Field";
 
 const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   width: 100%;
-  border: 1px solid var(--grey300);
-  border-radius: 0.8rem;
-  padding: 1rem;
   margin-top: 1rem;
   font-size: 1.6rem;
   font-weight: 500;
 `;
-const Item = styled.div`
-  margin: 1rem;
+const Error = styled.div`
+  margin: 1rem 0;
+  font-size: 1.4rem;
+  color: var(--colorError);
 `;
 const ButtonContainer = styled.div`
   display: flex;
   justify-content: center;
+  padding-top: 2rem;
   width: 100%;
 `;
 const MyButton = styled(Button)`
-  margin: 1rem;
+  width: 12rem;
 `;
 
 export function ImportGitHub({
@@ -73,42 +71,37 @@ export function ImportGitHub({
   return (
     <Container>
       {isPackageModal && (
-        <Item>
-          Package name &nbsp;
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </Item>
+        <Field
+          type="text"
+          labelText="Package name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
       )}
-      <Item>
-        Github repo &nbsp;
-        <input
-          type="text"
-          value={repo}
-          onChange={(e) => setRepo(e.target.value)}
-        />
-      </Item>
-      <Item>
-        Branch &nbsp;
-        <input
-          type="text"
-          value={branch}
-          onChange={(e) => setBranch(e.target.value)}
-        />
-      </Item>
-      <Item>
-        Directory &nbsp;
-        <input
-          type="text"
-          value={dir}
-          onChange={(e) => setDir(e.target.value)}
-        />
-      </Item>
-      <Item>{error}</Item>
+      <Field
+        type="text"
+        labelText="Github repo"
+        value={repo}
+        onChange={(e) => setRepo(e.target.value)}
+      />
+      <Field
+        type="text"
+        labelText="Branch"
+        value={branch}
+        onChange={(e) => setBranch(e.target.value)}
+      />
+      <Field
+        type="text"
+        labelText="Directory"
+        value={dir}
+        onChange={(e) => setDir(e.target.value)}
+      />
+      <Error>{error}</Error>
       <ButtonContainer>
-        <MyButton onClick={isPackageModal ? fetchPackageCode : fetchCode}>
+        <MyButton
+          onClick={isPackageModal ? fetchPackageCode : fetchCode}
+          variant="primary"
+        >
           Import
         </MyButton>
         <MyButton onClick={back}>Back</MyButton>
