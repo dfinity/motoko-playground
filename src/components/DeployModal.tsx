@@ -1,5 +1,5 @@
-import styled from "styled-components";
 import { useState, useCallback, useEffect, useContext } from "react";
+import styled from "styled-components";
 import {
   IDL,
   renderInput,
@@ -32,12 +32,23 @@ const FormContainer = styled.div`
 `;
 
 const InitContainer = styled.div`
-  width: 100%;
   border: 1px solid var(--grey300);
   border-radius: 0.8rem;
-  overflow: auto;
   padding: 1rem;
-  margin-top: 1rem;
+  margin: 1rem -1rem 2rem;
+
+  input {
+    width: 100%;
+    color: var(--grey700);
+    border: 1px solid var(--grey500);
+    padding: 0.3rem 1rem;
+    border-radius: 0;
+
+    + span {
+      font-size: 1.4rem;
+      margin: -0.5rem 0 0.5rem;
+    }
+  }
 `;
 
 const WarningContainer = styled.div`
@@ -127,6 +138,7 @@ export function DeployModal({
     },
     [inputs]
   );
+
   const parse = () => {
     if (!initTypes.length) {
       return blobFromUint8Array(IDL.encode(initTypes, []));

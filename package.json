@@ -38,6 +38,7 @@
     "test": "craco test -- --config=config/jest.config.js",
     "eject": "craco eject",
     "deploy": "dfx deploy --argument '(null)'",
+    "refresh": "dfx build react_app && dfx canister install react_app --mode upgrade",
     "prestart": "dfx start --background --no-artificial-delay || exit 0",
     "predeploy": "npm run prestart",
     "prepare": "husky install"
