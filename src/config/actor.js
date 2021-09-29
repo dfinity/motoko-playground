@@ -32,7 +32,7 @@ export const saved = Actor.createActor(savedIdlFactory, {
 });
 
 const uiCanisterId = is_local(agent)
-  ? "rdmx6-jaaaa-aaaaa-aaadq-cai" //"rdmx6-jaaaa-aaaaa-aaadq-cai"  //"rno2w-sqaaa-aaaaa-aaacq-cai"
+  ? "rno2w-sqaaa-aaaaa-aaacq-cai"
   : "a4gq6-oaaaa-aaaab-qaa4q-cai";
 export const uiCanisterUrl = is_local(agent)
   ? `http://${uiCanisterId}.${dfxConfig.networks.local.bind}`
