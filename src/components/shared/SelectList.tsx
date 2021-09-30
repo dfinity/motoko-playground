@@ -37,9 +37,11 @@ export const ListButton = styled("button")<{ isActive?: boolean }>`
   }
 `;
 
-const ListContainer = styled("div")<{
+interface ListDimensions {
   dimensions: { height: string; width: string };
-}>`
+}
+
+const ListContainer = styled("div")<ListDimensions>`
   height: ${({ dimensions }) => dimensions.height};
   width: ${({ dimensions }) => dimensions.width};
   border: 1px solid var(--grey300);
@@ -47,7 +49,7 @@ const ListContainer = styled("div")<{
   overflow: hidden;
 `;
 
-const List = styled("div")<{ dimensions: { height: string; width: string } }>`
+const List = styled("div")<ListDimensions>`
   height: ${({ dimensions }) => dimensions.height};
   width: ${({ dimensions }) => dimensions.width};
   overflow-y: auto;
