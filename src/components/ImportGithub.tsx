@@ -26,12 +26,7 @@ const MyButton = styled(Button)`
   width: 12rem;
 `;
 
-export function ImportGitHub({
-  importCode,
-  close,
-  // back,
-  isPackageModal = false,
-}) {
+export function ImportGitHub({ importCode, close, isPackageModal = false }) {
   const [repo, setRepo] = useState("dfinity/examples");
   const [branch, setBranch] = useState("master");
   const [dir, setDir] = useState("motoko/counter/src");

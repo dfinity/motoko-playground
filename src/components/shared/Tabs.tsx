@@ -76,13 +76,15 @@ const TabsContent = styled.div`
   flex-grow: 1;
 `;
 
-export function Tabs({
-  children,
-  onTabSelect = () => {},
-  activeTab: initialActiveTab = 0,
-  height,
-  width,
-}: TabsProps) {
+export function Tabs(props: TabsProps) {
+  const {
+    children,
+    onTabSelect = () => {},
+    activeTab: initialActiveTab = 0,
+    height,
+    width,
+  } = props;
+
   const [activeTab, setActiveTab] = useState(initialActiveTab);
   const handleTabSelect = (tabIndex) => {
     onTabSelect(tabIndex);
