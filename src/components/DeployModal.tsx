@@ -28,14 +28,13 @@ const ModalContainer = styled.div`
 const FormContainer = styled.div`
   width: 100%;
   margin-top: 2rem;
-  padding: 0 2rem;
 `;
 
 const InitContainer = styled.div`
   border: 1px solid var(--grey400);
   border-radius: 1.5rem;
   padding: 1rem calc(2rem - 1px);
-  margin: 1rem -2rem 2rem;
+  margin: 1rem 0 2rem;
 
   input {
     width: 100%;
