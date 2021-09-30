@@ -33,8 +33,8 @@ const FormContainer = styled.div`
 
 const InitContainer = styled.div`
   border: 1px solid var(--grey400);
-  border-radius: 0.8rem;
-  padding: 1rem 2rem;
+  border-radius: 1.5rem;
+  padding: 1rem calc(2rem - 1px);
   margin: 1rem -2rem 2rem;
 
   input {
@@ -325,15 +325,18 @@ export function DeployModal({
           </ButtonContainer>
         </ModalContainer>
       </Modal>
+
       <Confirm
         isOpen={isConfirmOpen}
         close={() => setIsConfirmOpen(false)}
         onConfirm={() => handleDeploy("upgrade")}
       >
         <h3 style={{ width: "100%", textAlign: "center" }}>Warning</h3>
+
         <WarningContainer>
           <strong>Upgrade is not backward compatible:</strong> {upgradeWarning}
         </WarningContainer>
+
         <p style={{ fontSize: "1.4rem", marginTop: "2rem" }}>
           Press "Continue" to upgrade canister anyway.
         </p>

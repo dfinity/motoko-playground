@@ -8,6 +8,7 @@ import { ImportGitHub } from "./ImportGithub";
 import packageSet from "../config/package-set.json";
 import { PackageInfo } from "../workers/file";
 import { WorkerContext } from "../contexts/WorkplaceState";
+import { Tab, Tabs } from "./shared/Tabs";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -59,7 +60,6 @@ export function PackageModal({
   close,
   loadPackage,
 }: PackageModalProps) {
-  const [importOpen, setImportOpen] = useState(false);
   const worker = useContext(WorkerContext);
   async function handleSelectPackage(pack: PackageInfo) {
     if (await worker.fetchPackage(pack)) {
@@ -80,28 +80,27 @@ export function PackageModal({
     >
       <ModalContainer>
         <SelectLabel>Select a Motoko package</SelectLabel>
-        {!importOpen ? (
-          <SelectList height="24rem">
-            {packageSet.map((pack) => (
-              <ProjectButton
-                key={pack.name}
-                onClick={() => handleSelectPackage(pack)}
-              >
-                {pack.name} {pack.description ? `-- ${pack.description}` : ""}
-              </ProjectButton>
-            ))}
-            <ProjectButton onClick={() => setImportOpen(true)}>
-              Import from Github...
-            </ProjectButton>
-          </SelectList>
-        ) : (
-          <ImportGitHub
-            isPackageModal={true}
-            importCode={loadPackage}
-            close={close}
-            back={() => setImportOpen(false)}
-          />
-        )}
+        <Tabs width="44rem">
+          <Tab label="Vessel packages">
+            <SelectList height="36.1rem">
+              {packageSet.map((pack) => (
+                <ProjectButton
+                  key={pack.name}
+                  onClick={() => handleSelectPackage(pack)}
+                >
+                  {pack.name} {pack.description ? `-- ${pack.description}` : ""}
+                </ProjectButton>
+              ))}
+            </SelectList>
+          </Tab>
+          <Tab label="Import from Github">
+            <ImportGitHub
+              isPackageModal={true}
+              importCode={loadPackage}
+              close={close}
+            />
+          </Tab>
+        </Tabs>
         <CancelButton onClick={close}>Cancel</CancelButton>
       </ModalContainer>
     </Modal>

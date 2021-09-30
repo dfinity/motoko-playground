@@ -29,7 +29,7 @@ const MyButton = styled(Button)`
 export function ImportGitHub({
   importCode,
   close,
-  back,
+  // back,
   isPackageModal = false,
 }) {
   const [repo, setRepo] = useState("dfinity/examples");
@@ -104,7 +104,6 @@ export function ImportGitHub({
         >
           Import
         </MyButton>
-        <MyButton onClick={back}>Back</MyButton>
       </ButtonContainer>
     </Container>
   );
