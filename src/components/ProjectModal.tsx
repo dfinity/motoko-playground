@@ -1,13 +1,16 @@
+import { useContext } from "react";
 import styled from "styled-components";
-import { useState, useContext } from "react";
+
 import { Modal } from "./shared/Modal";
 import { MotokoLabLogo } from "./shared/MotokoLabLogo";
 import { Button } from "./shared/Button";
 import { ListButton, SelectList } from "./shared/SelectList";
-import iconCaretRight from "../assets/images/icon-caret-right.svg";
+import { Tab, Tabs } from "./shared/Tabs";
+
 import { ImportGitHub } from "./ImportGithub";
 import { fetchExample, exampleProjects, ExampleProject } from "../examples";
 import { WorkerContext } from "../contexts/WorkplaceState";
+import iconCaretRight from "../assets/images/icon-caret-right.svg";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -36,7 +39,7 @@ function ProjectButton({ onClick, children }) {
 }
 
 const SelectLabel = styled.span`
-  margin: 1rem 0 0.5rem;
+  margin: 1rem 0 2rem;
   font-size: 1.6rem;
   font-weight: 500;
 `;
@@ -59,7 +62,6 @@ export function ProjectModal({
   importCode,
   isFirstOpen,
 }: ProjectModalProps) {
-  const [importOpen, setImportOpen] = useState(false);
   const worker = useContext(WorkerContext);
   async function handleSelectProjectAndClose(project: ExampleProject) {
     const files = await fetchExample(worker, project);
@@ -115,30 +117,26 @@ export function ProjectModal({
         <MotokoLabLogo />
         {isFirstOpen ? welcomeText : switchProjectText}
         <SelectLabel>{labelText}</SelectLabel>
-        {!importOpen ? (
-          <SelectList height="18rem">
-            <ProjectButton onClick={emptyProject}>
-              Empty Motoko project
-            </ProjectButton>
-            {Object.entries(exampleProjects).map(([name, project]) => (
-              <ProjectButton
-                key={name}
-                onClick={() => handleSelectProjectAndClose(project)}
-              >
-                {name}
+        <Tabs width="39rem">
+          <Tab label="Example Projects">
+            <SelectList height="28.95rem">
+              <ProjectButton onClick={emptyProject}>
+                Empty Motoko project
               </ProjectButton>
-            ))}
-            <ProjectButton onClick={() => setImportOpen(true)}>
-              Import from Github...
-            </ProjectButton>
-          </SelectList>
-        ) : (
-          <ImportGitHub
-            importCode={importCode}
-            close={close}
-            back={() => setImportOpen(false)}
-          />
-        )}
+              {Object.entries(exampleProjects).map(([name, project]) => (
+                <ProjectButton
+                  key={name}
+                  onClick={() => handleSelectProjectAndClose(project)}
+                >
+                  {name}
+                </ProjectButton>
+              ))}
+            </SelectList>
+          </Tab>
+          <Tab label="Import from Github">
+            <ImportGitHub importCode={importCode} close={close} />
+          </Tab>
+        </Tabs>
         {!isFirstOpen && <CancelButton onClick={close}>Cancel</CancelButton>}
       </ModalContainer>
     </Modal>

@@ -37,17 +37,21 @@ export const ListButton = styled("button")<{ isActive?: boolean }>`
   }
 `;
 
-const ListContainer = styled("div")<{ height: string; width: string }>`
-  height: ${(props) => props.height};
-  width: ${(props) => props.width};
+interface ListDimensions {
+  dimensions: { height: string; width: string };
+}
+
+const ListContainer = styled("div")<ListDimensions>`
+  height: ${({ dimensions }) => dimensions.height};
+  width: ${({ dimensions }) => dimensions.width};
   border: 1px solid var(--grey300);
   border-radius: 0.8rem;
   overflow: hidden;
 `;
 
-const List = styled("div")<{ height: string; width: string }>`
-  height: ${(props) => props.height};
-  width: ${(props) => props.width};
+const List = styled("div")<ListDimensions>`
+  height: ${({ dimensions }) => dimensions.height};
+  width: ${({ dimensions }) => dimensions.width};
   overflow-y: auto;
   border-radius: 0.8rem;
 
@@ -74,10 +78,8 @@ export function SelectList({
   children: ReactNodeArray;
 }) {
   return (
-    <ListContainer width={width} height={height}>
-      <List width={width} height={height}>
-        {children}
-      </List>
+    <ListContainer dimensions={{ height, width }}>
+      <List dimensions={{ height, width }}>{children}</List>
     </ListContainer>
   );
 }
