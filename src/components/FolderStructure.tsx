@@ -1,6 +1,7 @@
 import styled, { css } from "styled-components";
 import { ListButton } from "./shared/SelectList";
-import { isNumber } from "util";
+import folderIcon from "../assets/images/icon-folder.svg";
+import fileIcon from "../assets/images/icon-file.svg";
 
 interface FoldersJson {
   files: Array<string>;
@@ -31,26 +32,6 @@ export function structureFolders(filePaths: Array<string>) {
   );
 }
 
-function iconBefore(icon) {
-  const iconSize = `1.5rem`;
-  const { PUBLIC_URL } = process.env;
-
-  return css`
-    &::before {
-      display: block;
-      content: " ";
-      background-image: url("${PUBLIC_URL}/images/icon-${icon}.svg");
-      background-size: ${iconSize} ${iconSize};
-      height: ${iconSize};
-      width: ${iconSize};
-      margin-right: 0.8rem;
-    }
-  `;
-}
-
-const folderIcon = iconBefore("folder");
-const fileIcon = iconBefore("file");
-
 const FolderContainer = styled.details`
   width: 100%;
   font-size: 1.4rem;
@@ -72,8 +53,6 @@ const StyledFolder = styled.summary<DepthProp>`
   &:hover {
     color: var(--colorPrimary);
   }
-
-  ${folderIcon}
 `;
 
 const FileButton = styled(ListButton)<DepthProp>`
@@ -81,8 +60,12 @@ const FileButton = styled(ListButton)<DepthProp>`
   border-bottom: none;
   height: 3rem;
   user-select: none;
+`;
 
-  ${fileIcon}
+const Icon = styled.img`
+  width: 1.6rem;
+  margin-right: 0.8rem;
+  filter: brightness(0) brightness(0.95);
 `;
 
 interface RenderOptions {
@@ -98,7 +81,10 @@ function renderFolderStructure(options: RenderOptions) {
   const finalStructure = Object.entries(folderStructure.folders).map(
     ([folderName, contents]) => (
       <FolderContainer key={folderName} open>
-        <StyledFolder nestDepth={nestDepth}>{folderName}</StyledFolder>
+        <StyledFolder nestDepth={nestDepth}>
+          <Icon src={folderIcon} alt="" />
+          {folderName}
+        </StyledFolder>
         {renderFolderStructure({
           folderStructure: contents,
           onSelectFile,
@@ -122,6 +108,7 @@ function renderFolderStructure(options: RenderOptions) {
         disabled={isActive}
         aria-label="File"
       >
+        <Icon src={fileIcon} alt="" />
         {fileName}
       </FileButton>
     );
