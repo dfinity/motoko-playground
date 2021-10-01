@@ -52,17 +52,13 @@ const StyledFolder = styled.summary`
   align-items: center;
   height: 4rem;
   cursor: pointer;
-  border-bottom: 1px solid var(--grey300);
 
   ${iconBefore("folder")}
 `;
 
 const FileButton = styled(ListButton)`
   padding-left: 1.6rem;
-
-  &:last-child {
-    border-bottom: none;
-  }
+  border-bottom: none;
 
   ${iconBefore("file")}
 `;
@@ -71,20 +67,11 @@ const FolderContainer = styled.details`
   width: 100%;
   font-size: 1.4rem;
   padding-left: 1.6rem;
-  background-color: var(--grey200);
-  border-bottom: 1px solid var(--grey300);
+  background-color: var(--grey100);
+`;
 
-  > ${this}[open] {
-    border-left: 1px dashed var(--grey300);
-
-    > summary {
-      margin-left: -1px;
-    }
-  }
-
-  &:not([open]) > ${StyledFolder}, &:last-child {
-    margin-bottom: -1px;
-  }
+const FolderContents = styled.div`
+  border-left: 1px dashed var(--grey300);
 `;
 
 interface RenderOptions {
@@ -100,11 +87,13 @@ function renderFolderStructure(options: RenderOptions) {
     ([folderName, contents]) => (
       <FolderContainer key={folderName} open>
         <StyledFolder>{folderName}</StyledFolder>
-        {renderFolderStructure({
-          folderStructure: contents,
-          onSelectFile,
-          activeFile,
-        })}
+        <FolderContents>
+          {renderFolderStructure({
+            folderStructure: contents,
+            onSelectFile,
+            activeFile,
+          })}
+        </FolderContents>
       </FolderContainer>
     )
   );
