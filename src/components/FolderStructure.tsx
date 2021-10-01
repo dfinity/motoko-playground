@@ -1,4 +1,4 @@
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 import { ListButton } from "./shared/SelectList";
 import folderIcon from "../assets/images/icon-folder.svg";
 import fileIcon from "../assets/images/icon-file.svg";
@@ -65,7 +65,6 @@ const FileButton = styled(ListButton)<DepthProp>`
 const Icon = styled.img`
   width: 1.6rem;
   margin-right: 0.8rem;
-  filter: brightness(0) brightness(0.95);
 `;
 
 interface RenderOptions {
