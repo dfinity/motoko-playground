@@ -1,5 +1,6 @@
 import styled, { css } from "styled-components";
 import { ListButton } from "./shared/SelectList";
+import { isNumber } from "util";
 
 interface FoldersJson {
   files: Array<string>;
@@ -47,46 +48,62 @@ function iconBefore(icon) {
   `;
 }
 
-const StyledFolder = styled.summary`
-  display: flex;
-  align-items: center;
-  height: 4rem;
-  cursor: pointer;
-
-  ${iconBefore("folder")}
-`;
-
-const FileButton = styled(ListButton)`
-  padding-left: 1.6rem;
-  border-bottom: none;
-
-  ${iconBefore("file")}
-`;
+const folderIcon = iconBefore("folder");
+const fileIcon = iconBefore("file");
 
 const FolderContainer = styled.details`
   width: 100%;
   font-size: 1.4rem;
-  padding-left: 1.6rem;
   background-color: var(--grey100);
+`;
+
+interface DepthProp {
+  nestDepth: number;
+}
+
+const StyledFolder = styled.summary<DepthProp>`
+  display: flex;
+  align-items: center;
+  height: 3rem;
+  padding-left: calc(${({ nestDepth }) => nestDepth + 1} * 1.6rem);
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    color: var(--colorPrimary);
+  }
+
+  ${folderIcon}
+`;
+
+const FileButton = styled(ListButton)<DepthProp>`
+  padding-left: calc(${({ nestDepth }) => nestDepth + 1} * 1.6rem);
+  border-bottom: none;
+  height: 3rem;
+  user-select: none;
+
+  ${fileIcon}
 `;
 
 interface RenderOptions {
   folderStructure: FoldersJson;
   onSelectFile: (folder: string) => void;
   activeFile: string | null;
+  nestDepth?: number;
 }
 
 function renderFolderStructure(options: RenderOptions) {
-  const { folderStructure, onSelectFile, activeFile } = options;
+  const { folderStructure, onSelectFile, activeFile, nestDepth = 0 } = options;
 
   const finalStructure = Object.entries(folderStructure.folders).map(
     ([folderName, contents]) => (
       <FolderContainer key={folderName} open>
-        <StyledFolder>{folderName}</StyledFolder>
+        <StyledFolder nestDepth={nestDepth}>{folderName}</StyledFolder>
         {renderFolderStructure({
           folderStructure: contents,
           onSelectFile,
           activeFile,
+          nestDepth: nestDepth + 1,
         })}
       </FolderContainer>
     )
@@ -99,6 +116,7 @@ function renderFolderStructure(options: RenderOptions) {
     finalStructure.push(
       <FileButton
         key={fileName}
+        nestDepth={nestDepth}
         onClick={() => onSelectFile(filePath)}
         isActive={isActive}
         disabled={isActive}
