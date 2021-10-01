@@ -70,10 +70,6 @@ const FolderContainer = styled.details`
   background-color: var(--grey100);
 `;
 
-const FolderContents = styled.div`
-  border-left: 1px dashed var(--grey300);
-`;
-
 interface RenderOptions {
   folderStructure: FoldersJson;
   onSelectFile: (folder: string) => void;
@@ -87,13 +83,11 @@ function renderFolderStructure(options: RenderOptions) {
     ([folderName, contents]) => (
       <FolderContainer key={folderName} open>
         <StyledFolder>{folderName}</StyledFolder>
-        <FolderContents>
-          {renderFolderStructure({
-            folderStructure: contents,
-            onSelectFile,
-            activeFile,
-          })}
-        </FolderContents>
+        {renderFolderStructure({
+          folderStructure: contents,
+          onSelectFile,
+          activeFile,
+        })}
       </FolderContainer>
     )
   );
