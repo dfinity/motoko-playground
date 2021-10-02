@@ -15,6 +15,7 @@ import { CanisterModal } from "./CanisterModal";
 import { PackageInfo } from "../workers/file";
 import { ILoggingStore } from "./Logger";
 import { deleteCanister } from "../build";
+import { FolderStructure } from "./FolderStructure";
 
 const StyledExplorer = styled.div`
   width: var(--explorerWidth);
@@ -191,26 +192,18 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
           <img style={{ width: "1.6rem" }} src={iconPlus} alt="" />
         </MyButton>
       </CategoryTitle>
-      {Object.keys(state.files)
-        .sort()
-        .map((filename) => (
-          <ListButton
-            key={filename}
-            isActive={state.selectedFile === filename}
-            disabled={state.selectedFile === filename}
-            onClick={() => onSelectFile(filename)}
-            aria-label={`File`}
-          >
-            {filename}
-          </ListButton>
-        ))}
+      <FolderStructure
+        filePaths={Object.keys(state.files).sort()}
+        onSelectFile={onSelectFile}
+        activeFile={state.selectedFile}
+      />
       <CategoryTitle>
         Packages
         <MyButton onClick={() => setShowPackage(true)} aria-label="Add package">
           <img style={{ width: "1.6rem" }} src={iconPlus} alt="" />
         </MyButton>
       </CategoryTitle>
-      {Object.entries(state.packages).map(([_, info]) => (
+      {Object.values(state.packages).map((info) => (
         <ListButton
           onClick={() => {
             window.open(info.homepage!, "_blank");
