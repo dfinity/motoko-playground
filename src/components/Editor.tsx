@@ -12,10 +12,8 @@ import { configureMonaco } from "../config/monacoConfig";
 import { Console } from "./Console";
 import iconRabbit from "../assets/images/icon-rabbit.png";
 import iconSpin from "../assets/images/icon-spin.gif";
-import { DeployModal } from "./DeployModal";
 import {
   getActorAliases,
-  getDeployedCanisters,
   WorkerContext,
   WorkplaceDispatchContext,
 } from "../contexts/WorkplaceState";
@@ -74,9 +72,9 @@ function setMarkers(diags, codeModel, monaco, fileName) {
   monaco.editor.setModelMarkers(codeModel, "moc", markers);
 }
 
-export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
-  const [showModal, setShowModal] = useState(false);
-  const [isDeploying, setIsDeploying] = useState(false);
+export function Editor({ state, logger, setConsoleHeight }) {
+  //const [showModal, setShowModal] = useState(false);
+  //const [isDeploying, setIsDeploying] = useState(false);
   const [candidCode, setCandidCode] = useState("");
   const [initTypes, setInitTypes] = useState([]);
   const worker = useContext(WorkerContext);
@@ -90,7 +88,6 @@ export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
     : state.files["Main.mo"]
     ? "Main.mo"
     : "";
-  const internalCanisters = getDeployedCanisters(state.canisters);
   const monaco = useMonaco();
   const checkFileAddMarkers = async () => {
     if (!fileName || !fileName.endsWith("mo")) return;
@@ -147,18 +144,6 @@ export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
 
   return (
     <EditorColumn>
-      <DeployModal
-        isOpen={showModal}
-        close={() => setShowModal(false)}
-        onDeploy={onDeploy}
-        isDeploy={setIsDeploying}
-        canisters={internalCanisters}
-        ttl={ttl}
-        fileName={mainFile}
-        candid={candidCode}
-        initTypes={initTypes}
-        logger={logger}
-      />
       <PanelHeader>
         Editor
         <RightContainer>

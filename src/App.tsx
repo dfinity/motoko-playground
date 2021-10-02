@@ -16,9 +16,11 @@ import {
   WorkplaceDispatchContext,
   WorkerContext,
   getActorAliases,
+  getDeployedCanisters,
   getShareableProject,
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
+import { DeployModal } from "./DeployModal";
 import { backend, saved } from "./config/actor";
 
 const GlobalStyles = createGlobalStyle`
@@ -133,6 +135,8 @@ export function App() {
   );
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(!hasUrlParams);
   const [isFirstVisit, setIsFirstVisit] = useState(!hasUrlParams);
+  const [showDeployModal, setShowDeployModal] = useState(false);
+  const [isDeploying, setIsDeploying] = useState(false);
   const [showCandidUI, setShowCandidUI] = useState(false);
   const [candidWidth, setCandidWidth] = useState("0");
   const [consoleHeight, setConsoleHeight] = useState("3rem");
@@ -250,12 +254,22 @@ export function App() {
             close={closeProjectModal}
             isFirstOpen={isFirstVisit}
           />
+          <DeployModal
+            isOpen={showDeployModal}
+            close={() => setShowDeployModal(false)}
+            onDeploy={deployWorkplace}
+            isDeploy={setIsDeploying}
+            canisters={getDeployedCanisters(workplaceState.canisters)}
+            ttl={TTL}
+            fileName={mainFile}
+            candid={candidCode}
+            initTypes={initTypes}
+            logger={logger}
+          />
           <AppContainer candidWidth={candidWidth} consoleHeight={consoleHeight}>
             <Explorer state={workplaceState} ttl={TTL} logger={logger} />
             <Editor
               state={workplaceState}
-              ttl={TTL}
-              onDeploy={deployWorkplace}
               logger={logger}
               setConsoleHeight={setConsoleHeight}
             />

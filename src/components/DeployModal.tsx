@@ -82,6 +82,12 @@ const MyButton = styled(Button)`
   width: 12rem;
 `;
 
+export interface DeploySetters {
+  setFileName: (name: string) => void;
+  setCandidCode: (code: string) => void;
+  setInitTypes: (args: Array<IDL.Type>) => void;
+}
+
 interface DeployModalProps {
   isOpen: boolean;
   close: () => void;
