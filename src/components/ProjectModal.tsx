@@ -17,7 +17,7 @@ const ModalContainer = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 34rem;
+  width: 40rem;
   font-size: 1.4rem;
 `;
 
@@ -121,7 +121,7 @@ export function ProjectModal({
           <Tab label="Example Projects">
             <SelectList height="28.95rem">
               <ProjectButton onClick={emptyProject}>
-                Empty Motoko project
+                New Motoko project
               </ProjectButton>
               {Object.entries(exampleProjects).map(([name, project]) => (
                 <ProjectButton
