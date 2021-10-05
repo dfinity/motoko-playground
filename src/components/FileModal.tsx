@@ -26,16 +26,34 @@ const ButtonContainer = styled.div`
   margin-top: 3rem;
 `;
 
-export function FileModal({ isOpen, close }) {
-  const [fileName, setFileName] = useState("");
+export function FileModal({ isOpen, close, filename: initialFilename = "" }) {
+  const [fileName, setFileName] = useState(initialFilename);
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
 
+  const isRename = Boolean(initialFilename);
+  const name = fileName.endsWith(".mo") ? fileName : `${fileName}.mo`;
+
   async function addFile() {
-    const name = fileName.endsWith(".mo") ? fileName : `${fileName}.mo`;
     await worker.Moc({ type: "save", file: name, content: "" });
     await dispatch({ type: "saveFile", payload: { path: name, contents: "" } });
     await dispatch({ type: "selectFile", payload: { path: name } });
+    await close();
+  }
+
+  async function renameFile() {
+    if (initialFilename !== fileName) {
+      await worker.Moc({
+        type: "renameFile",
+        file: initialFilename,
+        newName: name,
+      });
+      await dispatch({
+        type: "renameFile",
+        payload: { path: initialFilename, newPath: name },
+      });
+      await dispatch({ type: "selectFile", payload: { path: name } });
+    }
     await close();
   }
 
@@ -48,18 +66,32 @@ export function FileModal({ isOpen, close }) {
       shouldCloseOnOverlayClick
     >
       <ModalContainer>
-        <p style={{ marginBottom: "2rem" }}>Add a new file</p>
+        <p style={{ marginBottom: "2rem" }}>
+          {isRename ? (
+            <>
+              Rename <code>{initialFilename}</code>
+            </>
+          ) : (
+            "Add a new file"
+          )}
+        </p>
         <Field
           type="text"
           labelText="Filename"
-          value={fileName}
+          value={fileName || initialFilename}
           onChange={(e) => setFileName(e.target.value)}
           autoFocus
         />
         <ButtonContainer>
-          <Button variant="primary" onClick={addFile}>
-            Add
-          </Button>
+          {isRename ? (
+            <Button variant="primary" onClick={renameFile}>
+              Rename
+            </Button>
+          ) : (
+            <Button variant="primary" onClick={addFile}>
+              Add
+            </Button>
+          )}
           <Button onClick={close}>Cancel</Button>
         </ButtonContainer>
       </ModalContainer>
