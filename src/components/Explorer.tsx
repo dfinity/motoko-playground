@@ -47,6 +47,9 @@ const CloseButton = styled(MyButton)`
   margin-right: -1.1rem;
   margin-left: -0.3rem;
 `;
+const ConfirmText = styled.p`
+  margin-bottom: 2rem;
+`;
 
 interface ExplorerProps {
   state: WorkplaceState;
@@ -98,13 +101,14 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
       },
     });
   }
-  function onDeleteFile(path) {
+  function onDeleteFile() {
     dispatch({
       type: "deleteFile",
       payload: {
-        path,
+        path: fileToModify,
       },
     });
+    setFileToModify("");
   }
 
   const onCanister = async (selectedCanister: string, action: string) => {
@@ -229,7 +233,9 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
           setFileToModify("");
         }}
       >
-        Are you sure you want to delete the file <code>{fileToModify}</code>?
+        <ConfirmText>
+          Are you sure you want to delete the file <code>{fileToModify}</code>?
+        </ConfirmText>
       </Confirm>
       <CategoryTitle>
         Files

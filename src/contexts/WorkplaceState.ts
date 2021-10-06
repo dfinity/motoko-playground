@@ -230,7 +230,14 @@ export const workplaceReducer = {
         const fileContents = files[action.payload.path];
         delete files[action.payload.path];
         files[action.payload.newPath] = fileContents;
-        return { ...state, files };
+        return {
+          ...state,
+          files,
+          selectedFile:
+            state.selectedFile === action.payload.path
+              ? action.payload.newPath
+              : state.selectedFile,
+        };
       }
       case "deleteFile": {
         const files = {
@@ -238,7 +245,14 @@ export const workplaceReducer = {
         };
 
         delete files[action.payload.path];
-        return { ...state, files };
+        return {
+          ...state,
+          files,
+          selectedFile:
+            state.selectedFile === action.payload.path
+              ? selectFirstFile(state.files)
+              : state.selectedFile,
+        };
       }
       case "deployWorkplace": {
         const name = action.payload.canister.name!;

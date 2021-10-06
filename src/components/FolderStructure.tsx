@@ -2,6 +2,7 @@ import styled, { css } from "styled-components";
 import { ListButton } from "./shared/SelectList";
 import folderIcon from "../assets/images/icon-folder.svg";
 import fileIcon from "../assets/images/icon-file.svg";
+import pencilIcon from "../assets/images/icon-pencil.svg";
 import closeIcon from "../assets/images/icon-close.svg";
 
 interface FoldersJson {
@@ -162,7 +163,7 @@ function renderFolderStructure(options: RenderOptions) {
         <p>{fileName}</p>
         <FileFunctions>
           <FileFunctionButton onClick={(e) => onRenameFile(e, filePath)}>
-            <Icon src={fileIcon} alt="Rename file" title="Rename file" />
+            <Icon src={pencilIcon} alt="Rename file" title="Rename file" />
           </FileFunctionButton>
           <FileFunctionButton onClick={(e) => onDeleteFile(e, filePath)}>
             <Icon src={closeIcon} alt="Delete file" title="Delete file" />
@@ -182,5 +183,5 @@ type Folders = SharedProps & {
 export function FolderStructure({ filePaths, ...passProps }: Folders) {
   const folderStructure = structureFolders(filePaths);
 
-  return <>{renderFolderStructure({ folderStructure, ...passProps })}</>;
+  return renderFolderStructure({ folderStructure, ...passProps });
 }

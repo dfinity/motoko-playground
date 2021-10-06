@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { Modal } from "./shared/Modal";
 import { Button } from "./shared/Button";
 
@@ -26,8 +26,21 @@ const ButtonContainer = styled.div`
   margin-top: 3rem;
 `;
 
+const MyButton = styled(Button)`
+  width: 14rem;
+`;
+
 export function FileModal({ isOpen, close, filename: initialFilename = "" }) {
   const [fileName, setFileName] = useState(initialFilename);
+
+  // Make sure local fileName stays in sync with whatever was passed in
+  useEffect(() => {
+    if (initialFilename !== fileName) {
+      setFileName(initialFilename);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialFilename]);
+
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
 
@@ -38,23 +51,18 @@ export function FileModal({ isOpen, close, filename: initialFilename = "" }) {
     await worker.Moc({ type: "save", file: name, content: "" });
     await dispatch({ type: "saveFile", payload: { path: name, contents: "" } });
     await dispatch({ type: "selectFile", payload: { path: name } });
-    await close();
+    close();
   }
 
   async function renameFile() {
     if (initialFilename !== fileName) {
-      await worker.Moc({
-        type: "renameFile",
-        file: initialFilename,
-        newName: name,
-      });
       await dispatch({
         type: "renameFile",
         payload: { path: initialFilename, newPath: name },
       });
       await dispatch({ type: "selectFile", payload: { path: name } });
     }
-    await close();
+    close();
   }
 
   return (
@@ -78,21 +86,21 @@ export function FileModal({ isOpen, close, filename: initialFilename = "" }) {
         <Field
           type="text"
           labelText="Filename"
-          value={fileName || initialFilename}
+          value={fileName}
           onChange={(e) => setFileName(e.target.value)}
           autoFocus
         />
         <ButtonContainer>
           {isRename ? (
-            <Button variant="primary" onClick={renameFile}>
+            <MyButton variant="primary" onClick={renameFile}>
               Rename
-            </Button>
+            </MyButton>
           ) : (
-            <Button variant="primary" onClick={addFile}>
+            <MyButton variant="primary" onClick={addFile}>
               Add
-            </Button>
+            </MyButton>
           )}
-          <Button onClick={close}>Cancel</Button>
+          <MyButton onClick={close}>Cancel</MyButton>
         </ButtonContainer>
       </ModalContainer>
     </Modal>
