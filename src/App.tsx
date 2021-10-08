@@ -20,7 +20,7 @@ import {
   getShareableProject,
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
-import { DeployModal } from "./DeployModal";
+import { DeployModal, DeploySetter } from "./components/DeployModal";
 import { backend, saved } from "./config/actor";
 
 const GlobalStyles = createGlobalStyle`
@@ -135,13 +135,24 @@ export function App() {
   );
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(!hasUrlParams);
   const [isFirstVisit, setIsFirstVisit] = useState(!hasUrlParams);
-  const [showDeployModal, setShowDeployModal] = useState(false);
-  const [isDeploying, setIsDeploying] = useState(false);
   const [showCandidUI, setShowCandidUI] = useState(false);
   const [candidWidth, setCandidWidth] = useState("0");
   const [consoleHeight, setConsoleHeight] = useState("3rem");
   const [TTL, setTTL] = useState(BigInt(0));
   const [forceUpdate, setForceUpdate] = useReducer((x) => (x + 1) % 10, 0);
+
+  // States for deploy modal
+  const [showDeployModal, setShowDeployModal] = useState(false);
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [candidCode, setCandidCode] = useState("");
+  const [initTypes, setInitTypes] = useState([]);
+  const [mainFile, setMainFile] = useState("");
+  const deploySetter: DeploySetter = {
+    setMainFile,
+    setInitTypes,
+    setCandidCode,
+    setShowDeployModal,
+  };
 
   const logger = useLogging();
 
@@ -271,6 +282,8 @@ export function App() {
             <Editor
               state={workplaceState}
               logger={logger}
+              deploySetter={deploySetter}
+              isDeploying={isDeploying}
               setConsoleHeight={setConsoleHeight}
             />
             {showCandidUI ? (

@@ -72,11 +72,13 @@ function setMarkers(diags, codeModel, monaco, fileName) {
   monaco.editor.setModelMarkers(codeModel, "moc", markers);
 }
 
-export function Editor({ state, logger, setConsoleHeight }) {
-  //const [showModal, setShowModal] = useState(false);
-  //const [isDeploying, setIsDeploying] = useState(false);
-  const [candidCode, setCandidCode] = useState("");
-  const [initTypes, setInitTypes] = useState([]);
+export function Editor({
+  state,
+  logger,
+  setConsoleHeight,
+  deploySetter,
+  isDeploying,
+}) {
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
 
@@ -88,6 +90,7 @@ export function Editor({ state, logger, setConsoleHeight }) {
     : state.files["Main.mo"]
     ? "Main.mo"
     : "";
+  deploySetter.setMainFile(mainFile);
   const monaco = useMonaco();
   const checkFileAddMarkers = async () => {
     if (!fileName || !fileName.endsWith("mo")) return;
@@ -130,9 +133,9 @@ export function Editor({ state, logger, setConsoleHeight }) {
     if (candid) {
       const candidJS = await didToJs(candid);
       const init = candidJS.init({ IDL });
-      await setInitTypes(init);
-      await setCandidCode(candid);
-      await setShowModal(true);
+      await deploySetter.setInitTypes(init);
+      await deploySetter.setCandidCode(candid);
+      await deploySetter.setShowDeployModal(true);
     }
   };
 
