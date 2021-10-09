@@ -90,7 +90,7 @@ export function Editor({
     : state.files["Main.mo"]
     ? "Main.mo"
     : "";
-  deploySetter.setMainFile(mainFile);
+
   const monaco = useMonaco();
   const checkFileAddMarkers = async () => {
     if (!fileName || !fileName.endsWith("mo")) return;
@@ -135,6 +135,8 @@ export function Editor({
       const init = candidJS.init({ IDL });
       await deploySetter.setInitTypes(init);
       await deploySetter.setCandidCode(candid);
+      await deploySetter.setWasm(undefined);
+      await deploySetter.setMainFile(mainFile);
       await deploySetter.setShowDeployModal(true);
     }
   };

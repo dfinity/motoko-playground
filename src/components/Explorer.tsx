@@ -12,6 +12,7 @@ import {
 import { PackageModal } from "./PackageModal";
 import { FileModal } from "./FileModal";
 import { CanisterModal } from "./CanisterModal";
+import { DeploySetter } from "./DeplayModal";
 import { PackageInfo } from "../workers/file";
 import { ILoggingStore } from "./Logger";
 import { deleteCanister } from "../build";
@@ -49,6 +50,7 @@ interface ExplorerProps {
   state: WorkplaceState;
   ttl: bigint;
   logger: ILoggingStore;
+  deploySetter: DeploySetter;
 }
 
 type TimeStatus = {
@@ -57,7 +59,7 @@ type TimeStatus = {
   seconds?: string;
 };
 
-export function Explorer({ state, ttl, logger }: ExplorerProps) {
+export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
   const [timeLeft, setTimeLeft] = useState<Array<TimeStatus>>([]);
   const [isExpired, setIsExpired] = useState<Array<string>>([]);
   const [showPackage, setShowPackage] = useState(false);
@@ -185,6 +187,7 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
       <CanisterModal
         isOpen={showCanisterModal}
         close={() => setShowCanisterModal(false)}
+        deploySetter={deploySetter}
       />
       <CategoryTitle>
         Files

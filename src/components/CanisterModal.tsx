@@ -3,12 +3,13 @@ import { useState, useEffect, useContext } from "react";
 import { Modal } from "./shared/Modal";
 import { Button } from "./shared/Button";
 import { Principal } from "@dfinity/principal";
+import { IDL } from "@dfinity/candid";
 
 import {
   WorkerContext,
   WorkplaceDispatchContext,
 } from "../contexts/WorkplaceState";
-import { fetchCandidInterface, didjs } from "../config/actor";
+import { fetchCandidInterface, didjs, didToJs } from "../config/actor";
 import { CanisterInfo } from "../build";
 import { canisterSet } from "../config/canister-set";
 import { Field } from "./shared/Field";
@@ -52,10 +53,11 @@ const MyButton = styled(Button)`
   width: 10rem;
 `;
 
-export function CanisterModal({ isOpen, close }) {
+export function CanisterModal({ isOpen, close, deploySetter }) {
   const [canisterName, setCanisterName] = useState("");
   const [canisterId, setCanisterId] = useState("");
   const [candid, setCandid] = useState("");
+  const [wasm, setWasm] = useState(undefined);
   const [uploadDid, setUploadDid] = useState(false);
   const [error, setError] = useState("");
   const [genBinding, setGenBinding] = useState(false);
@@ -97,6 +99,16 @@ export function CanisterModal({ isOpen, close }) {
     }
   }
 
+  async function deployWasm() {
+    if (!candid || !wasm) return;
+    const candidJS = await didToJs(candid);
+    const init = candidJS.init({ IDL });
+    await close();
+    await deploySetter.setWasm(wasm);
+    await deploySetter.setInitTypes(init);
+    await deploySetter.setCandidCode(candid);
+    await deploySetter.setShowDeployModal(true);
+  }
   async function addCanister() {
     if (error || !canisterName || !canisterId || !candid) {
       return;
@@ -138,10 +150,9 @@ export function CanisterModal({ isOpen, close }) {
   function handleWasmUpload(e) {
     const reader = new FileReader();
     reader.addEventListener("load", () => {
-      if (typeof reader.result === "string") {
-        setCandid(reader.result);
-      }
+      setWasm(reader.result);
     });
+    deploySetter.setMainFile(e.target.files[0].name);
     reader.readAsArrayBuffer(e.target.files[0]);
   }
 
@@ -205,6 +216,7 @@ export function CanisterModal({ isOpen, close }) {
                 type="file"
                 labelText="Upload Wasm module"
                 accept=".wasm"
+                onChange={handleWasmUpload}
               />
               <Field
                 type="file"
@@ -213,7 +225,7 @@ export function CanisterModal({ isOpen, close }) {
                 onChange={handleDidUpload}
               />
               <ButtonContainer>
-                <MyButton variant="primary" onClick={addCanister}>
+                <MyButton variant="primary" onClick={deployWasm}>
                   Deploy
                 </MyButton>
                 <MyButton onClick={close}>Cancel</MyButton>

@@ -147,11 +147,13 @@ export function App() {
   const [candidCode, setCandidCode] = useState("");
   const [initTypes, setInitTypes] = useState([]);
   const [mainFile, setMainFile] = useState("");
+  const [wasm, setWasm] = useState(undefined);
   const deploySetter: DeploySetter = {
     setMainFile,
     setInitTypes,
     setCandidCode,
     setShowDeployModal,
+    setWasm,
   };
 
   const logger = useLogging();
@@ -273,12 +275,18 @@ export function App() {
             canisters={getDeployedCanisters(workplaceState.canisters)}
             ttl={TTL}
             fileName={mainFile}
+            wasm={wasm}
             candid={candidCode}
             initTypes={initTypes}
             logger={logger}
           />
           <AppContainer candidWidth={candidWidth} consoleHeight={consoleHeight}>
-            <Explorer state={workplaceState} ttl={TTL} logger={logger} />
+            <Explorer
+              state={workplaceState}
+              ttl={TTL}
+              logger={logger}
+              deploySetter={deploySetter}
+            />
             <Editor
               state={workplaceState}
               logger={logger}
