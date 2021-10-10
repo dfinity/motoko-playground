@@ -152,8 +152,15 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
     reader.addEventListener("load", () => {
       setWasm(reader.result);
     });
-    deploySetter.setMainFile(e.target.files[0].name);
-    reader.readAsArrayBuffer(e.target.files[0]);
+    const file = e.target.files[0];
+    if (file.size > 2097152) {
+      setError("Wasm size should be less than 2MB");
+      return;
+    } else {
+      setError("");
+    }
+    deploySetter.setMainFile(file.name);
+    reader.readAsArrayBuffer(file);
   }
 
   return (
@@ -204,7 +211,7 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
               )}
               <ButtonContainer>
                 <MyButton variant="primary" onClick={addCanister}>
-                  Add
+                  Import
                 </MyButton>
                 <MyButton onClick={close}>Cancel</MyButton>
               </ButtonContainer>
@@ -224,6 +231,7 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
                 accept=".did"
                 onChange={handleDidUpload}
               />
+              {error && <Error>{error}</Error>}
               <ButtonContainer>
                 <MyButton variant="primary" onClick={deployWasm}>
                   Deploy
