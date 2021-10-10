@@ -145,7 +145,7 @@ export function Editor({
     if (!monaco) return;
     checkFileAddMarkers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [monaco, fileName]);
+  }, [monaco, state]);
 
   return (
     <EditorColumn>
