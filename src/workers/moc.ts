@@ -10,6 +10,7 @@ export type MocAction =
   | { type: "save"; file: string; content: string }
   | { type: "check"; file: string }
   | { type: "compile"; file: string }
+  | { type: "wasi"; file: string }
   | { type: "candid"; file: string }
   | { type: "addPackage"; name: string; path: string }
   | { type: "setActorAliases"; list: Array<[string, string]> };
@@ -24,6 +25,8 @@ export function Moc(action: MocAction) {
       return Motoko.check(action.file);
     case "compile":
       return Motoko.compileWasm("ic", action.file);
+    case "wasi":
+      return Motoko.compileWasm("wasi", action.file);
     case "candid":
       return Motoko.candid(action.file);
     case "addPackage":

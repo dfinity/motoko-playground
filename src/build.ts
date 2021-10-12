@@ -2,6 +2,7 @@ import { blobFromUint8Array, BinaryBlob } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 import { backend } from "./config/actor";
 import { ILoggingStore } from "./components/Logger";
+import * as Wasi from "./wasiPolyfill";
 
 export interface CanisterInfo {
   id: Principal;
@@ -68,6 +69,22 @@ export async function compileCandid(
     return;
   }
   return candid_source;
+}
+
+export async function runWasi(
+  worker,
+  file: string,
+  logger: ILoggingStore
+): Promise<undefined> {
+  logger.log(`Compiling in WASI mode...`);
+  const out = await worker.Moc({ type: "wasi", file });
+  if (out.diagnostics) logDiags(out.diagnostics, logger);
+  if (!out.code === null) {
+    logger.log(`cannot compile in WASI mode`);
+  } else {
+    const wasiPolyfill = new Wasi.barebonesWASI();
+    Wasi.importWasmModule(out.code, wasiPolyfill, logger.log);
+  }
 }
 
 export async function deploy(

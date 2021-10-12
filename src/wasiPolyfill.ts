@@ -104,8 +104,10 @@ export function barebonesWASI() {
     if (fd === WASI_STDOUT_FILENO) {
       const content = String.fromCharCode.apply(null, bufferBytes);
       //console.log(content);
-      // @ts-ignore
-      moduleOutput(content);
+      if (content !== "\n") {
+        // @ts-ignore
+        moduleOutput(content);
+      }
     }
     view.setUint32(nwritten, written, !0);
     return WASI_ESUCCESS;
@@ -151,18 +153,14 @@ export function importWasmModule(code, wasiPolyfill, output) {
   };
 
   (async () => {
-    let tStart = Date.now();
     const wa = await WebAssembly.instantiate(code, moduleImports);
     const instance = wa.instance;
     wasiPolyfill.setModuleInstance(instance);
     wasiPolyfill.setOutput(output);
-    let duration = (Date.now() - tStart) / 1000;
-    output(`(load time: ${duration}s)`);
-    tStart = Date.now();
+    output(`Running Wasm module in browser...`);
     // @ts-ignore
     instance.exports._start();
-    duration = (Date.now() - tStart) / 1000;
-    output(`(run time: ${duration}s)`);
+    output("Done");
   })().catch((err) => {
     output("Wasm exception:\n" + err.stack);
     throw err;

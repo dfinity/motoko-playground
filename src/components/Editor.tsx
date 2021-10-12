@@ -19,7 +19,7 @@ import {
   WorkerContext,
   WorkplaceDispatchContext,
 } from "../contexts/WorkplaceState";
-import { compileCandid } from "../build";
+import { compileCandid, runWasi } from "../build";
 import { didToJs } from "../config/actor";
 
 const EditorColumn = styled.div`
@@ -138,6 +138,9 @@ export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
       await setShowModal(true);
     }
   };
+  const localRun = async () => {
+    await runWasi(worker, fileName, logger);
+  };
 
   useEffect(() => {
     if (!monaco) return;
@@ -162,6 +165,9 @@ export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
       <PanelHeader>
         Editor
         <RightContainer>
+          <Button onClick={localRun} small>
+            Run
+          </Button>
           <Button
             onClick={deployClick}
             disabled={isDeploying}
