@@ -1,7 +1,7 @@
 #!ic-repl
+load "prelude.sh";
 
-let id = call ic.provisional_create_canister_with_cycles(record { settings = null; amount = null });
-let S = id.canister_id;
+let wasm = file "../../../.dfx/local/canisters/backend/backend.wasm";
 
 let init = opt record {
   cycles_per_canister = 105_000_000_000 : nat;
@@ -9,28 +9,15 @@ let init = opt record {
   nonce_time_to_live = 1 : nat;
   canister_time_to_live = 1 : nat;
 };
-call ic.install_code(
-  record {
-    arg = encode (init);
-    wasm_module = file "../../../.dfx/local/canisters/backend/backend.wasm";
-    mode = variant { install };
-    canister_id = S;
-  },
-);
+let S = install(wasm, init, null);
+
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
 let c1 = call S.getCanisterId(nonce);
 c1;
 let c2 = call S.getCanisterId(nonce);
 c2;
 
-call ic.install_code(
-  record {
-    arg = encode (init);
-    wasm_module = file "../../../.dfx/local/canisters/backend/backend.wasm";
-    mode = variant { upgrade };
-    canister_id = S;
-  },
-);
+upgrade(S, wasm, init);
 let c3 = call S.getCanisterId(nonce);
 c3;
 let c4 = call S.getCanisterId(nonce);
@@ -46,14 +33,7 @@ let init = opt record {
   nonce_time_to_live = 1 : nat;
   canister_time_to_live = 3600_000_000_000 : nat;
 };
-call ic.install_code(
-  record {
-    arg = encode (init);
-    wasm_module = file "../../../.dfx/local/canisters/backend/backend.wasm";
-    mode = variant { upgrade };
-    canister_id = S;
-  },
-);
+upgrade(S, wasm, init);
 let c5 = call S.getCanisterId(nonce);
 c5;
 assert c5.id != c1.id;
@@ -68,14 +48,7 @@ let init = opt record {
   nonce_time_to_live = 1 : nat;
   canister_time_to_live = 1 : nat;
 };
-fail call ic.install_code(
-  record {
-    arg = encode (init);
-    wasm_module = file "../../../.dfx/local/canisters/backend/backend.wasm";
-    mode = variant { upgrade };
-    canister_id = S;
-  },
-);
+fail upgrade(S, wasm, init);
 assert _ ~= "assertion failed";
 // still old canister, new TTL does not apply
 fail call S.getCanisterId(nonce);
