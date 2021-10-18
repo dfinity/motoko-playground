@@ -13,26 +13,24 @@ export const Button = styled("button")<{
   padding: 0.6rem 1.6rem;
   font-size: 1.4rem;
   font-weight: 500;
-  height: ${(props) => (props.small ? "3.3rem" : "4.5rem")};
-  min-width: ${(props) => (props.small ? "5.6rem" : "7.8rem")};
-  ${(props) => (props.width ? `width: ${props.width}` : "")};
-  background-color: ${(props) =>
-    props.variant
-      ? props.variant === "primary"
+  height: ${({ small }) => (small ? "3.3rem" : "4.5rem")};
+  min-width: ${({ small }) => (small ? "5.6rem" : "7.8rem")};
+  ${({ width }) => (width ? `width: ${width}` : "")};
+  background-color: ${({ variant }) =>
+    variant
+      ? variant === "primary"
         ? "var(--colorPrimary)"
         : "white"
       : "var(--grey200)"};
-  color: ${(props) =>
-    props.variant === "primary"
+  color: ${({ variant }) =>
+    variant === "primary"
       ? "white"
-      : props.variant === "secondary"
+      : variant === "secondary"
       ? "var(--grey500)"
       : "var(--grey600)"};
-  border: ${(props) =>
-    `1px solid ${
-      props.variant === "secondary" ? "var(--grey400)" : "transparent"
-    }`};
-  border-radius: ${(props) => (props.small ? "1.7rem" : "2.3rem")};
+  border: ${({ variant }) =>
+    `1px solid ${variant === "secondary" ? "var(--grey400)" : "transparent"}`};
+  border-radius: ${({ small }) => (small ? "1.7rem" : "2.3rem")};
 
   &:not(:last-child) {
     margin-right: 2rem;
@@ -47,12 +45,10 @@ export const Button = styled("button")<{
   }
 
   &:hover {
-    background-color: ${(props) =>
-      props.variant === "primary"
-        ? "var(--colorPrimaryDark)"
-        : "var(--grey100)"};
-    ${(props) =>
-      !props.variant
+    background-color: ${({ variant }) =>
+      variant === "primary" ? "var(--colorPrimaryDark)" : "var(--grey100)"};
+    ${({ variant }) =>
+      !variant
         ? `color: var(--colorPrimary);
            border: 1px solid var(--grey300);
 

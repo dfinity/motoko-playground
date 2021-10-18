@@ -33,7 +33,9 @@ const StyleOverrides = createGlobalStyle`
 `;
 
 // Tell ReactModal to which element it should attach its Portal/overlay.
-ReactModal.setAppElement("#root");
+if (process.env.NODE_ENV !== "test") {
+  ReactModal.setAppElement("#root");
+}
 // Override ReactModal's inline styles...
 ReactModal.defaultStyles = {
   ...ReactModal.defaultStyles,
@@ -77,6 +79,8 @@ export function Modal({
       contentLabel={label}
       onRequestClose={close}
       closeTimeoutMS={TIMING}
+      appElement={document.getElementById("root")!}
+      ariaHideApp={process.env.NODE_ENV !== "test"}
       {...props}
     >
       <StyleOverrides />

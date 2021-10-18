@@ -217,7 +217,6 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
         isOpen={showPackage}
         close={() => {
           setShowPackage(false);
-          setFileToModify("");
         }}
         loadPackage={loadPackage}
       />

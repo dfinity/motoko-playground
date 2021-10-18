@@ -19,26 +19,26 @@
   font-family: "CircularXX";
   font-weight: 100;
   src: local(CircularXX), local(CircularXXWeb-Light),
-    url(./CircularXXWeb-Light.woff2) format("woff2");
+    url(CircularXXWeb-Light.woff2) format("woff2");
 }
 
 @font-face {
   font-family: "CircularXX";
   font-weight: 400;
   src: local(CircularXX), local(CircularXXWeb-Book),
-    url(./CircularXXWeb-Book.woff2) format("woff2");
+    url(CircularXXWeb-Book.woff2) format("woff2");
 }
 
 @font-face {
   font-family: "CircularXX";
   font-weight: 700;
   src: local(CircularXX), local(CircularXXWeb-Medium),
-    url(./CircularXXWeb-Medium.woff) format("woff");
+    url(CircularXXWeb-Medium.woff) format("woff");
 }
 
 @font-face {
   font-family: "CircularXX";
   font-weight: 900;
   src: local(CircularXX), local(CircularXXWeb-Bold),
-    url(./CircularXXWeb-Bold.woff2) format("woff2");
+    url(CircularXXWeb-Bold.woff2) format("woff2");
 }
