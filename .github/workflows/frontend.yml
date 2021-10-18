@@ -1,27 +1,53 @@
 # This workflow will do a clean install of node dependencies, cache/restore them, build the source code and run tests across different versions of node
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
-name: Test Frontend
+name: Frontend
 
-on: [push, pull_request]
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the main branch
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
-
+    # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [14.x, 16.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
+    # environment variables to set for dfx
+    env:
+      DFX_VERSION: 0.8.0
     steps:
       - uses: actions/checkout@v2
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js environment
         uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run build --if-present
-      - run: npm test
+          node-version: "14"
+      - name: Install DFX and Vessel
+        run: |
+          echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+          echo "/home/runner/bin" >> $GITHUB_PATH
+          ./src/config/vessel-install.sh
+
+      - name: Bootstrap and Deploy
+        run: |
+          echo "vessel dependencies"
+          apt update && apt install -y python build-essential git
+
+          echo "npm install from lockfile"
+          npm ci
+
+          echo "/src/config/bootstrap-ci.sh"
+          # bootstrapping will be force-stopped if it takes too long
+
+          timeout 1800 ./src/config/bootstrap-ci.sh
+
+      - name: Test
+        run: npm run test
+
+      - name: stop dfx
+        run: |
+          echo "dfx stop"
+          dfx stop

@@ -36,7 +36,7 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
-    "test": "craco test",
+    "test": "craco test --config=src/config/jest.config.js",
     "eject": "craco eject",
     "deploy": "dfx deploy --argument '(null)'",
     "prestart": "dfx start --background --no-artificial-delay || exit 0",
