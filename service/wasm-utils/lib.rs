@@ -7,8 +7,8 @@ mod utils;
 
 #[derive(CandidType, Deserialize)]
 struct Config {
-    profiling: bool,         // only works for Motoko canister
-    remove_cycles_add: bool, // works for all Wasm
+    profiling: bool,
+    remove_cycles_add: bool,
 }
 
 #[ic_cdk_macros::query]

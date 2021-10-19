@@ -70,65 +70,69 @@ export async function compileCandid(
   return candid_source;
 }
 
+export async function compileWasm(
+  worker,
+  file: string,
+  logger: ILoggingStore
+): Promise<BinaryBlob | undefined> {
+  logger.log("Compiling code...");
+  const out = await worker.Moc({ type: "compile", file });
+  if (out.diagnostics) logDiags(out.diagnostics, logger);
+  if (out.code === null) {
+    logger.log("syntax error");
+    return;
+  }
+  logger.log(`Compiled Wasm size: ${Math.floor(out.code.length / 1024)}KB`);
+  return out.code;
+}
+
 export async function deploy(
   worker,
   canisterName: string,
   canisterInfo: CanisterInfo | null,
   args: BinaryBlob,
   mode: string,
-  file: string,
+  wasm: BinaryBlob,
   profiling: boolean,
   logger: ILoggingStore
 ): Promise<CanisterInfo | undefined> {
-  logger.log("Compiling code...");
-
-  // NOTE: Will change to "ic" in a future moc release
-  const out = await worker.Moc({ type: "compile", file });
-  if (out.diagnostics) logDiags(out.diagnostics, logger);
-  // setMarkers(out.diagnostics);
-  if (out.code === null) {
-    logger.log("syntax error");
-  } else {
-    const wasm = out.code;
-    logger.log(`Compiled Wasm size: ${Math.floor(wasm.length / 1024)}KB`);
-    const module = blobFromUint8Array(wasm);
-    try {
-      logger.log(`Deploying code...`);
-      let updatedState: CanisterInfo | null = null;
-      if (!canisterInfo) {
-        if (mode !== "install") {
-          throw new Error(`Cannot ${mode} for new canister`);
-        }
-        logger.log(`Requesting a new canister id...`);
-        canisterInfo = await createCanister(worker, logger);
-        updatedState = await install(
-          canisterInfo,
-          module,
-          args,
-          "install",
-          profiling,
-          logger
-        );
-      } else {
-        if (mode !== "reinstall" && mode !== "upgrade") {
-          throw new Error(`Unknown mode ${mode}`);
-        }
-        updatedState = await install(
-          canisterInfo,
-          module,
-          args,
-          mode,
-          profiling,
-          logger
-        );
+  const module = blobFromUint8Array(wasm);
+  try {
+    logger.log(`Deploying code...`);
+    let updatedState: CanisterInfo | null = null;
+    if (!canisterInfo) {
+      if (mode !== "install") {
+        throw new Error(`Cannot ${mode} for new canister`);
       }
-      //updatedState.candid = candid_source;
-      updatedState.name = canisterName;
-      return updatedState;
-    } catch (err) {
-      logger.log(err.message);
-      throw err;
+      logger.log(`Requesting a new canister id...`);
+      canisterInfo = await createCanister(worker, logger);
+      updatedState = await install(
+        canisterInfo,
+        module,
+        args,
+        "install",
+        profiling,
+        logger
+      );
+    } else {
+      if (mode !== "reinstall" && mode !== "upgrade") {
+        throw new Error(`Unknown mode ${mode}`);
+      }
+      updatedState = await install(
+        canisterInfo,
+        module,
+        args,
+        mode,
+        profiling,
+        logger
+      );
     }
+    //updatedState.candid = candid_source;
+    updatedState.name = canisterName;
+    return updatedState;
+  } catch (err) {
+    logger.log(err.message);
+    throw err;
   }
 }
 
@@ -181,10 +185,12 @@ async function install(
 
 export function getCanisterName(file: string): string {
   const path = file.split("/");
-  const name = path.pop()!;
-  if (name === "Main.mo" && path.length) {
+  const name = path.pop()!.toLowerCase();
+  if (name === "main.mo" && path.length) {
     return path.pop()!.toLowerCase();
   } else {
-    return name.slice(0, -3).toLowerCase();
+    const suffix = name.lastIndexOf(".");
+    if (suffix === -1) return name;
+    return name.slice(0, suffix);
   }
 }
