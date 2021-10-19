@@ -31,23 +31,22 @@ jobs:
           echo "/home/runner/bin" >> $GITHUB_PATH
           ./src/config/vessel-install.sh
 
-      - name: Bootstrap and Deploy
+      - name: DFX build steps
         run: |
-          echo "vessel dependencies"
-          apt update && apt install -y python build-essential git
-
           echo "npm install from lockfile"
           npm ci
 
-          echo "/src/config/bootstrap-ci.sh"
-          # bootstrapping will be force-stopped if it takes too long
+          echo "start dfx"
+          npm run prestart
 
-          timeout 1800 ./src/config/bootstrap-ci.sh
+          echo "build for dfx artifacts"
+          dfx canister create --all
+          dfx build --all
 
       - name: Test
         run: npm run test
 
-      - name: stop dfx
+      - name: Stop DFX
         run: |
           echo "dfx stop"
           dfx stop
