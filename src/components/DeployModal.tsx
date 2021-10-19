@@ -5,10 +5,11 @@ import {
   renderInput,
   blobFromUint8Array,
   InputBox,
+  BinaryBlob,
 } from "@dfinity/candid";
 
 import { Modal } from "./shared/Modal";
-import { CanisterInfo, getCanisterName, deploy } from "../build";
+import { CanisterInfo, getCanisterName, deploy, compileWasm } from "../build";
 import { ILoggingStore } from "./Logger";
 import { Button } from "./shared/Button";
 import { WorkerContext } from "../contexts/WorkplaceState";
@@ -81,6 +82,14 @@ const MyButton = styled(Button)`
   width: 12rem;
 `;
 
+export interface DeploySetter {
+  setMainFile: (name: string) => void;
+  setCandidCode: (code: string) => void;
+  setInitTypes: (args: Array<IDL.Type>) => void;
+  setShowDeployModal: (boolean) => void;
+  setWasm: (file: BinaryBlob | undefined) => void;
+}
+
 interface DeployModalProps {
   isOpen: boolean;
   close: () => void;
@@ -89,6 +98,7 @@ interface DeployModalProps {
   canisters: Record<string, CanisterInfo>;
   ttl: bigint;
   fileName: string;
+  wasm: BinaryBlob | undefined;
   candid: string;
   initTypes: Array<IDL.Type>;
   logger: ILoggingStore;
@@ -104,6 +114,7 @@ export function DeployModal({
   canisters,
   ttl,
   fileName,
+  wasm,
   candid,
   initTypes,
   logger,
@@ -166,13 +177,22 @@ export function DeployModal({
       return;
     }
     await isDeploy(true);
+    let wasmModule;
+    if (!wasm) {
+      wasmModule = await compileWasm(worker, fileName, logger);
+      if (!wasmModule) {
+        throw new Error("syntax error");
+      }
+    } else {
+      wasmModule = wasm;
+    }
     const info = await deploy(
       worker,
       canisterName,
       canisters[canisterName],
       args,
       mode,
-      fileName,
+      wasmModule,
       profiling,
       logger
     );

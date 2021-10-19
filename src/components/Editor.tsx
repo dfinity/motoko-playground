@@ -12,10 +12,8 @@ import { configureMonaco } from "../config/monacoConfig";
 import { Console } from "./Console";
 import iconRabbit from "../assets/images/icon-rabbit.png";
 import iconSpin from "../assets/images/icon-spin.gif";
-import { DeployModal } from "./DeployModal";
 import {
   getActorAliases,
-  getDeployedCanisters,
   WorkerContext,
   WorkplaceDispatchContext,
 } from "../contexts/WorkplaceState";
@@ -74,11 +72,13 @@ function setMarkers(diags, codeModel, monaco, fileName) {
   monaco.editor.setModelMarkers(codeModel, "moc", markers);
 }
 
-export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
-  const [showModal, setShowModal] = useState(false);
-  const [isDeploying, setIsDeploying] = useState(false);
-  const [candidCode, setCandidCode] = useState("");
-  const [initTypes, setInitTypes] = useState([]);
+export function Editor({
+  state,
+  logger,
+  setConsoleHeight,
+  deploySetter,
+  isDeploying,
+}) {
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
 
@@ -90,7 +90,7 @@ export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
     : state.files["Main.mo"]
     ? "Main.mo"
     : "";
-  const internalCanisters = getDeployedCanisters(state.canisters);
+
   const monaco = useMonaco();
   const checkFileAddMarkers = async () => {
     if (!fileName || !fileName.endsWith("mo")) return;
@@ -133,9 +133,11 @@ export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
     if (candid) {
       const candidJS = await didToJs(candid);
       const init = candidJS.init({ IDL });
-      await setInitTypes(init);
-      await setCandidCode(candid);
-      await setShowModal(true);
+      await deploySetter.setInitTypes(init);
+      await deploySetter.setCandidCode(candid);
+      await deploySetter.setWasm(undefined);
+      await deploySetter.setMainFile(mainFile);
+      await deploySetter.setShowDeployModal(true);
     }
   };
 
@@ -143,22 +145,10 @@ export function Editor({ state, ttl, onDeploy, logger, setConsoleHeight }) {
     if (!monaco) return;
     checkFileAddMarkers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [monaco, fileName]);
+  }, [monaco, state]);
 
   return (
     <EditorColumn>
-      <DeployModal
-        isOpen={showModal}
-        close={() => setShowModal(false)}
-        onDeploy={onDeploy}
-        isDeploy={setIsDeploying}
-        canisters={internalCanisters}
-        ttl={ttl}
-        fileName={mainFile}
-        candid={candidCode}
-        initTypes={initTypes}
-        logger={logger}
-      />
       <PanelHeader>
         Editor
         <RightContainer>

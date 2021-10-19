@@ -33,8 +33,12 @@ pub fn instrument(m: &mut Module) {
         .globals
         .add_local(ValType::I64, true, InitExpr::Value(Value::I64(0)));
     let mut gc_funcs = Vec::new();
-    m.funcs.by_name("schedule_copying_gc").and_then(|id| Some(gc_funcs.push(id)));
-    m.funcs.by_name("schedule_compacting_gc").and_then(|id| Some(gc_funcs.push(id)));
+    if let Some(id) = m.funcs.by_name("schedule_copying_gc") {
+        gc_funcs.push(id);
+    }
+    if let Some(id) = m.funcs.by_name("schedule_compacting_gc") {
+        gc_funcs.push(id);
+    }
     let gc_local_var = m.locals.add(ValType::I64);
     let vars = Variables {
         total_counter,
@@ -146,20 +150,19 @@ fn inject_getter(m: &mut Module, vars: &Variables) {
     let memory = get_memory_id(m);
     let reply_data = get_ic_func_id(m, "msg_reply_data_append");
     let reply = get_ic_func_id(m, "msg_reply");
-    // Motoko reserves the first 64k memory as runtime stack. Here we use the top of the stack to construct reply message.
-    // TODO restore stack data or use a new memory page
-    m.data.add(
-        DataKind::Active(ActiveData {
-            memory,
-            location: ActiveDataLocation::Absolute(0),
-        }),
-        b"DIDL\x00\x02\x74\x74".to_vec(),
-    );
     let mut getter = FunctionBuilder::new(&mut m.types, &[], &[]);
     getter.name("__get_cycles".to_string());
     #[rustfmt::skip]
     getter
         .func_body()
+        // It's a query call, so we can arbitrarily change the memory without restoring them afterwards.
+        .i32_const(0)
+        .i64_const(0x747402004c444944)  // "DIDL00027474" in little endian
+        .store(
+            memory,
+            StoreKind::I64 { atomic: false },
+            MemArg { offset: 0, align: 8 },
+        )
         .i32_const(8)
         .global_get(vars.total_counter)
         .store(

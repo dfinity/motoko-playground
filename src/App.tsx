@@ -16,9 +16,11 @@ import {
   WorkplaceDispatchContext,
   WorkerContext,
   getActorAliases,
+  getDeployedCanisters,
   getShareableProject,
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
+import { DeployModal, DeploySetter } from "./components/DeployModal";
 import { backend, saved } from "./config/actor";
 
 const GlobalStyles = createGlobalStyle`
@@ -139,6 +141,21 @@ export function App() {
   const [TTL, setTTL] = useState(BigInt(0));
   const [forceUpdate, setForceUpdate] = useReducer((x) => (x + 1) % 10, 0);
 
+  // States for deploy modal
+  const [showDeployModal, setShowDeployModal] = useState(false);
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [candidCode, setCandidCode] = useState("");
+  const [initTypes, setInitTypes] = useState([]);
+  const [mainFile, setMainFile] = useState("");
+  const [wasm, setWasm] = useState(undefined);
+  const deploySetter: DeploySetter = {
+    setMainFile,
+    setInitTypes,
+    setCandidCode,
+    setShowDeployModal,
+    setWasm,
+  };
+
   const logger = useLogging();
 
   function closeProjectModal() {
@@ -251,13 +268,31 @@ export function App() {
             close={closeProjectModal}
             isFirstOpen={isFirstVisit}
           />
+          <DeployModal
+            isOpen={showDeployModal}
+            close={() => setShowDeployModal(false)}
+            onDeploy={deployWorkplace}
+            isDeploy={setIsDeploying}
+            canisters={getDeployedCanisters(workplaceState.canisters)}
+            ttl={TTL}
+            fileName={mainFile}
+            wasm={wasm}
+            candid={candidCode}
+            initTypes={initTypes}
+            logger={logger}
+          />
           <AppContainer candidWidth={candidWidth} consoleHeight={consoleHeight}>
-            <Explorer state={workplaceState} ttl={TTL} logger={logger} />
-            <Editor
+            <Explorer
               state={workplaceState}
               ttl={TTL}
-              onDeploy={deployWorkplace}
               logger={logger}
+              deploySetter={deploySetter}
+            />
+            <Editor
+              state={workplaceState}
+              logger={logger}
+              deploySetter={deploySetter}
+              isDeploying={isDeploying}
               setConsoleHeight={setConsoleHeight}
             />
             {showCandidUI ? (

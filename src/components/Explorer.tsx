@@ -9,6 +9,7 @@ import { ListButton } from "./shared/SelectList";
 import { PackageModal } from "./PackageModal";
 import { FileModal } from "./FileModal";
 import { CanisterModal } from "./CanisterModal";
+import { DeploySetter } from "./DeplayModal";
 import { FolderStructure } from "./FolderStructure";
 import { Confirm } from "./shared/Confirm";
 
@@ -55,6 +56,7 @@ interface ExplorerProps {
   state: WorkplaceState;
   ttl: bigint;
   logger: ILoggingStore;
+  deploySetter: DeploySetter;
 }
 
 type TimeStatus = {
@@ -63,7 +65,7 @@ type TimeStatus = {
   seconds?: string;
 };
 
-export function Explorer({ state, ttl, logger }: ExplorerProps) {
+export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
   const [timeLeft, setTimeLeft] = useState<Array<TimeStatus>>([]);
   const [isExpired, setIsExpired] = useState<Array<string>>([]);
   const [showPackage, setShowPackage] = useState(false);
@@ -223,6 +225,7 @@ export function Explorer({ state, ttl, logger }: ExplorerProps) {
       <CanisterModal
         isOpen={showCanisterModal}
         close={() => setShowCanisterModal(false)}
+        deploySetter={deploySetter}
       />
       <Confirm
         isOpen={showDeleteConfirm}

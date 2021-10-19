@@ -44,6 +44,10 @@ const StyledInput = styled.input`
     width: unset;
   }
 `;
+const StyledFile = styled.input`
+  {StyledInput}
+  border: unset;
+`;
 
 const StyledSelect = styled.select`
   ${inputStyles};
@@ -53,6 +57,8 @@ const StyledSelect = styled.select`
 function Input({ type, ...props }) {
   if (type === "select") {
     return <StyledSelect {...props} />;
+  } else if (type === "file") {
+    return <StyledFile {...{ type, ...props }} />;
   } else {
     return <StyledInput {...{ type, ...props }} />;
   }
