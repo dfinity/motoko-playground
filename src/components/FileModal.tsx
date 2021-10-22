@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { Modal } from "./shared/Modal";
 import { Button } from "./shared/Button";
 
@@ -26,17 +26,44 @@ const ButtonContainer = styled.div`
   margin-top: 3rem;
 `;
 
-export function FileModal({ isOpen, close }) {
-  const [fileName, setFileName] = useState("");
+const MyButton = styled(Button)`
+  width: 14rem;
+`;
+
+export function FileModal({ isOpen, close, filename: initialFilename = "" }) {
+  const [fileName, setFileName] = useState(initialFilename);
+
+  // Make sure local fileName stays in sync with whatever was passed in
+  useEffect(() => {
+    if (initialFilename !== fileName) {
+      setFileName(initialFilename);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialFilename]);
+
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
 
+  const isRename = Boolean(initialFilename);
+  const name = fileName.endsWith(".mo") ? fileName : `${fileName}.mo`;
+
   async function addFile() {
-    const name = fileName.endsWith(".mo") ? fileName : `${fileName}.mo`;
     await worker.Moc({ type: "save", file: name, content: "" });
     await dispatch({ type: "saveFile", payload: { path: name, contents: "" } });
     await dispatch({ type: "selectFile", payload: { path: name } });
-    await close();
+    close();
+  }
+
+  async function renameFile() {
+    if (initialFilename !== fileName) {
+      await dispatch({
+        type: "renameFile",
+        payload: { path: initialFilename, newPath: name },
+      });
+      await worker.Moc({ type: "rename", old: initialFilename, new: name });
+      await dispatch({ type: "selectFile", payload: { path: name } });
+    }
+    close();
   }
 
   return (
@@ -48,7 +75,15 @@ export function FileModal({ isOpen, close }) {
       shouldCloseOnOverlayClick
     >
       <ModalContainer>
-        <p style={{ marginBottom: "2rem" }}>Add a new file</p>
+        <p style={{ marginBottom: "2rem" }}>
+          {isRename ? (
+            <>
+              Rename <code>{initialFilename}</code>
+            </>
+          ) : (
+            "Add a new file"
+          )}
+        </p>
         <Field
           type="text"
           labelText="Filename"
@@ -57,10 +92,16 @@ export function FileModal({ isOpen, close }) {
           autoFocus
         />
         <ButtonContainer>
-          <Button variant="primary" onClick={addFile}>
-            Add
-          </Button>
-          <Button onClick={close}>Cancel</Button>
+          {isRename ? (
+            <MyButton variant="primary" onClick={renameFile}>
+              Rename
+            </MyButton>
+          ) : (
+            <MyButton variant="primary" onClick={addFile}>
+              Add
+            </MyButton>
+          )}
+          <MyButton onClick={close}>Cancel</MyButton>
         </ButtonContainer>
       </ModalContainer>
     </Modal>

@@ -1,0 +1,52 @@
+# This workflow will do a clean install of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Frontend
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the main branch
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    # environment variables to set for dfx
+    env:
+      DFX_VERSION: 0.8.0
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+      - name: Install DFX and Vessel
+        run: |
+          echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+          echo "/home/runner/bin" >> $GITHUB_PATH
+          ./src/config/vessel-install.sh
+
+      - name: DFX build steps
+        run: |
+          echo "npm install from lockfile"
+          npm ci
+
+          echo "start dfx"
+          npm run prestart
+
+          echo "build for dfx artifacts"
+          dfx canister --no-wallet create --all
+          dfx build --all
+
+      - name: Test
+        run: npm run test
+
+      - name: Stop DFX
+        run: |
+          echo "dfx stop"
+          dfx stop

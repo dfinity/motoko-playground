@@ -117,6 +117,22 @@ export type WorkplaceReducerAction =
       };
     }
   | {
+      type: "renameFile";
+      payload: {
+        /** path of file that should be updated. Should correspond to a property in state.files */
+        path: string;
+        /** new name of file */
+        newPath: string;
+      };
+    }
+  | {
+      type: "deleteFile";
+      payload: {
+        /** path of file that should be deleted. Should correspond to a property in state.files */
+        path: string;
+      };
+    }
+  | {
       type: "deployWorkplace";
       payload: {
         /** path of file that should be updated. Should correspond to a property in state.files */
@@ -192,9 +208,11 @@ export const workplaceReducer = {
         };
       case "deleteCanister": {
         const name = action.payload.name;
-        delete state.canisters[name];
+        const canisters = { ...state.canisters };
+        delete canisters[name];
         return {
           ...state,
+          canisters,
           selectedCanister:
             state.selectedCanister === name ? null : state.selectedCanister,
         };
@@ -207,6 +225,37 @@ export const workplaceReducer = {
             [action.payload.path]: action.payload.contents,
           },
         };
+      case "renameFile": {
+        const files = {
+          ...state.files,
+        };
+        const fileContents = files[action.payload.path];
+        delete files[action.payload.path];
+        files[action.payload.newPath] = fileContents;
+        return {
+          ...state,
+          files,
+          selectedFile:
+            state.selectedFile === action.payload.path
+              ? action.payload.newPath
+              : state.selectedFile ?? selectFirstFile(files),
+        };
+      }
+      case "deleteFile": {
+        const files = {
+          ...state.files,
+        };
+
+        delete files[action.payload.path];
+        return {
+          ...state,
+          files,
+          selectedFile:
+            state.selectedFile === action.payload.path
+              ? selectFirstFile(files)
+              : state.selectedFile ?? selectFirstFile(files),
+        };
+      }
       case "deployWorkplace": {
         const name = action.payload.canister.name!;
         return {
@@ -219,11 +268,8 @@ export const workplaceReducer = {
         };
       }
       default:
-        // this should never be reached. If there is a type error here, add a 'case'
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        let x: never = action;
+        return state;
     }
-    return state;
   },
 };
 
@@ -237,7 +283,7 @@ export const WorkplaceDispatchContext = React.createContext<
   React.Dispatch<WorkplaceReducerAction>
 >(() => {
   console.warn(
-    "using default WorkplaceDispathcContext. Make sure to Provide one in your component tree"
+    "using default WorkplaceDispatchContext. Make sure to Provide one in your component tree"
   );
 });
 export const WorkerContext = React.createContext<any>(() => {

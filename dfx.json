@@ -28,6 +28,10 @@
     "build": {
       "output": "build",
       "packtool": "vessel sources"
+    },
+    "start": {
+      "address": "localhost",
+      "port": 8000
     }
   },
   "networks": {

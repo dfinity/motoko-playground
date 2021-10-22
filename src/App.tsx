@@ -245,9 +245,10 @@ export function App() {
 
   useEffect(() => {
     // Show Candid UI iframe if there are canisters
-    const isCandidReady =
+    const isCandidReady = Boolean(
       workplaceState.selectedCanister &&
-      workplaceState.canisters[workplaceState.selectedCanister];
+        workplaceState.canisters[workplaceState.selectedCanister]
+    );
     setShowCandidUI(isCandidReady);
     setCandidWidth(isCandidReady ? "30vw" : "0");
   }, [workplaceState.canisters, workplaceState.selectedCanister]);

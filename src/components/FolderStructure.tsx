@@ -1,7 +1,9 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { ListButton } from "./shared/SelectList";
 import folderIcon from "../assets/images/icon-folder.svg";
 import fileIcon from "../assets/images/icon-file.svg";
+import pencilIcon from "../assets/images/icon-pencil.svg";
+import closeIcon from "../assets/images/icon-close.svg";
 
 interface FoldersJson {
   files: Array<string>;
@@ -42,6 +44,18 @@ interface DepthProp {
   nestDepth: number;
 }
 
+const handleLongText = css`
+  text-align: unset;
+
+  > p {
+    width: 100%;
+    margin: unset;
+    overflow-x: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+`;
+
 const StyledFolder = styled.summary<DepthProp>`
   display: flex;
   align-items: center;
@@ -53,13 +67,44 @@ const StyledFolder = styled.summary<DepthProp>`
   &:hover {
     color: var(--colorPrimary);
   }
+
+  ${handleLongText}
+`;
+
+const FileFunctions = styled.span`
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.1rem 0 0 0.5rem;
+  height: calc(100% + 0.2rem);
+  background-image: linear-gradient(90deg, transparent 0%, var(--grey100) 15%);
 `;
 
 const FileButton = styled(ListButton)<DepthProp>`
+  position: relative;
   padding-left: calc(${({ nestDepth }) => nestDepth + 1} * 1.6rem);
   border-bottom: none;
   height: 3rem;
   user-select: none;
+
+  &:hover ${FileFunctions} {
+    display: inline;
+  }
+
+  ${handleLongText}
+`;
+
+const FileFunctionButton = styled.button`
+  padding: 0.5rem 0.4rem 0.5rem 0.6rem;
+  width: 2.7rem;
+  border-radius: 50%;
+  line-height: 1;
+  background-color: transparent;
+
+  &:hover {
+    background-color: var(--grey300);
+  }
 `;
 
 const Icon = styled.img`
@@ -67,28 +112,34 @@ const Icon = styled.img`
   margin-right: 0.8rem;
 `;
 
-interface RenderOptions {
-  folderStructure: FoldersJson;
-  onSelectFile: (folder: string) => void;
+interface SharedProps {
   activeFile: string | null;
-  nestDepth?: number;
+  onSelectFile: (filepath: string) => void;
+  onRenameFile: (e, filepath: string) => void;
+  onDeleteFile: (e, filepath: string) => void;
 }
 
+type RenderOptions = SharedProps & {
+  folderStructure: FoldersJson;
+  nestDepth?: number;
+};
+
 function renderFolderStructure(options: RenderOptions) {
-  const { folderStructure, onSelectFile, activeFile, nestDepth = 0 } = options;
+  const { folderStructure, activeFile, nestDepth = 0, ...functions } = options;
+  const { onSelectFile, onRenameFile, onDeleteFile } = functions;
 
   const finalStructure = Object.entries(folderStructure.folders).map(
     ([folderName, contents]) => (
       <FolderContainer key={folderName} open>
-        <StyledFolder nestDepth={nestDepth}>
+        <StyledFolder nestDepth={nestDepth} title={folderName}>
           <Icon src={folderIcon} alt="" />
-          {folderName}
+          <p>{folderName}</p>
         </StyledFolder>
         {renderFolderStructure({
           folderStructure: contents,
-          onSelectFile,
-          activeFile,
           nestDepth: nestDepth + 1,
+          activeFile,
+          ...functions,
         })}
       </FolderContainer>
     )
@@ -101,6 +152,7 @@ function renderFolderStructure(options: RenderOptions) {
     finalStructure.push(
       <FileButton
         key={fileName}
+        title={fileName}
         nestDepth={nestDepth}
         onClick={() => onSelectFile(filePath)}
         isActive={isActive}
@@ -108,7 +160,15 @@ function renderFolderStructure(options: RenderOptions) {
         aria-label="File"
       >
         <Icon src={fileIcon} alt="" />
-        {fileName}
+        <p>{fileName}</p>
+        <FileFunctions>
+          <FileFunctionButton onClick={(e) => onRenameFile(e, filePath)}>
+            <Icon src={pencilIcon} alt="Rename file" title="Rename file" />
+          </FileFunctionButton>
+          <FileFunctionButton onClick={(e) => onDeleteFile(e, filePath)}>
+            <Icon src={closeIcon} alt="Delete file" title="Delete file" />
+          </FileFunctionButton>
+        </FileFunctions>
       </FileButton>
     );
   });
@@ -116,20 +176,12 @@ function renderFolderStructure(options: RenderOptions) {
   return <>{finalStructure}</>;
 }
 
-interface Folders {
+type Folders = SharedProps & {
   filePaths: Array<string>;
-  onSelectFile: (folder: string) => void;
-  activeFile: string | null;
-}
+};
 
-export function FolderStructure({
-  filePaths,
-  onSelectFile,
-  activeFile,
-}: Folders) {
+export function FolderStructure({ filePaths, ...passProps }: Folders) {
   const folderStructure = structureFolders(filePaths);
 
-  return (
-    <>{renderFolderStructure({ folderStructure, onSelectFile, activeFile })}</>
-  );
+  return renderFolderStructure({ folderStructure, ...passProps });
 }

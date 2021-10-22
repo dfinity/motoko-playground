@@ -10,6 +10,7 @@
     "@types/node": "^12.0.0",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
+    "@types/react-modal": "^3.13.1",
     "@types/styled-components": "^5.1.10",
     "lodash.debounce": "^4.0.8",
     "react": "^17.0.2",
@@ -35,7 +36,7 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
-    "test": "craco test -- --config=config/jest.config.js",
+    "test": "craco test",
     "eject": "craco eject",
     "deploy": "dfx deploy --argument '(null)'",
     "prestart": "dfx start --background --no-artificial-delay || exit 0",

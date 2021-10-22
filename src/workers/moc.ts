@@ -8,6 +8,9 @@ declare var Motoko: any;
 
 export type MocAction =
   | { type: "save"; file: string; content: string }
+  | { type: "remove"; file: string }
+  | { type: "rename"; old: string; new: string }
+  | { type: "ls"; path: string }
   | { type: "check"; file: string }
   | { type: "compile"; file: string }
   | { type: "candid"; file: string }
@@ -20,6 +23,12 @@ export function Moc(action: MocAction) {
   switch (action.type) {
     case "save":
       return Motoko.saveFile(action.file, action.content);
+    case "remove":
+      return Motoko.removeFile(action.file);
+    case "rename":
+      return Motoko.renameFile(action.old, action.new);
+    case "ls":
+      return Motoko.readDir(action.file);
     case "check":
       return Motoko.check(action.file);
     case "compile":

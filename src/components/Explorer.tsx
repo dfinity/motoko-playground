@@ -1,22 +1,26 @@
 import { useState, useEffect, useContext } from "react";
 import styled from "styled-components";
-import iconPackage from "../assets/images/icon-package.svg";
-import iconCanister from "../assets/images/icon-canister.svg";
-import iconClose from "../assets/images/icon-close.svg";
-import iconPlus from "../assets/images/icon-plus.svg";
-import { ListButton } from "./shared/SelectList";
 import {
   WorkplaceState,
   WorkplaceDispatchContext,
+  WorkerContext,
 } from "../contexts/WorkplaceState";
+
+import { ListButton } from "./shared/SelectList";
 import { PackageModal } from "./PackageModal";
 import { FileModal } from "./FileModal";
 import { CanisterModal } from "./CanisterModal";
 import { DeploySetter } from "./DeplayModal";
+import { FolderStructure } from "./FolderStructure";
+import { Confirm } from "./shared/Confirm";
+
 import { PackageInfo } from "../workers/file";
 import { ILoggingStore } from "./Logger";
 import { deleteCanister } from "../build";
-import { FolderStructure } from "./FolderStructure";
+import iconPackage from "../assets/images/icon-package.svg";
+import iconCanister from "../assets/images/icon-canister.svg";
+import iconClose from "../assets/images/icon-close.svg";
+import iconPlus from "../assets/images/icon-plus.svg";
 
 const StyledExplorer = styled.div`
   width: var(--explorerWidth);
@@ -45,6 +49,9 @@ const CloseButton = styled(MyButton)`
   margin-right: -1.1rem;
   margin-left: -0.3rem;
 `;
+const ConfirmText = styled.p`
+  margin-bottom: 2rem;
+`;
 
 interface ExplorerProps {
   state: WorkplaceState;
@@ -65,17 +72,31 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
   const [showPackage, setShowPackage] = useState(false);
   const [showFileModal, setShowFileModal] = useState(false);
   const [showCanisterModal, setShowCanisterModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [fileToModify, setFileToModify] = useState("");
   const dispatch = useContext(WorkplaceDispatchContext);
+  const worker = useContext(WorkerContext);
 
-  const onSelectFile = (selectedFile: string) => {
+  function handleRenameClick(e, selectedFile: string) {
+    e.stopPropagation();
+    setFileToModify(selectedFile);
+    setShowFileModal(true);
+  }
+  function handleDeleteClick(e, selectedFile: string) {
+    e.stopPropagation();
+    setFileToModify(selectedFile);
+    setShowDeleteConfirm(true);
+  }
+
+  function onSelectFile(selectedFile: string) {
     dispatch({
       type: "selectFile",
       payload: {
         path: selectedFile,
       },
     });
-  };
-  const loadPackage = (pack: PackageInfo) => {
+  }
+  function loadPackage(pack: PackageInfo) {
     dispatch({
       type: "loadPackage",
       payload: {
@@ -83,7 +104,18 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
         package: pack,
       },
     });
-  };
+  }
+  function onDeleteFile() {
+    dispatch({
+      type: "deleteFile",
+      payload: {
+        path: fileToModify,
+      },
+    });
+    worker.Moc({ type: "remove", file: fileToModify });
+    setFileToModify("");
+  }
+
   const onCanister = async (selectedCanister: string, action: string) => {
     switch (action) {
       case "select":
@@ -178,10 +210,19 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
 
   return (
     <StyledExplorer>
-      <FileModal isOpen={showFileModal} close={() => setShowFileModal(false)} />
+      <FileModal
+        isOpen={showFileModal}
+        close={() => {
+          setShowFileModal(false);
+          setFileToModify("");
+        }}
+        filename={fileToModify}
+      />
       <PackageModal
         isOpen={showPackage}
-        close={() => setShowPackage(false)}
+        close={() => {
+          setShowPackage(false);
+        }}
         loadPackage={loadPackage}
       />
       <CanisterModal
@@ -189,6 +230,18 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
         close={() => setShowCanisterModal(false)}
         deploySetter={deploySetter}
       />
+      <Confirm
+        isOpen={showDeleteConfirm}
+        onConfirm={onDeleteFile}
+        close={() => {
+          setShowDeleteConfirm(false);
+          setFileToModify("");
+        }}
+      >
+        <ConfirmText>
+          Are you sure you want to delete the file <code>{fileToModify}</code>?
+        </ConfirmText>
+      </Confirm>
       <CategoryTitle>
         Files
         <MyButton onClick={() => setShowFileModal(true)} aria-label="Add file">
@@ -197,10 +250,12 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
       </CategoryTitle>
       <FolderStructure
         filePaths={Object.keys(state.files).sort()}
-        onSelectFile={onSelectFile}
         activeFile={state.selectedFile}
+        onSelectFile={onSelectFile}
+        onRenameFile={handleRenameClick}
+        onDeleteFile={handleDeleteClick}
       />
-      <CategoryTitle>
+      <CategoryTitle style={{ borderTop: "1px solid var(--grey300)" }}>
         Packages
         <MyButton onClick={() => setShowPackage(true)} aria-label="Add package">
           <img style={{ width: "1.6rem" }} src={iconPlus} alt="" />
