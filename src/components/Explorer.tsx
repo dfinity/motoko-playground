@@ -3,6 +3,7 @@ import styled from "styled-components";
 import {
   WorkplaceState,
   WorkplaceDispatchContext,
+  WorkerContext,
 } from "../contexts/WorkplaceState";
 
 import { ListButton } from "./shared/SelectList";
@@ -74,6 +75,7 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [fileToModify, setFileToModify] = useState("");
   const dispatch = useContext(WorkplaceDispatchContext);
+  const worker = useContext(WorkerContext);
 
   function handleRenameClick(e, selectedFile: string) {
     e.stopPropagation();
@@ -110,6 +112,7 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
         path: fileToModify,
       },
     });
+    worker.Moc({ type: "remove", file: fileToModify });
     setFileToModify("");
   }
 

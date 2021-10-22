@@ -60,6 +60,7 @@ export function FileModal({ isOpen, close, filename: initialFilename = "" }) {
         type: "renameFile",
         payload: { path: initialFilename, newPath: name },
       });
+      await worker.Moc({ type: "rename", old: initialFilename, new: name });
       await dispatch({ type: "selectFile", payload: { path: name } });
     }
     close();
