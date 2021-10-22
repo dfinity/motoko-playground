@@ -177,7 +177,8 @@ export const workplaceReducer = {
   /** Return updated state based on an action */
   reduce(
     state: WorkplaceState,
-    action: WorkplaceReducerAction
+    action: WorkplaceReducerAction,
+    worker
   ): WorkplaceState {
     switch (action.type) {
       case "loadProject":
@@ -247,6 +248,7 @@ export const workplaceReducer = {
         };
 
         delete files[action.payload.path];
+        worker.Moc({ type: "remove", file: action.payload.path });
         return {
           ...state,
           files,

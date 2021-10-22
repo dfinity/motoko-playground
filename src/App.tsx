@@ -178,22 +178,28 @@ export function App() {
 
   const deployWorkplace = (info: CanisterInfo) => {
     setForceUpdate();
-    workplaceDispatch({
-      type: "deployWorkplace",
-      payload: {
-        canister: info,
+    workplaceDispatch(
+      {
+        type: "deployWorkplace",
+        payload: {
+          canister: info,
+        },
       },
-    });
+      worker
+    );
   };
 
   const importCode = useCallback(
     (files: Record<string, string>) => {
-      workplaceDispatch({
-        type: "loadProject",
-        payload: {
-          files,
+      workplaceDispatch(
+        {
+          type: "loadProject",
+          payload: {
+            files,
+          },
         },
-      });
+        worker
+      );
     },
     [workplaceDispatch]
   );
@@ -209,13 +215,16 @@ export function App() {
     };
     (async () => {
       await worker.fetchPackage(baseInfo);
-      await workplaceDispatch({
-        type: "loadPackage",
-        payload: {
-          name: "base",
-          package: baseInfo,
+      await workplaceDispatch(
+        {
+          type: "loadPackage",
+          payload: {
+            name: "base",
+            package: baseInfo,
+          },
         },
-      });
+        worker
+      );
       logger.log("Base library loaded.");
       // fetch code after loading base library
       if (hasUrlParams) {
