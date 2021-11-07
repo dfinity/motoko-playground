@@ -7,7 +7,7 @@
     "name": "base",
     "owners": ["kritzcreek", "dfinity"],
     "repo": "https://github.com/dfinity/motoko-base.git",
-    "version": "2a46463287b18ee4300617fc282cdabc395625c3"
+    "version": "master"
   },
   {
     "authors": ["Matthew Hammer"],
