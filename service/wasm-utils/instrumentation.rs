@@ -39,6 +39,7 @@ pub fn instrument(m: &mut Module) {
             inject_profiling_prints(printer, id, func);
         }
     }
+    inject_init(m);
     inject_getter(m, &vars);
 }
 
@@ -126,6 +127,7 @@ fn inject_profiling_prints(printer: FunctionId, id: FunctionId, func: &mut Local
         let mut instrs = vec![];
         if seq_id == start {
             instrs.extend_from_slice(&[
+                // Note this is the OLD func id. We need the old name section to interpret the name.
                 (Const { value: Value::I32(id.index() as i32) }.into(), Default::default()),
                 (Call { func: printer }.into(), Default::default()),
             ]);
@@ -161,7 +163,7 @@ fn inject_printer(m: &mut Module, vars: &Variables) -> FunctionId {
             MemArg { offset: 0, align: 4 },
         )
         .global_get(vars.log_size)
-        .i32_const(1)
+        .i32_const(4)
         .binop(BinaryOp::I32Add)
         .global_get(vars.total_counter)
         .store(
@@ -170,13 +172,29 @@ fn inject_printer(m: &mut Module, vars: &Variables) -> FunctionId {
             MemArg { offset: 0, align: 8 },
         )
         .global_get(vars.log_size)
-        .i32_const(3)
-        .binop(BinaryOp::I32Add)
-        .global_set(vars.log_size)
-        .i32_const(0)
+        .i32_const(12)
+        .call(print)
         .global_get(vars.log_size)
-        .call(print);
+        .i32_const(12)
+        .binop(BinaryOp::I32Add)
+        .global_set(vars.log_size);
     builder.finish(vec![func_id], &mut m.funcs)
+}
+fn inject_init(m: &mut Module) {
+    let grow = get_ic_func_id(m, "stable_grow");
+    match m.exports.iter().find(|e| e.name == "canister_init").map(|e| e.item) {
+        Some(ExportItem::Function(id)) => {
+            if let FunctionKind::Local(func) = &mut m.funcs.get_mut(id).kind {
+                func.builder_mut().func_body().i32_const(1).call(grow).drop();
+            } else {
+                unreachable!()
+            }
+        }
+        None => {
+            FunctionBuilder::new(&mut m.types, &[], &[]).func_body().i32_const(1).call(grow).drop();
+        }
+        Some(_) => unreachable!(),
+    }
 }
 
 fn inject_getter(m: &mut Module, vars: &Variables) {
