@@ -35,7 +35,9 @@ pub fn instrument(m: &mut Module) {
     }
     let printer = inject_printer(m, &vars);
     for (id, func) in m.funcs.iter_local_mut() {
-        inject_profiling_prints(printer, id, func);
+        if id != printer {
+            inject_profiling_prints(printer, id, func);
+        }
     }
     inject_getter(m, &vars);
 }
