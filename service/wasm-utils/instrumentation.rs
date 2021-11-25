@@ -48,6 +48,7 @@ pub fn instrument(m: &mut Module) {
     }
     //inject_start(m, vars.is_init);
     inject_init(m, vars.is_init);
+    inject_stable_getter(m, &vars);
     inject_getter(m, &vars);
 }
 
@@ -179,27 +180,21 @@ fn inject_printer(m: &mut Module, vars: &Variables) -> FunctionId {
             else_
                 .i32_const(0)
                 .local_get(func_id)
-                .store(
-                    memory,
-                    StoreKind::I32 { atomic: false },
-                    MemArg { offset: 0, align: 4 },
-                )
+                .store(memory, StoreKind::I32 { atomic: false }, MemArg { offset: 0, align: 4 })
                 .i32_const(4)
                 .global_get(vars.total_counter)
-                .store(
-                    memory,
-                    StoreKind::I64 { atomic: false },
-                    MemArg { offset: 0, align: 8 },
-                )
+                .store(memory, StoreKind::I64 { atomic: false }, MemArg { offset: 0, align: 8 })
                 .i32_const(0)
                 .i32_const(12)
                 .call(printer)
                 .global_get(vars.log_size)
+                .i32_const(12)
+                .binop(BinaryOp::I32Mul)
                 .i32_const(0)
                 .i32_const(12)
                 .call(writer)
                 .global_get(vars.log_size)
-                .i32_const(12)
+                .i32_const(1)
                 .binop(BinaryOp::I32Add)
                 .global_set(vars.log_size);
         },
@@ -253,7 +248,43 @@ fn inject_init(m: &mut Module, is_init: GlobalId) {
         }
     }
 }
-
+fn inject_stable_getter(m: &mut Module, vars: &Variables) {
+    let memory = get_memory_id(m);
+    let reply_data = get_ic_func_id(m, "msg_reply_data_append");
+    let reply = get_ic_func_id(m, "msg_reply");
+    let reader = get_ic_func_id(m, "stable_read");
+    let mut builder = FunctionBuilder::new(&mut m.types, &[], &[]);
+    builder.name("__get_profiling".to_string());
+    #[rustfmt::skip]
+    builder.func_body()
+        .i32_const(0)
+        // vec { record { int32; int64 } }
+        .i64_const(0x6c016d024c444944) // "DIDL026d016c"
+        .store(memory, StoreKind::I64 { atomic: false }, MemArg { offset: 0, align: 8 })
+        .i32_const(8)
+        .i64_const(0x0000017401750002)  // "02007501740100xx"
+        .store(memory, StoreKind::I64 { atomic: false }, MemArg { offset: 0, align: 8 })
+        .i32_const(15)
+        .global_get(vars.log_size) // assume <= 127
+        .store(memory, StoreKind::I32_8 { atomic: false }, MemArg { offset: 0, align: 1 })
+        .i32_const(0)
+        .i32_const(16)
+        .call(reply_data)
+        .i32_const(0)
+        .i32_const(0)
+        .global_get(vars.log_size)
+        .i32_const(12)
+        .binop(BinaryOp::I32Mul)
+        .call(reader)
+        .i32_const(0)
+        .global_get(vars.log_size)
+        .i32_const(12)
+        .binop(BinaryOp::I32Mul)
+        .call(reply_data)
+        .call(reply);
+    let getter = builder.finish(vec![], &mut m.funcs);
+    m.exports.add("canister_query __get_profiling", getter);
+}
 fn inject_getter(m: &mut Module, vars: &Variables) {
     let memory = get_memory_id(m);
     let reply_data = get_ic_func_id(m, "msg_reply_data_append");
@@ -266,25 +297,13 @@ fn inject_getter(m: &mut Module, vars: &Variables) {
         // It's a query call, so we can arbitrarily change the memory without restoring them afterwards.
         .i32_const(0)
         .i64_const(0x747402004c444944)  // "DIDL00027474" in little endian
-        .store(
-            memory,
-            StoreKind::I64 { atomic: false },
-            MemArg { offset: 0, align: 8 },
-        )
+        .store(memory, StoreKind::I64 { atomic: false }, MemArg { offset: 0, align: 8 })
         .i32_const(8)
         .global_get(vars.total_counter)
-        .store(
-            memory,
-            StoreKind::I64 { atomic: false },
-            MemArg { offset: 0, align: 8 },
-        )
+        .store(memory, StoreKind::I64 { atomic: false }, MemArg { offset: 0, align: 8 })
         .i32_const(16)
         .global_get(vars.total_counter)
-        .store(
-            memory,
-            StoreKind::I64 { atomic: false },
-            MemArg { offset: 0, align: 8 },
-        )
+        .store(memory, StoreKind::I64 { atomic: false }, MemArg { offset: 0, align: 8 })
         .i32_const(0)
         .i32_const(8 * 3)
         .call(reply_data)
