@@ -18,7 +18,7 @@ impl InjectionPoint {
 struct Variables {
     total_counter: GlobalId,
     log_size: GlobalId,
-    is_start: GlobalId,
+    is_init: GlobalId,
 }
 
 pub fn instrument(m: &mut Module) {
@@ -29,13 +29,13 @@ pub fn instrument(m: &mut Module) {
     let log_size = m
         .globals
         .add_local(ValType::I32, true, InitExpr::Value(Value::I32(0)));
-    let is_start = m
+    let is_init = m
         .globals
         .add_local(ValType::I32, true, InitExpr::Value(Value::I32(1)));
     let vars = Variables {
         total_counter,
         log_size,
-        is_start,
+        is_init,
     };
     for (_, func) in m.funcs.iter_local_mut() {
         inject_metering(func, func.entry_block(), &vars);
@@ -46,8 +46,8 @@ pub fn instrument(m: &mut Module) {
             inject_profiling_prints(printer, id, func);
         }
     }
-    inject_start(m, vars.is_start);
-    inject_init(m);
+    //inject_start(m, vars.is_init);
+    inject_init(m, vars.is_init);
     inject_getter(m, &vars);
 }
 
@@ -155,7 +155,7 @@ fn inject_profiling_prints(printer: FunctionId, id: FunctionId, func: &mut Local
                 Instr::Return(_) => instrs.extend_from_slice(end_instrs),
                 _ => (),
             }
-            instrs.push((instr.clone(), loc.clone()));
+            instrs.push((instr.clone(), *loc));
         }
         instrs.extend_from_slice(end_instrs);
         *original = instrs;
@@ -168,7 +168,7 @@ fn inject_printer(m: &mut Module, vars: &Variables) -> FunctionId {
     let memory = get_memory_id(m);
     let mut builder = FunctionBuilder::new(&mut m.types, &[ValType::I32], &[]);
     let func_id = m.locals.add(ValType::I32);
-    builder.func_body().global_get(vars.is_start).if_else(
+    builder.func_body().global_get(vars.is_init).if_else(
         None,
         |then| {
             then.return_();
@@ -206,7 +206,7 @@ fn inject_printer(m: &mut Module, vars: &Variables) -> FunctionId {
     );
     builder.finish(vec![func_id], &mut m.funcs)
 }
-fn inject_start(m: &mut Module, is_start: GlobalId) {
+fn inject_start(m: &mut Module, is_init: GlobalId) {
     if let Some(id) = m.start {
         let builder = get_builder(m, id);
         builder
@@ -214,15 +214,16 @@ fn inject_start(m: &mut Module, is_start: GlobalId) {
             .instr(Const {
                 value: Value::I32(0),
             })
-            .instr(GlobalSet { global: is_start });
+            .instr(GlobalSet { global: is_init });
     }
 }
-fn inject_init(m: &mut Module) {
+fn inject_init(m: &mut Module, is_init: GlobalId) {
     let grow = get_ic_func_id(m, "stable_grow");
     match get_export_func_id(m, "canister_init") {
         Some(id) => {
             let builder = get_builder(m, id);
-            #[rustfmt::skip]
+            // Not sure why adding stabe_grow at the top caused IDL decoding error
+            /*#[rustfmt::skip]
             inject_top(
                 builder,
                 vec![
@@ -230,11 +231,24 @@ fn inject_init(m: &mut Module) {
                     Call { func: grow }.into(),
                     Drop {}.into(),
                 ],
-            );
+            );*/
+            builder
+                .func_body()
+                .i32_const(1)
+                .call(grow)
+                .drop()
+                .i32_const(0)
+                .global_set(is_init);
         }
         None => {
             let mut builder = FunctionBuilder::new(&mut m.types, &[], &[]);
-            builder.func_body().i32_const(1).call(grow).drop();
+            builder
+                .func_body()
+                .i32_const(1)
+                .call(grow)
+                .drop()
+                .i32_const(0)
+                .global_set(is_init);
             builder.finish(vec![], &mut m.funcs);
         }
     }
