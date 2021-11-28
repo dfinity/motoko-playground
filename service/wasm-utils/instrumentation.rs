@@ -126,7 +126,8 @@ fn inject_metering(func: &mut LocalFunction, start: InstrSeqId, vars: &Variables
 fn inject_profiling_prints(printer: FunctionId, id: FunctionId, func: &mut LocalFunction) {
     #[rustfmt::skip]
     let end_instrs = &[
-        (Const { value: Value::I32(-1) }.into(), Default::default()),
+        // TODO fix when id == 0
+        (Const { value: Value::I32(-(id.index() as i32)) }.into(), Default::default()),
         (Call { func: printer }.into(), Default::default()),
     ];
     let start = func.entry_block();
@@ -158,7 +159,9 @@ fn inject_profiling_prints(printer: FunctionId, id: FunctionId, func: &mut Local
             }
             instrs.push((instr.clone(), *loc));
         }
-        instrs.extend_from_slice(end_instrs);
+        if seq_id == start {
+            instrs.extend_from_slice(end_instrs);
+        }
         *original = instrs;
     }
 }
@@ -184,9 +187,9 @@ fn inject_printer(m: &mut Module, vars: &Variables) -> FunctionId {
                 .i32_const(4)
                 .global_get(vars.total_counter)
                 .store(memory, StoreKind::I64 { atomic: false }, MemArg { offset: 0, align: 8 })
-                .i32_const(0)
+                /*.i32_const(0)
                 .i32_const(12)
-                .call(printer)
+                .call(printer)*/
                 .global_get(vars.log_size)
                 .i32_const(12)
                 .binop(BinaryOp::I32Mul)
