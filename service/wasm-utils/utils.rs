@@ -26,16 +26,17 @@ pub fn get_export_func_id(m: &Module, method: &str) -> Option<FunctionId> {
     }
 }
 
-pub fn get_builder(m: &mut Module, id: FunctionId) -> &mut FunctionBuilder {
+pub fn get_builder(m: &mut Module, id: FunctionId) -> InstrSeqBuilder<'_> {
     if let FunctionKind::Local(func) = &mut m.funcs.get_mut(id).kind {
-        func.builder_mut()
+        let id = func.entry_block();
+        func.builder_mut().instr_seq(id)
     } else {
         unreachable!()
     }
 }
 
-pub fn inject_top(builder: &mut FunctionBuilder, instrs: Vec<ir::Instr>) {
+pub fn inject_top(builder: &mut InstrSeqBuilder<'_>, instrs: Vec<ir::Instr>) {
     for instr in instrs.into_iter().rev() {
-        builder.func_body().instr_at(0, instr);
+        builder.instr_at(0, instr);
     }
 }

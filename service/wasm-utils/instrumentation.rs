@@ -48,6 +48,7 @@ pub fn instrument(m: &mut Module) {
     }
     //inject_start(m, vars.is_init);
     inject_init(m, vars.is_init);
+    inject_canister_methods(m, &vars);
     inject_stable_getter(m, &vars);
     inject_getter(m, &vars);
 }
@@ -206,20 +207,35 @@ fn inject_printer(m: &mut Module, vars: &Variables) -> FunctionId {
 }
 fn inject_start(m: &mut Module, is_init: GlobalId) {
     if let Some(id) = m.start {
-        let builder = get_builder(m, id);
+        let mut builder = get_builder(m, id);
         builder
-            .func_body()
             .instr(Const {
                 value: Value::I32(0),
             })
             .instr(GlobalSet { global: is_init });
     }
 }
+
+fn inject_canister_methods(m: &mut Module, vars: &Variables) {
+    let methods: Vec<_> = m.exports.iter().filter_map(|e| {
+        match e.item {
+            ExportItem::Function(id) if e.name.starts_with("canister_update") => Some(id),
+            _ => None,
+        }
+    }).collect();
+    for id in methods.into_iter() {
+        let mut builder = get_builder(m, id);
+        inject_top(&mut builder, vec![
+            Const { value: Value::I32(0) }.into(),
+            GlobalSet { global: vars.log_size }.into(),
+        ]);
+    }
+}
 fn inject_init(m: &mut Module, is_init: GlobalId) {
     let grow = get_ic_func_id(m, "stable_grow");
     match get_export_func_id(m, "canister_init") {
         Some(id) => {
-            let builder = get_builder(m, id);
+            let mut builder = get_builder(m, id);
             // Not sure why adding stabe_grow at the top caused IDL decoding error
             /*#[rustfmt::skip]
             inject_top(
@@ -231,7 +247,6 @@ fn inject_init(m: &mut Module, is_init: GlobalId) {
                 ],
             );*/
             builder
-                .func_body()
                 .i32_const(1)
                 .call(grow)
                 .drop()
