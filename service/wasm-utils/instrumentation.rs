@@ -169,7 +169,6 @@ fn inject_profiling_prints(printer: FunctionId, id: FunctionId, func: &mut Local
 
 fn inject_printer(m: &mut Module, vars: &Variables) -> FunctionId {
     let writer = get_ic_func_id(m, "stable_write");
-    let printer = get_ic_func_id(m, "debug_print");
     let memory = get_memory_id(m);
     let mut builder = FunctionBuilder::new(&mut m.types, &[ValType::I32], &[]);
     let func_id = m.locals.add(ValType::I32);
@@ -188,9 +187,6 @@ fn inject_printer(m: &mut Module, vars: &Variables) -> FunctionId {
                 .i32_const(4)
                 .global_get(vars.total_counter)
                 .store(memory, StoreKind::I64 { atomic: false }, MemArg { offset: 0, align: 8 })
-                /*.i32_const(0)
-                .i32_const(12)
-                .call(printer)*/
                 .global_get(vars.log_size)
                 .i32_const(12)
                 .binop(BinaryOp::I32Mul)
@@ -208,27 +204,32 @@ fn inject_printer(m: &mut Module, vars: &Variables) -> FunctionId {
 fn inject_start(m: &mut Module, is_init: GlobalId) {
     if let Some(id) = m.start {
         let mut builder = get_builder(m, id);
+        #[rustfmt::skip]
         builder
-            .instr(Const {
-                value: Value::I32(0),
-            })
+            .instr(Const { value: Value::I32(0) })
             .instr(GlobalSet { global: is_init });
     }
 }
 
 fn inject_canister_methods(m: &mut Module, vars: &Variables) {
-    let methods: Vec<_> = m.exports.iter().filter_map(|e| {
-        match e.item {
+    let methods: Vec<_> = m
+        .exports
+        .iter()
+        .filter_map(|e| match e.item {
             ExportItem::Function(id) if e.name.starts_with("canister_update") => Some(id),
             _ => None,
-        }
-    }).collect();
-    for id in methods.into_iter() {
-        let mut builder = get_builder(m, id);
-        inject_top(&mut builder, vec![
-            Const { value: Value::I32(0) }.into(),
-            GlobalSet { global: vars.log_size }.into(),
-        ]);
+        })
+        .collect();
+    for id in methods.iter() {
+        let mut builder = get_builder(m, *id);
+        #[rustfmt::skip]
+        inject_top(
+            &mut builder,
+            vec![
+                Const { value: Value::I32(0) }.into(),
+                GlobalSet { global: vars.log_size }.into(),
+            ],
+        );
     }
 }
 fn inject_init(m: &mut Module, is_init: GlobalId) {
@@ -267,6 +268,7 @@ fn inject_init(m: &mut Module, is_init: GlobalId) {
     }
 }
 fn inject_stable_getter(m: &mut Module, vars: &Variables) {
+    let leb = make_leb128_encoder(m);
     let memory = get_memory_id(m);
     let reply_data = get_ic_func_id(m, "msg_reply_data_append");
     let reply = get_ic_func_id(m, "msg_reply");
@@ -282,11 +284,13 @@ fn inject_stable_getter(m: &mut Module, vars: &Variables) {
         .i32_const(8)
         .i64_const(0x0000017401750002)  // "02007501740100xx"
         .store(memory, StoreKind::I64 { atomic: false }, MemArg { offset: 0, align: 8 })
-        .i32_const(15)
-        .global_get(vars.log_size) // assume <= 127
-        .store(memory, StoreKind::I32_8 { atomic: false }, MemArg { offset: 0, align: 1 })
         .i32_const(0)
-        .i32_const(16)
+        .i32_const(15)
+        .call(reply_data)
+        .global_get(vars.log_size)
+        .call(leb)
+        .i32_const(0)
+        .i32_const(5)
         .call(reply_data)
         .i32_const(0)
         .i32_const(0)
@@ -302,6 +306,31 @@ fn inject_stable_getter(m: &mut Module, vars: &Variables) {
         .call(reply);
     let getter = builder.finish(vec![], &mut m.funcs);
     m.exports.add("canister_query __get_profiling", getter);
+}
+// Generate i32 to 5-byte LEB128 encoding at memory address 0..5
+fn make_leb128_encoder(m: &mut Module) -> FunctionId {
+    let memory = get_memory_id(m);
+    let mut builder = FunctionBuilder::new(&mut m.types, &[ValType::I32], &[]);
+    let value = m.locals.add(ValType::I32);
+    let mut instrs = builder.func_body();
+    #[rustfmt::skip]
+    for i in 0..5 {
+        instrs
+            .i32_const(i)
+            .local_get(value)
+            .i32_const(0x7f)
+            .binop(BinaryOp::I32And);
+        if i < 4 {
+            instrs.i32_const(0x80).binop(BinaryOp::I32Or);
+        }
+        instrs
+            .store(memory, StoreKind::I32_8 { atomic: false }, MemArg { offset: 0, align: 1 })
+            .local_get(value)
+            .i32_const(7)
+            .binop(BinaryOp::I32ShrU)
+            .local_set(value);
+    }
+    builder.finish(vec![value], &mut m.funcs)
 }
 fn inject_getter(m: &mut Module, vars: &Variables) {
     let memory = get_memory_id(m);
