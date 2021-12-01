@@ -49,8 +49,12 @@ pub fn instrument(m: &mut Module) {
     //inject_start(m, vars.is_init);
     inject_init(m, vars.is_init);
     inject_canister_methods(m, &vars);
-    inject_stable_getter(m, &vars);
-    inject_getter(m, &vars);
+    let leb = make_leb128_encoder(m);
+    make_stable_getter(m, &vars, leb);
+    make_getter(m, &vars);
+    let name = make_name_section(m);
+    m.customs.add(name.clone());
+    //make_name_getter(m, name.data, leb);
 }
 
 fn inject_metering(func: &mut LocalFunction, start: InstrSeqId, vars: &Variables) {
@@ -267,8 +271,7 @@ fn inject_init(m: &mut Module, is_init: GlobalId) {
         }
     }
 }
-fn inject_stable_getter(m: &mut Module, vars: &Variables) {
-    let leb = make_leb128_encoder(m);
+fn make_stable_getter(m: &mut Module, vars: &Variables, leb: FunctionId) {
     let memory = get_memory_id(m);
     let reply_data = get_ic_func_id(m, "msg_reply_data_append");
     let reply = get_ic_func_id(m, "msg_reply");
@@ -313,7 +316,6 @@ fn make_leb128_encoder(m: &mut Module) -> FunctionId {
     let mut builder = FunctionBuilder::new(&mut m.types, &[ValType::I32], &[]);
     let value = m.locals.add(ValType::I32);
     let mut instrs = builder.func_body();
-    #[rustfmt::skip]
     for i in 0..5 {
         instrs
             .i32_const(i)
@@ -323,6 +325,7 @@ fn make_leb128_encoder(m: &mut Module) -> FunctionId {
         if i < 4 {
             instrs.i32_const(0x80).binop(BinaryOp::I32Or);
         }
+        #[rustfmt::skip]
         instrs
             .store(memory, StoreKind::I32_8 { atomic: false }, MemArg { offset: 0, align: 1 })
             .local_get(value)
@@ -332,7 +335,61 @@ fn make_leb128_encoder(m: &mut Module) -> FunctionId {
     }
     builder.finish(vec![value], &mut m.funcs)
 }
-fn inject_getter(m: &mut Module, vars: &Variables) {
+fn make_name_section(m: &Module) -> RawCustomSection {
+    use ic_cdk::export::candid::Encode;
+    let name: Vec<_> = m
+        .funcs
+        .iter()
+        .filter_map(|f| {
+            if matches!(f.kind, FunctionKind::Local(_)) {
+                Some((f.id().index(), f.name.as_ref()?))
+            } else {
+                None
+            }
+        })
+        .collect();
+    let data = Encode!(&name).unwrap();
+    RawCustomSection {
+        name: "icp:public name".to_string(),
+        data,
+    }
+}
+fn make_name_getter(m: &mut Module, data: Vec<u8>, leb: FunctionId) {
+    let len = data.len() as i32;
+    let memory = get_memory_id(m);
+    let data_id = m.data.add(DataKind::Passive, data);
+    let reply_data = get_ic_func_id(m, "msg_reply_data_append");
+    let reply = get_ic_func_id(m, "msg_reply");
+    let mut getter = FunctionBuilder::new(&mut m.types, &[], &[]);
+    getter.name("__get_names".to_string());
+    #[rustfmt::skip]
+    getter.func_body()
+        .i32_const(0)
+        .i64_const(0x017b6d014c444944) // "DIDL016d7b01"
+        .store(memory, StoreKind::I64 { atomic: false }, MemArg { offset: 0, align: 8 })
+        .i32_const(8)
+        .i32_const(0)
+        .store(memory, StoreKind::I32_8 { atomic: false }, MemArg { offset: 0, align: 1 })
+        .i32_const(0)
+        .i32_const(9)
+        .call(reply_data)
+        .i32_const(len)
+        .call(leb)
+        .i32_const(0)
+        .i32_const(5)
+        .call(reply_data)
+        .i32_const(0)
+        .i32_const(0)
+        .i32_const(len)
+        .memory_init(memory, data_id)
+        .i32_const(0)
+        .i32_const(len)
+        .call(reply_data)
+        .call(reply);
+    let getter = getter.finish(vec![], &mut m.funcs);
+    m.exports.add("canister_query __get_names", getter);
+}
+fn make_getter(m: &mut Module, vars: &Variables) {
     let memory = get_memory_id(m);
     let reply_data = get_ic_func_id(m, "msg_reply_data_append");
     let reply = get_ic_func_id(m, "msg_reply");
