@@ -53,7 +53,7 @@ pub fn instrument(m: &mut Module) {
     make_stable_getter(m, &vars, leb);
     make_getter(m, &vars);
     let name = make_name_section(m);
-    m.customs.add(name.clone());
+    m.customs.add(name);
     //make_name_getter(m, name.data, leb);
 }
 
@@ -176,15 +176,24 @@ fn inject_printer(m: &mut Module, vars: &Variables) -> FunctionId {
     let memory = get_memory_id(m);
     let mut builder = FunctionBuilder::new(&mut m.types, &[ValType::I32], &[]);
     let func_id = m.locals.add(ValType::I32);
+    let a = m.locals.add(ValType::I32);
+    let b = m.locals.add(ValType::I64);
     builder.func_body().global_get(vars.is_init).if_else(
         None,
         |then| {
             then.return_();
         },
         |else_| {
-            // TODO restore memory
             #[rustfmt::skip]
             else_
+                // backup memory
+                .i32_const(0)
+                .load(memory, LoadKind::I32 { atomic: false }, MemArg { offset: 0, align: 4})
+                .local_set(a)
+                .i32_const(4)
+                .load(memory, LoadKind::I64 { atomic: false }, MemArg { offset: 0, align: 8})
+                .local_set(b)
+                // print
                 .i32_const(0)
                 .local_get(func_id)
                 .store(memory, StoreKind::I32 { atomic: false }, MemArg { offset: 0, align: 4 })
@@ -197,10 +206,18 @@ fn inject_printer(m: &mut Module, vars: &Variables) -> FunctionId {
                 .i32_const(0)
                 .i32_const(12)
                 .call(writer)
+                // update counter
                 .global_get(vars.log_size)
                 .i32_const(1)
                 .binop(BinaryOp::I32Add)
-                .global_set(vars.log_size);
+                .global_set(vars.log_size)
+                // restore memory
+                .i32_const(0)
+                .local_get(a)
+                .store(memory, StoreKind::I32 { atomic: false }, MemArg { offset: 0, align: 4 })
+                .i32_const(4)
+                .local_get(b)
+                .store(memory, StoreKind::I64 { atomic: false }, MemArg { offset: 0, align: 8 });
         },
     );
     builder.finish(vec![func_id], &mut m.funcs)
@@ -220,7 +237,12 @@ fn inject_canister_methods(m: &mut Module, vars: &Variables) {
         .exports
         .iter()
         .filter_map(|e| match e.item {
-            ExportItem::Function(id) if e.name.starts_with("canister_update") => Some(id),
+            ExportItem::Function(id)
+                if e.name.starts_with("canister_update")
+                    || e.name.starts_with("canister_query") =>
+            {
+                Some(id)
+            }
             _ => None,
         })
         .collect();
@@ -244,7 +266,7 @@ fn inject_init(m: &mut Module, is_init: GlobalId) {
             // Not sure why adding stabe_grow at the top caused IDL decoding error
             /*#[rustfmt::skip]
             inject_top(
-                builder,
+                &mut builder,
                 vec![
                     Const { value: Value::I32(1) }.into(),
                     Call { func: grow }.into(),
