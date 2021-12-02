@@ -22,7 +22,6 @@ struct Variables {
 }
 
 pub fn instrument(m: &mut Module) {
-    // TODO put counter in stable memory so that we can profile upgrades.
     let total_counter = m
         .globals
         .add_local(ValType::I64, true, InitExpr::Value(Value::I64(0)));
@@ -263,7 +262,8 @@ fn inject_init(m: &mut Module, is_init: GlobalId) {
     match get_export_func_id(m, "canister_init") {
         Some(id) => {
             let mut builder = get_builder(m, id);
-            // Not sure why adding stabe_grow at the top caused IDL decoding error
+            // canister_init in Motoko use stable_size to decide if there is stable memory to deserialize
+            // If we call stable.grow at the beginning, it breaks this check.
             /*#[rustfmt::skip]
             inject_top(
                 &mut builder,
@@ -289,7 +289,8 @@ fn inject_init(m: &mut Module, is_init: GlobalId) {
                 .drop()
                 .i32_const(0)
                 .global_set(is_init);
-            builder.finish(vec![], &mut m.funcs);
+            let id = builder.finish(vec![], &mut m.funcs);
+            m.exports.add("canister_init", id);
         }
     }
 }
