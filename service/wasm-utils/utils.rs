@@ -11,8 +11,12 @@ pub fn get_ic_func_id(m: &mut Module, method: &str) -> FunctionId {
         }
         None => {
             let ty = match method {
-                "stable_write" => m.types.add(&[ValType::I32, ValType::I32, ValType::I32], &[]),
-                "stable_read" => m.types.add(&[ValType::I32, ValType::I32, ValType::I32], &[]),
+                "stable_write" => m
+                    .types
+                    .add(&[ValType::I32, ValType::I32, ValType::I32], &[]),
+                "stable_read" => m
+                    .types
+                    .add(&[ValType::I32, ValType::I32, ValType::I32], &[]),
                 "stable_grow" => m.types.add(&[ValType::I32], &[ValType::I32]),
                 "debug_print" => m.types.add(&[ValType::I32, ValType::I32], &[]),
                 "msg_reply_data_append" => m.types.add(&[ValType::I32, ValType::I32], &[]),

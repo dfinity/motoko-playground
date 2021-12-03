@@ -42,7 +42,7 @@ pub fn instrument(m: &mut Module) {
     let printer = inject_printer(m, &vars);
     for (id, func) in m.funcs.iter_local_mut() {
         if id != printer {
-            inject_profiling_prints(printer, id, func);
+            inject_profiling_prints(&m.types, printer, id, func);
         }
     }
     //inject_start(m, vars.is_init);
@@ -127,44 +127,106 @@ fn inject_metering(func: &mut LocalFunction, start: InstrSeqId, vars: &Variables
     }
 }
 
-fn inject_profiling_prints(printer: FunctionId, id: FunctionId, func: &mut LocalFunction) {
-    #[rustfmt::skip]
-    let end_instrs = &[
-        // TODO fix when id == 0
-        (Const { value: Value::I32(-(id.index() as i32)) }.into(), Default::default()),
-        (Call { func: printer }.into(), Default::default()),
-    ];
-    let start = func.entry_block();
-    let mut stack = vec![start];
+fn inject_profiling_prints(
+    types: &ModuleTypes,
+    printer: FunctionId,
+    id: FunctionId,
+    func: &mut LocalFunction,
+) {
+    // Put the original function body inside a block, so that if the code
+    // use br_if/br_table to exit the function, we can still output the exit signal.
+    let start_id = func.entry_block();
+    let original_block = func.block_mut(start_id);
+    let start_instrs = original_block.instrs.split_off(0);
+    let start_ty = match original_block.ty {
+        InstrSeqType::MultiValue(id) => {
+            let valtypes = types.results(id);
+            InstrSeqType::Simple(match valtypes.len() {
+                0 => None,
+                1 => Some(valtypes[0]),
+                _ => unreachable!("Multivalue return not supported"),
+            })
+        }
+        // top-level block is using the function signature
+        InstrSeqType::Simple(_) => unreachable!(),
+    };
+    let mut inner_start = func.builder_mut().dangling_instr_seq(start_ty);
+    *(inner_start.instrs_mut()) = start_instrs;
+    let inner_start_id = inner_start.id();
+    drop(inner_start);
+    let mut start_builder = func.builder_mut().func_body();
+    start_builder
+        .i32_const(id.index() as i32)
+        .call(printer)
+        .instr(Block {
+            seq: inner_start_id,
+        })
+        // TOOD fix when id == 0
+        .i32_const(-(id.index() as i32))
+        .call(printer);
+
+    let mut stack = vec![inner_start_id];
     while let Some(seq_id) = stack.pop() {
         let mut builder = func.builder_mut().instr_seq(seq_id);
         let original = builder.instrs_mut();
         let mut instrs = vec![];
-        if seq_id == start {
-            #[rustfmt::skip]
-            instrs.extend_from_slice(&[
-                // Note this is the OLD func id. We need the old name section to interpret the name.
-                (Const { value: Value::I32(id.index() as i32) }.into(), Default::default()),
-                (Call { func: printer }.into(), Default::default()),
-            ]);
-        }
         for (instr, loc) in original.iter() {
             match instr {
-                Instr::Block(Block { seq }) | Instr::Loop(Loop { seq }) => stack.push(*seq),
+                Instr::Block(Block { seq }) | Instr::Loop(Loop { seq }) => {
+                    stack.push(*seq);
+                    instrs.push((instr.clone(), *loc));
+                }
                 Instr::IfElse(IfElse {
                     consequent,
                     alternative,
                 }) => {
                     stack.push(*alternative);
                     stack.push(*consequent);
+                    instrs.push((instr.clone(), *loc));
                 }
-                Instr::Return(_) => instrs.extend_from_slice(end_instrs),
-                _ => (),
+                Instr::Return(_) => {
+                    instrs.push((
+                        Instr::Br(Br {
+                            block: inner_start_id,
+                        }),
+                        *loc,
+                    ));
+                }
+                // redirect br,br_if,br_table to inner seq id
+                Instr::Br(Br { block }) if *block == start_id => {
+                    instrs.push((
+                        Instr::Br(Br {
+                            block: inner_start_id,
+                        }),
+                        *loc,
+                    ));
+                }
+                Instr::BrIf(BrIf { block }) if *block == start_id => {
+                    instrs.push((
+                        Instr::BrIf(BrIf {
+                            block: inner_start_id,
+                        }),
+                        *loc,
+                    ));
+                }
+                Instr::BrTable(BrTable { blocks, default }) => {
+                    let mut blocks = blocks.clone();
+                    for i in 0..blocks.len() {
+                        if let Some(id) = blocks.get_mut(i) {
+                            if *id == start_id {
+                                *id = inner_start_id
+                            };
+                        }
+                    }
+                    let default = if *default == start_id {
+                        inner_start_id
+                    } else {
+                        *default
+                    };
+                    instrs.push((Instr::BrTable(BrTable { blocks, default }), *loc));
+                }
+                _ => instrs.push((instr.clone(), *loc)),
             }
-            instrs.push((instr.clone(), *loc));
-        }
-        if seq_id == start {
-            instrs.extend_from_slice(end_instrs);
         }
         *original = instrs;
     }
