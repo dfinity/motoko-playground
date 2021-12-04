@@ -427,7 +427,7 @@ fn make_name_section(m: &Module) -> RawCustomSection {
         .iter()
         .filter_map(|f| {
             if matches!(f.kind, FunctionKind::Local(_)) {
-                Some((f.id().index(), f.name.as_ref()?))
+                Some((f.id().index() as u16, f.name.as_ref()?))
             } else {
                 None
             }
@@ -492,16 +492,13 @@ fn make_getter(m: &mut Module, vars: &Variables) {
         .func_body()
         // It's a query call, so we can arbitrarily change the memory without restoring them afterwards.
         .i32_const(0)
-        .i64_const(0x747402004c444944)  // "DIDL00027474" in little endian
+        .i64_const(0x007401004c444944)  // "DIDL000174xx" in little endian
         .store(memory, StoreKind::I64 { atomic: false }, MemArg { offset: 0, align: 8 })
-        .i32_const(8)
-        .global_get(vars.total_counter)
-        .store(memory, StoreKind::I64 { atomic: false }, MemArg { offset: 0, align: 8 })
-        .i32_const(16)
+        .i32_const(7)
         .global_get(vars.total_counter)
         .store(memory, StoreKind::I64 { atomic: false }, MemArg { offset: 0, align: 8 })
         .i32_const(0)
-        .i32_const(8 * 3)
+        .i32_const(15)
         .call(reply_data)
         .call(reply);
     let getter = getter.finish(vec![], &mut m.funcs);
