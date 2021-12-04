@@ -52,8 +52,8 @@ pub fn instrument(m: &mut Module) {
     make_stable_getter(m, &vars, leb);
     make_getter(m, &vars);
     let name = make_name_section(m);
-    m.customs.add(name);
-    //make_name_getter(m, name.data, leb);
+    //m.customs.add(name);
+    make_name_getter(m, name.data, leb);
 }
 
 fn inject_metering(func: &mut LocalFunction, start: InstrSeqId, vars: &Variables) {
@@ -441,8 +441,19 @@ fn make_name_section(m: &Module) -> RawCustomSection {
 }
 fn make_name_getter(m: &mut Module, data: Vec<u8>, leb: FunctionId) {
     let len = data.len() as i32;
+    if len == 0 || len >= 65526 {
+        return;
+    }
     let memory = get_memory_id(m);
-    let data_id = m.data.add(DataKind::Passive, data);
+    //let data_id = m.data.add(DataKind::Passive, data);
+    let data_start = 10;
+    m.data.add(
+        DataKind::Active(ActiveData {
+            memory,
+            location: ActiveDataLocation::Absolute(data_start),
+        }),
+        data,
+    );
     let reply_data = get_ic_func_id(m, "msg_reply_data_append");
     let reply = get_ic_func_id(m, "msg_reply");
     let mut getter = FunctionBuilder::new(&mut m.types, &[], &[]);
@@ -463,11 +474,7 @@ fn make_name_getter(m: &mut Module, data: Vec<u8>, leb: FunctionId) {
         .i32_const(0)
         .i32_const(5)
         .call(reply_data)
-        .i32_const(0)
-        .i32_const(0)
-        .i32_const(len)
-        .memory_init(memory, data_id)
-        .i32_const(0)
+        .i32_const(data_start as i32)
         .i32_const(len)
         .call(reply_data)
         .call(reply);
