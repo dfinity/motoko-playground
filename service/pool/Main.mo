@@ -121,12 +121,12 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
             stats := Logs.updateStats(stats, #mismatch);
         }
     };
-    /*public func GCCanisters() {
+    public func GCCanisters() {
         let list = pool.gcList();
         for (id in list.vals()) {
             await IC.uninstall_code({canister_id=id});
         };
-    };*/
+    };
     public query({caller}) func dump() : async [Types.CanisterInfo] {
         if (caller != controller) {
             throw Error.reject("Only called by controller");
