@@ -27,12 +27,14 @@ pub fn limit_stable_memory_page(m: &mut Module, limit: u32) {
                     }
                 }
             }
-            m.funcs.iter_local_mut().for_each(|(_, func)| {
-                dfs_pre_order_mut(
-                    &mut Replacer { old_grow, new_grow },
-                    func,
-                    func.entry_block(),
-                );
+            m.funcs.iter_local_mut().for_each(|(id, func)| {
+                if id != new_grow {
+                    dfs_pre_order_mut(
+                        &mut Replacer { old_grow, new_grow },
+                        func,
+                        func.entry_block(),
+                    );
+                }
             });
         }
     }
