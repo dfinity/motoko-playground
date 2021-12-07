@@ -106,7 +106,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
                  throw Error.reject("Cannot find canister");
              };
         case (?new_info) {
-                 let wasm = await Wasm.transform(args.wasm_module, { profiling; remove_cycles_add = true });
+                 let wasm = await Wasm.transform(args.wasm_module, { profiling; remove_cycles_add = true; limit_stable_memory_page = ?1 });
                  let new_args = { arg = args.arg; wasm_module = wasm; mode = args.mode; canister_id = args.canister_id };
                  await IC.install_code(new_args);
                  stats := Logs.updateStats(stats, #install);
