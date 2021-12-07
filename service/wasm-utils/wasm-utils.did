@@ -1,4 +1,4 @@
-type Config = record { profiling: bool; remove_cycles_add: bool };
+type Config = record { profiling: bool; remove_cycles_add: bool; limit_stable_memory_page: opt nat32 };
 
 service : {
   transform : (blob, Config) -> (blob);
