@@ -135,6 +135,7 @@ export function Editor({
       const init = candidJS.init({ IDL });
       await deploySetter.setInitTypes(init);
       await deploySetter.setCandidCode(result.candid);
+      await deploySetter.setStableSig(result.stable);
       await deploySetter.setWasm(result.wasm);
       await deploySetter.setMainFile(mainFile);
       await deploySetter.setShowDeployModal(true);

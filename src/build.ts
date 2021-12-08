@@ -9,6 +9,7 @@ export interface CanisterInfo {
   timestamp?: bigint;
   name?: string;
   candid?: string | null;
+  stableSig?: string | null;
 }
 /*
 export function interpret(file: string, logger: ILoggingStore): void {

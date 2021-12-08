@@ -88,6 +88,7 @@ export interface DeploySetter {
   setInitTypes: (args: Array<IDL.Type>) => void;
   setShowDeployModal: (boolean) => void;
   setWasm: (file: BinaryBlob | undefined) => void;
+  setStableSig: (sig: string) => void;
 }
 
 interface DeployModalProps {
@@ -116,13 +117,15 @@ export function DeployModal({
   fileName,
   wasm,
   candid,
+  stableSig,
   initTypes,
   logger,
 }: DeployModalProps) {
   const [canisterName, setCanisterName] = useState("");
   const [inputs, setInputs] = useState<InputBox[]>([]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [upgradeWarning, setUpgradeWarning] = useState("");
+  const [candidWarning, setCandidWarning] = useState("");
+  const [stableWarning, setStableWarning] = useState("");
   const [profiling, setProfiling] = useState(false);
   const worker = useContext(WorkerContext);
 
@@ -190,6 +193,7 @@ export function DeployModal({
     await isDeploy(false);
     if (info) {
       info.candid = candid_src;
+      info.stableSig = stableSig;
       await worker.Moc({
         type: "save",
         file: `idl/${info.id}.did`,
@@ -206,8 +210,33 @@ export function DeployModal({
     }
     await close();
     try {
-      logger.clearLogs();
       if (mode === "upgrade") {
+        let hasWarning = false;
+        if (canisters[canisterName].stableSig) {
+          await worker.Moc({
+            type: "save",
+            file: "pre.most",
+            content: canisters[canisterName].stableSig,
+          });
+          await worker.Moc({
+            type: "save",
+            file: "post.most",
+            content: stableSig,
+          });
+          const result = await worker.Moc({
+            type: "stableCheck",
+            pre: "pre.most",
+            post: "post.most",
+          });
+          if (result.diagnostics) {
+            const err = result.diagnostics.map((d) => d.message).join("<br>");
+            await setStableWarning(err);
+            await setIsConfirmOpen(true);
+            hasWarning = true;
+          } else {
+            await setStableWarning("");
+          }
+        }
         if (canisters[canisterName].candid) {
           const old = canisters[canisterName].candid;
           const result = await didjs.subtype(candid_src, old);
@@ -216,10 +245,15 @@ export function DeployModal({
               "expected type",
               "pre-upgrade interface"
             );
-            setUpgradeWarning(err);
-            setIsConfirmOpen(true);
-            return;
+            await setCandidWarning(err);
+            await setIsConfirmOpen(true);
+            hasWarning = true;
+          } else {
+            await setCandidWarning("");
           }
+        }
+        if (hasWarning) {
+          return;
         }
       }
       await handleDeploy(mode);
@@ -343,9 +377,18 @@ export function DeployModal({
       >
         <h3 style={{ width: "100%", textAlign: "center" }}>Warning</h3>
 
-        <WarningContainer>
-          <strong>Upgrade is not backward compatible:</strong> {upgradeWarning}
-        </WarningContainer>
+        {stableWarning ? (
+          <WarningContainer>
+            <strong>Incompatible stable signature will cause data loss:</strong>{" "}
+            {stableWarning}
+          </WarningContainer>
+        ) : null}
+
+        {candidWarning ? (
+          <WarningContainer>
+            <strong>Upgrade is not backward compatible:</strong> {candidWarning}
+          </WarningContainer>
+        ) : null}
 
         <p style={{ fontSize: "1.4rem", marginTop: "2rem" }}>
           Press "Continue" to upgrade canister anyway.
