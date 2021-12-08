@@ -9,7 +9,7 @@ import {
 } from "@dfinity/candid";
 
 import { Modal } from "./shared/Modal";
-import { CanisterInfo, getCanisterName, deploy, compileWasm } from "../build";
+import { CanisterInfo, getCanisterName, deploy } from "../build";
 import { ILoggingStore } from "./Logger";
 import { Button } from "./shared/Button";
 import { WorkerContext } from "../contexts/WorkplaceState";
@@ -177,22 +177,13 @@ export function DeployModal({
       return;
     }
     await isDeploy(true);
-    let wasmModule;
-    if (!wasm) {
-      wasmModule = await compileWasm(worker, fileName, logger);
-      if (!wasmModule) {
-        throw new Error("syntax error");
-      }
-    } else {
-      wasmModule = wasm;
-    }
     const info = await deploy(
       worker,
       canisterName,
       canisters[canisterName],
       args,
       mode,
-      wasmModule,
+      wasm,
       profiling,
       logger
     );
@@ -217,7 +208,6 @@ export function DeployModal({
     try {
       logger.clearLogs();
       if (mode === "upgrade") {
-        // TODO subtype check for init args
         if (canisters[canisterName].candid) {
           const old = canisters[canisterName].candid;
           const result = await didjs.subtype(candid_src, old);

@@ -36,6 +36,11 @@ interface Diagnostics {
   severity: number;
   source: string;
 }
+interface CompileResult {
+  wasm: BinaryBlob;
+  candid: String;
+  stable: String;
+}
 
 function logDiags(diagnostics: Diagnostics[], logger: ILoggingStore) {
   diagnostics.forEach((d) => {
@@ -51,30 +56,11 @@ function logDiags(diagnostics: Diagnostics[], logger: ILoggingStore) {
   });
 }
 
-export async function compileCandid(
-  worker,
-  file: string,
-  logger: ILoggingStore
-): Promise<string | undefined> {
-  const candid_result = await worker.Moc({ type: "candid", file });
-  if (candid_result.diagnostics) logDiags(candid_result.diagnostics, logger);
-  // setMarkers(candid_result.diagnostics);
-  const candid_source = candid_result.code;
-  if (!candid_source) {
-    logger.log(`cannot deploy: syntax error`);
-    return;
-  } else if (candid_source.trim() === "") {
-    logger.log(`cannot deploy: ${file} has no actor`);
-    return;
-  }
-  return candid_source;
-}
-
 export async function compileWasm(
   worker,
   file: string,
   logger: ILoggingStore
-): Promise<BinaryBlob | undefined> {
+): Promise<CompileResult | undefined> {
   logger.log("Compiling code...");
   const out = await worker.Moc({ type: "compile", file });
   if (out.diagnostics) logDiags(out.diagnostics, logger);
@@ -82,7 +68,17 @@ export async function compileWasm(
     logger.log("syntax error");
     return;
   }
-  logger.log(`Compiled Wasm size: ${Math.floor(out.code.length / 1024)}KB`);
+  if (out.code.candid.trim() === "") {
+    logger.log(`cannot deploy: ${file} has no actor`);
+    return;
+  }
+  if (out.code.stable === null) {
+    logger.log(`cannot deploy: ${file} cannot generate stable signature`);
+    return;
+  }
+  logger.log(
+    `Compiled Wasm size: ${Math.floor(out.code.wasm.length / 1024)}KB`
+  );
   return out.code;
 }
 

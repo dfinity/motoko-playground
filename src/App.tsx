@@ -217,7 +217,7 @@ export function App() {
         },
       });
       logger.log("moc version 0.6.17");
-      logger.log(`Base library version ${baseInfo.version}`);
+      logger.log(`base library version ${baseInfo.version}`);
       // fetch code after loading base library
       if (hasUrlParams) {
         const files = await fetchFromUrlParams(workplaceDispatch);
