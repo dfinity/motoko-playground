@@ -131,6 +131,8 @@ export function DeployModal({
   const [candidWarning, setCandidWarning] = useState("");
   const [stableWarning, setStableWarning] = useState("");
   const [profiling, setProfiling] = useState(false);
+  const [forceGC, setForceGC] = useState(false);
+  const [gcMethod, setGCMethod] = useState("copying");
   const worker = useContext(WorkerContext);
 
   const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
@@ -346,6 +348,21 @@ export function DeployModal({
               checked={profiling}
               onChange={(e) => setProfiling(e.target.checked)}
             />
+            <Field
+              type="checkbox"
+              labelText="Force GC"
+              checked={forceGC}
+              onChange={(e) => setForceGC(e.target.checked)}
+            />
+            <Field
+              type="select"
+              labelText="GC strategy"
+              value={gcMethod}
+              onChange={(e) => setGCMethod(e.target.value)}
+            >
+              <option value="copying">Copying GC</option>
+              <option value="marking">Marking GC</option>
+            </Field>
           </FormContainer>
           {Warnings}
           <ButtonContainer>
