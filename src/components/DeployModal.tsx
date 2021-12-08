@@ -63,6 +63,10 @@ const WarningContainer = styled.div`
     padding-left: 1.4rem;
   }
 `;
+const PreContainer = styled.pre`
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+`;
 
 const WarningLabel = styled.strong`
   display: block;
@@ -229,7 +233,7 @@ export function DeployModal({
             post: "post.most",
           });
           if (result.diagnostics) {
-            const err = result.diagnostics.map((d) => d.message).join("<br>");
+            const err = result.diagnostics.map((d) => d.message).join("\n");
             await setStableWarning(err);
             await setIsConfirmOpen(true);
             hasWarning = true;
@@ -379,14 +383,15 @@ export function DeployModal({
 
         {stableWarning ? (
           <WarningContainer>
-            <strong>Incompatible stable signature will cause data loss:</strong>{" "}
-            {stableWarning}
+            <strong>Incompatible stable signature will cause data loss:</strong>
+            <PreContainer>{stableWarning}</PreContainer>
           </WarningContainer>
         ) : null}
 
         {candidWarning ? (
           <WarningContainer>
-            <strong>Upgrade is not backward compatible:</strong> {candidWarning}
+            <strong>Upgrade is not backward compatible:</strong>{" "}
+            <PreContainer>{candidWarning}</PreContainer>
           </WarningContainer>
         ) : null}
 
