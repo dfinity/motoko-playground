@@ -146,8 +146,12 @@ export function DeployModal({
   }, [fileName]);
 
   useEffect(() => {
-    if (startDeploy && deployMode && compileResult.wasm) {
-      handleDeploy(deployMode);
+    if (deployMode && compileResult.wasm) {
+      if (deployMode === "upgrade" && !startDeploy) {
+        checkUpgrade();
+      } else {
+        handleDeploy(deployMode);
+      }
     }
   }, [deployMode, compileResult, startDeploy]);
 
@@ -187,10 +191,55 @@ export function DeployModal({
     return { args, candid_src };
   }
 
+  async function checkUpgrade() {
+    let hasWarning = false;
+    if (canisters[canisterName].stableSig && compileResult.stable) {
+      await worker.Moc({
+        type: "save",
+        file: "pre.most",
+        content: canisters[canisterName].stableSig,
+      });
+      await worker.Moc({
+        type: "save",
+        file: "post.most",
+        content: compileResult.stable,
+      });
+      const result = await worker.Moc({
+        type: "stableCheck",
+        pre: "pre.most",
+        post: "post.most",
+      });
+      if (result.diagnostics) {
+        const err = result.diagnostics.map((d) => d.message).join("\n");
+        await setStableWarning(err);
+        await setIsConfirmOpen(true);
+        hasWarning = true;
+      } else {
+        await setStableWarning("");
+      }
+    }
+    if (canisters[canisterName].candid && compileResult.candid) {
+      const old = canisters[canisterName].candid;
+      const result = await didjs.subtype(compileResult.candid, old);
+      if (result.hasOwnProperty("Err")) {
+        const err = result.Err.replaceAll(
+          "expected type",
+          "pre-upgrade interface"
+        );
+        await setCandidWarning(err);
+        await setIsConfirmOpen(true);
+        hasWarning = true;
+      } else {
+        await setCandidWarning("");
+      }
+    }
+    return hasWarning;
+  }
+
   async function handleDeploy(mode: string) {
     const { args, candid_src } = await getArgsAndCandidSrc();
-    await isDeploy(true);
 
+    await isDeploy(true);
     const info = await deploy(
       worker,
       canisterName,
@@ -232,53 +281,6 @@ export function DeployModal({
       } else {
         await setCompileResult({ wasm: wasm, candid: candid });
       }
-      if (mode === "upgrade") {
-        let hasWarning = false;
-        if (canisters[canisterName].stableSig && compileResult.stable) {
-          await worker.Moc({
-            type: "save",
-            file: "pre.most",
-            content: canisters[canisterName].stableSig,
-          });
-          await worker.Moc({
-            type: "save",
-            file: "post.most",
-            content: compileResult.stable,
-          });
-          const result = await worker.Moc({
-            type: "stableCheck",
-            pre: "pre.most",
-            post: "post.most",
-          });
-          if (result.diagnostics) {
-            const err = result.diagnostics.map((d) => d.message).join("\n");
-            await setStableWarning(err);
-            await setIsConfirmOpen(true);
-            hasWarning = true;
-          } else {
-            await setStableWarning("");
-          }
-        }
-        if (canisters[canisterName].candid && compileResult.candid) {
-          const old = canisters[canisterName].candid;
-          const result = await didjs.subtype(compileResult.candid, old);
-          if (result.hasOwnProperty("Err")) {
-            const err = result.Err.replaceAll(
-              "expected type",
-              "pre-upgrade interface"
-            );
-            await setCandidWarning(err);
-            await setIsConfirmOpen(true);
-            hasWarning = true;
-          } else {
-            await setCandidWarning("");
-          }
-        }
-        if (hasWarning) {
-          return;
-        }
-      }
-      setStartDeploy(true);
     } catch (err) {
       isDeploy(false);
       throw err;
