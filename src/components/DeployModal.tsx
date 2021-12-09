@@ -137,6 +137,7 @@ export function DeployModal({
   const worker = useContext(WorkerContext);
 
   const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
+  const isMotoko = wasm ? false : true;
 
   useEffect(() => {
     if (!exceedsLimit) {
@@ -274,6 +275,12 @@ export function DeployModal({
       setStartDeploy(false);
       setDeployMode(mode);
       if (!wasm) {
+        if (forceGC) {
+          await worker.Moc({ type: "gcFlags", option: "force" });
+        } else {
+          await worker.Moc({ type: "gcFlags", option: "scheduling" });
+        }
+        await worker.Moc({ type: "gcFlags", option: gcMethod });
         const result = await compileWasm(worker, fileName, logger);
         if (!result) {
           throw new Error("syntax error");
@@ -370,21 +377,25 @@ export function DeployModal({
               checked={profiling}
               onChange={(e) => setProfiling(e.target.checked)}
             />
-            <Field
-              type="checkbox"
-              labelText="Force GC"
-              checked={forceGC}
-              onChange={(e) => setForceGC(e.target.checked)}
-            />
-            <Field
-              type="select"
-              labelText="GC strategy"
-              value={gcMethod}
-              onChange={(e) => setGCMethod(e.target.value)}
-            >
-              <option value="copying">Copying GC</option>
-              <option value="marking">Marking GC</option>
-            </Field>
+            {isMotoko ? (
+              <InitContainer>
+                <Field
+                  type="select"
+                  labelText="GC strategy"
+                  value={gcMethod}
+                  onChange={(e) => setGCMethod(e.target.value)}
+                >
+                  <option value="copying">Copying GC (default)</option>
+                  <option value="marking">Marking GC</option>
+                </Field>
+                <Field
+                  type="checkbox"
+                  labelText="Force garbage collection (only if you want to test GC)"
+                  checked={forceGC}
+                  onChange={(e) => setForceGC(e.target.checked)}
+                />
+              </InitContainer>
+            ) : null}
           </FormContainer>
           {Warnings}
           <ButtonContainer>
