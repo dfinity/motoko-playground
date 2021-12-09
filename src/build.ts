@@ -57,6 +57,25 @@ function logDiags(diagnostics: Diagnostics[], logger: ILoggingStore) {
   });
 }
 
+export async function compileCandid(
+  worker,
+  file: string,
+  logger: ILoggingStore
+): Promise<string | undefined> {
+  const candid_result = await worker.Moc({ type: "candid", file });
+  if (candid_result.diagnostics) logDiags(candid_result.diagnostics, logger);
+  // setMarkers(candid_result.diagnostics);
+  const candid_source = candid_result.code;
+  if (!candid_source) {
+    logger.log(`cannot deploy: syntax error`);
+    return;
+  } else if (candid_source.trim() === "") {
+    logger.log(`cannot deploy: ${file} has no actor`);
+    return;
+  }
+  return candid_source;
+}
+
 export async function compileWasm(
   worker,
   file: string,

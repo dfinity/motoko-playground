@@ -17,7 +17,7 @@ import {
   WorkerContext,
   WorkplaceDispatchContext,
 } from "../contexts/WorkplaceState";
-import { compileWasm } from "../build";
+import { compileCandid } from "../build";
 import { didToJs } from "../config/actor";
 
 const EditorColumn = styled.div`
@@ -129,14 +129,13 @@ export function Editor({
     if (!mainFile) {
       logger.log("Select a main entry file to deploy");
     }
-    const result = await compileWasm(worker, mainFile, logger);
-    if (result) {
-      const candidJS = await didToJs(result.candid);
+    const candid = await compileCandid(worker, mainFile, logger);
+    if (candid) {
+      const candidJS = await didToJs(candid);
       const init = candidJS.init({ IDL });
       await deploySetter.setInitTypes(init);
-      await deploySetter.setCandidCode(result.candid);
-      await deploySetter.setStableSig(result.stable);
-      await deploySetter.setWasm(result.wasm);
+      await deploySetter.setCandidCode(candid);
+      await deploySetter.setWasm(undefined);
       await deploySetter.setMainFile(mainFile);
       await deploySetter.setShowDeployModal(true);
     }

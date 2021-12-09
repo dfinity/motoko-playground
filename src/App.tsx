@@ -148,14 +148,12 @@ export function App() {
   const [initTypes, setInitTypes] = useState([]);
   const [mainFile, setMainFile] = useState("");
   const [wasm, setWasm] = useState(undefined);
-  const [stableSig, setStableSig] = useState("");
   const deploySetter: DeploySetter = {
     setMainFile,
     setInitTypes,
     setCandidCode,
     setShowDeployModal,
     setWasm,
-    setStableSig,
   };
 
   const logger = useLogging();
@@ -280,7 +278,6 @@ export function App() {
             fileName={mainFile}
             wasm={wasm}
             candid={candidCode}
-            stableSig={stableSig}
             initTypes={initTypes}
             logger={logger}
           />

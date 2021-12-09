@@ -9,7 +9,7 @@ import {
 } from "@dfinity/candid";
 
 import { Modal } from "./shared/Modal";
-import { CanisterInfo, getCanisterName, deploy } from "../build";
+import { CanisterInfo, getCanisterName, deploy, compileWasm } from "../build";
 import { ILoggingStore } from "./Logger";
 import { Button } from "./shared/Button";
 import { WorkerContext } from "../contexts/WorkplaceState";
@@ -92,7 +92,6 @@ export interface DeploySetter {
   setInitTypes: (args: Array<IDL.Type>) => void;
   setShowDeployModal: (boolean) => void;
   setWasm: (file: BinaryBlob | undefined) => void;
-  setStableSig: (sig: string) => void;
 }
 
 interface DeployModalProps {
@@ -121,7 +120,6 @@ export function DeployModal({
   fileName,
   wasm,
   candid,
-  stableSig,
   initTypes,
   logger,
 }: DeployModalProps) {
@@ -133,6 +131,9 @@ export function DeployModal({
   const [profiling, setProfiling] = useState(false);
   const [forceGC, setForceGC] = useState(false);
   const [gcMethod, setGCMethod] = useState("copying");
+  const [compileResult, setCompileResult] = useState({});
+  const [deployMode, setDeployMode] = useState("");
+  const [startDeploy, setStartDeploy] = useState(false);
   const worker = useContext(WorkerContext);
 
   const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
@@ -143,6 +144,12 @@ export function DeployModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileName]);
+
+  useEffect(() => {
+    if (startDeploy && deployMode && compileResult.wasm) {
+      handleDeploy(deployMode);
+    }
+  }, [deployMode, compileResult, startDeploy]);
 
   useEffect(() => {
     const args = initTypes.map((arg) => renderInput(arg));
@@ -182,28 +189,26 @@ export function DeployModal({
 
   async function handleDeploy(mode: string) {
     const { args, candid_src } = await getArgsAndCandidSrc();
-    if (args === undefined) {
-      return;
-    }
     await isDeploy(true);
+
     const info = await deploy(
       worker,
       canisterName,
       canisters[canisterName],
       args,
       mode,
-      wasm,
+      compileResult.wasm,
       profiling,
       logger
     );
     await isDeploy(false);
     if (info) {
-      info.candid = candid_src;
-      info.stableSig = stableSig;
+      info.candid = compileResult.candid;
+      info.stableSig = compileResult.stable;
       await worker.Moc({
         type: "save",
         file: `idl/${info.id}.did`,
-        content: candid_src,
+        content: compileResult.candid,
       });
       onDeploy(info);
     }
@@ -216,9 +221,20 @@ export function DeployModal({
     }
     await close();
     try {
+      setStartDeploy(false);
+      setDeployMode(mode);
+      if (!wasm) {
+        const result = await compileWasm(worker, fileName, logger);
+        if (!result) {
+          throw new Error("syntax error");
+        }
+        await setCompileResult(result);
+      } else {
+        await setCompileResult({ wasm: wasm, candid: candid });
+      }
       if (mode === "upgrade") {
         let hasWarning = false;
-        if (canisters[canisterName].stableSig) {
+        if (canisters[canisterName].stableSig && compileResult.stable) {
           await worker.Moc({
             type: "save",
             file: "pre.most",
@@ -227,7 +243,7 @@ export function DeployModal({
           await worker.Moc({
             type: "save",
             file: "post.most",
-            content: stableSig,
+            content: compileResult.stable,
           });
           const result = await worker.Moc({
             type: "stableCheck",
@@ -243,9 +259,9 @@ export function DeployModal({
             await setStableWarning("");
           }
         }
-        if (canisters[canisterName].candid) {
+        if (canisters[canisterName].candid && compileResult.candid) {
           const old = canisters[canisterName].candid;
-          const result = await didjs.subtype(candid_src, old);
+          const result = await didjs.subtype(compileResult.candid, old);
           if (result.hasOwnProperty("Err")) {
             const err = result.Err.replaceAll(
               "expected type",
@@ -262,7 +278,7 @@ export function DeployModal({
           return;
         }
       }
-      await handleDeploy(mode);
+      setStartDeploy(true);
     } catch (err) {
       isDeploy(false);
       throw err;
@@ -394,7 +410,7 @@ export function DeployModal({
       <Confirm
         isOpen={isConfirmOpen}
         close={() => setIsConfirmOpen(false)}
-        onConfirm={() => handleDeploy("upgrade")}
+        onConfirm={() => setStartDeploy(true)}
       >
         <h3 style={{ width: "100%", textAlign: "center" }}>Warning</h3>
 
