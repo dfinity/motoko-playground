@@ -131,7 +131,7 @@ export function DeployModal({
   const [profiling, setProfiling] = useState(false);
   const [forceGC, setForceGC] = useState(false);
   const [gcMethod, setGCMethod] = useState("copying");
-  const [compileResult, setCompileResult] = useState({});
+  const [compileResult, setCompileResult] = useState({ wasm: undefined });
   const [deployMode, setDeployMode] = useState("");
   const [startDeploy, setStartDeploy] = useState(false);
   const worker = useContext(WorkerContext);
@@ -146,14 +146,18 @@ export function DeployModal({
   }, [fileName]);
 
   useEffect(() => {
+    // This code is very tricky...compileResult takes time to set, so we need useEffect.
+    // We also need to prevent handleDeploy being called multiple times.
     if (deployMode && compileResult.wasm) {
       if (deployMode === "upgrade" && !startDeploy) {
         checkUpgrade();
-      } else {
+        return;
+      }
+      if (startDeploy) {
         handleDeploy(deployMode);
       }
     }
-  }, [deployMode, compileResult, startDeploy]);
+  }, [compileResult, startDeploy, deployMode]);
 
   useEffect(() => {
     const args = initTypes.map((arg) => renderInput(arg));
@@ -181,16 +185,6 @@ export function DeployModal({
     return blobFromUint8Array(IDL.encode(initTypes, args));
   };
 
-  async function getArgsAndCandidSrc() {
-    const args = parse();
-    let candid_src = candid;
-    if (initTypes.length) {
-      candid_src = (await didjs.binding(candid, "installed_did"))[0];
-    }
-
-    return { args, candid_src };
-  }
-
   async function checkUpgrade() {
     let hasWarning = false;
     if (canisters[canisterName].stableSig && compileResult.stable) {
@@ -212,8 +206,9 @@ export function DeployModal({
       if (result.diagnostics) {
         const err = result.diagnostics.map((d) => d.message).join("\n");
         await setStableWarning(err);
-        await setIsConfirmOpen(true);
-        hasWarning = true;
+        if (err) {
+          hasWarning = true;
+        }
       } else {
         await setStableWarning("");
       }
@@ -227,17 +222,22 @@ export function DeployModal({
           "pre-upgrade interface"
         );
         await setCandidWarning(err);
-        await setIsConfirmOpen(true);
-        hasWarning = true;
+        if (err) {
+          hasWarning = true;
+        }
       } else {
         await setCandidWarning("");
       }
     }
-    return hasWarning;
+    if (!hasWarning) {
+      setStartDeploy(true);
+    } else {
+      setIsConfirmOpen(true);
+    }
   }
 
   async function handleDeploy(mode: string) {
-    const { args, candid_src } = await getArgsAndCandidSrc();
+    const args = parse();
 
     await isDeploy(true);
     const info = await deploy(
@@ -261,10 +261,11 @@ export function DeployModal({
       });
       onDeploy(info);
     }
+    setCompileResult({ wasm: undefined });
   }
 
   const deployClick = async (mode: string) => {
-    const { args, candid_src } = await getArgsAndCandidSrc();
+    const args = parse();
     if (args === undefined) {
       return;
     }
@@ -280,6 +281,9 @@ export function DeployModal({
         await setCompileResult(result);
       } else {
         await setCompileResult({ wasm: wasm, candid: candid });
+      }
+      if (mode !== "upgrade") {
+        setStartDeploy(true);
       }
     } catch (err) {
       isDeploy(false);
