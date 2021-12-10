@@ -239,30 +239,34 @@ export function DeployModal({
 
   async function handleDeploy(mode: string) {
     const args = parse();
-
-    await isDeploy(true);
-    const info = await deploy(
-      worker,
-      canisterName,
-      canisters[canisterName],
-      args,
-      mode,
-      compileResult.wasm,
-      profiling,
-      logger
-    );
-    await isDeploy(false);
-    if (info) {
-      info.candid = compileResult.candid;
-      info.stableSig = compileResult.stable;
-      await worker.Moc({
-        type: "save",
-        file: `idl/${info.id}.did`,
-        content: compileResult.candid,
-      });
-      onDeploy(info);
+    try {
+      await isDeploy(true);
+      const info = await deploy(
+        worker,
+        canisterName,
+        canisters[canisterName],
+        args,
+        mode,
+        compileResult.wasm,
+        profiling,
+        logger
+      );
+      await isDeploy(false);
+      if (info) {
+        info.candid = compileResult.candid;
+        info.stableSig = compileResult.stable;
+        await worker.Moc({
+          type: "save",
+          file: `idl/${info.id}.did`,
+          content: compileResult.candid,
+        });
+        onDeploy(info);
+      }
+      setCompileResult({ wasm: undefined });
+    } catch (err) {
+      isDeploy(false);
+      throw err;
     }
-    setCompileResult({ wasm: undefined });
   }
 
   const deployClick = async (mode: string) => {
