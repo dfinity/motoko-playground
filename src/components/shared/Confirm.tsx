@@ -3,7 +3,7 @@ import { Modal } from "./Modal";
 import { Button } from "./Button";
 
 const ConfirmContainer = styled.div`
-  width: 34rem;
+  width: 40rem;
 `;
 
 const ButtonContainer = styled.div`

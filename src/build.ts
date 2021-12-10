@@ -9,6 +9,7 @@ export interface CanisterInfo {
   timestamp?: bigint;
   name?: string;
   candid?: string | null;
+  stableSig?: string | null;
 }
 /*
 export function interpret(file: string, logger: ILoggingStore): void {
@@ -35,6 +36,11 @@ interface Diagnostics {
   };
   severity: number;
   source: string;
+}
+interface CompileResult {
+  wasm: BinaryBlob;
+  candid: String;
+  stable: String;
 }
 
 function logDiags(diagnostics: Diagnostics[], logger: ILoggingStore) {
@@ -74,7 +80,7 @@ export async function compileWasm(
   worker,
   file: string,
   logger: ILoggingStore
-): Promise<BinaryBlob | undefined> {
+): Promise<CompileResult | undefined> {
   logger.log("Compiling code...");
   const out = await worker.Moc({ type: "compile", file });
   if (out.diagnostics) logDiags(out.diagnostics, logger);
@@ -82,7 +88,17 @@ export async function compileWasm(
     logger.log("syntax error");
     return;
   }
-  logger.log(`Compiled Wasm size: ${Math.floor(out.code.length / 1024)}KB`);
+  if (out.code.candid.trim() === "") {
+    logger.log(`cannot deploy: ${file} has no actor`);
+    return;
+  }
+  if (out.code.stable === null) {
+    logger.log(`cannot deploy: ${file} cannot generate stable signature`);
+    return;
+  }
+  logger.log(
+    `Compiled Wasm size: ${Math.floor(out.code.wasm.length / 1024)}KB`
+  );
   return out.code;
 }
 
