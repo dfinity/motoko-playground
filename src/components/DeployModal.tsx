@@ -401,12 +401,14 @@ export function DeployModal({
           <ButtonContainer>
             {canisters.hasOwnProperty(canisterName) ? (
               <>
-                <MyButton
-                  variant="primary"
-                  onClick={() => deployClick("upgrade")}
-                >
-                  Upgrade
-                </MyButton>
+                {!profiling ? (
+                  <MyButton
+                    variant="primary"
+                    onClick={() => deployClick("upgrade")}
+                  >
+                    Upgrade
+                  </MyButton>
+                ) : null}
                 <MyButton onClick={() => deployClick("reinstall")}>
                   Reinstall
                 </MyButton>
