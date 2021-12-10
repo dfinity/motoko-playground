@@ -63,6 +63,10 @@ const WarningContainer = styled.div`
     padding-left: 1.4rem;
   }
 `;
+const PreContainer = styled.pre`
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+`;
 
 const WarningLabel = styled.strong`
   display: block;
@@ -122,11 +126,18 @@ export function DeployModal({
   const [canisterName, setCanisterName] = useState("");
   const [inputs, setInputs] = useState<InputBox[]>([]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [upgradeWarning, setUpgradeWarning] = useState("");
+  const [candidWarning, setCandidWarning] = useState("");
+  const [stableWarning, setStableWarning] = useState("");
   const [profiling, setProfiling] = useState(false);
+  const [forceGC, setForceGC] = useState(false);
+  const [gcMethod, setGCMethod] = useState("copying");
+  const [compileResult, setCompileResult] = useState({ wasm: undefined });
+  const [deployMode, setDeployMode] = useState("");
+  const [startDeploy, setStartDeploy] = useState(false);
   const worker = useContext(WorkerContext);
 
   const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
+  const isMotoko = wasm ? false : true;
 
   useEffect(() => {
     if (!exceedsLimit) {
@@ -134,6 +145,20 @@ export function DeployModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileName]);
+
+  useEffect(() => {
+    // This code is very tricky...compileResult takes time to set, so we need useEffect.
+    // We also need to prevent handleDeploy being called multiple times.
+    if (deployMode && compileResult.wasm) {
+      if (deployMode === "upgrade" && !startDeploy) {
+        checkUpgrade();
+        return;
+      }
+      if (startDeploy) {
+        handleDeploy(deployMode);
+      }
+    }
+  }, [compileResult, startDeploy, deployMode]);
 
   useEffect(() => {
     const args = initTypes.map((arg) => renderInput(arg));
@@ -161,78 +186,112 @@ export function DeployModal({
     return blobFromUint8Array(IDL.encode(initTypes, args));
   };
 
-  async function getArgsAndCandidSrc() {
-    const args = parse();
-    let candid_src = candid;
-    if (initTypes.length) {
-      candid_src = (await didjs.binding(candid, "installed_did"))[0];
+  async function checkUpgrade() {
+    let hasWarning = false;
+    if (canisters[canisterName].stableSig && compileResult.stable) {
+      await worker.Moc({
+        type: "save",
+        file: "pre.most",
+        content: canisters[canisterName].stableSig,
+      });
+      await worker.Moc({
+        type: "save",
+        file: "post.most",
+        content: compileResult.stable,
+      });
+      const result = await worker.Moc({
+        type: "stableCheck",
+        pre: "pre.most",
+        post: "post.most",
+      });
+      if (result.diagnostics) {
+        const err = result.diagnostics.map((d) => d.message).join("\n");
+        await setStableWarning(err);
+        if (err) {
+          hasWarning = true;
+        }
+      } else {
+        await setStableWarning("");
+      }
     }
-
-    return { args, candid_src };
+    if (canisters[canisterName].candid && compileResult.candid) {
+      const old = canisters[canisterName].candid;
+      const result = await didjs.subtype(compileResult.candid, old);
+      if (result.hasOwnProperty("Err")) {
+        const err = result.Err.replaceAll(
+          "expected type",
+          "pre-upgrade interface"
+        );
+        await setCandidWarning(err);
+        if (err) {
+          hasWarning = true;
+        }
+      } else {
+        await setCandidWarning("");
+      }
+    }
+    if (!hasWarning) {
+      setStartDeploy(true);
+    } else {
+      setIsConfirmOpen(true);
+    }
   }
 
   async function handleDeploy(mode: string) {
-    const { args, candid_src } = await getArgsAndCandidSrc();
-    if (args === undefined) {
-      return;
-    }
+    const args = parse();
+
     await isDeploy(true);
-    let wasmModule;
-    if (!wasm) {
-      wasmModule = await compileWasm(worker, fileName, logger);
-      if (!wasmModule) {
-        throw new Error("syntax error");
-      }
-    } else {
-      wasmModule = wasm;
-    }
     const info = await deploy(
       worker,
       canisterName,
       canisters[canisterName],
       args,
       mode,
-      wasmModule,
+      compileResult.wasm,
       profiling,
       logger
     );
     await isDeploy(false);
     if (info) {
-      info.candid = candid_src;
+      info.candid = compileResult.candid;
+      info.stableSig = compileResult.stable;
       await worker.Moc({
         type: "save",
         file: `idl/${info.id}.did`,
-        content: candid_src,
+        content: compileResult.candid,
       });
       onDeploy(info);
     }
+    setCompileResult({ wasm: undefined });
   }
 
   const deployClick = async (mode: string) => {
-    const { args, candid_src } = await getArgsAndCandidSrc();
+    const args = parse();
     if (args === undefined) {
       return;
     }
     await close();
     try {
-      logger.clearLogs();
-      if (mode === "upgrade") {
-        // TODO subtype check for init args
-        if (canisters[canisterName].candid) {
-          const old = canisters[canisterName].candid;
-          const result = await didjs.subtype(candid_src, old);
-          if (result.hasOwnProperty("Err")) {
-            const err = result.Err.replaceAll(
-              "expected type",
-              "pre-upgrade interface"
-            );
-            setUpgradeWarning(err);
-            setIsConfirmOpen(true);
-            return;
-          }
+      setStartDeploy(false);
+      setDeployMode(mode);
+      if (!wasm) {
+        if (forceGC) {
+          await worker.Moc({ type: "gcFlags", option: "force" });
+        } else {
+          await worker.Moc({ type: "gcFlags", option: "scheduling" });
         }
+        await worker.Moc({ type: "gcFlags", option: gcMethod });
+        const result = await compileWasm(worker, fileName, logger);
+        if (!result) {
+          throw new Error("syntax error");
+        }
+        await setCompileResult(result);
+      } else {
+        await setCompileResult({ wasm: wasm, candid: candid });
       }
-      await handleDeploy(mode);
+      if (mode !== "upgrade") {
+        setStartDeploy(true);
+      }
     } catch (err) {
       isDeploy(false);
       throw err;
@@ -318,6 +377,25 @@ export function DeployModal({
               checked={profiling}
               onChange={(e) => setProfiling(e.target.checked)}
             />
+            {isMotoko ? (
+              <InitContainer>
+                <Field
+                  type="select"
+                  labelText="GC strategy"
+                  value={gcMethod}
+                  onChange={(e) => setGCMethod(e.target.value)}
+                >
+                  <option value="copying">Copying GC (default)</option>
+                  <option value="marking">Marking GC</option>
+                </Field>
+                <Field
+                  type="checkbox"
+                  labelText="Force garbage collection (only if you want to test GC)"
+                  checked={forceGC}
+                  onChange={(e) => setForceGC(e.target.checked)}
+                />
+              </InitContainer>
+            ) : null}
           </FormContainer>
           {Warnings}
           <ButtonContainer>
@@ -349,13 +427,23 @@ export function DeployModal({
       <Confirm
         isOpen={isConfirmOpen}
         close={() => setIsConfirmOpen(false)}
-        onConfirm={() => handleDeploy("upgrade")}
+        onConfirm={() => setStartDeploy(true)}
       >
         <h3 style={{ width: "100%", textAlign: "center" }}>Warning</h3>
 
-        <WarningContainer>
-          <strong>Upgrade is not backward compatible:</strong> {upgradeWarning}
-        </WarningContainer>
+        {stableWarning ? (
+          <WarningContainer>
+            <strong>Incompatible stable signature will cause data loss:</strong>
+            <PreContainer>{stableWarning}</PreContainer>
+          </WarningContainer>
+        ) : null}
+
+        {candidWarning ? (
+          <WarningContainer>
+            <strong>Upgrade is not backward compatible:</strong>{" "}
+            <PreContainer>{candidWarning}</PreContainer>
+          </WarningContainer>
+        ) : null}
 
         <p style={{ fontSize: "1.4rem", marginTop: "2rem" }}>
           Press "Continue" to upgrade canister anyway.

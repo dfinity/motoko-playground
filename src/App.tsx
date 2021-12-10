@@ -216,7 +216,8 @@ export function App() {
           package: baseInfo,
         },
       });
-      logger.log("Base library loaded.");
+      logger.log("moc version post-0.6.16");
+      logger.log(`base library version ${baseInfo.version}`);
       // fetch code after loading base library
       if (hasUrlParams) {
         const files = await fetchFromUrlParams(workplaceDispatch);
