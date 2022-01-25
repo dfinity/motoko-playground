@@ -23,7 +23,7 @@ import {
 import { ProjectModal } from "./components/ProjectModal";
 import { DeployModal, DeploySetter } from "./components/DeployModal";
 import { backend, saved } from "./config/actor";
-import { startBlocksIntegration } from "./integrations/blocksIntegration";
+import { setupEditorIntegration } from "./integrations/editorIntegration";
 
 const GlobalStyles = createGlobalStyle`
   :root {
@@ -66,16 +66,16 @@ const urlParams = new URLSearchParams(window.location.search);
 const hasUrlParams = !!(
   urlParams.get("git") ||
   urlParams.get("tag") ||
-  urlParams.get("integration")
+  urlParams.get("editor")
 );
 async function fetchFromUrlParams(
   dispatch: (WorkplaceReducerAction) => void
 ): Promise<Record<string, string> | undefined> {
   const git = urlParams.get("git");
   const tag = urlParams.get("tag");
-  const integration = urlParams.get("integration");
-  if (integration === "blocks") {
-    return startBlocksIntegration(dispatch);
+  const editor = urlParams.get("editor");
+  if (editor) {
+    return setupEditorIntegration(editor, dispatch);
   }
   if (git) {
     const repo = {

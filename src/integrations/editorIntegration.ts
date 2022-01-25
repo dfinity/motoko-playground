@@ -1,42 +1,40 @@
 import { WorkplaceReducerAction } from "../contexts/WorkplaceState";
+import ALLOWED_ORIGIN_PREFIXES from "./allowedOriginPrefixes";
 
-type BlocksIntegrationHooks = {
+type EditorIntegrationHooks = {
   deploy: () => Promise<void>;
 };
 
-type BlocksIntegrationMessage = {
+type EditorIntegrationMessage = {
   type: "workplace";
   acknowledge: number;
   actions: [WorkplaceReducerAction];
   deploy?: boolean;
 };
 
-const ALLOWED_ORIGIN_PREFIXES = [
-  "http://localhost",
-  "https://blocks-editor.github.io",
-];
+export const INTEGRATION_HOOKS: Partial<EditorIntegrationHooks> = {};
 
-export const BLOCKS_INTEGRATION_HOOKS: Partial<BlocksIntegrationHooks> = {};
-
-const MESSAGE_PREFIX = "blocks:";
-
+// Cached return value to ensure at most one initialization
 let previousResult;
 
 /**
- * Enables the [Blocks Editor](https://blocks-editor.github.io/blocks/) workspace integration.
+ * Enables a cross-origin editor integration.
  *
+ * @param editorKey A unique editor identifier (forward-compatibility with parallel editor integrations)
  * @param dispatch Workspace action dispatch function
  * @returns Initial workspace files
  */
-export async function startBlocksIntegration(
+export async function setupEditorIntegration(
+  editorKey: string,
   dispatch: (WorkplaceReducerAction) => void
 ): Promise<Record<string, string> | undefined> {
   if (previousResult) {
     return previousResult;
   }
+  const messagePrefix = `editor_${editorKey}:`;
 
-  // Handle integration-specific JSON messages
-  const handleMessage = async (message: BlocksIntegrationMessage) => {
+  // Handle JSON messages from the external editor
+  const handleMessage = async (message: EditorIntegrationMessage) => {
     if (message.type == "workplace") {
       message.actions.forEach((action) => {
         dispatch(action);
@@ -44,7 +42,7 @@ export async function startBlocksIntegration(
       if (message.deploy) {
         // Allow text to render before deploying
         setTimeout(() => {
-          BLOCKS_INTEGRATION_HOOKS.deploy?.();
+          INTEGRATION_HOOKS.deploy?.();
         });
       }
     }
@@ -55,6 +53,7 @@ export async function startBlocksIntegration(
     "message",
     async ({ origin, source, data }) => {
       try {
+        // Ensure the message is from an allowed origin
         if (
           !ALLOWED_ORIGIN_PREFIXES.some((prefix) => origin.startsWith(prefix))
         ) {
@@ -62,8 +61,8 @@ export async function startBlocksIntegration(
         }
 
         // Validate and parse integration message
-        if (typeof data === "string" && data.startsWith(MESSAGE_PREFIX)) {
-          const message = JSON.parse(data.substring(MESSAGE_PREFIX.length));
+        if (typeof data === "string" && data.startsWith(messagePrefix)) {
+          const message = JSON.parse(data.substring(messagePrefix.length));
           if (process.env.NODE_ENV === "development") {
             console.log("Received integration message:", message);
           }
@@ -71,13 +70,13 @@ export async function startBlocksIntegration(
           if (!(source instanceof MessagePort)) {
             // Send acknowledgement
             source?.postMessage(
-              `${MESSAGE_PREFIX}acknowledge:${message.acknowledge}`,
+              `${messagePrefix}acknowledge:${message.acknowledge}`,
               origin
             );
           }
         }
       } catch (e) {
-        console.error("Error in Blocks integration message listener:");
+        console.error("Error in editor integration message listener:");
         console.error(e);
       }
     },
