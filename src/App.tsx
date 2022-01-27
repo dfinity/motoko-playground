@@ -66,16 +66,16 @@ const urlParams = new URLSearchParams(window.location.search);
 const hasUrlParams = !!(
   urlParams.get("git") ||
   urlParams.get("tag") ||
-  urlParams.get("editor")
+  urlParams.get("post")
 );
 async function fetchFromUrlParams(
   dispatch: (WorkplaceReducerAction) => void
 ): Promise<Record<string, string> | undefined> {
   const git = urlParams.get("git");
   const tag = urlParams.get("tag");
-  const editor = urlParams.get("editor");
-  if (editor) {
-    return setupEditorIntegration(editor, dispatch);
+  const editorKey = urlParams.get("post");
+  if (editorKey) {
+    return setupEditorIntegration(editorKey, dispatch);
   }
   if (git) {
     const repo = {

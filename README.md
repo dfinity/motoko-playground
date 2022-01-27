@@ -60,3 +60,60 @@ dfx deploy --argument '(null)'
 - Clone the package-set repo: https://github.com/dfinity/vessel-package-set
 - Make sure [`dhall` and `dhall-to-json` are installed](https://docs.dhall-lang.org/tutorials/Getting-started_Generate-JSON-or-YAML.html#os-x) with `apt` or `brew`
 - `dhall-to-json --file vessel-package-set/src/packages.dhall > motoko-playground/src/config/package-set.json`
+
+## Editor Integrations
+
+Motoko Playground supports
+limited [cross-origin communication](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage). If you are
+building a custom smart contract editor or similar application, you can use the following code snippet to open a project in Motoko Playground:
+
+```js
+const PLAYGROUND_ORIGIN = 'https://m7sm4-2iaaa-aaaab-qabra-cai.raw.ic0.app'
+const APP_ID = 'MyEditor'
+
+const userFiles = {
+    'Main.mo': 'actor { public func hello() : async Text { "Hello World" } }'
+}
+
+const playground = window.open(`${PLAYGROUND_ORIGIN}?post=${APP_ID}`, 'playground')
+
+// Call repeatedly until loaded (interval ID used for acknowledgement)
+const ack = setInterval(() => {
+    const request = {
+        type: 'workplace',
+        acknowledge: ack,
+        deploy: true,
+        actions: [{
+            type: 'loadProject',
+            payload: {
+                files: userFiles,
+            }
+        }]
+    }
+    const data = `${APP_ID}${JSON.stringify(request)}`
+    console.log('Request data:', data)
+    playground.postMessage(data, PLAYGROUND_ORIGIN)
+}, 1000)
+
+// Listen for acknowledgement
+const responseListener = ({source, origin, data}) => {
+    if(
+        typeof data === 'string' &&
+        data.startsWith(APP_ID) &&
+        source === playground &&
+        origin === PLAYGROUND_ORIGIN
+    ) {
+        console.log('Response data:', data)
+        // Parse JSON part of message
+        const response = JSON.parse(data.substring(APP_ID.length))
+        if(response.acknowledge === ack) {
+            clearInterval(ack)
+            window.removeEventListener('message', responseListener)
+        }
+    }
+}
+window.addEventListener('message', responseListener)
+```
+
+Note: this works for `localhost`out of the box. If you would like to use this feature in production, please submit a PR
+adding your application's public URL to [`src/integrations/allowedOrigins.js`](src/integrations/allowedOrigins.js).

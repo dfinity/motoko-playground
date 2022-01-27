@@ -1,15 +1,19 @@
 import { WorkplaceReducerAction } from "../contexts/WorkplaceState";
-import ALLOWED_ORIGIN_PREFIXES from "./allowedOriginPrefixes";
+import ALLOWED_ORIGINS from "./allowedOrigins";
 
 type EditorIntegrationHooks = {
   deploy: () => Promise<void>;
 };
 
-type EditorIntegrationMessage = {
+type EditorIntegrationRequest = {
   type: "workplace";
   acknowledge: number;
   actions: [WorkplaceReducerAction];
   deploy?: boolean;
+};
+
+type EditorIntegrationResponse = {
+  acknowledge: number;
 };
 
 export const INTEGRATION_HOOKS: Partial<EditorIntegrationHooks> = {};
@@ -31,10 +35,9 @@ export async function setupEditorIntegration(
   if (previousResult) {
     return previousResult;
   }
-  const messagePrefix = `editor_${editorKey}:`;
 
   // Handle JSON messages from the external editor
-  const handleMessage = async (message: EditorIntegrationMessage) => {
+  const handleMessage = async (message: EditorIntegrationRequest) => {
     if (message.type == "workplace") {
       message.actions.forEach((action) => {
         dispatch(action);
@@ -55,22 +58,29 @@ export async function setupEditorIntegration(
       try {
         // Ensure the message is from an allowed origin
         if (
-          !ALLOWED_ORIGIN_PREFIXES.some((prefix) => origin.startsWith(prefix))
+          !ALLOWED_ORIGINS.some((allowed) =>
+            allowed instanceof RegExp
+              ? allowed.test(origin)
+              : allowed === origin
+          )
         ) {
           return;
         }
 
-        // Validate and parse integration message
-        if (typeof data === "string" && data.startsWith(messagePrefix)) {
-          const message = JSON.parse(data.substring(messagePrefix.length));
+        // Validate and parse integration message (example: `CustomEditor{"type":"workplace","actions":[...]}`)
+        if (typeof data === "string" && data.startsWith(editorKey)) {
+          const message = JSON.parse(data.substring(editorKey.length));
           if (process.env.NODE_ENV === "development") {
             console.log("Received integration message:", message);
           }
           await handleMessage(message);
           if (!(source instanceof MessagePort)) {
-            // Send acknowledgement
+            // Send response (example: `CustomEditor{"acknowledge":123}`)
+            const response: EditorIntegrationResponse = {
+              acknowledge: message.acknowledge,
+            };
             source?.postMessage(
-              `${messagePrefix}acknowledge:${message.acknowledge}`,
+              `${editorKey}${JSON.stringify(response)}`,
               origin
             );
           }
