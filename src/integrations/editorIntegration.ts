@@ -38,7 +38,7 @@ export async function setupEditorIntegration(
 
   // Handle JSON messages from the external editor
   const handleMessage = async (message: EditorIntegrationRequest) => {
-    if (message.type == "workplace") {
+    if (message.type === "workplace") {
       message.actions.forEach((action) => {
         dispatch(action);
       });

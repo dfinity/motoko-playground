@@ -9,8 +9,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      DFX_VERSION: 0.8.0
-      IC_REPL_VERSION: 0.1.1
+      DFX_VERSION: 0.9.0
+      IC_REPL_VERSION: 0.1.2
       VESSEL_VERSION: v0.6.2
       CI: true
     steps:
@@ -27,9 +27,9 @@ jobs:
       - name: Build
         run: |
           dfx cache install
-          dfx start --background --no-artificial-delay
-          dfx canister --no-wallet create backend
-          dfx canister --no-wallet create wasm-utils        
+          dfx start --background
+          dfx canister create backend
+          dfx canister create wasm-utils        
           dfx build backend
       - name: Test
         run: |
