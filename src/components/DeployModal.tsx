@@ -158,6 +158,7 @@ export function DeployModal({
         handleDeploy(deployMode);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [compileResult, startDeploy, deployMode]);
 
   useEffect(() => {

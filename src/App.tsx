@@ -18,7 +18,6 @@ import {
   getActorAliases,
   getDeployedCanisters,
   getShareableProject,
-  WorkplaceReducerAction,
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
 import { DeployModal, DeploySetter } from "./components/DeployModal";
