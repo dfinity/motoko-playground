@@ -19,6 +19,7 @@ import {
 } from "../contexts/WorkplaceState";
 import { compileCandid } from "../build";
 import { didToJs } from "../config/actor";
+import { INTEGRATION_HOOKS } from "../integrations/editorIntegration";
 
 const EditorColumn = styled.div`
   display: flex;
@@ -140,6 +141,8 @@ export function Editor({
       await deploySetter.setShowDeployModal(true);
     }
   };
+  // DRY workaround for editor integrations (until deployment refactor)
+  INTEGRATION_HOOKS.deploy = deployClick;
 
   useEffect(() => {
     if (!monaco) return;

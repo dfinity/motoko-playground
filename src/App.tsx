@@ -18,10 +18,12 @@ import {
   getActorAliases,
   getDeployedCanisters,
   getShareableProject,
+  WorkplaceReducerAction,
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
 import { DeployModal, DeploySetter } from "./components/DeployModal";
 import { backend, saved } from "./config/actor";
+import { setupEditorIntegration } from "./integrations/editorIntegration";
 
 const GlobalStyles = createGlobalStyle`
   :root {
@@ -61,13 +63,20 @@ const AppContainer = styled.div<{ candidWidth: string; consoleHeight: string }>`
 
 const worker = new MocWorker();
 const urlParams = new URLSearchParams(window.location.search);
-const hasUrlParams =
-  urlParams.get("git") || urlParams.get("tag") ? true : false;
+const hasUrlParams = !!(
+  urlParams.get("git") ||
+  urlParams.get("tag") ||
+  urlParams.get("post")
+);
 async function fetchFromUrlParams(
-  dispatch
+  dispatch: (WorkplaceReducerAction) => void
 ): Promise<Record<string, string> | undefined> {
   const git = urlParams.get("git");
   const tag = urlParams.get("tag");
+  const editorKey = urlParams.get("post");
+  if (editorKey) {
+    return setupEditorIntegration(editorKey, dispatch);
+  }
   if (git) {
     const repo = {
       repo: git,
