@@ -28,8 +28,8 @@ jobs:
         run: |
           dfx cache install
           dfx start --background
-          dfx canister --no-wallet create backend
-          dfx canister --no-wallet create wasm-utils        
+          dfx canister create backend
+          dfx canister create wasm-utils        
           dfx build backend
       - name: Test
         run: |
