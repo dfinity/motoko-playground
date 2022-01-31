@@ -135,7 +135,7 @@
     "description": "Extension of the Iter base library",
     "name": "iterext",
     "owners": ["timohanke"],
-    "repo": "https://github.com/timohanke/motoko-iterext",
+    "repo": "https://github.com/timohanke/motoko-iterext.git",
     "version": "v2.0.0"
   },
   {
@@ -144,7 +144,7 @@
     "description": "SHA2 family of hash functions",
     "name": "sha2",
     "owners": ["timohanke"],
-    "repo": "https://github.com/timohanke/motoko-sha2",
+    "repo": "https://github.com/timohanke/motoko-sha2.git",
     "version": "v2.0.0"
   }
 ]
