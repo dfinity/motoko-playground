@@ -71,49 +71,62 @@ building a custom smart contract editor or similar application, you can use the 
 const PLAYGROUND_ORIGIN = 'https://m7sm4-2iaaa-aaaab-qabra-cai.raw.ic0.app'
 const APP_ID = 'MyEditor'
 
+// Workplace files for a project
 const userFiles = {
-    'Main.mo': 'actor { public func hello() : async Text { "Hello World" } }'
+  'Main.mo': 'actor { public func hello() : async Text { "Hello World" } }'
 }
 
+// GitHub package dependencies for a project
+const userPackages = [{
+  name: 'quicksort',
+  repo: 'https://github.com/dfinity/examples.git',
+  version: 'master',
+  dir: 'motoko/quicksort/src'
+}]
+
+// Open Motoko Playground in a new window
 const playground = window.open(`${PLAYGROUND_ORIGIN}?post=${APP_ID}`, 'playground')
 
 // Call repeatedly until loaded (interval ID used for acknowledgement)
 const ack = setInterval(() => {
-    const request = {
-        type: 'workplace',
-        acknowledge: ack,
-        deploy: true,
-        actions: [{
-            type: 'loadProject',
-            payload: {
-                files: userFiles,
-            }
-        }]
-    }
-    const data = `${APP_ID}${JSON.stringify(request)}`
-    console.log('Request data:', data)
-    playground.postMessage(data, PLAYGROUND_ORIGIN)
+  const request = {
+    type: 'workplace',
+    acknowledge: ack,
+    packages: userPackages,
+    actions: [{
+      type: 'loadProject',
+      payload: {
+        files: userFiles
+      }
+    }],
+    deploy: true
+  }
+  // Concatenate APP_ID and request JSON
+  const data = APP_ID + JSON.stringify(request)
+  console.log('Request data:', data)
+  playground.postMessage(data, PLAYGROUND_ORIGIN)
 }, 1000)
 
 // Listen for acknowledgement
 const responseListener = ({source, origin, data}) => {
-    if(
-        typeof data === 'string' &&
-        data.startsWith(APP_ID) &&
-        source === playground &&
-        origin === PLAYGROUND_ORIGIN
-    ) {
-        console.log('Response data:', data)
-        // Parse JSON part of message
-        const response = JSON.parse(data.substring(APP_ID.length))
-        if(response.acknowledge === ack) {
-            clearInterval(ack)
-            window.removeEventListener('message', responseListener)
-        }
+  if(
+          typeof data === 'string' &&
+          data.startsWith(APP_ID) &&
+          source === playground &&
+          origin === PLAYGROUND_ORIGIN
+  ) {
+    console.log('Response data:', data)
+    // Parse JSON part of message (prefixed by APP_ID)
+    const response = JSON.parse(data.substring(APP_ID.length))
+    if(response.acknowledge === ack) {
+      clearInterval(ack)
+      window.removeEventListener('message', responseListener)
     }
+  }
 }
 window.addEventListener('message', responseListener)
 ```
 
 Note: this works for `localhost`out of the box. If you would like to use this feature in production, please submit a PR
 adding your application's public URL to [`src/integrations/allowedOrigins.js`](src/integrations/allowedOrigins.js).
+
