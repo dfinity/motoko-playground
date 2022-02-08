@@ -1,8 +1,6 @@
 [
   {
-    "authors": [
-      "The DFINITY Language Team"
-    ],
+    "authors": ["The DFINITY Language Team"],
     "dependencies": [],
     "description": "The Motoko standard library",
     "homepage": "https://sdk.dfinity.org/docs/base-libraries/stdlib-intro.html",
