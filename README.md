@@ -51,9 +51,13 @@ We plan on adding many more features to make playground a full-featured web IDE 
 
 ```
 npm install
-dfx start [--clean] [--background] [--no-artificial-delay]
+dfx start [--clean] [--background]
 dfx deploy --argument '(null)'
 ```
+
+### npm audit warnings
+
+Vulnerabilities from dev dependencies are false positives, we only aim to fix warnings from `npm audit --production`.
 
 ### Update Vessel package list
 

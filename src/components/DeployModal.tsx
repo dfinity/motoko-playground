@@ -1,12 +1,6 @@
 import { useState, useCallback, useEffect, useContext } from "react";
 import styled from "styled-components";
-import {
-  IDL,
-  renderInput,
-  blobFromUint8Array,
-  InputBox,
-  BinaryBlob,
-} from "@dfinity/candid";
+import { IDL, renderInput, InputBox } from "@dfinity/candid";
 
 import { Modal } from "./shared/Modal";
 import { CanisterInfo, getCanisterName, deploy, compileWasm } from "../build";
@@ -91,7 +85,7 @@ export interface DeploySetter {
   setCandidCode: (code: string) => void;
   setInitTypes: (args: Array<IDL.Type>) => void;
   setShowDeployModal: (boolean) => void;
-  setWasm: (file: BinaryBlob | undefined) => void;
+  setWasm: (file: Uint8Array | undefined) => void;
 }
 
 interface DeployModalProps {
@@ -102,7 +96,7 @@ interface DeployModalProps {
   canisters: Record<string, CanisterInfo>;
   ttl: bigint;
   fileName: string;
-  wasm: BinaryBlob | undefined;
+  wasm: Uint8Array | undefined;
   candid: string;
   initTypes: Array<IDL.Type>;
   logger: ILoggingStore;
@@ -177,14 +171,14 @@ export function DeployModal({
 
   const parse = () => {
     if (!initTypes.length) {
-      return blobFromUint8Array(IDL.encode(initTypes, []));
+      return IDL.encode(initTypes, []);
     }
     const args = inputs.map((arg) => arg.parse());
     const isReject = inputs.some((arg) => arg.isRejected());
     if (isReject) {
       return undefined;
     }
-    return blobFromUint8Array(IDL.encode(initTypes, args));
+    return IDL.encode(initTypes, args);
   };
 
   async function checkUpgrade() {

@@ -1,4 +1,3 @@
-import { blobFromUint8Array, BinaryBlob } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 import { backend } from "./config/actor";
 import { ILoggingStore } from "./components/Logger";
@@ -38,7 +37,7 @@ interface Diagnostics {
   source: string;
 }
 interface CompileResult {
-  wasm: BinaryBlob;
+  wasm: Uint8Array;
   candid: String;
   stable: String;
 }
@@ -106,13 +105,12 @@ export async function deploy(
   worker,
   canisterName: string,
   canisterInfo: CanisterInfo | null,
-  args: BinaryBlob,
+  args: Uint8Array,
   mode: string,
-  wasm: BinaryBlob,
+  wasm: Uint8Array,
   profiling: boolean,
   logger: ILoggingStore
 ): Promise<CanisterInfo | undefined> {
-  const module = blobFromUint8Array(wasm);
   try {
     logger.log(`Deploying code...`);
     let updatedState: CanisterInfo | null = null;
@@ -124,7 +122,7 @@ export async function deploy(
       canisterInfo = await createCanister(worker, logger);
       updatedState = await install(
         canisterInfo,
-        module,
+        wasm,
         args,
         "install",
         profiling,
@@ -136,7 +134,7 @@ export async function deploy(
       }
       updatedState = await install(
         canisterInfo,
-        module,
+        wasm,
         args,
         mode,
         profiling,
@@ -173,8 +171,8 @@ export async function deleteCanister(info: CanisterInfo) {
 
 async function install(
   canisterInfo: CanisterInfo,
-  module: BinaryBlob,
-  args: BinaryBlob,
+  module: Uint8Array,
+  args: Uint8Array,
   mode: string,
   profiling: boolean,
   logger: ILoggingStore
