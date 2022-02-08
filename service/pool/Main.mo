@@ -100,28 +100,26 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject("Cannot install removed canister");
         };
-        switch (pool.refresh(info)) {
-        case null {
-                 stats := Logs.updateStats(stats, #mismatch);
-                 throw Error.reject("Cannot find canister");
-             };
-        case (?new_info) {
-                 let config = {
-                     profiling;
-                     remove_cycles_add = true;
-                     limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
-                 };
-                 let wasm = await Wasm.transform(args.wasm_module, config);
-                 let new_args = { arg = args.arg; wasm_module = wasm; mode = args.mode; canister_id = args.canister_id };
-                 await IC.install_code(new_args);
-                 stats := Logs.updateStats(stats, #install);
-                 new_info
-          };
-        }
+        if (not pool.find(info)) {
+            stats := Logs.updateStats(stats, #mismatch);
+            throw Error.reject("Cannot find canister");
+        } else {
+            let config = {
+                profiling;
+                remove_cycles_add = true;
+                limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
+            };
+            let wasm = await Wasm.transform(args.wasm_module, config);
+            let new_args = { arg = args.arg; wasm_module = wasm; mode = args.mode; canister_id = args.canister_id };
+            await IC.install_code(new_args);
+            stats := Logs.updateStats(stats, #install);
+            Option.unwrap(pool.refresh(info));
+        };
     };
     public func removeCode(info: Types.CanisterInfo) : async () {
-        if (pool.retire(info)) {
+        if (pool.find(info)) {
             await IC.uninstall_code({canister_id=info.id});
+            ignore pool.retire(info);
         } else {
             stats := Logs.updateStats(stats, #mismatch);
         }

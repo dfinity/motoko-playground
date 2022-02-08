@@ -74,7 +74,7 @@ async function fetchFromUrlParams(
   const tag = urlParams.get("tag");
   const editorKey = urlParams.get("post");
   if (editorKey) {
-    return setupEditorIntegration(editorKey, dispatch);
+    return setupEditorIntegration(editorKey, dispatch, worker);
   }
   if (git) {
     const repo = {

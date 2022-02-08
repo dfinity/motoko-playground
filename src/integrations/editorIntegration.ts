@@ -1,5 +1,6 @@
 import { WorkplaceReducerAction } from "../contexts/WorkplaceState";
 import ALLOWED_ORIGINS from "./allowedOrigins";
+import { PackageInfo } from "../workers/file";
 
 type EditorIntegrationHooks = {
   deploy: () => Promise<void>;
@@ -8,7 +9,8 @@ type EditorIntegrationHooks = {
 type EditorIntegrationRequest = {
   type: "workplace";
   acknowledge: number;
-  actions: [WorkplaceReducerAction];
+  actions?: [WorkplaceReducerAction];
+  packages?: [PackageInfo];
   deploy?: boolean;
 };
 
@@ -26,11 +28,13 @@ let previousResult;
  *
  * @param editorKey A unique editor identifier (forward-compatibility with parallel editor integrations)
  * @param dispatch Workspace action dispatch function
+ * @param worker Motoko compiler worker
  * @returns Initial workspace files
  */
 export async function setupEditorIntegration(
   editorKey: string,
-  dispatch: (WorkplaceReducerAction) => void
+  dispatch: (WorkplaceReducerAction) => void,
+  worker // MocWorker
 ): Promise<Record<string, string> | undefined> {
   if (previousResult) {
     return previousResult;
@@ -39,14 +43,27 @@ export async function setupEditorIntegration(
   // Handle JSON messages from the external editor
   const handleMessage = async (message: EditorIntegrationRequest) => {
     if (message.type === "workplace") {
-      message.actions.forEach((action) => {
-        dispatch(action);
-      });
-      if (message.deploy) {
-        // Allow text to render before deploying
-        setTimeout(() => {
-          INTEGRATION_HOOKS.deploy?.();
+      if (message.actions) {
+        message.actions.forEach((action) => {
+          dispatch(action);
         });
+      }
+      if (message.packages) {
+        await Promise.all(
+          message.packages.map(async (packageInfo) => {
+            await worker.fetchPackage(packageInfo);
+            dispatch({
+              type: "loadPackage",
+              payload: {
+                name: packageInfo.name,
+                package: packageInfo,
+              },
+            });
+          })
+        );
+      }
+      if (message.deploy) {
+        await INTEGRATION_HOOKS.deploy?.();
       }
     }
   };

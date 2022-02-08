@@ -46,7 +46,7 @@
     "name": "scc",
     "owners": ["nomeata"],
     "repo": "https://github.com/nomeata/motoko-scc.git",
-    "version": "v0.1"
+    "version": "v0.1.1"
   },
   {
     "authors": ["Enzo Haussecker"],
@@ -126,5 +126,23 @@
     "owners": ["matthewhammer"],
     "repo": "https://github.com/matthewhammer/motoko-adapton.git",
     "version": "v0.1.1"
+  },
+  {
+    "authors": ["Timo Hanke"],
+    "dependencies": ["base"],
+    "description": "Extension of the Iter base library",
+    "name": "iterext",
+    "owners": ["timohanke"],
+    "repo": "https://github.com/timohanke/motoko-iterext.git",
+    "version": "v2.0.0"
+  },
+  {
+    "authors": ["Timo Hanke"],
+    "dependencies": ["base", "iterext"],
+    "description": "SHA2 family of hash functions",
+    "name": "sha2",
+    "owners": ["timohanke"],
+    "repo": "https://github.com/timohanke/motoko-sha2.git",
+    "version": "v2.0.0"
   }
 ]
