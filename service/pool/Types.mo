@@ -66,6 +66,7 @@ module {
             len += 1;
             tree.insert(info);
         };
+        public func find(info: CanisterInfo) : Bool = tree.find(info);
         public func refresh(info: CanisterInfo) : ?CanisterInfo {
             if (not tree.find(info)) { return null };
             tree.remove(info);
