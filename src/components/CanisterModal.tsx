@@ -150,7 +150,7 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
   function handleWasmUpload(e) {
     const reader = new FileReader();
     reader.addEventListener("load", () => {
-      setWasm(reader.result);
+      setWasm(new Uint8Array(reader.result));
     });
     const file = e.target.files[0];
     if (file.size > 2097152) {

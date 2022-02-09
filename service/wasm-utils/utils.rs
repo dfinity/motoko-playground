@@ -2,22 +2,30 @@ use walrus::*;
 
 pub fn get_ic_func_id(m: &mut Module, method: &str) -> FunctionId {
     match m.imports.find("ic0", method) {
-        Some(id) => {
-            match m.imports.get(id).kind {
-                ImportKind::Function(func_id) => func_id,
-                _ => unreachable!(),
-            }
-        }
+        Some(id) => match m.imports.get(id).kind {
+            ImportKind::Function(func_id) => func_id,
+            _ => unreachable!(),
+        },
         None => {
             let ty = match method {
                 "stable_write" => m
                     .types
                     .add(&[ValType::I32, ValType::I32, ValType::I32], &[]),
+                "stable64_write" => m
+                    .types
+                    .add(&[ValType::I64, ValType::I64, ValType::I64], &[]),
                 "stable_read" => m
                     .types
                     .add(&[ValType::I32, ValType::I32, ValType::I32], &[]),
+                "stable64_read" => m
+                    .types
+                    .add(&[ValType::I64, ValType::I64, ValType::I64], &[]),
                 "stable_grow" => m.types.add(&[ValType::I32], &[ValType::I32]),
+                "stable64_grow" => m.types.add(&[ValType::I64], &[ValType::I64]),
                 "stable_size" => m.types.add(&[], &[ValType::I32]),
+                "stable64_size" => m.types.add(&[], &[ValType::I64]),
+                "call_cycles_add" => m.types.add(&[ValType::I64], &[]),
+                "call_cycles_add128" => m.types.add(&[ValType::I64, ValType::I64], &[]),
                 "debug_print" => m.types.add(&[ValType::I32, ValType::I32], &[]),
                 "trap" => m.types.add(&[ValType::I32, ValType::I32], &[]),
                 "msg_reply_data_append" => m.types.add(&[ValType::I32, ValType::I32], &[]),
