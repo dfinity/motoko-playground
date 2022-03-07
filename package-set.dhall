@@ -7,7 +7,7 @@ let
   additions =
       [{ name = "base"
       , repo = "https://github.com/dfinity/motoko-base"
-      , version = "dfx-0.7.0"
+      , version = "master"
       , dependencies = [] : List Text
       }] : List Package
 
