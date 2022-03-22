@@ -224,7 +224,7 @@ export function App() {
           package: baseInfo,
         },
       });
-      logger.log("moc version 0.6.24");
+      logger.log("moc version 0.6.25");
       logger.log(`base library version ${baseInfo.version}`);
       // fetch code after loading base library
       if (hasUrlParams) {

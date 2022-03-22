@@ -1,4 +1,10 @@
-import { Actor, HttpAgent, ActorSubclass } from "@dfinity/agent";
+import {
+  Actor,
+  HttpAgent,
+  ActorSubclass,
+  makeNonceTransform,
+  makeNonce,
+} from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { IDL } from "@dfinity/candid";
 import { idlFactory, canisterId } from "dfx-generated/backend";
@@ -16,6 +22,7 @@ function is_local(agent) {
 }
 
 export const agent = new HttpAgent({});
+agent.addTransform(makeNonceTransform(makeNonce));
 if (is_local(agent)) {
   agent.fetchRootKey();
 }
