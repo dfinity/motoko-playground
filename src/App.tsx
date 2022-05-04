@@ -212,7 +212,7 @@ export function App() {
       name: "base",
       repo: "https://github.com/dfinity/motoko-base.git",
       dir: "src",
-      version: "moc-0.6.24",
+      version: "moc-0.6.27",
       homepage: "https://sdk.dfinity.org/docs/base-libraries/stdlib-intro.html",
     };
     (async () => {
@@ -224,7 +224,7 @@ export function App() {
           package: baseInfo,
         },
       });
-      logger.log("moc version 0.6.25");
+      logger.log("moc version 0.6.27");
       logger.log(`base library version ${baseInfo.version}`);
       // fetch code after loading base library
       if (hasUrlParams) {
