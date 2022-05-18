@@ -235,7 +235,7 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
           onClick={() => onCanister(canister, "select")}
           aria-label="Select canister"
         >
-          <img src={iconCanister} alt="" />
+          <img style={{ width: "2rem" }} src={iconCanister} alt="" />
           canister:{canister}
           {timeLeft[i]?.status === "Active" && (
             <div style={{ marginLeft: "auto" }}>
