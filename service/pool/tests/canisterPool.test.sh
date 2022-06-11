@@ -51,7 +51,7 @@ let init = opt record {
   nonce_time_to_live = 1 : nat;
   canister_time_to_live = 60_000_000_000 : nat;
 };
-let S = install(wasm, init, opt 10_000_000);
+let S = install(wasm, init, opt 100_000_000_000);
 fail call S.getCanisterId(nonce);
 assert _ ~= "105000000000 cycles";
 call ic.provisional_top_up_canister(

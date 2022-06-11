@@ -24,6 +24,8 @@ import { DeployModal, DeploySetter } from "./components/DeployModal";
 import { backend, saved } from "./config/actor";
 import { setupEditorIntegration } from "./integrations/editorIntegration";
 
+const MOC_VERSION = "0.6.29";
+
 const GlobalStyles = createGlobalStyle`
   :root {
     font-family: "CircularXX", sans-serif;
@@ -212,7 +214,7 @@ export function App() {
       name: "base",
       repo: "https://github.com/dfinity/motoko-base.git",
       dir: "src",
-      version: "moc-0.6.27",
+      version: `moc-${MOC_VERSION}`,
       homepage: "https://sdk.dfinity.org/docs/base-libraries/stdlib-intro.html",
     };
     (async () => {
@@ -224,7 +226,7 @@ export function App() {
           package: baseInfo,
         },
       });
-      logger.log("moc version 0.6.27");
+      logger.log(`moc version ${MOC_VERSION}`);
       logger.log(`base library version ${baseInfo.version}`);
       // fetch code after loading base library
       if (hasUrlParams) {
