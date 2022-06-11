@@ -237,7 +237,7 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
         >
           <img style={{ width: "2rem" }} src={iconCanister} alt="" />
           canister:{canister}
-          {timeLeft[i]?.status === "Active" && (
+          {timeLeft[i]?.status === "Active" ? (
             <div style={{ marginLeft: "auto" }}>
               <span style={{ fontVariantNumeric: "tabular-nums" }}>
                 {timeLeft[i]?.minutes}
@@ -247,6 +247,8 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
                 {timeLeft[i]?.seconds}
               </span>
             </div>
+          ) : (
+            <div style={{ marginLeft: "auto" }}></div>
           )}
           <CloseButton
             onClick={() => onCanister(canister, "delete")}
