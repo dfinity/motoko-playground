@@ -184,6 +184,7 @@ export function Editor({
             wrappingIndent: "indent",
             scrollBeyondLastLine: false,
             fontSize: 16,
+            tabSize: 2,
           }}
         />
       </EditorContainer>
