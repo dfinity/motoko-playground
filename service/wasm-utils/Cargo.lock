@@ -355,6 +355,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-wasm"
+version = "0.1.1"
+dependencies = [
+ "candid",
+ "walrus",
+]
+
+[[package]]
 name = "id-arena"
 version = "2.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -921,6 +929,7 @@ dependencies = [
  "candid",
  "ic-cdk",
  "ic-cdk-macros",
+ "ic-wasm",
  "serde",
  "serde_bytes",
  "walrus",

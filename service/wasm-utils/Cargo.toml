@@ -12,8 +12,9 @@ ic-cdk = "0.5"
 ic-cdk-macros = "0.5"
 serde = "1.0"
 serde_bytes = "0.11"
-walrus = "0.19"
 candid = "0.7"
+ic-wasm = { path = "../../../ic-wasm" , version = "0.1", default-features = false }
+walrus = "0.19"
 
 [profile.release]
 lto = true
