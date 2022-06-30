@@ -1,9 +1,7 @@
 use ic_cdk::export::candid::{CandidType, Deserialize};
 use serde_bytes::ByteBuf;
 
-mod instrumentation;
-mod remove_cycles;
-mod utils;
+use ic_wasm::*;
 
 #[derive(CandidType, Deserialize)]
 struct Config {
@@ -18,12 +16,11 @@ fn transform(wasm: ByteBuf, config: Config) -> ByteBuf {
     if config.profiling {
         instrumentation::instrument(&mut m);
     }
-    if config.remove_cycles_add {
-        remove_cycles::replace_cycles_add_with_drop(&mut m);
-    }
-    if let Some(page) = config.limit_stable_memory_page {
-        remove_cycles::limit_stable_memory_page(&mut m, page);
-    }
+    let resource_config = limit_resource::Config {
+        remove_cycles_add: config.remove_cycles_add,
+        limit_stable_memory_page: config.limit_stable_memory_page,
+    };
+    limit_resource::limit_resource(&mut m, &resource_config);
     let wasm = m.emit_wasm();
     ByteBuf::from(wasm)
 }
