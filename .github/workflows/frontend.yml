@@ -16,6 +16,7 @@ jobs:
           - 18
     env:
       DFX_VERSION: 0.10.1
+      VESSEL_VERSION: v0.6.3
     steps:
       - uses: actions/checkout@v2
       - name: Setup Node.js ${{ matrix.node }}
@@ -23,7 +24,11 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Install dfx
-        run: echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+        run: |
+          echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+          wget https://github.com/dfinity/vessel/releases/download/$VESSEL_VERSION/vessel-linux64
+          cp ./vessel-linux64 /usr/local/bin/vessel
+          chmod a+x /usr/local/bin/vessel
       - name: Build frontend
         run: |
           npm install -g npm
