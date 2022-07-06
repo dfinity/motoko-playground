@@ -7,11 +7,10 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
         node:
           - 16
           - 18
@@ -30,5 +29,4 @@ jobs:
           npm install -g npm
           npm install
           npm run prestart
-          dfx canister create --all
-          npm run build
+          dfx deploy
