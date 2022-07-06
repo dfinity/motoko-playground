@@ -7,20 +7,28 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        node:
+          - 16
+          - 18
     env:
       DFX_VERSION: 0.10.1
     steps:
       - uses: actions/checkout@v2
-      - name: Setup Node.js
+      - name: Setup Node.js ${{ matrix.node }}
         uses: actions/setup-node@v2
         with:
-          node-version: "18"
+          node-version: ${{ matrix.node }}
       - name: Install dfx
         run: echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
       - name: Build frontend
         run: |
-          npm ci
+          npm install -g npm
+          npm install
           npm run prestart
           dfx canister create --all
           npm run build
