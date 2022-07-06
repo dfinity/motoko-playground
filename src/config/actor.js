@@ -68,6 +68,7 @@ export async function didToJs(source) {
   }
   const dataUri =
     "data:text/javascript;charset=utf-8," + encodeURIComponent(js[0]);
+  // eslint-disable-next-line no-eval
   const candid = await eval('import("' + dataUri + '")');
   return candid;
 }
