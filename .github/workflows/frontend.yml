@@ -1,0 +1,26 @@
+name: Frontend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DFX_VERSION: 0.10.1
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "18"
+      - name: Install dfx
+        run: echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+      - name: Build frontend
+        run: |
+          npm ci
+          npm run prestart
+          dfx canister create --all
+          npm run build
