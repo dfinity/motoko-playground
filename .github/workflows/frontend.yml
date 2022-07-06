@@ -12,6 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         node:
+          - 14
           - 16
           - 18
     env:
@@ -29,9 +30,13 @@ jobs:
           wget https://github.com/dfinity/vessel/releases/download/$VESSEL_VERSION/vessel-linux64
           cp ./vessel-linux64 /usr/local/bin/vessel
           chmod a+x /usr/local/bin/vessel
+      - name: Start dfx
+        run: |
+          dfx cache install
+          dfx start --background
       - name: Build frontend
         run: |
-          npm install -g npm
           npm install
-          npm run prestart
           dfx deploy
+      - name: Stop dfx
+        run: dfx stop
