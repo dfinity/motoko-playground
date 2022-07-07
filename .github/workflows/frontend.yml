@@ -35,7 +35,10 @@ jobs:
           dfx start --background
       - name: Build frontend
         run: |
+          dfx canister create --all
+          dfx build backend
+          dfx build saved
           npm install
-          dfx deploy react_app
+          dfx build react_app
       - name: Stop dfx
         run: dfx stop
