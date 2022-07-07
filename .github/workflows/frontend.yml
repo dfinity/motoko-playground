@@ -14,7 +14,6 @@ jobs:
         node:
           - 14
           - 16
-          - 18
     env:
       DFX_VERSION: 0.10.1
       VESSEL_VERSION: v0.6.3
@@ -37,6 +36,6 @@ jobs:
       - name: Build frontend
         run: |
           npm install
-          dfx deploy
+          dfx deploy react_app
       - name: Stop dfx
         run: dfx stop
