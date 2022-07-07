@@ -36,8 +36,6 @@ jobs:
       - name: Build frontend
         run: |
           dfx canister create --all
-          dfx build backend
-          dfx build saved
           npm install
           dfx build react_app
       - name: Stop dfx
