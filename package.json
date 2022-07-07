@@ -54,7 +54,8 @@
   "browserslist": [
     "last 1 chrome version",
     "last 1 firefox version",
-    "last 1 safari version"
+    "last 1 safari version",
+    "not op_mini all"
   ],
   "lint-staged": {
     "src/**/*.{js,ts,jsx,tsx,json,css,scss,htm,html,md,mdx}": [
