@@ -1,0 +1,44 @@
+name: Frontend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+    - 'src/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - 14
+          - 16
+    env:
+      DFX_VERSION: 0.10.1
+      VESSEL_VERSION: v0.6.3
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install dfx
+        run: |
+          echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+          wget https://github.com/dfinity/vessel/releases/download/$VESSEL_VERSION/vessel-linux64
+          cp ./vessel-linux64 /usr/local/bin/vessel
+          chmod a+x /usr/local/bin/vessel
+      - name: Start dfx
+        run: |
+          dfx cache install
+          dfx start --background
+      - name: Build frontend
+        run: |
+          dfx canister create --all
+          npm install
+          dfx build react_app
+      - name: Stop dfx
+        run: dfx stop
