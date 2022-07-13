@@ -4,6 +4,8 @@ import Error "mo:base/Error";
 import Option "mo:base/Option";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
+import Array "mo:base/Array";
+import Principal "mo:base/Principal";
 import Types "./Types";
 import ICType "./IC";
 import PoW "./PoW";
@@ -95,6 +97,48 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
              };
         };
     };
+    // Imitating the management canister's `create_canister`
+    public shared({caller}) func create_canister() : async Types.CanisterInfo {
+        let now = Time.now();
+
+        let parent_timestamp = Array.find<Types.CanisterInfo>(pool.share(), func(info) = Principal.equal(caller, info.id));
+        // pattern match on option and fail if null (since that means that an external canister was calling this function)
+        // if found, then use the parent's timestamp for this new canister
+        switch (pool.getExpiredCanisterId()) {
+        case (#newId) {
+                 Cycles.add(params.cycles_per_canister);
+                 let cid = await IC.create_canister({ settings = null });
+                 let info = { id = cid.canister_id; timestamp = now };
+                 pool.add(info);
+                 // FIXME
+                 // nonceCache.add(nonce);
+                 stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
+                 info
+             };
+        case (#reuse(info)) {
+                 let cid = { canister_id = info.id };
+                 let status = await IC.canister_status(cid);
+                 let top_up_cycles : Nat = if (status.cycles < params.cycles_per_canister) {
+                     params.cycles_per_canister - status.cycles;
+                 } else { 0 };
+                 if (top_up_cycles > 0) {
+                     Cycles.add(top_up_cycles);
+                     await IC.deposit_cycles(cid);
+                 };
+                 await IC.uninstall_code(cid);
+                 // FIXME
+                 // nonceCache.add(nonce);
+                 stats := Logs.updateStats(stats, #getId(top_up_cycles));
+                 info
+             };
+        case (#outOfCapacity(time)) {
+                 let second = time / 1_000_000_000;
+                 stats := Logs.updateStats(stats, #outOfCapacity(second));
+                 throw Error.reject("No available canister id, wait for " # debug_show(second) # " seconds.");
+             };
+        };
+    };
+
     public func installCode(info: Types.CanisterInfo, args: Types.InstallArgs, profiling: Bool) : async Types.CanisterInfo {
         if (info.timestamp == 0) {
             stats := Logs.updateStats(stats, #mismatch);
