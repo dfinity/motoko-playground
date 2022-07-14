@@ -98,24 +98,22 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
         };
     };
     // Imitating the management canister's `create_canister`
-    public shared({caller}) func create_canister() : async Types.CanisterInfo {
-        let now = Time.now();
+    public shared({caller}) func create_canister() : async Principal {
+        let parent_info = Array.find<Types.CanisterInfo>(pool.share(), func(info) = Principal.equal(caller, info.id));
 
-        let parent_timestamp = Array.find<Types.CanisterInfo>(pool.share(), func(info) = Principal.equal(caller, info.id));
-        // pattern match on option and fail if null (since that means that an external canister was calling this function)
-        // if found, then use the parent's timestamp for this new canister
-        switch (pool.getExpiredCanisterId()) {
-        case (#newId) {
+        switch (parent_info, pool.getExpiredCanisterId()) {
+        case (null, _) {
+                throw Error.reject("Only a canister managed by the Playground can call create_canister")
+            };
+        case (?({ id = _; timestamp = parent_timestamp}), #newId) {
                  Cycles.add(params.cycles_per_canister);
                  let cid = await IC.create_canister({ settings = null });
-                 let info = { id = cid.canister_id; timestamp = now };
+                 let info = { id = cid.canister_id; timestamp = parent_timestamp };
                  pool.add(info);
-                 // FIXME
-                 // nonceCache.add(nonce);
                  stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
-                 info
+                 cid.canister_id;
              };
-        case (#reuse(info)) {
+        case (_, #reuse(info)) {
                  let cid = { canister_id = info.id };
                  let status = await IC.canister_status(cid);
                  let top_up_cycles : Nat = if (status.cycles < params.cycles_per_canister) {
@@ -126,12 +124,10 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
                      await IC.deposit_cycles(cid);
                  };
                  await IC.uninstall_code(cid);
-                 // FIXME
-                 // nonceCache.add(nonce);
                  stats := Logs.updateStats(stats, #getId(top_up_cycles));
-                 info
+                 cid.canister_id
              };
-        case (#outOfCapacity(time)) {
+        case (_, #outOfCapacity(time)) {
                  let second = time / 1_000_000_000;
                  stats := Logs.updateStats(stats, #outOfCapacity(second));
                  throw Error.reject("No available canister id, wait for " # debug_show(second) # " seconds.");
