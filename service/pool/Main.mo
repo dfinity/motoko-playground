@@ -14,7 +14,7 @@ import Metrics "./Metrics";
 import MetricType "./MetricType";
 import Wasm "canister:wasm-utils";
 
-shared(creator) actor class Self(opt_params : ?Types.InitParams) {
+shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     let IC : ICType.Self = actor "aaaaa-aa";
     let params = Option.get(opt_params, Types.defaultParams);
     var pool = Types.CanisterPool(params.max_num_canisters, params.canister_time_to_live);
@@ -97,6 +97,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
              };
         };
     };
+
     // Imitating the management canister's `create_canister`
     public shared({caller}) func create_canister() : async Principal {
         let parent_info = Array.find<Types.CanisterInfo>(pool.share(), func(info) = Principal.equal(caller, info.id));
@@ -148,6 +149,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
                 profiling;
                 remove_cycles_add = true;
                 limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
+                backend_canister_id = ?Principal.fromActor(this);
             };
             let wasm = await Wasm.transform(args.wasm_module, config);
             let new_args = { arg = args.arg; wasm_module = wasm; mode = args.mode; canister_id = args.canister_id };
@@ -156,6 +158,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
             Option.unwrap(pool.refresh(info));
         };
     };
+
     public func removeCode(info: Types.CanisterInfo) : async () {
         if (pool.find(info)) {
             await IC.uninstall_code({canister_id=info.id});

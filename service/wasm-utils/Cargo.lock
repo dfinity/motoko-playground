@@ -356,11 +356,10 @@ dependencies = [
 
 [[package]]
 name = "ic-wasm"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98f30356f66151c27e681c22b9775466e409bc52f1f7aad3ce9c2f7566492358"
+version = "0.1.4"
 dependencies = [
  "candid",
+ "ic-types",
  "walrus",
 ]
 
@@ -931,6 +930,7 @@ dependencies = [
  "candid",
  "ic-cdk",
  "ic-cdk-macros",
+ "ic-types",
  "ic-wasm",
  "serde",
  "serde_bytes",
