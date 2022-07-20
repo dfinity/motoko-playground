@@ -54,5 +54,12 @@ const overrideWebpackConfig = ({ webpackConfig }) => {
 };
 
 module.exports = {
-  plugins: [{ plugin: { overrideWebpackConfig } }],
+  plugins: [{ 
+    plugin: { overrideWebpackConfig } 
+  }, {
+    plugin: require("craco-babel-loader"),
+    options: {
+      includes: [/(\.dfx)/],
+    }
+  }],
 };
