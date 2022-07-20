@@ -57,6 +57,7 @@ module.exports = {
   plugins: [{ 
     plugin: { overrideWebpackConfig } 
   }, {
+    // Fixes a Babel error encountered on Node 16.x / 18.x
     plugin: require("craco-babel-loader"),
     options: {
       includes: [/(\.dfx)/],
