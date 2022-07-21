@@ -99,7 +99,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     // Imitating the management canister's `create_canister`
-    public shared({caller}) func create_canister() : async Principal {
+    public shared({caller}) func create_canister() : async { canister_id : Principal } {
         let parent_info = Array.find<Types.CanisterInfo>(pool.share(), func(info) = Principal.equal(caller, info.id));
 
         switch (parent_info, pool.getExpiredCanisterId()) {
@@ -112,7 +112,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                  let info = { id = cid.canister_id; timestamp = parent_timestamp };
                  pool.add(info);
                  stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
-                 cid.canister_id;
+                 cid
              };
         case (_, #reuse(info)) {
                  let cid = { canister_id = info.id };
@@ -126,7 +126,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                  };
                  await IC.uninstall_code(cid);
                  stats := Logs.updateStats(stats, #getId(top_up_cycles));
-                 cid.canister_id
+                 cid
              };
         case (_, #outOfCapacity(time)) {
                  let second = time / 1_000_000_000;
