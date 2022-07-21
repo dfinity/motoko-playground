@@ -13,7 +13,7 @@ ic-cdk-macros = "0.5"
 serde = "1.0"
 serde_bytes = "0.11"
 candid = "0.7"
-ic-wasm = { path = "/Users/kentosugama/Documents/ic-wasm", version = "0.1.4", default-features = false }
+ic-wasm = { git = "https://github.com/dfinity/ic-wasm", branch = "reuse-canister", version = "0.1.4", default-features = false }
 walrus = "0.19"
 ic-types = "0.3.0"
 
