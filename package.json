@@ -27,6 +27,7 @@
     "@testing-library/user-event": "^12.1.10",
     "@types/jest": "^26.0.19",
     "comlink-loader": "^2.0.0",
+    "craco-babel-loader": "^1.0.3",
     "husky": "^7.0.1",
     "lint-staged": "^11.1.2",
     "prettier": "^2.3.2",
@@ -54,10 +55,7 @@
   "browserslist": [
     "last 1 chrome version",
     "last 1 firefox version",
-    "last 1 safari version",
-    ">0.2%",
-    "not dead",
-    "not op_mini all"
+    "last 1 safari version"
   ],
   "lint-staged": {
     "src/**/*.{js,ts,jsx,tsx,json,css,scss,htm,html,md,mdx}": [
