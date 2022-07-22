@@ -14,6 +14,8 @@ import Metrics "./Metrics";
 import MetricType "./MetricType";
 import Wasm "canister:wasm-utils";
 
+import Debug "mo:base/Debug";
+
 shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     let IC : ICType.Self = actor "aaaaa-aa";
     let params = Option.get(opt_params, Types.defaultParams);
@@ -237,13 +239,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         await IC.uninstall_code({ canister_id });
     };
     
-    // FIXME canister_status is a query call, which doesn't support inter-canister calls
-
-    // public shared query({caller}) func canister_status({ canister_id: ICType.canister_id }) : async { status: { #stopped; #stopping; #running }; memory_size: Nat; cycles: Nat; settings: ICType.definite_canister_settings; module_hash: ?Blob; } {
-    //     { status = #running; memory_size = 0; cycles = 10000000000; settings = { controllers = []; freezing_threshold = 0; memory_allocation = 0; compute_allocation = 0}; module_hash = null}
-    // };
-
-    public shared({caller}) func canister_status({ canister_id: ICType.canister_id }) : async { status: { #stopped; #stopping; #running }; memory_size: Nat; cycles: Nat; settings: ICType.definite_canister_settings; module_hash: ?Blob; } {
+    public shared query({caller}) func canister_status({ canister_id: ICType.canister_id }) : async { status: { #stopped; #stopping; #running }; memory_size: Nat; cycles: Nat; settings: ICType.definite_canister_settings; module_hash: ?Blob; } {
         await IC.canister_status({ canister_id });
     };
 
