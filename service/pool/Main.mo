@@ -98,44 +98,6 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
     };
 
-    // Imitating the management canister's `create_canister`
-    public shared({caller}) func create_canister() : async { canister_id : Principal } {
-        let parent_info = Array.find<Types.CanisterInfo>(pool.share(), func(info) = Principal.equal(caller, info.id));
-
-        switch (parent_info, pool.getExpiredCanisterId()) {
-        case (null, _) {
-                throw Error.reject("Only a canister managed by the Playground can call create_canister")
-            };
-        case (?({ id = _; timestamp = parent_timestamp}), #newId) {
-                 Cycles.add(params.cycles_per_canister);
-                 let cid = await IC.create_canister({ settings = null });
-                 let info = { id = cid.canister_id; timestamp = parent_timestamp };
-                 pool.add(info);
-                 stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
-                 cid
-             };
-        case (_, #reuse(info)) {
-                 let cid = { canister_id = info.id };
-                 let status = await IC.canister_status(cid);
-                 let top_up_cycles : Nat = if (status.cycles < params.cycles_per_canister) {
-                     params.cycles_per_canister - status.cycles;
-                 } else { 0 };
-                 if (top_up_cycles > 0) {
-                     Cycles.add(top_up_cycles);
-                     await IC.deposit_cycles(cid);
-                 };
-                 await IC.uninstall_code(cid);
-                 stats := Logs.updateStats(stats, #getId(top_up_cycles));
-                 cid
-             };
-        case (_, #outOfCapacity(time)) {
-                 let second = time / 1_000_000_000;
-                 stats := Logs.updateStats(stats, #outOfCapacity(second));
-                 throw Error.reject("No available canister id, wait for " # debug_show(second) # " seconds.");
-             };
-        };
-    };
-
     public func installCode(info: Types.CanisterInfo, args: Types.InstallArgs, profiling: Bool) : async Types.CanisterInfo {
         if (info.timestamp == 0) {
             stats := Logs.updateStats(stats, #mismatch);
@@ -217,5 +179,83 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
               });
           });
         response
+    };
+
+    /*
+    * The following methods are wrappers/immitations of the management canister's methods that require controller permissions.
+    * In general, the backend is the sole controller of all playground pool canisters.
+    * FIXME add security checks to wrappers
+    */
+
+    public shared({caller}) func create_canister({ settings: ?ICType.canister_settings }) : async { canister_id: ICType.canister_id } {
+        let parent_info = Array.find<Types.CanisterInfo>(pool.share(), func(info) = Principal.equal(caller, info.id));
+
+        switch (parent_info, pool.getExpiredCanisterId()) {
+        case (null, _) {
+                throw Error.reject("Only a canister managed by the Playground can call create_canister")
+            };
+        case (?({ id = _; timestamp = parent_timestamp}), #newId) {
+                 Cycles.add(params.cycles_per_canister);
+                 // FIXME add security checks to setting
+                 let cid = await IC.create_canister({ settings });
+                 let info = { id = cid.canister_id; timestamp = parent_timestamp };
+                 pool.add(info);
+                 stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
+                 cid
+             };
+        case (_, #reuse(info)) {
+                 let cid = { canister_id = info.id };
+                 let status = await IC.canister_status(cid);
+                 let top_up_cycles : Nat = if (status.cycles < params.cycles_per_canister) {
+                     params.cycles_per_canister - status.cycles;
+                 } else { 0 };
+                 if (top_up_cycles > 0) {
+                     Cycles.add(top_up_cycles);
+                     await IC.deposit_cycles(cid);
+                 };
+                 await IC.uninstall_code(cid);
+                 stats := Logs.updateStats(stats, #getId(top_up_cycles));
+                 cid
+             };
+        case (_, #outOfCapacity(time)) {
+                 let second = time / 1_000_000_000;
+                 stats := Logs.updateStats(stats, #outOfCapacity(second));
+                 throw Error.reject("No available canister id, wait for " # debug_show(second) # " seconds.");
+             };
+        };
+    };
+
+    public shared({caller}) func update_settings({ canister_id: ICType.canister_id; settings: ICType.canister_settings }) : async () {
+        await IC.update_settings({ canister_id; settings});
+    };
+
+    public shared({caller}) func install_code({ arg: Blob; wasm_module: ICType.wasm_module; mode: { #reinstall; #upgrade; #install }; canister_id: ICType.canister_id }) : async () {
+        await IC.install_code({ arg; wasm_module; mode; canister_id });
+    };
+
+    public shared({caller}) func uninstall_code({ canister_id: ICType.canister_id }) : async () {
+        await IC.uninstall_code({ canister_id });
+    };
+    
+    // FIXME canister_status is a query call, which doesn't support inter-canister calls
+
+    // public shared query({caller}) func canister_status({ canister_id: ICType.canister_id }) : async { status: { #stopped; #stopping; #running }; memory_size: Nat; cycles: Nat; settings: ICType.definite_canister_settings; module_hash: ?Blob; } {
+    //     { status = #running; memory_size = 0; cycles = 10000000000; settings = { controllers = []; freezing_threshold = 0; memory_allocation = 0; compute_allocation = 0}; module_hash = null}
+    // };
+
+    public shared({caller}) func canister_status({ canister_id: ICType.canister_id }) : async { status: { #stopped; #stopping; #running }; memory_size: Nat; cycles: Nat; settings: ICType.definite_canister_settings; module_hash: ?Blob; } {
+        await IC.canister_status({ canister_id });
+    };
+
+    public shared({caller}) func stop_canister({ canister_id: ICType.canister_id }) : async () {
+        await IC.stop_canister({ canister_id });
+    };
+
+    public shared({caller}) func start_canister({ canister_id: ICType.canister_id }) : async () {
+        await IC.start_canister({ canister_id });
+    };
+
+    public shared({caller}) func delete_canister({ canister_id: ICType.canister_id }) : async () {
+        await IC.delete_canister({ canister_id });
     };
 }
