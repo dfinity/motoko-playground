@@ -239,7 +239,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         await IC.uninstall_code({ canister_id });
     };
     
-    public shared query({caller}) func canister_status({ canister_id: ICType.canister_id }) : async { status: { #stopped; #stopping; #running }; memory_size: Nat; cycles: Nat; settings: ICType.definite_canister_settings; module_hash: ?Blob; } {
+    public shared({caller}) func canister_status({ canister_id: ICType.canister_id }) : async { status: { #stopped; #stopping; #running }; memory_size: Nat; cycles: Nat; settings: ICType.definite_canister_settings; module_hash: ?Blob; } {
         await IC.canister_status({ canister_id });
     };
 
