@@ -186,7 +186,6 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     /*
     * The following methods are wrappers/immitations of the management canister's methods that require controller permissions.
     * In general, the backend is the sole controller of all playground pool canisters.
-    * FIXME add security checks to wrappers
     */
 
     public shared({caller}) func create_canister({ settings: ?ICType.canister_settings }) : async { canister_id: ICType.canister_id } {
@@ -194,12 +193,12 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
 
         switch (parent_info, pool.getExpiredCanisterId()) {
         case (null, _) {
-                throw Error.reject("Only a canister managed by the Playground can call create_canister")
+                throw Error.reject("Only a canister managed by the Motoko Playground can call create_canister")
             };
         case (?({ id = _; timestamp = parent_timestamp}), #newId) {
                  Cycles.add(params.cycles_per_canister);
-                 // FIXME add security checks to setting
-                 let cid = await IC.create_canister({ settings });
+                 // Don't let user control the canister settings
+                 let cid = await IC.create_canister({ settings = null });
                  let info = { id = cid.canister_id; timestamp = parent_timestamp };
                  pool.add(info);
                  stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
@@ -228,7 +227,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     public shared({caller}) func update_settings({ canister_id: ICType.canister_id; settings: ICType.canister_settings }) : async () {
-        await IC.update_settings({ canister_id; settings});
+        throw Error.reject("Cannot call update_settings from within Motoko Playground");
     };
 
     public shared({caller}) func install_code({ arg: Blob; wasm_module: ICType.wasm_module; mode: { #reinstall; #upgrade; #install }; canister_id: ICType.canister_id }) : async () {

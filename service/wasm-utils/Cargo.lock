@@ -357,7 +357,7 @@ dependencies = [
 [[package]]
 name = "ic-wasm"
 version = "0.1.4"
-source = "git+https://github.com/dfinity/ic-wasm?branch=reuse-canister#43a2fb794ddc67cb045786883787da07fc4d7e10"
+source = "git+https://github.com/dfinity/ic-wasm?branch=reuse-canister#567e133b8e8fd15f712aef5d3fa0b3db0aaac759"
 dependencies = [
  "candid",
  "ic-types",
