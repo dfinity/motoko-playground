@@ -10,7 +10,7 @@ let
     additions =
         [ { name = "base"
           , repo = "https://github.com/dfinity/motoko-base"
-          , version = "03513d76580b9e674519d0b1fc58b161d3c3f16d"  -- Revert to master after dfx 0.10.2
+          , version = "master"
           , dependencies = [] : List Text
           }
         ]
