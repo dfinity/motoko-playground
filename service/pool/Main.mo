@@ -14,12 +14,11 @@ import Metrics "./Metrics";
 import MetricType "./MetricType";
 import Wasm "canister:wasm-utils";
 
-import Debug "mo:base/Debug";
-
 shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     let IC : ICType.Self = actor "aaaaa-aa";
     let params = Option.get(opt_params, Types.defaultParams);
     var pool = Types.CanisterPool(params.max_num_canisters, params.canister_time_to_live);
+    var metadata = Types.MetadataMap();
     let nonceCache = PoW.NonceCache(params.nonce_time_to_live);
 
     stable let controller = creator.caller;
@@ -31,14 +30,11 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         previousParam := ?params;
     };
     system func postupgrade() {
-        switch previousParam {
-        case (?old) {
-                 if (old.max_num_canisters > params.max_num_canisters) {
-                     //throw Error.reject("Cannot reduce canisterPool for upgrade");
-                     assert false;
-                 };
-             };
-        case null {};
+        ignore do ? {
+            if (previousParam!.max_num_canisters > params.max_num_canisters) {
+                //throw Error.reject("Cannot reduce canisterPool for upgrade");
+                assert false;
+            }
         };
         pool.unshare(stablePool);
     };
@@ -55,8 +51,48 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         let amount = Cycles.available();
         ignore Cycles.accept(amount);
     };
+    private func getExpiredCanisterInfo(nonce: ?PoW.Nonce) : async Types.CanisterInfo {
+        switch (pool.getExpiredCanisterId()) {
+            case (#newId) {
+                Cycles.add(params.cycles_per_canister);
+                let cid = await IC.create_canister({ settings = null });
+                let now = Time.now();
+                let info = { id = cid.canister_id; timestamp = now };
+                pool.add(info);
+                metadata.putTimestamp(cid.canister_id, now);
+                ignore do ? {
+                    nonceCache.add(nonce!);
+                };
+                stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
+                info
+            };
+            case (#reuse(info)) {
+                metadata.refreshTimestamp(info.id);
+                let cid = { canister_id = info.id };
+                let status = await IC.canister_status(cid);
+                let top_up_cycles : Nat =
+                    if (status.cycles < params.cycles_per_canister) {
+                        params.cycles_per_canister - status.cycles;
+                    } else { 0 };
+                if (top_up_cycles > 0) {
+                    Cycles.add(top_up_cycles);
+                    await IC.deposit_cycles(cid);
+                };
+                await IC.uninstall_code(cid);
+                ignore do ? {
+                    nonceCache.add(nonce!);
+                };
+                stats := Logs.updateStats(stats, #getId(top_up_cycles));
+                info
+            };
+            case (#outOfCapacity(time)) {
+                let second = time / 1_000_000_000;
+                stats := Logs.updateStats(stats, #outOfCapacity(second));
+                throw Error.reject("No available canister id, wait for " # debug_show(second) # " seconds.");
+            };
+        };
+    };
     public shared({caller}) func getCanisterId(nonce: PoW.Nonce) : async Types.CanisterInfo {
-        let now = Time.now();
         if (caller != controller and not nonceCache.checkProofOfWork(nonce)) {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject("Proof of work check failed");
@@ -66,38 +102,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject("Nonce already used");
         };
-        
-        switch (pool.getExpiredCanisterId()) {
-        case (#newId) {
-                 Cycles.add(params.cycles_per_canister);
-                 let cid = await IC.create_canister({ settings = null });
-                 let info = { id = cid.canister_id; timestamp = now };
-                 pool.add(info);
-                 nonceCache.add(nonce);
-                 stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
-                 info
-             };
-        case (#reuse(info)) {
-                 let cid = { canister_id = info.id };
-                 let status = await IC.canister_status(cid);
-                 let top_up_cycles : Nat = if (status.cycles < params.cycles_per_canister) {
-                     params.cycles_per_canister - status.cycles;
-                 } else { 0 };
-                 if (top_up_cycles > 0) {
-                     Cycles.add(top_up_cycles);
-                     await IC.deposit_cycles(cid);
-                 };
-                 await IC.uninstall_code(cid);
-                 nonceCache.add(nonce);
-                 stats := Logs.updateStats(stats, #getId(top_up_cycles));
-                 info
-             };
-        case (#outOfCapacity(time)) {
-                 let second = time / 1_000_000_000;
-                 stats := Logs.updateStats(stats, #outOfCapacity(second));
-                 throw Error.reject("No available canister id, wait for " # debug_show(second) # " seconds.");
-             };
-        };
+        await getExpiredCanisterInfo(?nonce)
     };
 
     public func installCode(info: Types.CanisterInfo, args: Types.InstallArgs, profiling: Bool) : async Types.CanisterInfo {
@@ -119,13 +124,19 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
             let new_args = { arg = args.arg; wasm_module = wasm; mode = args.mode; canister_id = args.canister_id };
             await IC.install_code(new_args);
             stats := Logs.updateStats(stats, #install);
-            Option.unwrap(pool.refresh(info));
+            metadata.refreshTimestamp(args.canister_id);
+            metadata.updateProfiling(args.canister_id, profiling);
+            switch(pool.refresh(info)) {
+                case (?newInfo) newInfo;
+                case null throw Error.reject("Cannot find canister");
+            }
         };
     };
 
     public func removeCode(info: Types.CanisterInfo) : async () {
         if (pool.find(info)) {
             await IC.uninstall_code({canister_id=info.id});
+            metadata.retire(info.id);
             ignore pool.retire(info);
         } else {
             stats := Logs.updateStats(stats, #mismatch);
@@ -135,6 +146,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         let list = pool.gcList();
         for (id in list.vals()) {
             await IC.uninstall_code({canister_id=id});
+            metadata.retire(id);
         };
     };
     public query({caller}) func dump() : async [Types.CanisterInfo] {
@@ -189,41 +201,15 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     */
 
     public shared({caller}) func create_canister({ settings: ?ICType.canister_settings }) : async { canister_id: ICType.canister_id } {
-        let parent_info = Array.find<Types.CanisterInfo>(pool.share(), func(info) = Principal.equal(caller, info.id));
-
-        switch (parent_info, pool.getExpiredCanisterId()) {
-        case (null, _) {
-                throw Error.reject("Only a canister managed by the Motoko Playground can call create_canister")
+        switch(metadata.get(caller)) {
+            case null {
+                throw Error.reject("Only a canister managed by the Motoko Playground can call create_canister");
             };
-        case (?({ id = _; timestamp = parent_timestamp}), #newId) {
-                 Cycles.add(params.cycles_per_canister);
-                 // Don't let user control the canister settings
-                 let cid = await IC.create_canister({ settings = null });
-                 let info = { id = cid.canister_id; timestamp = parent_timestamp };
-                 pool.add(info);
-                 stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
-                 cid
-             };
-        case (_, #reuse(info)) {
-                 let cid = { canister_id = info.id };
-                 let status = await IC.canister_status(cid);
-                 let top_up_cycles : Nat = if (status.cycles < params.cycles_per_canister) {
-                     params.cycles_per_canister - status.cycles;
-                 } else { 0 };
-                 if (top_up_cycles > 0) {
-                     Cycles.add(top_up_cycles);
-                     await IC.deposit_cycles(cid);
-                 };
-                 await IC.uninstall_code(cid);
-                 stats := Logs.updateStats(stats, #getId(top_up_cycles));
-                 cid
-             };
-        case (_, #outOfCapacity(time)) {
-                 let second = time / 1_000_000_000;
-                 stats := Logs.updateStats(stats, #outOfCapacity(second));
-                 throw Error.reject("No available canister id, wait for " # debug_show(second) # " seconds.");
-             };
-        };
+            case _ {
+                let info = await getExpiredCanisterInfo(null);
+                { canister_id = info.id }
+            };
+        }
     };
 
     public shared({caller}) func update_settings({ canister_id: ICType.canister_id; settings: ICType.canister_settings }) : async () {
@@ -231,11 +217,33 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     public shared({caller}) func install_code({ arg: Blob; wasm_module: ICType.wasm_module; mode: { #reinstall; #upgrade; #install }; canister_id: ICType.canister_id }) : async () {
-        await IC.install_code({ arg; wasm_module; mode; canister_id });
+        switch (metadata.get(caller), metadata.getInfo(canister_id)) {
+            case (null, _) {
+                throw Error.reject("Only a canister managed by the Motoko Playground can call install_code");
+            };
+            case (_, null) {
+                throw Error.reject("Cannot find caniseter");
+            };
+            case (_, ?info) {
+                let args = { arg; wasm_module; mode; canister_id; };
+                let profiling = metadata.getProfiling(canister_id);
+                ignore await installCode(info, args, profiling);
+            };
+        };
     };
 
     public shared({caller}) func uninstall_code({ canister_id: ICType.canister_id }) : async () {
-        await IC.uninstall_code({ canister_id });
+        switch (metadata.get(caller), metadata.getInfo(canister_id)) {
+            case (null, _) {
+                throw Error.reject("Only a canister managed by the Motoko Playground can call install_code");
+            };
+            case (_, null) {
+                throw Error.reject("Cannot find caniseter");
+            };
+            case (_, ?info) {
+                await removeCode(info);
+            };
+        };
     };
     
     public shared({caller}) func canister_status({ canister_id: ICType.canister_id }) : async { status: { #stopped; #stopping; #running }; memory_size: Nat; cycles: Nat; settings: ICType.definite_canister_settings; module_hash: ?Blob; } {
@@ -251,6 +259,5 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     public shared({caller}) func delete_canister({ canister_id: ICType.canister_id }) : async () {
-        await IC.delete_canister({ canister_id });
     };
 }

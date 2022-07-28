@@ -2,6 +2,7 @@ import Principal "mo:base/Principal";
 import Splay "mo:splay";
 import Time "mo:base/Time";
 import Buffer "mo:base/Buffer";
+import TrieMap "mo:base/TrieMap";
 import Iter "mo:base/Iter";
 import Int "mo:base/Int";
 
@@ -34,7 +35,7 @@ module {
         else if (x.timestamp == y.timestamp and x.id == y.id) { #equal }
         else { #greater }
     };
-    public class CanisterPool(size: Nat, TTL: Nat) {
+    public class CanisterPool(size: Nat, ttl: Nat) {
         var len = 0;
         var tree = Splay.Splay<CanisterInfo>(canisterInfoCompare);
         public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
@@ -43,18 +44,18 @@ module {
                 #newId
             } else {
                 switch (tree.entries().next()) {
-                case null { assert false; loop(); };
-                case (?info) {
-                         let now = Time.now();
-                         let elapsed : Nat = Int.abs(now) - Int.abs(info.timestamp);
-                         if (elapsed >= TTL) {
-                             tree.remove(info);
-                             let new_info = { timestamp = now; id = info.id };
-                             tree.insert(new_info);
-                             #reuse(new_info)
-                         } else {
-                             #outOfCapacity(TTL - elapsed)
-                         }
+                    case null { assert false; loop(); };
+                    case (?info) {
+                        let now = Time.now();
+                        let elapsed : Nat = Int.abs(now) - Int.abs(info.timestamp);
+                        if (elapsed >= ttl) {
+                            tree.remove(info);
+                            let new_info = { timestamp = now; id = info.id };
+                            tree.insert(new_info);
+                            #reuse(new_info)
+                        } else {
+                            #outOfCapacity(ttl - elapsed)
+                        }
                      };
                 };
             };
@@ -86,7 +87,7 @@ module {
             for (info in tree.entries()) {
                 if (info.timestamp > 0) {
                     // assumes when timestamp == 0, uninstall_code is already done
-                    if (info.timestamp > now - TTL) { return result };
+                    if (info.timestamp > now - ttl) { return result };
                     result.add(info.id);
                     ignore retire(info);
                 }
@@ -101,4 +102,44 @@ module {
             tree.fromArray(list);
         };
     };
+
+    public class MetadataMap() {
+        var map = TrieMap.TrieMap<Principal, (Int, Bool)>(Principal.equal, Principal.hash);
+
+        public func getTimestamp(canister_id: Principal) : ?Int {
+            do ? {
+                get(canister_id)!.0
+            }
+        };
+        public func getProfiling(canister_id: Principal) : Bool {
+            switch (get(canister_id)) {
+                case (?(_, profiling)) {
+                    profiling
+                };
+                case null {
+                    false
+                };
+            };
+        };
+        public func get(canister_id: Principal) : ?(Int, Bool) = map.get(canister_id);
+        public func getInfo(canister_id: Principal) : ?CanisterInfo {
+            do ? {
+                let timestamp = getTimestamp(canister_id)!;
+                { id = canister_id; timestamp}
+            };
+        };
+        public func putTimestamp(canister_id: Principal, timestamp: Int) {
+            let profiling = switch(get(canister_id)) { case null false; case (?(_, profiling)) profiling };
+            map.put(canister_id, (timestamp, profiling));
+        };
+        public func updateProfiling(canister_id: Principal, profiling: Bool) {
+            ignore do ? {
+                let timestamp = getTimestamp(canister_id)!;
+                map.put(canister_id, (timestamp, profiling));
+            }
+        };
+        public func put(canister_id: Principal, metadata: (Int, Bool)) = map.put(canister_id, metadata);
+        public func refreshTimestamp(canister_id: Principal) = putTimestamp(canister_id, Time.now());
+        public func retire(canister_id: Principal) = put(canister_id, (0, false));
+    }
 }
