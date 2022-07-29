@@ -3,7 +3,9 @@ import Splay "mo:splay";
 import Time "mo:base/Time";
 import Buffer "mo:base/Buffer";
 import TrieMap "mo:base/TrieMap";
+import TrieSet "mo:base/TrieSet";
 import Iter "mo:base/Iter";
+import Array "mo:base/Array";
 import Int "mo:base/Int";
 
 module {
@@ -38,6 +40,7 @@ module {
     public class CanisterPool(size: Nat, ttl: Nat) {
         var len = 0;
         var tree = Splay.Splay<CanisterInfo>(canisterInfoCompare);
+        var metadata = TrieMap.TrieMap<Principal, (Int, Bool)>(Principal.equal, Principal.hash);
         public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
         public func getExpiredCanisterId() : NewId {
             if (len < size) {
@@ -52,6 +55,7 @@ module {
                             tree.remove(info);
                             let new_info = { timestamp = now; id = info.id };
                             tree.insert(new_info);
+                            metadata.put(new_info.id, (new_info.timestamp, false));
                             #reuse(new_info)
                         } else {
                             #outOfCapacity(ttl - elapsed)
@@ -66,19 +70,35 @@ module {
             };
             len += 1;
             tree.insert(info);
+            metadata.put(info.id, (info.timestamp, false));
         };
         public func find(info: CanisterInfo) : Bool = tree.find(info);
-        public func refresh(info: CanisterInfo) : ?CanisterInfo {
+        public func getMetadata(canister_id: Principal) : ?(Int, Bool) = metadata.get(canister_id);
+        public func getInfo(canister_id: Principal) : ?CanisterInfo {
+            do ? {
+                let (timestamp, _) = getMetadata(canister_id)!;
+                { timestamp; id = canister_id }
+            }
+        };
+        public func getProfiling(canister_id: Principal) : Bool {
+            switch (metadata.get(canister_id)) {
+                case null false;
+                case (?(_, profiling)) profiling;
+            }
+        };
+        public func refresh(info: CanisterInfo, profiling: Bool) : ?CanisterInfo {
             if (not tree.find(info)) { return null };
             tree.remove(info);
             let new_info = { timestamp = Time.now(); id = info.id };
             tree.insert(new_info);
+            metadata.put(new_info.id, (new_info.timestamp, profiling));
             ?new_info
         };
         public func retire(info: CanisterInfo) : Bool {
             if (not tree.find(info)) { return false; };
             tree.remove(info);
             tree.insert({ timestamp = 0; id = info.id });
+            metadata.put(info.id, (0, false));
             return true;
         };
         public func gcList() : Buffer.Buffer<Principal> {
@@ -100,46 +120,104 @@ module {
         public func unshare(list: [CanisterInfo]) {
             len := list.size();
             tree.fromArray(list);
+            Iter.iterate<CanisterInfo>(list.vals(), func(info, _) = metadata.put(info.id, (info.timestamp, false)));
         };
     };
 
-    public class MetadataMap() {
-        var map = TrieMap.TrieMap<Principal, (Int, Bool)>(Principal.equal, Principal.hash);
+    public class FamilyTree() {
+        // Bimap to represent parent-children tree with back pointers
+        // Parent is null iff root
+        var childrens = TrieMap.TrieMap<Principal, TrieSet.Set<Principal>>(Principal.equal, Principal.hash);
+        var parents = TrieMap.TrieMap<Principal, Principal>(Principal.equal, Principal.hash);
 
-        public func getTimestamp(canister_id: Principal) : ?Int {
-            do ? {
-                get(canister_id)!.0
-            }
-        };
-        public func getProfiling(canister_id: Principal) : Bool {
-            switch (get(canister_id)) {
-                case (?(_, profiling)) {
-                    profiling
+        public func addChild(parent: Principal, child: Principal) : Bool {
+            switch (parents.get(child)) {
+                case (?_) {
+                    // child should have at most one parent at a time
+                    return false;
                 };
+                case null {
+                    parents.put(child, parent);
+                };
+            };
+            let children =
+                switch (childrens.get(parent)) {
+                    case null TrieSet.empty();
+                    case (?children) children;
+                };
+            let newChildren = TrieSet.put<Principal>(children, child, Principal.hash(child), Principal.equal);
+            childrens.put(parent, newChildren);
+            return true;
+        };
+
+        public func isParentOf(parent: Principal, child: Principal) : Bool {
+            switch(parents.get(child)) {
                 case null {
                     false
                 };
+                case (?registerdParent) {
+                    Principal.equal(registerdParent, parent)
+                };
             };
         };
-        public func get(canister_id: Principal) : ?(Int, Bool) = map.get(canister_id);
-        public func getInfo(canister_id: Principal) : ?CanisterInfo {
-            do ? {
-                let timestamp = getTimestamp(canister_id)!;
-                { id = canister_id; timestamp}
-            };
-        };
-        public func putTimestamp(canister_id: Principal, timestamp: Int) {
-            let profiling = switch(get(canister_id)) { case null false; case (?(_, profiling)) profiling };
-            map.put(canister_id, (timestamp, profiling));
-        };
-        public func updateProfiling(canister_id: Principal, profiling: Bool) {
-            ignore do ? {
-                let timestamp = getTimestamp(canister_id)!;
-                map.put(canister_id, (timestamp, profiling));
+
+        public func getChildren(parent: Principal) : [Principal] {
+            switch (childrens.get(parent)) {
+                case null [];
+                case (?children) TrieSet.toArray(children);
             }
         };
-        public func put(canister_id: Principal, metadata: (Int, Bool)) = map.put(canister_id, metadata);
-        public func refreshTimestamp(canister_id: Principal) = putTimestamp(canister_id, Time.now());
-        public func retire(canister_id: Principal) = put(canister_id, (0, false));
+
+        public func delete(canister_id: Principal) {
+            // Remove children edges
+            ignore do ? {
+                let children = TrieSet.toArray(childrens.get(canister_id)!);
+                for (child in children.vals()) {
+                    delete(child);
+                }
+            };
+            childrens.delete(canister_id);
+
+            // Remove parent edges
+            ignore do ? {
+                let parent = parents.get(canister_id)!;
+                childrens.put(parent, TrieSet.delete<Principal>(childrens.get(parent)!, canister_id, Principal.hash(canister_id), Principal.equal));
+            };
+            parents.delete(canister_id);
+        };
+
+        public func share() : [(Principal, [Principal])] {
+            Iter.toArray(
+                Iter.map<(Principal, TrieSet.Set<Principal>), (Principal, [Principal])>(
+                    childrens.entries(),
+                    func((parent, children)) = (parent, TrieSet.toArray(children))
+                )
+            )
+        };
+
+        public func unshare(stableChildrens : [(Principal, [Principal])]) {
+            childrens := 
+                TrieMap.fromEntries(
+                    Array.map<(Principal, [Principal]), (Principal, TrieSet.Set<Principal>)>(
+                        stableChildrens,
+                        func((parent, children)) = (parent, TrieSet.fromArray(children, Principal.hash, Principal.equal))
+                    ).vals(), 
+                    Principal.equal,
+                    Principal.hash
+                );
+            
+            let parentsEntries = 
+                Array.flatten(
+                    Array.map<(Principal, [Principal]), [(Principal, Principal)]>(
+                        stableChildrens, 
+                        func((parent, children)) = 
+                            Array.map<Principal, (Principal, Principal)>(
+                                children,
+                                func(child) = (child, parent)
+                            )
+                    )
+                );
+            parents := TrieMap.fromEntries(parentsEntries.vals(), Principal.equal, Principal.hash);
+        }
     }
 }
