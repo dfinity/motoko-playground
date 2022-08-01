@@ -5,8 +5,8 @@ on:
     branches: [main]
   pull_request:
     paths:
-    - '**.js'
-    - '**.json'
+      - '**.js'
+      - '**.json'
 
 jobs:
   build:
