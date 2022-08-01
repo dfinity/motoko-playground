@@ -60,7 +60,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 Cycles.add(params.cycles_per_canister);
                 let cid = await IC.create_canister({ settings = null });
                 let now = Time.now();
-                let info = { id = cid.canister_id; timestamp = now };
+                let info = { id = cid.canister_id; timestamp = now; profiling = ?false };
                 pool.add(info);
                 stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
                 info

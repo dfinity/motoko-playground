@@ -30,6 +30,7 @@ module {
     public type CanisterInfo = {
         id: Principal;
         timestamp: Int;
+        profiling: ?Bool;
     };
     func canisterInfoCompare(x: CanisterInfo, y: CanisterInfo): {#less;#equal;#greater} {
         if (x.timestamp < y.timestamp) { #less }
@@ -53,9 +54,9 @@ module {
                         let elapsed : Nat = Int.abs(now) - Int.abs(info.timestamp);
                         if (elapsed >= ttl) {
                             tree.remove(info);
-                            let new_info = { timestamp = now; id = info.id };
+                            let new_info = { timestamp = now; id = info.id; profiling = info.profiling };
                             tree.insert(new_info);
-                            metadata.put(new_info.id, (new_info.timestamp, false));
+                            metadata.put(new_info.id, (new_info.timestamp, unwrapProfiling(new_info)));
                             #reuse(new_info)
                         } else {
                             #outOfCapacity(ttl - elapsed)
@@ -76,8 +77,8 @@ module {
         public func getMetadata(canister_id: Principal) : ?(Int, Bool) = metadata.get(canister_id);
         public func getInfo(canister_id: Principal) : ?CanisterInfo {
             do ? {
-                let (timestamp, _) = getMetadata(canister_id)!;
-                { timestamp; id = canister_id }
+                let (timestamp, profiling) = getMetadata(canister_id)!;
+                { timestamp; id = canister_id; profiling = ?profiling}
             }
         };
         public func getProfiling(canister_id: Principal) : Bool {
@@ -86,18 +87,24 @@ module {
                 case (?(_, profiling)) profiling;
             }
         };
+        private func unwrapProfiling(info: CanisterInfo) : Bool {
+            switch (info.profiling) {
+                case null false;
+                case (?profiling) profiling;
+            }
+        };
         public func refresh(info: CanisterInfo, profiling: Bool) : ?CanisterInfo {
             if (not tree.find(info)) { return null };
             tree.remove(info);
-            let new_info = { timestamp = Time.now(); id = info.id };
+            let new_info = { timestamp = Time.now(); id = info.id; profiling = ?profiling };
             tree.insert(new_info);
-            metadata.put(new_info.id, (new_info.timestamp, profiling));
+            metadata.put(new_info.id, (new_info.timestamp, unwrapProfiling(new_info)));
             ?new_info
         };
         public func retire(info: CanisterInfo) : Bool {
             if (not tree.find(info)) { return false; };
             tree.remove(info);
-            tree.insert({ timestamp = 0; id = info.id });
+            tree.insert({ timestamp = 0; id = info.id; profiling = ?false; });
             metadata.put(info.id, (0, false));
             return true;
         };
@@ -120,7 +127,9 @@ module {
         public func unshare(list: [CanisterInfo]) {
             len := list.size();
             tree.fromArray(list);
-            Iter.iterate<CanisterInfo>(list.vals(), func(info, _) = metadata.put(info.id, (info.timestamp, false)));
+            Iter.iterate<CanisterInfo>(
+                list.vals(),
+                func(info, _) = metadata.put(info.id, (info.timestamp, unwrapProfiling(info))));
         };
     };
 
