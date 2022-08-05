@@ -9,6 +9,7 @@ export interface CanisterInfo {
   name?: string;
   candid?: string | null;
   stableSig?: string | null;
+  profiling?: boolean;
 }
 /*
 export function interpret(file: string, logger: ILoggingStore): void {
@@ -162,6 +163,7 @@ async function createCanister(
     id: info.id,
     isExternal: false,
     timestamp: info.timestamp,
+    profiling: info.profiling,
   };
 }
 
