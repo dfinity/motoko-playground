@@ -24,10 +24,12 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     stable var stats = Logs.defaultStats;
     stable var stablePool : ([Types.CanisterInfo], [(Principal, [Principal])]) = ([], []);
     stable var previousParam : ?Types.InitParams = null;
+
     system func preupgrade() {
         stablePool := pool.share();
         previousParam := ?params;
     };
+
     system func postupgrade() {
         ignore do ? {
             if (previousParam!.max_num_canisters > params.max_num_canisters) {
@@ -37,19 +39,24 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
         pool.unshare stablePool;
     };
+
     public query func getInitParams() : async Types.InitParams {
         params
     };
+
     public query func getStats() : async Logs.Stats {
         stats
     };
+
     public query func balance() : async Nat {
         Cycles.balance()
     };
+
     public func wallet_receive() : async () {
         let amount = Cycles.available();
         ignore Cycles.accept amount;
     };
+
     private func getExpiredCanisterInfo() : async Types.CanisterInfo {
         switch (pool.getExpiredCanisterId()) {
             case (#newId) {
@@ -73,7 +80,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     await IC.deposit_cycles cid;
                 };
                 await IC.uninstall_code cid;
-                await IC.start_canister { canister_id = cid };
+                await IC.start_canister cid;
                 stats := Logs.updateStats(stats, #getId top_up_cycles);
                 info
             };
@@ -84,6 +91,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
             };
         };
     };
+
     public shared({caller}) func getCanisterId(nonce: PoW.Nonce) : async Types.CanisterInfo {
         if (caller != controller and not nonceCache.checkProofOfWork(nonce)) {
             stats := Logs.updateStats(stats, #mismatch);
@@ -193,56 +201,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     * The following methods are wrappers/immitations of the management canister's methods that require controller permissions.
     * In general, the backend is the sole controller of all playground pool canisters.
     */
-
-    public shared({caller}) func create_canister({ settings: ?ICType.canister_settings }) : async { canister_id: ICType.canister_id } {
-        if (not pool.findId caller) {
-            throw Error.reject "Only a canister managed by the Motoko Playground can call create_canister";
-        };
-        let info = await getExpiredCanisterInfo();
-        let result = pool.setChild(caller, info.id);
-        if (not result) {
-            throw Error.reject("Actor classes can only spawn up to " # params.max_num_children # " children");
-        };
-        { canister_id = info.id }
-    };
-
-    public shared({caller}) func update_settings({ canister_id: ICType.canister_id; settings: ICType.canister_settings }) : async () {
-        throw Error.reject "Cannot call update_settings from within Motoko Playground";
-    };
-
-    public shared({caller}) func install_code({ arg: Blob; wasm_module: ICType.wasm_module; mode: { #reinstall; #upgrade; #install }; canister_id: ICType.canister_id }) : async () {
-        let info = checkInputs(caller, canister_id, "install_code");
-        let args = { arg; wasm_module; mode; canister_id; };
-        let profiling = pool.getProfiling canister_id;
-        ignore await installCode(info, args, profiling);
-    };
-
-    public shared({caller}) func uninstall_code({ canister_id: ICType.canister_id }) : async () {
-        ignore checkInputs(caller, canister_id, "uninstall_code");
-        await IC.uninstall_code { canister_id };
-    };
-    
-    public shared({caller}) func canister_status({ canister_id: ICType.canister_id }) : async { status: { #stopped; #stopping; #running }; memory_size: Nat; cycles: Nat; settings: ICType.definite_canister_settings; module_hash: ?Blob; } {
-        ignore checkInputs(caller, canister_id, "canister_status");
-        await IC.canister_status { canister_id };
-    };
-
-    public shared({caller}) func stop_canister({ canister_id: ICType.canister_id }) : async () {
-        ignore checkInputs(caller, canister_id, "stop_canister");
-        await IC.stop_canister { canister_id };
-    };
-
-    public shared({caller}) func start_canister({ canister_id: ICType.canister_id }) : async () {
-        ignore checkInputs(caller, canister_id, "start_canister");
-        await IC.start_canister { canister_id };
-    };
-
-    public shared({caller}) func delete_canister({ canister_id: ICType.canister_id }) : async () {
-        let info = checkInputs(caller, canister_id, "delete_canister");
-        await removeCode(info);
-    };
-
-    private func sanitizeInputs(caller: Principal, callee: Principal, methodName: Text) : Types.CanisterInfo {
+    private func sanitizeInputs(caller: Principal, callee: Principal, methodName: Text) : async Types.CanisterInfo {
         if (not pool.findId caller) {
             throw Error.reject("Only a canister managed by the Motoko Playground can call " # methodName);
         };
@@ -258,5 +217,53 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 }
             }
         }
-    }
+    };
+
+    public shared({caller}) func create_canister({ settings: ?ICType.canister_settings }) : async { canister_id: ICType.canister_id } {
+        if (not pool.findId caller) {
+            throw Error.reject "Only a canister managed by the Motoko Playground can call create_canister";
+        };
+        let info = await getExpiredCanisterInfo();
+        let result = pool.setChild(caller, info.id);
+        if (not result) {
+            throw Error.reject("Actor classes can only spawn up to " # Nat.toText(params.max_num_children) # " children");
+        };
+        { canister_id = info.id }
+    };
+
+    public shared({caller}) func update_settings({ canister_id: ICType.canister_id; settings: ICType.canister_settings }) : async () {
+        throw Error.reject "Cannot call update_settings from within Motoko Playground";
+    };
+
+    public shared({caller}) func install_code({ arg: Blob; wasm_module: ICType.wasm_module; mode: { #reinstall; #upgrade; #install }; canister_id: ICType.canister_id }) : async () {
+        let info = await sanitizeInputs(caller, canister_id, "install_code");
+        let args = { arg; wasm_module; mode; canister_id; };
+        let profiling = pool.getProfiling canister_id;
+        ignore await installCode(info, args, profiling);
+    };
+
+    public shared({caller}) func uninstall_code({ canister_id: ICType.canister_id }) : async () {
+        ignore await sanitizeInputs(caller, canister_id, "uninstall_code");
+        await IC.uninstall_code { canister_id };
+    };
+    
+    public shared({caller}) func canister_status({ canister_id: ICType.canister_id }) : async { status: { #stopped; #stopping; #running }; memory_size: Nat; cycles: Nat; settings: ICType.definite_canister_settings; module_hash: ?Blob; } {
+        ignore await sanitizeInputs(caller, canister_id, "canister_status");
+        await IC.canister_status { canister_id };
+    };
+
+    public shared({caller}) func stop_canister({ canister_id: ICType.canister_id }) : async () {
+        ignore await sanitizeInputs(caller, canister_id, "stop_canister");
+        await IC.stop_canister { canister_id };
+    };
+
+    public shared({caller}) func start_canister({ canister_id: ICType.canister_id }) : async () {
+        ignore await sanitizeInputs(caller, canister_id, "start_canister");
+        await IC.start_canister { canister_id };
+    };
+
+    public shared({caller}) func delete_canister({ canister_id: ICType.canister_id }) : async () {
+        let info = await sanitizeInputs(caller, canister_id, "delete_canister");
+        await removeCode(info);
+    };
 }
