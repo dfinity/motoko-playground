@@ -266,4 +266,44 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         let info = await sanitizeInputs(caller, canister_id, "delete_canister");
         await removeCode(info);
     };
+
+    system func inspect({ msg : {
+        #GCCanisters : Any;
+        #balance : Any;
+        #dump : Any;
+        #getCanisterId : Any;
+        #getDeployCanisters : Any;
+        #getInitParams : Any;
+        #getStats : Any;
+        #http_request : Any;
+        #installCode : Any;
+        #removeCode : Any;
+        #resetStats : Any;
+        #track : Any;
+        #wallet_receive : Any;
+
+
+        #create_canister : Any;
+        #update_settings : Any;
+        #install_code : Any;
+        #uninstall_code : Any;
+        #canister_status : Any;
+        #start_canister : Any;
+        #stop_canister : Any;
+        #delete_canister : Any;
+        }}) : Bool {
+            switch msg {
+                case (#create_canister _) false;
+                case (#update_settings _) false;
+                case (#install_code _) false;
+                case (#uninstall_code _) false;
+                case (#canister_status _) false;
+                case (#start_canister _) false;
+                case (#stop_canister _) false;
+                case (#delete_canister _) false;
+
+                case _ true;
+            }
+    };
+
 }
