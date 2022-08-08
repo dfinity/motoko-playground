@@ -64,6 +64,7 @@ module {
                             let new_info = { timestamp = now; id = info.id; profiling = info.profiling };
                             tree.insert new_info;
                             metadata.put(new_info.id, (new_info.timestamp, unwrapProfiling(new_info)));
+                            deleteFamilyNode(new_info.id);
                             #reuse new_info
                         } else {
                             #outOfCapacity(ttl - elapsed)
@@ -109,29 +110,20 @@ module {
             metadata.put(new_info.id, (new_info.timestamp, unwrapProfiling new_info));
             ?new_info
         };
-        // Return a list of canister IDs from which to uninstall code
-        public func retire(info: CanisterInfo) : Buffer.Buffer<Principal> {
-            let uninstallList = Buffer.Buffer<Principal>(len);
-            if (not tree.find info) {
-                return uninstallList;
-            };
-            retireSubtree(info.id, uninstallList);
-            uninstallList;
-        };
-        private func retireSubtree(root: Principal, list: Buffer.Buffer<Principal>) {
-            ignore do ? {
-                let info = getInfo(root)!;
-                tree.remove info;
-                tree.insert { timestamp = 0; id = root; profiling = ?false; };
-                metadata.put(root, (0, false));
-                parents.delete root;
-                list.add root;
 
-                let children = childrens.get(root)!;
-                childrens.delete root;
-                List.iterate<Principal>(children, func child = retireSubtree(child, list))
-            }
+        public func retire(info: CanisterInfo) : Bool {
+            if (not tree.find info) {
+                return false;
+            };
+            let id = info.id;
+            tree.remove info;
+            tree.insert { timestamp = 0; id; profiling = ?false; };
+            metadata.put(id, (0, false));
+            deleteFamilyNode id;
+            return true;
         };
+
+        // Return a list of canister IDs from which to uninstall code
         public func gcList() : Buffer.Buffer<Principal> {
             let now = Time.now();
             let result = Buffer.Buffer<Principal>(len);
@@ -139,7 +131,8 @@ module {
                 if (info.timestamp > 0) {
                     // assumes when timestamp == 0, uninstall_code is already done
                     if (info.timestamp > now - ttl) { return result };
-                    retireSubtree(info.id, result);
+                    result.add(info.id);
+                    ignore retire info;
                 }
             };
             result
@@ -187,15 +180,6 @@ module {
         };
 
         public func setChild(parent: Principal, child: Principal) : Bool {
-            switch (parents.get child) {
-                case (?_) {
-                    // child should have at most one parent at a time
-                    return false;
-                };
-                case null {
-                    parents.put(child, parent);
-                };
-            };
             let children =
                 switch (childrens.get parent) {
                     case null List.nil();
@@ -205,11 +189,11 @@ module {
                 return false;
             };
             childrens.put(parent, List.push(child, children));
+            parents.put(child, parent);
             return true;
         };
 
         public func isParentOf(parent: Principal, child: Principal) : Bool {
-            // FIXME consider TTL expiration
             switch(parents.get child) {
                 case null {
                     false
@@ -220,12 +204,10 @@ module {
             };
         };
 
-        private func delete(id: Principal) {
+        private func deleteFamilyNode(id: Principal) {
             // Remove children edges
             ignore do ? {
-                for (child in List.toIter(childrens.get(id)!)) {
-                    delete child;
-                }
+                List.iterate(childrens.get(id)!, parents.delete);
             };
             childrens.delete id;
 

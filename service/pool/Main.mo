@@ -73,6 +73,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     await IC.deposit_cycles cid;
                 };
                 await IC.uninstall_code cid;
+                await IC.start_canister { canister_id = cid };
                 stats := Logs.updateStats(stats, #getId top_up_cycles);
                 info
             };
@@ -124,30 +125,34 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     public func removeCode(info: Types.CanisterInfo) : async () {
-        if (not pool.find info) {
+        if (pool.find info) {
+            await IC.uninstall_code { canister_id = info.id };
+            ignore pool.retire info;
+        } else {
             stats := Logs.updateStats(stats, #mismatch);
-        };
-        for (id in pool.retire(info).vals()) {
-            await IC.uninstall_code {canister_id=id};
-        };
+        }
     };
+
     public func GCCanisters() {
         for (id in pool.gcList().vals()) {
-            await IC.uninstall_code {canister_id=id};
+            await IC.uninstall_code { canister_id = id };
         };
     };
+
     public query({caller}) func dump() : async [Types.CanisterInfo] {
         if (caller != controller) {
             throw Error.reject "Only called by controller";
         };
         pool.share().0
     };
+
     public shared({caller}) func resetStats() : async () {
         if (caller != controller) {
             throw Error.reject "Only called by controller"; 
         };
         stats := Logs.defaultStats;
     };
+
     // Metrics
     public query func http_request(req: Metrics.HttpRequest): async Metrics.HttpResponse {
         if (req.url == "/metrics") {
@@ -165,9 +170,11 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
             }
         }
     };
+
     public query func getDeployCanisters() : async Nat {
         stats.num_of_canisters
     };
+
     public func track() : async MetricType.MetricsResponse {
         let Metrics = actor "bsusq-diaaa-aaaah-qac5q-cai" : MetricType.MetricsService;
         let response = await Metrics.track(
@@ -192,7 +199,10 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "Only a canister managed by the Motoko Playground can call create_canister";
         };
         let info = await getExpiredCanisterInfo();
-        ignore pool.setChild(caller, info.id);
+        let result = pool.setChild(caller, info.id);
+        if (not result) {
+            throw Error.reject("Actor classes can only spawn up to " # params.max_num_children # " children");
+        };
         { canister_id = info.id }
     };
 
@@ -201,60 +211,52 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     public shared({caller}) func install_code({ arg: Blob; wasm_module: ICType.wasm_module; mode: { #reinstall; #upgrade; #install }; canister_id: ICType.canister_id }) : async () {
-        if (not pool.findId caller) {
-            throw Error.reject "Only a canister managed by the Motoko Playground can call install_code";
-        }
-        else if (not pool.isParentOf(caller, canister_id)) {
-            throw Error.reject "Can only call install_code on canisters spawned by your own code";
-        };
-        switch (pool.getInfo canister_id) {
-            case null {
-                throw Error.reject "Cannot find child canister";
-            };
-            case (?info) {
-                let args = { arg; wasm_module; mode; canister_id; };
-                let profiling = pool.getProfiling canister_id;
-                ignore await installCode(info, args, profiling);
-            }
-        }
+        let info = checkInputs(caller, canister_id, "install_code");
+        let args = { arg; wasm_module; mode; canister_id; };
+        let profiling = pool.getProfiling canister_id;
+        ignore await installCode(info, args, profiling);
     };
 
     public shared({caller}) func uninstall_code({ canister_id: ICType.canister_id }) : async () {
-        if (not pool.findId caller) {
-            throw Error.reject "Only a canister managed by the Motoko Playground can call uninstall_code";
-        }
-        else if (not pool.isParentOf(caller, canister_id)) {
-            throw Error.reject "Can only call uninstall_code on canisters spawned by your own code";
-        };
-        switch (pool.getInfo canister_id) {
-            case null {
-                throw Error.reject "Cannot find child canister";
-            };
-            case (?info) {
-                await removeCode info;
-            }
-        }
+        ignore checkInputs(caller, canister_id, "uninstall_code");
+        await IC.uninstall_code { canister_id };
     };
     
     public shared({caller}) func canister_status({ canister_id: ICType.canister_id }) : async { status: { #stopped; #stopping; #running }; memory_size: Nat; cycles: Nat; settings: ICType.definite_canister_settings; module_hash: ?Blob; } {
-        if (not pool.findId caller) {
-            throw Error.reject "Only a canister managed by the Motoko Playground can call canister_status";
-        }
-        else if (not pool.isParentOf(caller, canister_id)) {
-            throw Error.reject "Can only call canister_status on canisters spawned by your own code";
-        };
+        ignore checkInputs(caller, canister_id, "canister_status");
         await IC.canister_status { canister_id };
     };
 
     public shared({caller}) func stop_canister({ canister_id: ICType.canister_id }) : async () {
-        // FIXME
+        ignore checkInputs(caller, canister_id, "stop_canister");
+        await IC.stop_canister { canister_id };
     };
 
     public shared({caller}) func start_canister({ canister_id: ICType.canister_id }) : async () {
-        // FIXME
+        ignore checkInputs(caller, canister_id, "start_canister");
+        await IC.start_canister { canister_id };
     };
 
     public shared({caller}) func delete_canister({ canister_id: ICType.canister_id }) : async () {
-        // FIXME
+        let info = checkInputs(caller, canister_id, "delete_canister");
+        await removeCode(info);
     };
+
+    private func sanitizeInputs(caller: Principal, callee: Principal, methodName: Text) : Types.CanisterInfo {
+        if (not pool.findId caller) {
+            throw Error.reject("Only a canister managed by the Motoko Playground can call " # methodName);
+        };
+        switch (pool.getInfo callee) {
+            case null {
+                throw Error.reject("Can only call " # methodName # " on canisters in the Motoko Playground");
+            };
+            case (?info) {
+                if (not pool.isParentOf(caller, callee)) {
+                    throw Error.reject("Can only call " # methodName # " on canisters spawned by your own code");
+                } else {
+                    info
+                }
+            }
+        }
+    }
 }
