@@ -80,7 +80,12 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     await IC.deposit_cycles cid;
                 };
                 await IC.uninstall_code cid;
-                await IC.start_canister cid;
+                switch (status.status) {
+                    case (#stopped or #stopping) {
+                        await IC.start_canister cid;
+                    };
+                    case _ { };
+                }
                 stats := Logs.updateStats(stats, #getId top_up_cycles);
                 info
             };

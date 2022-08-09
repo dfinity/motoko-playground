@@ -96,12 +96,7 @@ module {
                 case (?(_, profiling)) profiling;
             }
         };
-        private func unwrapProfiling(info: CanisterInfo) : Bool {
-            switch (info.profiling) {
-                case null false;
-                case (?profiling) profiling;
-            }
-        };
+        private func unwrapProfiling(info: CanisterInfo) : Bool = Option.get(info.profiling, false);
         public func refresh(info: CanisterInfo, profiling: Bool) : ?CanisterInfo {
             if (not tree.find info) { return null };
             tree.remove info;
