@@ -285,7 +285,6 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 case (#start_canister _) false;
                 case (#stop_canister _) false;
                 case (#delete_canister _) false;
-
                 case _ true;
             }
     };
