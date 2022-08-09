@@ -9,7 +9,6 @@ import ICType "./IC";
 import PoW "./PoW";
 import Logs "./Logs";
 import Metrics "./Metrics";
-import MetricType "./MetricType";
 import Wasm "canister:wasm-utils";
 
 shared(creator) actor class Self(opt_params : ?Types.InitParams) {
@@ -158,21 +157,5 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) {
                 body = Text.encodeUtf8("Not supported");
             }
         }
-    };
-    public query func getDeployCanisters() : async Nat {
-        stats.num_of_canisters
-    };
-    public func track() : async MetricType.MetricsResponse {
-        let Metrics = actor "bsusq-diaaa-aaaah-qac5q-cai" : MetricType.MetricsService;
-        let response = await Metrics.track(
-          { attributeId = null;
-            action = #Set(
-              { name = "deployed canisters";
-                description = ?"deployed canisters from playground";
-                getter = getDeployCanisters;
-                polling_frequency = ?{ n = 30; period = #Minute };
-              });
-          });
-        response
     };
 }
