@@ -11,7 +11,6 @@ import ICType "./IC";
 import PoW "./PoW";
 import Logs "./Logs";
 import Metrics "./Metrics";
-import MetricType "./MetricType";
 import Wasm "canister:wasm-utils";
 
 shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
@@ -85,7 +84,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                         await IC.start_canister cid;
                     };
                     case _ { };
-                }
+                };
                 stats := Logs.updateStats(stats, #getId top_up_cycles);
                 info
             };
@@ -184,24 +183,6 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         }
     };
 
-    public query func getDeployCanisters() : async Nat {
-        stats.num_of_canisters
-    };
-
-    public func track() : async MetricType.MetricsResponse {
-        let Metrics = actor "bsusq-diaaa-aaaah-qac5q-cai" : MetricType.MetricsService;
-        let response = await Metrics.track(
-          { attributeId = null;
-            action = #Set(
-              { name = "deployed canisters";
-                description = ?"deployed canisters from playground";
-                getter = getDeployCanisters;
-                polling_frequency = ?{ n = 30; period = #Minute };
-              });
-          });
-        response
-    };
-
     /*
     * The following methods are wrappers/immitations of the management canister's methods that require controller permissions.
     * In general, the backend is the sole controller of all playground pool canisters.
@@ -274,17 +255,15 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
 
     system func inspect({ msg : {
         #GCCanisters : Any;
-        #balance : Any;
+        #balance: Any;
         #dump : Any;
         #getCanisterId : Any;
-        #getDeployCanisters : Any;
         #getInitParams : Any;
         #getStats : Any;
         #http_request : Any;
         #installCode : Any;
         #removeCode : Any;
         #resetStats : Any;
-        #track : Any;
         #wallet_receive : Any;
 
 
