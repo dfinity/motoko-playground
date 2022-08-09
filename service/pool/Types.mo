@@ -61,9 +61,9 @@ module {
                         let elapsed : Nat = Int.abs(now) - Int.abs(info.timestamp);
                         if (elapsed >= ttl) {
                             tree.remove info;
-                            let new_info = { timestamp = now; id = info.id; profiling = info.profiling };
+                            let new_info = { timestamp = now; id = info.id; profiling = ?false };
                             tree.insert new_info;
-                            metadata.put(new_info.id, (new_info.timestamp, unwrapProfiling(new_info)));
+                            metadata.put(new_info.id, (new_info.timestamp, false));
                             deleteFamilyNode(new_info.id);
                             #reuse new_info
                         } else {

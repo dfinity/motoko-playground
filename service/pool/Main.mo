@@ -5,6 +5,7 @@ import Option "mo:base/Option";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import Array "mo:base/Array";
+import Result "mo:base/Result";
 import Principal "mo:base/Principal";
 import Types "./Types";
 import ICType "./IC";
@@ -187,19 +188,19 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     * The following methods are wrappers/immitations of the management canister's methods that require controller permissions.
     * In general, the backend is the sole controller of all playground pool canisters.
     */
-    private func sanitizeInputs(caller: Principal, callee: Principal, methodName: Text) : async Types.CanisterInfo {
+    private func sanitizeInputs(caller: Principal, callee: Principal) : Result.Result<Types.CanisterInfo, Text -> Text> {
         if (not pool.findId caller) {
-            throw Error.reject("Only a canister managed by the Motoko Playground can call " # methodName);
+            return #err(func methodName = "Only a canister managed by the Motoko Playground can call " # methodName);
         };
         switch (pool.getInfo callee) {
             case null {
-                throw Error.reject("Can only call " # methodName # " on canisters in the Motoko Playground");
+                #err(func methodName = "Can only call " # methodName # " on canisters in the Motoko Playground")
             };
             case (?info) {
                 if (not pool.isParentOf(caller, callee)) {
-                    throw Error.reject("Can only call " # methodName # " on canisters spawned by your own code");
+                    #err(func methodName = "Can only call " # methodName # " on canisters spawned by your own code")
                 } else {
-                    info
+                    #ok info
                 }
             }
         }
@@ -222,35 +223,49 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     public shared({caller}) func install_code({ arg: Blob; wasm_module: ICType.wasm_module; mode: { #reinstall; #upgrade; #install }; canister_id: ICType.canister_id }) : async () {
-        let info = await sanitizeInputs(caller, canister_id, "install_code");
-        let args = { arg; wasm_module; mode; canister_id; };
-        let profiling = pool.getProfiling canister_id;
-        ignore await installCode(info, args, profiling);
+        switch(sanitizeInputs(caller, canister_id)) {
+            case (#ok info) {
+                let args = { arg; wasm_module; mode; canister_id; };
+                let profiling = pool.getProfiling canister_id;
+                ignore await installCode(info, args, profiling);
+            };
+            case (#err makeMsg) throw Error.reject(makeMsg "install_code");
+        }
     };
 
     public shared({caller}) func uninstall_code({ canister_id: ICType.canister_id }) : async () {
-        ignore await sanitizeInputs(caller, canister_id, "uninstall_code");
-        await IC.uninstall_code { canister_id };
+        switch(sanitizeInputs(caller, canister_id)) {
+            case (#ok _) await IC.uninstall_code { canister_id };
+            case (#err makeMsg) throw Error.reject(makeMsg "uninstall_code");
+        }
     };
     
     public shared({caller}) func canister_status({ canister_id: ICType.canister_id }) : async { status: { #stopped; #stopping; #running }; memory_size: Nat; cycles: Nat; settings: ICType.definite_canister_settings; module_hash: ?Blob; } {
-        ignore await sanitizeInputs(caller, canister_id, "canister_status");
-        await IC.canister_status { canister_id };
+        switch(sanitizeInputs(caller, canister_id)) {
+            case (#ok _) await IC.canister_status { canister_id };
+            case (#err makeMsg) throw Error.reject(makeMsg "canister_status");
+        }
     };
 
     public shared({caller}) func stop_canister({ canister_id: ICType.canister_id }) : async () {
-        ignore await sanitizeInputs(caller, canister_id, "stop_canister");
-        await IC.stop_canister { canister_id };
+        switch(sanitizeInputs(caller, canister_id)) {
+            case (#ok _) await IC.stop_canister { canister_id };
+            case (#err makeMsg) throw Error.reject(makeMsg "stop_canister");
+        }
     };
 
     public shared({caller}) func start_canister({ canister_id: ICType.canister_id }) : async () {
-        ignore await sanitizeInputs(caller, canister_id, "start_canister");
-        await IC.start_canister { canister_id };
+        switch(sanitizeInputs(caller, canister_id)) {
+            case (#ok _) await IC.start_canister { canister_id };
+            case (#err makeMsg) throw Error.reject(makeMsg "start_canister");
+        }
     };
 
     public shared({caller}) func delete_canister({ canister_id: ICType.canister_id }) : async () {
-        let info = await sanitizeInputs(caller, canister_id, "delete_canister");
-        await removeCode(info);
+        switch(sanitizeInputs(caller, canister_id)) {
+            case (#ok info) await removeCode(info);
+            case (#err makeMsg) throw Error.reject(makeMsg "delete_canister");
+        }
     };
 
     system func inspect({ msg : {
