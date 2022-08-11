@@ -87,7 +87,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     };
                     case _ { };
                 };
-                stats := Logs.updateStats(stats, #getId top_up_cycles);
+                stats := Logs.updateStats(stats, #getId topUpCycles);
                 info
             };
             case (#outOfCapacity time) {
