@@ -108,9 +108,9 @@ module {
             if (not tree.find info) { return null };
             tree.remove info;
             let newInfo = { timestamp = Time.now(); id = info.id; profiling = ?profiling };
-            tree.insert new_info;
+            tree.insert newInfo;
             metadata.put(newInfo.id, (newInfo.timestamp, unwrapProfiling newInfo));
-            ?new_info
+            ?newInfo
         };
 
         public func retire(info: CanisterInfo) : Bool {

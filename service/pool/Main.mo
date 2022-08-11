@@ -71,12 +71,12 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
             case (#reuse info) {
                 let cid = { canister_id = info.id };
                 let status = await IC.canister_status cid;
-                let top_up_cycles : Nat =
+                let topUpCycles : Nat =
                     if (status.cycles < params.cycles_per_canister) {
                         params.cycles_per_canister - status.cycles;
                     } else { 0 };
-                if (top_up_cycles > 0) {
-                    Cycles.add top_up_cycles;
+                if (topUpCycles > 0) {
+                    Cycles.add topUpCycles;
                     await IC.deposit_cycles cid;
                 };
                 // Lazily cleanup the reused canister
@@ -129,8 +129,8 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 backend_canister_id = ?Principal.fromActor(this);
             };
             let wasm = await Wasm.transform(args.wasm_module, config);
-            let new_args = { arg = args.arg; wasm_module = wasm; mode = args.mode; canister_id = args.canister_id };
-            await IC.install_code new_args;
+            let newArgs = { arg = args.arg; wasm_module = wasm; mode = args.mode; canister_id = args.canister_id };
+            await IC.install_code newArgs;
             stats := Logs.updateStats(stats, #install);
             switch(pool.refresh(info, profiling)) {
                 case (?newInfo) newInfo;
