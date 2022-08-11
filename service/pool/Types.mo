@@ -57,6 +57,7 @@ module {
         var parents = TrieMap.TrieMap<Principal, Principal>(Principal.equal, Principal.hash);
 
         public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
+
         public func getExpiredCanisterId() : NewId {
             if (len < size) {
                 #newId
@@ -69,11 +70,11 @@ module {
                         if (elapsed >= ttl) {
                             // Lazily cleanup pool state before reusing canister
                             tree.remove info;
-                            let new_info = { timestamp = now; id = info.id; profiling = ?false };
-                            tree.insert new_info;
-                            metadata.put(new_info.id, (new_info.timestamp, false));
-                            deleteFamilyNode(new_info.id);
-                            #reuse new_info
+                            let newInfo = { timestamp = now; id = info.id; profiling = ?false };
+                            tree.insert newInfo;
+                            metadata.put(newInfo.id, (newInfo.timestamp, false));
+                            deleteFamilyNode(newInfo.id);
+                            #reuse newInfo
                         } else {
                             #outOfCapacity(ttl - elapsed)
                         }
@@ -81,6 +82,7 @@ module {
                 };
             };
         };
+
         public func add(info: CanisterInfo) {
             if (len >= size) {
                 assert false;
@@ -89,22 +91,25 @@ module {
             tree.insert info;
             metadata.put(info.id, (info.timestamp, false));
         };
+
         public func find(info: CanisterInfo) : Bool = tree.find info;
         public func findId(id: Principal) : Bool = Option.isSome(metadata.get id);
-        public func getInfo(id: Principal) : ?CanisterInfo {
+
+        public func info(id: Principal) : ?CanisterInfo {
             do ? {
                 let (timestamp, profiling) = metadata.get(id)!;
                 { timestamp; id; profiling = ?profiling}
             }
         };
+
         private func unwrapProfiling(info: CanisterInfo) : Bool = Option.get(info.profiling, false);
+
         public func refresh(info: CanisterInfo, profiling: Bool) : ?CanisterInfo {
             if (not tree.find info) { return null };
             tree.remove info;
-            let new_info = { timestamp = Time.now(); id = info.id; profiling = ?profiling };
+            let newInfo = { timestamp = Time.now(); id = info.id; profiling = ?profiling };
             tree.insert new_info;
-            metadata.put(new_info.id, (new_info.timestamp, unwrapProfiling new_info));
-            deleteFamilyNode(new_info.id);
+            metadata.put(newInfo.id, (newInfo.timestamp, unwrapProfiling newInfo));
             ?new_info
         };
 
@@ -134,6 +139,7 @@ module {
             };
             result
         };
+
         public func share() : ([CanisterInfo], [(Principal, [Principal])]) {
             let stableInfos = Iter.toArray(tree.entries());
             let stableChildrens = 
@@ -145,6 +151,7 @@ module {
                 );
             (stableInfos, stableChildrens)
         };
+
         public func unshare((stableInfos, stableChildrens): ([CanisterInfo], [(Principal, [Principal])])) {
             len := stableInfos.size();
             tree.fromArray stableInfos;

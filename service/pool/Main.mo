@@ -195,7 +195,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         if (not pool.findId caller) {
             return #err(func methodName = "Only a canister managed by the Motoko Playground can call " # methodName);
         };
-        switch (pool.getInfo callee) {
+        switch (pool.info callee) {
             case null {
                 #err(func methodName = "Can only call " # methodName # " on canisters in the Motoko Playground")
             };
@@ -230,7 +230,6 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         switch(sanitizeInputs(caller, canister_id)) {
             case (#ok info) {
                 let args = { arg; wasm_module; mode; canister_id; };
-                //let profiling = pool.getProfiling canister_id;
                 ignore await installCode(info, args);
             };
             case (#err makeMsg) throw Error.reject(makeMsg "install_code");
