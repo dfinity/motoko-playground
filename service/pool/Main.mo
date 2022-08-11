@@ -68,7 +68,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
                 info
             };
-            case (#reuse(info)) {
+            case (#reuse info) {
                 let cid = { canister_id = info.id };
                 let status = await IC.canister_status cid;
                 let top_up_cycles : Nat =
@@ -79,6 +79,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     Cycles.add top_up_cycles;
                     await IC.deposit_cycles cid;
                 };
+                // Lazily cleanup the reused canister
                 await IC.uninstall_code cid;
                 switch (status.status) {
                     case (#stopped or #stopping) {
@@ -89,7 +90,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 stats := Logs.updateStats(stats, #getId top_up_cycles);
                 info
             };
-            case (#outOfCapacity(time)) {
+            case (#outOfCapacity time) {
                 let second = time / 1_000_000_000;
                 stats := Logs.updateStats(stats, #outOfCapacity second);
                 throw Error.reject("No available canister id, wait for " # debug_show(second) # " seconds.");
@@ -186,7 +187,8 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
 
     /*
     * The following methods are wrappers/immitations of the management canister's methods that require controller permissions.
-    * In general, the backend is the sole controller of all playground pool canisters.
+    * In general, the backend is the sole controller of all playground pool canisters. Any canister that attempts to call the
+    * management canister will be redirected here instead by the wasm transformation above.
     */
     private func sanitizeInputs(caller: Principal, callee: Principal) : Result.Result<Types.CanisterInfo, Text -> Text> {
         if (not pool.findId caller) {
@@ -218,6 +220,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         { canister_id = info.id }
     };
 
+    // Disabled to prevent the user from updating the controller list (amongst other settings)
     public shared({caller}) func update_settings({ canister_id: ICType.canister_id; settings: ICType.canister_settings }) : async () {
         throw Error.reject "Cannot call update_settings from within Motoko Playground";
     };
@@ -226,7 +229,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         switch(sanitizeInputs(caller, canister_id)) {
             case (#ok info) {
                 let args = { arg; wasm_module; mode; canister_id; };
-                let profiling = pool.getProfiling canister_id;
+                let profiling = pool.getProfiling caller;
                 ignore await installCode(info, args, profiling);
             };
             case (#err makeMsg) throw Error.reject(makeMsg "install_code");
@@ -263,7 +266,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
 
     public shared({caller}) func delete_canister({ canister_id: ICType.canister_id }) : async () {
         switch(sanitizeInputs(caller, canister_id)) {
-            case (#ok info) await removeCode(info);
+            case (#ok info) await removeCode(info); // retire the canister back into pool instead of deleting
             case (#err makeMsg) throw Error.reject(makeMsg "delete_canister");
         }
     };
@@ -303,5 +306,4 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 case _ true;
             }
     };
-
 }

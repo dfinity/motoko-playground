@@ -42,6 +42,13 @@ module {
         else if (x.timestamp == y.timestamp and x.id == y.id) { #equal }
         else { #greater }
     };
+
+    /*
+    * Main data structure of the playground. The splay tree is the source of truth for
+    * what canisters live in the playground. Metadata map reflects the state of the tree
+    * to allow Map-style lookups on the canister data. Childrens and parents define the
+    * controller relationships for dynmically spawned canisters by actor classes.
+    */
     public class CanisterPool(size: Nat, ttl: Nat, max_num_children: Nat) {
         var len = 0;
         var tree = Splay.Splay<CanisterInfo>(canisterInfoCompare);
@@ -60,6 +67,7 @@ module {
                         let now = Time.now();
                         let elapsed : Nat = Int.abs(now) - Int.abs(info.timestamp);
                         if (elapsed >= ttl) {
+                            // Lazily cleanup pool state before reusing canister
                             tree.remove info;
                             let new_info = { timestamp = now; id = info.id; profiling = ?false };
                             tree.insert new_info;
@@ -83,10 +91,9 @@ module {
         };
         public func find(info: CanisterInfo) : Bool = tree.find info;
         public func findId(id: Principal) : Bool = Option.isSome(metadata.get id);
-        public func getMetadata(id: Principal) : ?(Int, Bool) = metadata.get id;
         public func getInfo(id: Principal) : ?CanisterInfo {
             do ? {
-                let (timestamp, profiling) = getMetadata(id)!;
+                let (timestamp, profiling) = metadata.get(id)!;
                 { timestamp; id; profiling = ?profiling}
             }
         };
@@ -103,6 +110,7 @@ module {
             let new_info = { timestamp = Time.now(); id = info.id; profiling = ?profiling };
             tree.insert new_info;
             metadata.put(new_info.id, (new_info.timestamp, unwrapProfiling new_info));
+            deleteFamilyNode(new_info.id);
             ?new_info
         };
 
