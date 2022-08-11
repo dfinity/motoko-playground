@@ -16,6 +16,7 @@ export type MocAction =
   | { type: "stableCheck"; pre: string; post: string }
   | { type: "addPackage"; name: string; path: string }
   | { type: "setActorAliases"; list: Array<[string, string]> }
+  | { type: "setPublicMetadata"; list: Array<string> }
   | { type: "gcFlags"; option: string };
 
 // Export as you would in a normal module:
@@ -40,6 +41,8 @@ export function Moc(action: MocAction) {
       return Motoko.addPackage(action.name, action.path);
     case "setActorAliases":
       return Motoko.setActorAliases(action.list);
+    case "setPublicMetadata":
+      return Motoko.setPublicMetadata(action.list);
     case "gcFlags":
       return Motoko.gcFlags(action.option);
   }
