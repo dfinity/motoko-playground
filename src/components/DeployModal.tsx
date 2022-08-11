@@ -280,6 +280,10 @@ export function DeployModal({
           await worker.Moc({ type: "gcFlags", option: "scheduling" });
         }
         await worker.Moc({ type: "gcFlags", option: gcMethod });
+        await worker.Moc({
+          type: "setPublicMetadata",
+          list: ["candid:service", "candid:args", "motoko:stable-types"],
+        });
         const result = await compileWasm(worker, fileName, logger);
         if (!result) {
           throw new Error("syntax error");
