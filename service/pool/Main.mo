@@ -111,7 +111,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         await getExpiredCanisterInfo()
     };
 
-    public func installCode(info: Types.CanisterInfo, args: Types.InstallArgs, profiling: Bool) : async Types.CanisterInfo {
+    public func installCode(info: Types.CanisterInfo, args: Types.InstallArgs) : async Types.CanisterInfo {
         if (info.timestamp == 0) {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot install removed canister";
@@ -120,6 +120,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot find canister";
         } else {
+            let profiling = Option.get(info.profiling, false);
             let config = {
                 profiling;
                 remove_cycles_add = true;
@@ -226,8 +227,8 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         switch(sanitizeInputs(caller, canister_id)) {
             case (#ok info) {
                 let args = { arg; wasm_module; mode; canister_id; };
-                let profiling = pool.getProfiling canister_id;
-                ignore await installCode(info, args, profiling);
+                //let profiling = pool.getProfiling canister_id;
+                ignore await installCode(info, args);
             };
             case (#err makeMsg) throw Error.reject(makeMsg "install_code");
         }

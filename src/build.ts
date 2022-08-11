@@ -9,7 +9,6 @@ export interface CanisterInfo {
   name?: string;
   candid?: string | null;
   stableSig?: string | null;
-  profiling?: boolean;
 }
 /*
 export function interpret(file: string, logger: ILoggingStore): void {
@@ -163,7 +162,6 @@ async function createCanister(
     id: info.id,
     isExternal: false,
     timestamp: info.timestamp,
-    profiling: info.profiling,
   };
 }
 
@@ -189,11 +187,8 @@ async function install(
     mode: { [mode]: null },
     canister_id: canisterId,
   };
-  const new_info = await backend.installCode(
-    canisterInfo,
-    installArgs,
-    profiling
-  );
+  const info = { profiling: [profiling], ...canisterInfo };
+  const new_info = await backend.installCode(info, installArgs);
   canisterInfo = new_info;
   logger.log(`Code installed at canister id ${canisterInfo.id}`);
   return canisterInfo;
