@@ -49,6 +49,10 @@ export const exampleProjects: Record<string, ExampleProject> = {
     repo: { dir: "motoko/pub-sub/src", ...example },
     readme: `${readmeURL}/pub-sub/README.md`,
   },
+  "Actor Classes": {
+    repo: { dir: "motoko/classes/src", ...example },
+    readme: `${readmeURL}/classes/README.md`,
+  },
 };
 
 export async function fetchExample(

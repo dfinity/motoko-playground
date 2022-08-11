@@ -97,12 +97,6 @@ module {
                 { timestamp; id; profiling = ?profiling}
             }
         };
-        public func getProfiling(id: Principal) : Bool {
-            switch (metadata.get id) {
-                case null false;
-                case (?(_, profiling)) profiling;
-            }
-        };
         private func unwrapProfiling(info: CanisterInfo) : Bool = Option.get(info.profiling, false);
         public func refresh(info: CanisterInfo, profiling: Bool) : ?CanisterInfo {
             if (not tree.find info) { return null };
