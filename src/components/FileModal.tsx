@@ -31,7 +31,10 @@ export function FileModal({ isOpen, close }) {
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
 
-  async function addFile() {
+  async function tryAddFile() {
+    if (!fileName) {
+      return;
+    }
     const name = fileName.endsWith(".mo") ? fileName : `${fileName}.mo`;
     await worker.Moc({ type: "save", file: name, content: "" });
     await dispatch({ type: "saveFile", payload: { path: name, contents: "" } });
@@ -54,10 +57,11 @@ export function FileModal({ isOpen, close }) {
           labelText="Filename"
           value={fileName}
           onChange={(e) => setFileName(e.target.value)}
+          onKeyPress={(e) => e.key === "Enter" && tryAddFile()}
           autoFocus
         />
         <ButtonContainer>
-          <Button variant="primary" onClick={addFile}>
+          <Button variant="primary" onClick={tryAddFile}>
             Add
           </Button>
           <Button onClick={close}>Cancel</Button>
