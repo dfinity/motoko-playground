@@ -34,3 +34,6 @@ yarn-error.log*
 /.idea
 /.vscode
 /.history
+
+# Tests
+/service/pool/tests/actor_class/.dfx
