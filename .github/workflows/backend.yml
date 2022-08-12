@@ -32,7 +32,8 @@ jobs:
         run: |
           dfx cache install
           dfx start --background
-          dfx deploy
+          npm install
+          dfx deploy --argument '(null)'
           cd ./service/pool/tests/actor_class
           dfx start --background
           dfx canister create Parent
