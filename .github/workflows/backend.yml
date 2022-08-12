@@ -32,9 +32,7 @@ jobs:
         run: |
           dfx cache install
           dfx start --background
-          dfx deploy wasm-utils
-          dfx canister create backend
-          dfx build backend
+          dfx deploy
           cd ./service/pool/tests/actor_class
           dfx start --background
           dfx canister create Parent
