@@ -42,6 +42,7 @@ jobs:
             ic-repl -r http://localhost:8000 "$f" || exit
           done)
       - name: Upgrade safety check
+        if: github.event_name == 'pull_request'
         run: |
           cp .dfx/local/canisters/backend/backend.most backend.new.most
           git checkout main
