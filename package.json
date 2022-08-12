@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@dfinity/agent": "^0.12.0",
-    "@dfinity/candid": "^0.12.0",
-    "@dfinity/principal": "^0.12.0",
+    "@dfinity/agent": "^0.12.2",
+    "@dfinity/candid": "^0.12.2",
+    "@dfinity/principal": "^0.12.2",
     "@monaco-editor/react": "^4.4.5",
     "@types/node": "^14.0.0",
     "@types/react": "^17.0.0",
@@ -53,9 +53,9 @@
     }
   },
   "browserslist": [
-    "last 1 chrome version",
-    "last 1 firefox version",
-    "last 1 safari version"
+    ">0.2%",
+    "not dead",
+    "not op_mini all"
   ],
   "lint-staged": {
     "src/**/*.{js,ts,jsx,tsx,json,css,scss,htm,html,md,mdx}": [
