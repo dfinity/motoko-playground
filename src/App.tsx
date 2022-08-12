@@ -316,6 +316,11 @@ export function App() {
                     ?.candid
                 }
                 forceUpdate={forceUpdate}
+                onMessage={({ origin, source, message }) => {
+                  console.log("Received message from Candid UI:", message);
+                  // TODO: handle messages as needed
+                  // workplaceDispatch({ type: "candid", payload: { message } });
+                }}
               />
             ) : null}
           </AppContainer>
