@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+    paths:
+    - 'service/**'
 
 jobs:
   build:
@@ -15,6 +17,8 @@ jobs:
       CI: true
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Install
         run: |
           echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
@@ -37,6 +41,14 @@ jobs:
             echo "==== Run test $f ===="
             ic-repl -r http://localhost:8000 "$f" || exit
           done)
+      - name: Upgrade safety check
+        if: github.event_name == 'pull_request'
+        run: |
+          cp .dfx/local/canisters/backend/backend.most backend.new.most
+          git checkout main
+          dfx build backend
+          cp .dfx/local/canisters/backend/backend.most backend.old.most
+          $(dfx cache show)/moc --stable-compatible backend.old.most backend.new.most
       - name: stop dfx
         run: |
           echo "dfx stop"
