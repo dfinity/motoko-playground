@@ -37,8 +37,11 @@ jobs:
           dfx build backend
       - name: Upgrade safety check
         run: |
+          cp .dfx/local/canisters/backend/backend.most backend.new.most
           git checkout main
           dfx build backend
+          cp .dfx/local/canisters/backend/backend.most backend.old.most
+          $(dfx cache show)/moc --stable-compatible backend.old.most backend.new.most
       - name: stop dfx
         run: |
           echo "dfx stop"
