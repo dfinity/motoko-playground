@@ -28,7 +28,7 @@ jobs:
           wget https://github.com/dfinity/vessel/releases/download/$VESSEL_VERSION/vessel-linux64
           cp ./vessel-linux64 /usr/local/bin/vessel
           chmod a+x /usr/local/bin/vessel
-      - name: Build
+      - name: Build and Test
         run: |
           npm install
           dfx start --background
@@ -36,8 +36,6 @@ jobs:
           cd service/pool/tests/actor_class
           dfx canister create Parent
           dfx build Parent
-      - name: Test
-        run: |
           (for f in service/pool/tests/*.test.sh; do
             echo "==== Run test $f ===="
             ic-repl -r http://localhost:8000 "$f" || exit
