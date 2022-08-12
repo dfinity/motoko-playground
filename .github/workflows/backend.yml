@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+    paths:
+    - 'service/**'
 
 jobs:
   build:
@@ -15,6 +17,8 @@ jobs:
       CI: true
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Install
         run: |
           echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
@@ -31,12 +35,10 @@ jobs:
           dfx canister create backend
           dfx canister create wasm-utils        
           dfx build backend
-      - name: Test
+      - name: Upgrade safety check
         run: |
-          (for f in service/pool/tests/*.test.sh; do
-            echo "==== Run test $f ===="
-            ic-repl -r http://localhost:8000 "$f" || exit
-          done)
+          git checkout main
+          dfx build backend
       - name: stop dfx
         run: |
           echo "dfx stop"
