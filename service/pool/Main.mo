@@ -23,7 +23,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
 
     stable let controller = creator.caller;
     stable var stats = Logs.defaultStats;
-    stable var stablePool : ([Types.CanisterInfo], [(Principal, [Principal])]) = ([], []);
+    stable var stablePool : ([Types.CanisterInfo], [(Principal, (Int, Bool))], [(Principal, [Principal])]) = ([], [], []);
     stable var previousParam : ?Types.InitParams = null;
 
     system func preupgrade() {
@@ -64,7 +64,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 Cycles.add(params.cycles_per_canister);
                 let cid = await IC.create_canister { settings = null };
                 let now = Time.now();
-                let info = { id = cid.canister_id; timestamp = now; profiling = ?false };
+                let info = { id = cid.canister_id; timestamp = now };
                 pool.add info;
                 stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
                 info
@@ -113,7 +113,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         await getExpiredCanisterInfo()
     };
 
-    public func installCode(info: Types.CanisterInfo, args: Types.InstallArgs) : async Types.CanisterInfo {
+    public func installCode(info: Types.CanisterInfo, args: Types.InstallArgs, profiling: Bool) : async Types.CanisterInfo {
         if (info.timestamp == 0) {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot install removed canister";
@@ -122,7 +122,6 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot find canister";
         } else {
-            let profiling = Option.get(info.profiling, false);
             let config = {
                 profiling;
                 remove_cycles_add = true;
@@ -238,7 +237,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         switch(sanitizeInputs(caller, canister_id)) {
             case (#ok info) {
                 let args = { arg; wasm_module; mode; canister_id; };
-                ignore await installCode(info, args);
+                ignore await installCode(info, args, pool.profiling caller); // inherit the profling of the parent
             };
             case (#err makeMsg) throw Error.reject(makeMsg "install_code");
         }

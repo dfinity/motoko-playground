@@ -34,7 +34,6 @@ module {
     public type CanisterInfo = {
         id: Principal;
         timestamp: Int;
-        profiling: ?Bool;
     };
     func canisterInfoCompare(x: CanisterInfo, y: CanisterInfo): {#less;#equal;#greater} {
         if (x.timestamp < y.timestamp) { #less }
@@ -70,7 +69,7 @@ module {
                         if (elapsed >= ttl) {
                             // Lazily cleanup pool state before reusing canister
                             tree.remove info;
-                            let newInfo = { timestamp = now; id = info.id; profiling = ?false };
+                            let newInfo = { timestamp = now; id = info.id; };
                             tree.insert newInfo;
                             metadata.put(newInfo.id, (newInfo.timestamp, false));
                             deleteFamilyNode(newInfo.id);
@@ -94,22 +93,21 @@ module {
 
         public func find(info: CanisterInfo) : Bool = tree.find info;
         public func findId(id: Principal) : Bool = Option.isSome(metadata.get id);
+        public func profiling(id: Principal) : Bool = Option.getMapped<(Int, Bool), Bool>(metadata.get id, func p = p.1, false);
 
         public func info(id: Principal) : ?CanisterInfo {
             do ? {
-                let (timestamp, profiling) = metadata.get(id)!;
-                { timestamp; id; profiling = ?profiling}
+                let (timestamp, _) = metadata.get(id)!;
+                { timestamp; id }
             }
         };
-
-        private func unwrapProfiling(info: CanisterInfo) : Bool = Option.get(info.profiling, false);
 
         public func refresh(info: CanisterInfo, profiling: Bool) : ?CanisterInfo {
             if (not tree.find info) { return null };
             tree.remove info;
-            let newInfo = { timestamp = Time.now(); id = info.id; profiling = ?profiling };
+            let newInfo = { timestamp = Time.now(); id = info.id };
             tree.insert newInfo;
-            metadata.put(newInfo.id, (newInfo.timestamp, unwrapProfiling newInfo));
+            metadata.put(newInfo.id, (newInfo.timestamp, profiling));
             ?newInfo
         };
 
@@ -119,7 +117,7 @@ module {
             };
             let id = info.id;
             tree.remove info;
-            tree.insert { timestamp = 0; id; profiling = ?false; };
+            tree.insert { timestamp = 0; id };
             metadata.put(id, (0, false));
             deleteFamilyNode id;
             return true;
@@ -140,8 +138,9 @@ module {
             result
         };
 
-        public func share() : ([CanisterInfo], [(Principal, [Principal])]) {
+        public func share() : ([CanisterInfo], [(Principal, (Int, Bool))], [(Principal, [Principal])]) {
             let stableInfos = Iter.toArray(tree.entries());
+            let stableMetadata = Iter.toArray(metadata.entries());
             let stableChildrens = 
                 Iter.toArray(
                     Iter.map<(Principal, List.List<Principal>), (Principal, [Principal])>(
@@ -149,15 +148,22 @@ module {
                         func((parent, children)) = (parent, List.toArray(children))
                     )
                 );
-            (stableInfos, stableChildrens)
+            (stableInfos, stableMetadata, stableChildrens)
         };
 
-        public func unshare((stableInfos, stableChildrens): ([CanisterInfo], [(Principal, [Principal])])) {
+        public func unshare((stableInfos, stableMetadata, stableChildrens): ([CanisterInfo], [(Principal, (Int, Bool))], [(Principal, [Principal])])) {
             len := stableInfos.size();
             tree.fromArray stableInfos;
+
+            // Ensure that metadata reflects tree
+            let profilingMap = TrieMap.fromEntries<Principal, (Int, Bool)>(Iter.fromArray stableMetadata, Principal.equal, Principal.hash);
             Iter.iterate<CanisterInfo>(
                 stableInfos.vals(),
-                func(info, _) = metadata.put(info.id, (info.timestamp, unwrapProfiling info)));
+                func(info, _) {
+                    let profiling = Option.getMapped<(Int, Bool), Bool>(profilingMap.get(info.id), func p = p.1, false);
+                    metadata.put(info.id, (info.timestamp, profiling));
+                    }
+                );
 
             childrens := 
                 TrieMap.fromEntries(
