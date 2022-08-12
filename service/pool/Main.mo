@@ -5,6 +5,7 @@ import Option "mo:base/Option";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import Array "mo:base/Array";
+import List "mo:base/List";
 import Result "mo:base/Result";
 import Principal "mo:base/Principal";
 import Types "./Types";
@@ -168,6 +169,13 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         stats := Logs.defaultStats;
     };
 
+    public shared({caller}) func getChildren(parent: Principal) : async [Principal] {
+        if (caller != controller) {
+            throw Error.reject "Only called by controller"; 
+        };
+        List.toArray(pool.getChildren parent)
+    };
+
     // Metrics
     public query func http_request(req: Metrics.HttpRequest): async Metrics.HttpResponse {
         if (req.url == "/metrics") {
@@ -276,6 +284,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         #balance: Any;
         #dump : Any;
         #getCanisterId : Any;
+        #getChildren: Any;
         #getInitParams : Any;
         #getStats : Any;
         #http_request : Any;
@@ -283,7 +292,6 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         #removeCode : Any;
         #resetStats : Any;
         #wallet_receive : Any;
-
 
         #create_canister : Any;
         #update_settings : Any;

@@ -1,0 +1,7 @@
+service : {
+  makeChild: (nat) -> ();
+  removeChild: (nat) -> ();
+  sayHi: (nat) -> (opt text);
+  startCanister: (nat) -> ();
+  stopChild: (nat) -> ();
+}

@@ -183,12 +183,15 @@ module {
             parents := TrieMap.fromEntries(parentsEntries.vals(), Principal.equal, Principal.hash);
         };
 
+        public func getChildren(parent: Principal) : List.List<Principal> {
+            switch(childrens.get parent) {
+                case null List.nil();
+                case (?children) children;
+            }
+        };
+
         public func setChild(parent: Principal, child: Principal) : Bool {
-            let children =
-                switch (childrens.get parent) {
-                    case null List.nil();
-                    case (?children) children;
-                };
+            let children = getChildren parent;
             if (List.size children >= max_num_children) {
                 return false;
             };
