@@ -30,12 +30,10 @@ jobs:
           chmod a+x /usr/local/bin/vessel
       - name: Build
         run: |
-          dfx cache install
-          dfx start --background
           npm install
-          dfx deploy --argument '(null)'
-          cd ./service/pool/tests/actor_class
           dfx start --background
+          dfx deploy --argument '(null)'
+          cd service/pool/tests/actor_class
           dfx canister create Parent
           dfx build Parent
       - name: Test
