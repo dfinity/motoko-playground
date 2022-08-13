@@ -44,7 +44,7 @@ jobs:
           wget https://github.com/dfinity/vessel/releases/download/$VESSEL_VERSION/vessel-linux64
           cp ./vessel-linux64 /usr/local/bin/vessel
           chmod a+x /usr/local/bin/vessel
-          apt install binaryen
+          sudo apt-get install -y binaryen
       - name: Start dfx
         run: |
           dfx cache install
