@@ -55,9 +55,9 @@ export function CandidUI({
   const [isExpanded, setIsExpanded] = useState(true);
   const candidFrameRef = useRef<HTMLIFrameElement>(null);
   const didParam =
-    candid && candid.length < 2048
+    candid && candid.length < 2000
       ? `&did=${encodeURIComponent(btoa(candid))}`
-      : "";
+      : "&external-config";
 
   const url =
     `${CANDID_UI_CANISTER_URL}/?id=${canisterId}&tag=${forceUpdate}` + didParam;
@@ -70,6 +70,7 @@ export function CandidUI({
     setIsExpanded(true);
   }, [canisterId, candid, forceUpdate]);
   useEffect(() => {
+    // Handle incoming messages from iframe
     const handleMessage = ({ origin, source, data }) => {
       const frame = candidFrameRef.current;
       if (frame) {
@@ -103,6 +104,21 @@ export function CandidUI({
     return () => window.removeEventListener("message", handleMessage);
   }, [onMessage, url]);
 
+  const handleLoadFrame = (event) => {
+    // Configure candid using iframe message
+    const message = {
+      type: "config",
+      config: {
+        candid: candid ? encodeURIComponent(btoa(candid)) : undefined,
+        // TODO: add more configuration options?
+      },
+    };
+    event.target.contentWindow?.postMessage(
+      `${CANDID_UI_MESSAGE_PREFIX}${JSON.stringify(message)}`,
+      CANDID_UI_CANISTER_URL
+    );
+  };
+
   return (
     <CandidPanel isExpanded={isExpanded}>
       <PanelHeader>
@@ -128,7 +144,9 @@ export function CandidUI({
           </Button>
         ) : null}
       </PanelHeader>
-      {isExpanded ? <CandidFrame ref={candidFrameRef} src={url} /> : null}
+      {isExpanded ? (
+        <CandidFrame ref={candidFrameRef} src={url} onLoad={handleLoadFrame} />
+      ) : null}
     </CandidPanel>
   );
 }
