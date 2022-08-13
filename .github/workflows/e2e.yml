@@ -1,0 +1,57 @@
+name: e2e
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    env:
+      DFX_VERSION: 0.11.0
+      VESSEL_VERSION: v0.6.3
+      IC_REPL_VERSION: 0.2.0
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: wasm32-unknown-unknown
+          components: rustfmt, clippy
+      - name: Cache cargo build
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            service/wasm-utils/target
+          key: cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install dfx
+        run: |
+          echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+          wget https://github.com/dfinity/vessel/releases/download/$VESSEL_VERSION/vessel-linux64
+          cp ./vessel-linux64 /usr/local/bin/vessel
+          chmod a+x /usr/local/bin/vessel
+          apt install binaryen
+      - name: Start dfx
+        run: |
+          dfx cache install
+          dfx start --background
+      - name: dfx deploy
+        run: |
+          npm install
+          dfx deploy
+      - name: Stop dfx
+        run: dfx stop
