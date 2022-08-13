@@ -47,10 +47,9 @@ jobs:
       - name: deploy main branch
         if: github.event_name == 'pull_request'
         run: |
-          echo "::set-env name=BRANCH_NAME::$(echo ${GITHUB_HEAD_REF})"
           git checkout main
           dfx deploy backend
-          git checkout $BRANCH_NAME
+          git checkout ${GITHUB_HEAD_REF}
       - name: deploy current branch
         run: |
           dfx deploy backend
