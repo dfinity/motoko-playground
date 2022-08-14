@@ -36,6 +36,9 @@ jobs:
       - name: Install dfx
         run: |
           echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+          wget https://github.com/chenyan2002/ic-repl/releases/download/$IC_REPL_VERSION/ic-repl-linux64
+          cp ./ic-repl-linux64 /usr/local/bin/ic-repl
+          chmod a+x /usr/local/bin/ic-repl
           wget https://github.com/dfinity/vessel/releases/download/$VESSEL_VERSION/vessel-linux64
           cp ./vessel-linux64 /usr/local/bin/vessel
           chmod a+x /usr/local/bin/vessel
