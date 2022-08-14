@@ -109,7 +109,7 @@ export function CandidUI({
     const message = {
       type: "config",
       config: {
-        candid: candid ? encodeURIComponent(btoa(candid)) : undefined,
+        candid: candid ? btoa(candid) : undefined,
         // TODO: add more configuration options?
       },
     };
