@@ -8,6 +8,7 @@ import Array "mo:base/Array";
 import List "mo:base/List";
 import Result "mo:base/Result";
 import Principal "mo:base/Principal";
+import Debug "mo:base/Debug";
 import Types "./Types";
 import ICType "./IC";
 import PoW "./PoW";
@@ -39,8 +40,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     system func postupgrade() {
         ignore do ? {
             if (previousParam!.max_num_canisters > params.max_num_canisters) {
-                //throw Error.reject("Cannot reduce canisterPool for upgrade");
-                assert false;
+                Debug.trap("Cannot reduce canisterPool for upgrade");
             }
         };
         pool.unshare(stablePool, stableMetadata, stableChildren);
