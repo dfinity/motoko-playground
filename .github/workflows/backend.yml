@@ -66,6 +66,6 @@ jobs:
           cd ./service/pool/tests/actor_class
           dfx canister create Parent
           dfx build Parent
-          ic-repl service/pool/tests/actor_class/test.sh
+          ic-repl ./test.sh
       - name: Stop dfx
         run: dfx stop
