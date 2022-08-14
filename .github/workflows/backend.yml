@@ -55,11 +55,17 @@ jobs:
           git checkout ${GITHUB_HEAD_REF}
       - name: Deploy current branch
         run: dfx deploy backend
-      - name: Test
+      - name: CanisterPool test
         run: |
           (for f in service/pool/tests/*.test.sh; do
             echo "==== Run test $f ===="
             ic-repl -r http://localhost:8000 "$f" || exit
           done)
+      - name: Actor class test
+        run: |
+          cd ./service/pool/tests/actor_class
+          dfx canister create Parent
+          dfx build Parent
+          ic-repl service/pool/tests/actor_class/test.sh
       - name: Stop dfx
         run: dfx stop
