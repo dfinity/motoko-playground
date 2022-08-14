@@ -52,7 +52,7 @@ let init = opt record {
   max_num_children = 3 : nat;
 };
 fail upgrade(S, wasm, init);
-assert _ ~= "assertion failed";
+assert _ ~= "Cannot reduce caniterPool for upgrade";
 // still old canister, new TTL does not apply
 fail call S.getCanisterId(nonce);
 assert _ ~= "No available canister id";
