@@ -1,4 +1,4 @@
-import "../prelude.sh";
+load "../prelude.sh";
 
 let wasm = file "../../../../.dfx/local/canisters/backend/backend.wasm";
 let parent = file ".dfx/local/canisters/Parent/Parent.wasm";
