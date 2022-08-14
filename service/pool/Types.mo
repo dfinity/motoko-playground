@@ -151,7 +151,7 @@ module {
             (stableInfos, stableMetadata, stableChildrens)
         };
 
-        public func unshare((stableInfos, stableMetadata, stableChildrens): ([CanisterInfo], [(Principal, (Int, Bool))], [(Principal, [Principal])])) {
+        public func unshare(stableInfos: [CanisterInfo], stableMetadata: [(Principal, (Int, Bool))], stableChildrens : [(Principal, [Principal])]) {
             len := stableInfos.size();
             tree.fromArray stableInfos;
 

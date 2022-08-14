@@ -44,15 +44,15 @@ jobs:
         run: |
           dfx cache install
           dfx start --background
-      - name: deploy main branch
-        if: github.event_name == 'pull_request'
+      - name: Deploy main branch
+        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
         run: |
           git checkout main
           dfx deploy backend
           git checkout ${GITHUB_HEAD_REF}
-      - name: deploy current branch
+      - name: Deploy current branch
         run: dfx deploy backend
-      - name: test
+      - name: Test
         run: |
           (for f in service/pool/tests/*.test.sh; do
             echo "==== Run test $f ===="

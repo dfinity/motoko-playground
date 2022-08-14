@@ -23,11 +23,16 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
 
     stable let controller = creator.caller;
     stable var stats = Logs.defaultStats;
-    stable var stablePool : ([Types.CanisterInfo], [(Principal, (Int, Bool))], [(Principal, [Principal])]) = ([], [], []);
+    stable var stablePool : [Types.CanisterInfo] = [];
+    stable var stableMetadata : [(Principal, (Int, Bool))] = [];
+    stable var stableChildren : [(Principal, [Principal])] = [];
     stable var previousParam : ?Types.InitParams = null;
 
     system func preupgrade() {
-        stablePool := pool.share();
+        let (tree, metadata, children) = pool.share();
+        stablePool := tree;
+        stableMetadata := metadata;
+        stableChildren := children;
         previousParam := ?params;
     };
 
@@ -38,7 +43,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 assert false;
             }
         };
-        pool.unshare stablePool;
+        pool.unshare(stablePool, stableMetadata, stableChildren);
     };
 
     public query func getInitParams() : async Types.InitParams {
