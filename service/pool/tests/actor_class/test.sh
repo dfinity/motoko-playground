@@ -57,3 +57,27 @@ fail call c1.makeChild(1);
 assert _ ~= "Canister has been uninstalled";
 call S.getCanisterId(nonce);
 call S.getCanisterId(nonce);
+
+// Security check
+let S = install(wasm, null, opt 100_000_000_000_000);
+
+let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
+let c1 = call S.getCanisterId(nonce);
+let args = record { arg = blob ""; wasm_module = parent; mode = variant { install }; canister_id = c1.id };
+call S.installCode(c1, args, false);
+
+let c2 = call S.getCanisterId(nonce);
+let args = record { arg = blob ""; wasm_module = deleter; mode = variant { install }; canister_id = c2.id };
+call S.installCode(c2, args, false);
+
+let c1 = c1.id;
+let c2 = c2.id;
+
+let child = call c1.makeChild(0);
+fail call c2.deleteCanister(child);
+assert _ ~= "Can only call delete_canister on canisters spawned by your own code";
+
+fail call S.create_canister(record { settings = null });
+assert _ ~= "canister_inspect_message explicitly refused message";
+fail call c1.updateChildSettings(0, record { settings = null });
+assert _ ~= "Cannot call update_settings from within Motoko Playground";
