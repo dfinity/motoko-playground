@@ -8,6 +8,7 @@ let init = opt record {
   max_num_canisters = 2 : nat;
   nonce_time_to_live = 1 : nat;
   canister_time_to_live = 1 : nat;
+  max_num_children = 3 : nat;
 };
 let S = install(wasm, init, null);
 
@@ -32,6 +33,7 @@ let init = opt record {
   max_num_canisters = 3 : nat;
   nonce_time_to_live = 1 : nat;
   canister_time_to_live = 3600_000_000_000 : nat;
+  max_num_children = 3 : nat; 
 };
 upgrade(S, wasm, init);
 let c5 = call S.getCanisterId(nonce);
@@ -47,9 +49,10 @@ let init = opt record {
   max_num_canisters = 1 : nat;
   nonce_time_to_live = 1 : nat;
   canister_time_to_live = 1 : nat;
+  max_num_children = 3 : nat;
 };
 fail upgrade(S, wasm, init);
-assert _ ~= "assertion failed";
+assert _ ~= "Cannot reduce canisterPool for upgrade";
 // still old canister, new TTL does not apply
 fail call S.getCanisterId(nonce);
 assert _ ~= "No available canister id";

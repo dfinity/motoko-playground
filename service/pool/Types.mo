@@ -2,7 +2,12 @@ import Principal "mo:base/Principal";
 import Splay "mo:splay";
 import Time "mo:base/Time";
 import Buffer "mo:base/Buffer";
+import TrieMap "mo:base/TrieMap";
+import TrieSet "mo:base/TrieSet";
 import Iter "mo:base/Iter";
+import Array "mo:base/Array";
+import List "mo:base/List";
+import Option "mo:base/Option";
 import Int "mo:base/Int";
 
 module {
@@ -11,12 +16,14 @@ module {
         max_num_canisters: Nat;
         canister_time_to_live: Nat;
         nonce_time_to_live: Nat;
+        max_num_children: Nat;
     };
     public let defaultParams : InitParams = {
         cycles_per_canister = 550_000_000_000;
         max_num_canisters = 100;
         canister_time_to_live = 1200_000_000_000;
         nonce_time_to_live = 300_000_000_000;
+        max_num_children = 3;
     };
     public type InstallArgs = {
         arg : Blob;
@@ -34,71 +41,195 @@ module {
         else if (x.timestamp == y.timestamp and x.id == y.id) { #equal }
         else { #greater }
     };
-    public class CanisterPool(size: Nat, TTL: Nat) {
+
+    /*
+    * Main data structure of the playground. The splay tree is the source of truth for
+    * what canisters live in the playground. Metadata map reflects the state of the tree
+    * to allow Map-style lookups on the canister data. Childrens and parents define the
+    * controller relationships for dynmically spawned canisters by actor classes.
+    */
+    public class CanisterPool(size: Nat, ttl: Nat, max_num_children: Nat) {
         var len = 0;
         var tree = Splay.Splay<CanisterInfo>(canisterInfoCompare);
+        var metadata = TrieMap.TrieMap<Principal, (Int, Bool)>(Principal.equal, Principal.hash);
+        var childrens = TrieMap.TrieMap<Principal, List.List<Principal>>(Principal.equal, Principal.hash);
+        var parents = TrieMap.TrieMap<Principal, Principal>(Principal.equal, Principal.hash);
+
         public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
+
         public func getExpiredCanisterId() : NewId {
             if (len < size) {
                 #newId
             } else {
                 switch (tree.entries().next()) {
-                case null { assert false; loop(); };
-                case (?info) {
-                         let now = Time.now();
-                         let elapsed : Nat = Int.abs(now) - Int.abs(info.timestamp);
-                         if (elapsed >= TTL) {
-                             tree.remove(info);
-                             let new_info = { timestamp = now; id = info.id };
-                             tree.insert(new_info);
-                             #reuse(new_info)
-                         } else {
-                             #outOfCapacity(TTL - elapsed)
-                         }
+                    case null { assert false; loop(); };
+                    case (?info) {
+                        let now = Time.now();
+                        let elapsed : Nat = Int.abs(now) - Int.abs(info.timestamp);
+                        if (elapsed >= ttl) {
+                            // Lazily cleanup pool state before reusing canister
+                            tree.remove info;
+                            let newInfo = { timestamp = now; id = info.id; };
+                            tree.insert newInfo;
+                            metadata.put(newInfo.id, (newInfo.timestamp, false));
+                            deleteFamilyNode(newInfo.id);
+                            #reuse newInfo
+                        } else {
+                            #outOfCapacity(ttl - elapsed)
+                        }
                      };
                 };
             };
         };
+
         public func add(info: CanisterInfo) {
             if (len >= size) {
                 assert false;
             };
             len += 1;
-            tree.insert(info);
+            tree.insert info;
+            metadata.put(info.id, (info.timestamp, false));
         };
-        public func find(info: CanisterInfo) : Bool = tree.find(info);
-        public func refresh(info: CanisterInfo) : ?CanisterInfo {
-            if (not tree.find(info)) { return null };
-            tree.remove(info);
-            let new_info = { timestamp = Time.now(); id = info.id };
-            tree.insert(new_info);
-            ?new_info
+
+        public func find(info: CanisterInfo) : Bool = tree.find info;
+        public func findId(id: Principal) : Bool = Option.isSome(metadata.get id);
+        public func profiling(id: Principal) : Bool = Option.getMapped<(Int, Bool), Bool>(metadata.get id, func p = p.1, false);
+
+        public func info(id: Principal) : ?CanisterInfo {
+            do ? {
+                let (timestamp, _) = metadata.get(id)!;
+                { timestamp; id }
+            }
         };
+
+        public func refresh(info: CanisterInfo, profiling: Bool) : ?CanisterInfo {
+            if (not tree.find info) { return null };
+            tree.remove info;
+            let newInfo = { timestamp = Time.now(); id = info.id };
+            tree.insert newInfo;
+            metadata.put(newInfo.id, (newInfo.timestamp, profiling));
+            ?newInfo
+        };
+
         public func retire(info: CanisterInfo) : Bool {
-            if (not tree.find(info)) { return false; };
-            tree.remove(info);
-            tree.insert({ timestamp = 0; id = info.id });
+            if (not tree.find info) {
+                return false;
+            };
+            let id = info.id;
+            tree.remove info;
+            tree.insert { timestamp = 0; id };
+            metadata.put(id, (0, false));
+            deleteFamilyNode id;
             return true;
         };
+
+        // Return a list of canister IDs from which to uninstall code
         public func gcList() : Buffer.Buffer<Principal> {
             let now = Time.now();
             let result = Buffer.Buffer<Principal>(len);
             for (info in tree.entries()) {
                 if (info.timestamp > 0) {
                     // assumes when timestamp == 0, uninstall_code is already done
-                    if (info.timestamp > now - TTL) { return result };
+                    if (info.timestamp > now - ttl) { return result };
                     result.add(info.id);
-                    ignore retire(info);
+                    ignore retire info;
                 }
             };
             result
         };
-        public func share() : [CanisterInfo] {
-            Iter.toArray(tree.entries())
+
+        public func share() : ([CanisterInfo], [(Principal, (Int, Bool))], [(Principal, [Principal])]) {
+            let stableInfos = Iter.toArray(tree.entries());
+            let stableMetadata = Iter.toArray(metadata.entries());
+            let stableChildrens = 
+                Iter.toArray(
+                    Iter.map<(Principal, List.List<Principal>), (Principal, [Principal])>(
+                        childrens.entries(),
+                        func((parent, children)) = (parent, List.toArray(children))
+                    )
+                );
+            (stableInfos, stableMetadata, stableChildrens)
         };
-        public func unshare(list: [CanisterInfo]) {
-            len := list.size();
-            tree.fromArray(list);
+
+        public func unshare(stableInfos: [CanisterInfo], stableMetadata: [(Principal, (Int, Bool))], stableChildrens : [(Principal, [Principal])]) {
+            len := stableInfos.size();
+            tree.fromArray stableInfos;
+
+            // Ensure that metadata reflects tree
+            let profilingMap = TrieMap.fromEntries<Principal, (Int, Bool)>(Iter.fromArray stableMetadata, Principal.equal, Principal.hash);
+            Iter.iterate<CanisterInfo>(
+                stableInfos.vals(),
+                func(info, _) {
+                    let profiling = Option.getMapped<(Int, Bool), Bool>(profilingMap.get(info.id), func p = p.1, false);
+                    metadata.put(info.id, (info.timestamp, profiling));
+                    }
+                );
+
+            childrens := 
+                TrieMap.fromEntries(
+                    Array.map<(Principal, [Principal]), (Principal, List.List<Principal>)>(
+                        stableChildrens,
+                        func((parent, children)) = (parent, List.fromArray children)
+                    ).vals(), 
+                    Principal.equal,
+                    Principal.hash
+                );
+            
+            let parentsEntries = 
+                Array.flatten(
+                    Array.map<(Principal, [Principal]), [(Principal, Principal)]>(
+                        stableChildrens, 
+                        func((parent, children)) = 
+                            Array.map<Principal, (Principal, Principal)>(
+                                children,
+                                func child = (child, parent)
+                            )
+                    )
+                );
+            parents := TrieMap.fromEntries(parentsEntries.vals(), Principal.equal, Principal.hash);
+        };
+
+        public func getChildren(parent: Principal) : List.List<Principal> {
+            switch(childrens.get parent) {
+                case null List.nil();
+                case (?children) children;
+            }
+        };
+
+        public func setChild(parent: Principal, child: Principal) : Bool {
+            let children = getChildren parent;
+            if (List.size children >= max_num_children) {
+                return false;
+            };
+            childrens.put(parent, List.push(child, children));
+            parents.put(child, parent);
+            return true;
+        };
+
+        public func isParentOf(parent: Principal, child: Principal) : Bool {
+            switch(parents.get child) {
+                case null {
+                    false
+                };
+                case (?registerdParent) {
+                    Principal.equal(registerdParent, parent)
+                };
+            };
+        };
+
+        private func deleteFamilyNode(id: Principal) {
+            // Remove children edges
+            ignore do ? {
+                List.iterate(childrens.get(id)!, parents.delete);
+            };
+            childrens.delete id;
+
+            // Remove parent edges
+            ignore do ? {
+                let parent = parents.get(id)!;
+                childrens.put(parent, List.filter<Principal>(childrens.get(parent)!, func child = not Principal.equal(child, id)));
+            };
+            parents.delete id;
         };
     };
 }
