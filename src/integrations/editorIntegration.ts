@@ -96,10 +96,9 @@ export async function setupEditorIntegration(
             const response: EditorIntegrationResponse = {
               acknowledge: message.acknowledge,
             };
-            source?.postMessage(
-              `${editorKey}${JSON.stringify(response)}`,
-              origin
-            );
+            source?.postMessage(`${editorKey}${JSON.stringify(response)}`, {
+              targetOrigin: origin,
+            });
           }
         }
       } catch (e) {
