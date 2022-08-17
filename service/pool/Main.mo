@@ -246,7 +246,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         let info = await getExpiredCanisterInfo();
         let result = pool.setChild(caller, info.id);
         if (not result) {
-            throw Error.reject("Actor classes can only spawn up to " # Nat.toText(params.max_num_children) # " children");
+            throw Error.reject("Each canister can only spawn up to " # Nat.toText(params.max_num_children) # " children");
         };
         { canister_id = info.id }
     };

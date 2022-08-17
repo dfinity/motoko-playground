@@ -22,7 +22,7 @@ assert _ == opt "Hey";
 call c1.makeChild(1);
 call c1.makeChild(2);
 fail call c1.makeChild(3);
-assert _ ~= "Actor classes can only spawn up to 3 children";
+assert _ ~= "Each canister can only spawn up to 3 children";
 
 call c1.stopChild(0);
 fail call c1.sayHi(0);
