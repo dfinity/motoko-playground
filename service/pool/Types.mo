@@ -190,9 +190,12 @@ module {
         };
 
         public func getChildren(parent: Principal) : List.List<Principal> {
+            let now = Time.now();
             switch(childrens.get parent) {
                 case null List.nil();
-                case (?children) children;
+                case (?children) {
+                         List.filter(children, func (p:Principal):Bool = Option.unwrap(info(p)).timestamp > now - ttl);
+                     }
             }
         };
 
