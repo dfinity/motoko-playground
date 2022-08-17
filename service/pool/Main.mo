@@ -6,6 +6,7 @@ import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import Array "mo:base/Array";
 import List "mo:base/List";
+import Deque "mo:base/Deque";
 import Result "mo:base/Result";
 import Principal "mo:base/Principal";
 import Debug "mo:base/Debug";
@@ -159,11 +160,28 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
     };
 
-    public query({caller}) func getChildren(parent: Types.CanisterInfo) : async [Types.CanisterInfo] {
+    public query func getSubtree(parent: Types.CanisterInfo) : async [(Principal, [Types.CanisterInfo])] {
         if (not pool.find(parent)) {
             throw Error.reject "Canister not found";
         };
-        List.toArray<Types.CanisterInfo>(List.map(pool.getChildren(parent.id), func (id: Principal): Types.CanisterInfo = Option.unwrap(pool.info(id))))
+        var result = List.nil<(Principal, [Types.CanisterInfo])>();
+        var queue = Deque.empty<Principal>();
+        queue := Deque.pushBack(queue, parent.id);
+        label l loop {
+            switch (Deque.popFront(queue)) {
+            case null break l;
+            case (?(id, tail))
+                {
+                    queue := tail;
+                    let children = List.map(pool.getChildren(id), func (child : Principal) : Types.CanisterInfo {
+                        queue := Deque.pushBack(queue, child);
+                        Option.unwrap(pool.info(child))
+                    });
+                    result := List.push((id, List.toArray children), result);
+                }
+            }
+        };
+        List.toArray(result)
     };
 
     public query({caller}) func dump() : async [Types.CanisterInfo] {
@@ -288,7 +306,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         #balance: Any;
         #dump : Any;
         #getCanisterId : Any;
-        #getChildren: Any;
+        #getSubtree: Any;
         #getInitParams : Any;
         #getStats : Any;
         #http_request : Any;

@@ -320,16 +320,24 @@ export function App() {
                   if (!message.caller) return;
                   // We have to check children for all canisters in workplaceState,
                   // because message.caller can call other canisters to spawn new children.
+                  const nameMap = Object.fromEntries(
+                    Object.entries(workplaceState.canisters).map(
+                      ([name, info]) => [info.id, name]
+                    )
+                  );
                   Object.entries(workplaceState.canisters).forEach(
                     async ([_, info]) => {
-                      const children = await backend.getChildren(info);
-                      // Assume children list is sorted by timestamp
-                      children.reverse().forEach((child, i) => {
-                        child.name = `${info.name}_${i + 1}`;
-                        child.isExternal = false;
-                        workplaceDispatch({
-                          type: "deployWorkplace",
-                          payload: { canister: child, do_not_select: true },
+                      const subtree = await backend.getSubtree(info);
+                      subtree.forEach(([parentId, children]) => {
+                        const parentName = nameMap[parentId];
+                        // Assume children is sorted by timestamp
+                        children.reverse().forEach((child, i) => {
+                          child.name = `${parentName}_${i}`;
+                          child.isExternal = false;
+                          workplaceDispatch({
+                            type: "deployWorkplace",
+                            payload: { canister: child, do_not_select: true },
+                          });
                         });
                       });
                     }
