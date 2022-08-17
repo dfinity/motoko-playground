@@ -159,6 +159,13 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
     };
 
+    public query({caller}) func getChildren(parent: Types.CanisterInfo) : async [Types.CanisterInfo] {
+        if (not pool.find(parent)) {
+            throw Error.reject "Canister not found";
+        };
+        List.toArray<Types.CanisterInfo>(List.map(pool.getChildren(parent.id), func (id: Principal): Types.CanisterInfo = Option.unwrap(pool.info(id))))
+    };
+
     public query({caller}) func dump() : async [Types.CanisterInfo] {
         if (caller != controller) {
             throw Error.reject "Only called by controller";
@@ -171,13 +178,6 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "Only called by controller"; 
         };
         stats := Logs.defaultStats;
-    };
-
-    public shared({caller}) func getChildren(parent: Principal) : async [Principal] {
-        if (caller != controller) {
-            throw Error.reject "Only called by controller"; 
-        };
-        List.toArray(pool.getChildren parent)
     };
 
     // Metrics
