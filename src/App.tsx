@@ -328,12 +328,13 @@ export function App() {
                   Object.entries(workplaceState.canisters).forEach(
                     async ([_, info]) => {
                       const subtree = await backend.getSubtree(info);
-                      subtree.forEach(([parentId, children]) => {
+                      subtree.reverse().forEach(([parentId, children]) => {
                         const parentName = nameMap[parentId];
                         // Assume children is sorted by timestamp
                         children.reverse().forEach((child, i) => {
                           child.name = `${parentName}_${i}`;
                           child.isExternal = false;
+                          nameMap[child.id] = child.name;
                           workplaceDispatch({
                             type: "deployWorkplace",
                             payload: { canister: child, do_not_select: true },
