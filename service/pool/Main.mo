@@ -20,7 +20,7 @@ import Wasm "canister:wasm-utils";
 shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     let IC : ICType.Self = actor "aaaaa-aa";
     let params = Option.get(opt_params, Types.defaultParams);
-    var pool = Types.CanisterPool(params.max_num_canisters, params.canister_time_to_live, params.max_num_children);
+    var pool = Types.CanisterPool(params.max_num_canisters, params.canister_time_to_live, params.max_family_tree_size);
     let nonceCache = PoW.NonceCache(params.nonce_time_to_live);
 
     stable let controller = creator.caller;
@@ -246,7 +246,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         let info = await getExpiredCanisterInfo();
         let result = pool.setChild(caller, info.id);
         if (not result) {
-            throw Error.reject("Each canister can only spawn up to " # Nat.toText(params.max_num_children) # " children");
+            throw Error.reject("In the Motoko Playground, each top level canister can only spawn " # Nat.toText(params.max_family_tree_size) # " descendants including itself");
         };
         { canister_id = info.id }
     };
@@ -260,7 +260,7 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         switch(sanitizeInputs(caller, canister_id)) {
             case (#ok info) {
                 let args = { arg; wasm_module; mode; canister_id; };
-                ignore await installCode(info, args, pool.profiling caller); // inherit the profling of the parent
+                ignore await installCode(info, args, pool.profiling caller); // inherit the profiling of the parent
             };
             case (#err makeMsg) throw Error.reject(makeMsg "install_code");
         }
