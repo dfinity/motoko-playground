@@ -201,26 +201,27 @@ module {
             }
         };
 
-        private func treeSize(node: Principal, now: Int) : Nat {
+        private func treeSize(node: Principal) : Nat {
             switch (parents.get node) {
                 // found root
                 case null {
-                    countActiveNodes(node, now)
+                    countActiveNodes(node)
                 };
                 case (?parent) {
-                    treeSize(parent, now)
+                    treeSize(parent)
                 }
             }
         };
 
         // Counts number of nodes in the tree rooted at root, excluding expired nodes at time `now
-        private func countActiveNodes(root: Principal, now: Int) : Nat {
+        private func countActiveNodes(root: Principal) : Nat {
             var count = 1;
+            let now = Time.now();
             ignore do ? {
                 let children = childrens.get(root)!;
                 for (child in List.toIter(children)) {
                     if (notExpired((info child)!, now)) {
-                        count := count + countActiveNodes(child, now)
+                        count := count + countActiveNodes(child)
                     }
                 };
             };
@@ -228,7 +229,7 @@ module {
         };
 
         public func setChild(parent: Principal, child: Principal) : Bool {
-            if (treeSize(parent, Time.now()) >= max_family_tree_size) {
+            if (treeSize(parent) >= max_family_tree_size) {
                 return false;
             };
             let children = getChildren parent;
