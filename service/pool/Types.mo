@@ -123,10 +123,7 @@ module {
             return true;
         };
 
-        private func notExpired(info: CanisterInfo) : Bool {
-            let now = Time.now();
-            info.timestamp > now - ttl;
-        };
+        private func notExpired(info: CanisterInfo, now: Int) : Bool = (info.timestamp > now - ttl);
 
         // Return a list of canister IDs from which to uninstall code
         public func gcList() : Buffer.Buffer<Principal> {
@@ -135,7 +132,7 @@ module {
             for (info in tree.entries()) {
                 if (info.timestamp > 0) {
                     // assumes when timestamp == 0, uninstall_code is already done
-                    if (notExpired info) { return result };
+                    if (notExpired(info, now)) { return result };
                     result.add(info.id);
                     ignore retire info;
                 }
@@ -195,35 +192,35 @@ module {
         };
 
         public func getChildren(parent: Principal) : List.List<Principal> {
-            let now = Time.now();
             switch(childrens.get parent) {
                 case null List.nil();
                 case (?children) {
-                    List.filter(children, func(p: Principal) : Bool = notExpired(Option.unwrap(info p)));
+                    let now = Time.now();
+                    List.filter(children, func(p: Principal) : Bool = notExpired(Option.unwrap(info p), now));
                 }
             }
         };
 
-        private func treeSize(node: Principal) : Nat {
+        private func treeSize(node: Principal, now: Int) : Nat {
             switch (parents.get node) {
                 // found root
                 case null {
-                    countActiveNodes node
+                    countActiveNodes(node, now)
                 };
                 case (?parent) {
-                    treeSize parent
+                    treeSize(parent, now)
                 }
             }
         };
 
-        // Counts number of nodes in the tree rooted at root, excluding expired nodes
-        private func countActiveNodes(root: Principal) : Nat {
+        // Counts number of nodes in the tree rooted at root, excluding expired nodes at time `now
+        private func countActiveNodes(root: Principal, now: Int) : Nat {
             var count = 1;
             ignore do ? {
                 let children = childrens.get(root)!;
                 for (child in List.toIter(children)) {
-                    if (notExpired((info child)!)) {
-                        count := count + countActiveNodes child
+                    if (notExpired((info child)!, now)) {
+                        count := count + countActiveNodes(child, now)
                     }
                 };
             };
@@ -231,7 +228,7 @@ module {
         };
 
         public func setChild(parent: Principal, child: Principal) : Bool {
-            if (treeSize parent >= max_family_tree_size) {
+            if (treeSize(parent, Time.now()) >= max_family_tree_size) {
                 return false;
             };
             let children = getChildren parent;
