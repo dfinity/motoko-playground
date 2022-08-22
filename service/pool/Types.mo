@@ -16,14 +16,14 @@ module {
         max_num_canisters: Nat;
         canister_time_to_live: Nat;
         nonce_time_to_live: Nat;
-        max_num_children: Nat;
+        max_family_tree_size: Nat;
     };
     public let defaultParams : InitParams = {
         cycles_per_canister = 550_000_000_000;
         max_num_canisters = 100;
         canister_time_to_live = 1200_000_000_000;
         nonce_time_to_live = 300_000_000_000;
-        max_num_children = 3;
+        max_family_tree_size = 5;
     };
     public type InstallArgs = {
         arg : Blob;
@@ -48,7 +48,7 @@ module {
     * to allow Map-style lookups on the canister data. Childrens and parents define the
     * controller relationships for dynmically spawned canisters by actor classes.
     */
-    public class CanisterPool(size: Nat, ttl: Nat, max_num_children: Nat) {
+    public class CanisterPool(size: Nat, ttl: Nat, max_family_tree_size: Nat) {
         var len = 0;
         var tree = Splay.Splay<CanisterInfo>(canisterInfoCompare);
         var metadata = TrieMap.TrieMap<Principal, (Int, Bool)>(Principal.equal, Principal.hash);
@@ -123,6 +123,8 @@ module {
             return true;
         };
 
+        private func notExpired(info: CanisterInfo, now: Int) : Bool = (info.timestamp > now - ttl);
+
         // Return a list of canister IDs from which to uninstall code
         public func gcList() : Buffer.Buffer<Principal> {
             let now = Time.now();
@@ -130,7 +132,7 @@ module {
             for (info in tree.entries()) {
                 if (info.timestamp > 0) {
                     // assumes when timestamp == 0, uninstall_code is already done
-                    if (info.timestamp > now - ttl) { return result };
+                    if (notExpired(info, now)) { return result };
                     result.add(info.id);
                     ignore retire info;
                 }
@@ -190,20 +192,47 @@ module {
         };
 
         public func getChildren(parent: Principal) : List.List<Principal> {
-            let now = Time.now();
             switch(childrens.get parent) {
                 case null List.nil();
                 case (?children) {
-                         List.filter(children, func (p:Principal):Bool = Option.unwrap(info(p)).timestamp > now - ttl);
-                     }
+                    let now = Time.now();
+                    List.filter(children, func(p: Principal) : Bool = notExpired(Option.unwrap(info p), now));
+                }
             }
         };
 
+        private func treeSize(node: Principal) : Nat {
+            switch (parents.get node) {
+                // found root
+                case null {
+                    countActiveNodes(node)
+                };
+                case (?parent) {
+                    treeSize(parent)
+                }
+            }
+        };
+
+        // Counts number of nodes in the tree rooted at root, excluding expired nodes at time `now
+        private func countActiveNodes(root: Principal) : Nat {
+            var count = 1;
+            let now = Time.now();
+            ignore do ? {
+                let children = childrens.get(root)!;
+                for (child in List.toIter(children)) {
+                    if (notExpired((info child)!, now)) {
+                        count := count + countActiveNodes(child)
+                    }
+                };
+            };
+            count
+        };
+
         public func setChild(parent: Principal, child: Principal) : Bool {
-            let children = getChildren parent;
-            if (List.size children >= max_num_children) {
+            if (treeSize(parent) >= max_family_tree_size) {
                 return false;
             };
+            let children = getChildren parent;
             childrens.put(parent, List.push(child, children));
             parents.put(child, parent);
             return true;

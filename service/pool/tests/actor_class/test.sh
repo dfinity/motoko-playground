@@ -21,8 +21,9 @@ assert _ == opt "Hey";
 
 call c1.makeChild(1);
 call c1.makeChild(2);
-fail call c1.makeChild(3);
-assert _ ~= "Each canister can only spawn up to 3 children";
+call c1.makeChild(3);
+fail call c1.makeChild(4);
+assert _ ~= "In the Motoko Playground, each top level canister can only spawn 5 descendants including itself";
 
 call c1.stopChild(0);
 fail call c1.sayHi(0);
@@ -42,7 +43,7 @@ let init = opt record {
   max_num_canisters = 2 : nat;
   nonce_time_to_live = 1 : nat;
   canister_time_to_live = 1 : nat;
-  max_num_children = 3 : nat;
+  max_family_tree_size = 5 : nat;
 };
 let S = install(wasm, init, opt 100_000_000_000_000);
 

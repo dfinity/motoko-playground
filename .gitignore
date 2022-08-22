@@ -27,6 +27,8 @@ yarn-error.log*
 .eslintcache
 .vessel
 
+/service/wasm-utils/*.old.did
+
 # IDEs
 /.idea
 /.vscode
