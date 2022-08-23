@@ -121,6 +121,7 @@ export type WorkplaceReducerAction =
       payload: {
         /** path of file that should be updated. Should correspond to a property in state.files */
         canister: CanisterInfo;
+        do_not_select?: bool;
         /** new contents of file */
       };
     };
@@ -211,7 +212,9 @@ export const workplaceReducer = {
         const name = action.payload.canister.name!;
         return {
           ...state,
-          selectedCanister: name,
+          selectedCanister: action.payload.do_not_select
+            ? state.selectedCanister
+            : name,
           canisters: {
             ...state.canisters,
             [name]: action.payload.canister,

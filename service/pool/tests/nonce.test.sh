@@ -9,6 +9,7 @@ let init = opt record {
   max_num_canisters = 2 : nat;
   nonce_time_to_live = 3600_000_000_000 : nat;
   canister_time_to_live = 1 : nat;
+  max_family_tree_size = 5 : nat;
 };
 let S = install(wasm, init, null);
 

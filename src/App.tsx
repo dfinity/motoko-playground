@@ -317,9 +317,32 @@ export function App() {
                 }
                 forceUpdate={forceUpdate}
                 onMessage={({ origin, source, message }) => {
-                  console.log("Received message from Candid UI:", message);
-                  // TODO: handle messages as needed
-                  // workplaceDispatch({ type: "candid", payload: { message } });
+                  if (!message.caller) return;
+                  // We have to check children for all canisters in workplaceState,
+                  // because message.caller can call other canisters to spawn new children.
+                  const nameMap = Object.fromEntries(
+                    Object.entries(workplaceState.canisters).map(
+                      ([name, info]) => [info.id, name]
+                    )
+                  );
+                  Object.entries(workplaceState.canisters).forEach(
+                    async ([_, info]) => {
+                      const subtree = await backend.getSubtree(info);
+                      subtree.reverse().forEach(([parentId, children]) => {
+                        const parentName = nameMap[parentId];
+                        // Assume children is sorted by timestamp
+                        children.reverse().forEach((child, i) => {
+                          child.name = `${parentName}_${i}`;
+                          child.isExternal = false;
+                          nameMap[child.id] = child.name;
+                          workplaceDispatch({
+                            type: "deployWorkplace",
+                            payload: { canister: child, do_not_select: true },
+                          });
+                        });
+                      });
+                    }
+                  );
                 }}
               />
             ) : null}

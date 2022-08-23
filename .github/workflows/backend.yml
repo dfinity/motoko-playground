@@ -5,19 +5,37 @@ on:
     branches: [main]
   pull_request:
     paths:
-    - 'service/**'
+      - 'service/**'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
     env:
       DFX_VERSION: 0.11.0
-      IC_REPL_VERSION: 0.1.3
       VESSEL_VERSION: v0.6.3
-      CI: true
+      IC_REPL_VERSION: 0.2.0
     steps:
       - uses: actions/checkout@v2
-      - name: Install
+        with:
+          fetch-depth: 0
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: wasm32-unknown-unknown
+      - name: Cache cargo build
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            service/wasm-utils/target
+          key: cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install dfx
         run: |
           echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
           wget https://github.com/chenyan2002/ic-repl/releases/download/$IC_REPL_VERSION/ic-repl-linux64
@@ -26,20 +44,30 @@ jobs:
           wget https://github.com/dfinity/vessel/releases/download/$VESSEL_VERSION/vessel-linux64
           cp ./vessel-linux64 /usr/local/bin/vessel
           chmod a+x /usr/local/bin/vessel
-      - name: Build
+          sudo apt-get install -y binaryen
+      - name: Start dfx
         run: |
           dfx cache install
           dfx start --background
-          dfx canister create backend
-          dfx canister create wasm-utils        
-          dfx build backend
-      - name: Test
+      - name: Deploy main branch
+        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
+        run: |
+          git checkout main
+          dfx deploy backend
+          git checkout ${GITHUB_HEAD_REF}
+      - name: Deploy current branch
+        run: dfx deploy backend
+      - name: CanisterPool test
         run: |
           (for f in service/pool/tests/*.test.sh; do
             echo "==== Run test $f ===="
             ic-repl -r http://localhost:8000 "$f" || exit
           done)
-      - name: stop dfx
+      - name: Actor class test
         run: |
-          echo "dfx stop"
-          dfx stop
+          cd ./service/pool/tests/actor_class
+          dfx canister create --all
+          dfx build
+          ic-repl ./test.sh
+      - name: Stop dfx
+        run: dfx stop
