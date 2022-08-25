@@ -24,22 +24,28 @@ export const configureMonaco = (monaco) => {
     // prettier-ignore
     keywords: [
       'actor','and','async','assert','await','break','case','catch','class',
-      'continue','debug','else','false','for','func','if','in','import',
+      'continue','debug','else','false','for','from_candid','func','if','in','import',
       'module','not','null','object','or','label','let','loop','private',
-      'public','return','shared','try','throw','debug_show','query','switch',
-      'true','type','var','while','stable','flexible','system',
+      'public','return','shared','try','throw','to_candid','debug_show','query','switch',
+      'true','type','var','while','with',
     ],
-    accessmodifiers: ["public", "private", "shared"],
+    accessmodifiers: [
+      "public",
+      "private",
+      "shared",
+      "stable",
+      "flexible",
+      "system",
+    ],
     // prettier-ignore
     typeKeywords: [
       'Any','None','Null','Bool','Int','Int8','Int16','Int32','Int64','Nat',
-      'Nat8','Nat16','Nat32','Nat64','Word8','Word16','Word32','Word64','Float',
-      'Char','Text','Blob','Error','Principal',
+      'Nat8','Nat16','Nat32','Nat64','Float','Char','Text','Blob','Error','Principal',
     ],
     // prettier-ignore
     operators: [
-      '=','<','>',':','<:','?','+','-','*','/','%','**','&','|','^','<<','>>',
-      '#','==','!=','>=','<=',':=','+=','-=','*=','/=','%=','**=','&=','|=',
+      '=','<','>',':','<:','?','+','-','*','/','%','**','+%','-%','*%','**%','&','|','^','<<','>>','<<>','<>>',
+      '#','==','!=','>=','<=',':=','+=','-=','*=','/=','%=','**=','+%=','-%=','*%=','**%=','&=','|=',
       '^=','<<=','>>=','#=','->',
     ],
     symbols: /[=(){}[\].,:;@#_&\-<>`?!+*\\/]/,
