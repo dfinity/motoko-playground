@@ -164,6 +164,10 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
         if (not pool.find(parent)) {
             throw Error.reject "Canister not found";
         };
+        // Do not return subtree for non-root parent to save cost
+        if (not pool.isRoot(parent.id)) {
+            return [];
+        };
         var result = List.nil<(Principal, [Types.CanisterInfo])>();
         var queue = Deque.empty<Principal>();
         queue := Deque.pushBack(queue, parent.id);

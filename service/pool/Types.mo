@@ -201,6 +201,8 @@ module {
             }
         };
 
+        public func isRoot(node: Principal) : Bool = Option.isNull(parents.get node);
+
         private func treeSize(node: Principal) : Nat {
             switch (parents.get node) {
                 // found root

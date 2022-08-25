@@ -327,6 +327,9 @@ export function App() {
                   );
                   Object.entries(workplaceState.canisters).forEach(
                     async ([_, info]) => {
+                      if (!info.timestamp || info.isExternal) {
+                        return;
+                      }
                       const subtree = await backend.getSubtree(info);
                       subtree.reverse().forEach(([parentId, children]) => {
                         const parentName = nameMap[parentId];
