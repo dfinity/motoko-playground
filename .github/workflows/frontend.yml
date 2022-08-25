@@ -21,7 +21,7 @@ jobs:
           - 16
     env:
       DFX_VERSION: 0.11.1
-      VESSEL_VERSION: v0.6.3
+      VESSEL_VERSION: v0.6.4
       SKIP_WASM: true
     steps:
       - uses: actions/checkout@v2
