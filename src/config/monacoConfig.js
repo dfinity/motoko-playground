@@ -24,10 +24,10 @@ export const configureMonaco = (monaco) => {
     // prettier-ignore
     keywords: [
       'actor','and','async','assert','await','break','case','catch','class',
-      'continue','debug','else','false','for','func','if','in','import',
+      'continue','debug','else','false','for','from_candid','func','if','in','import',
       'module','not','null','object','or','label','let','loop','private',
-      'public','return','shared','try','throw','debug_show','query','switch',
-      'true','type','var','while','stable','flexible','system',
+      'public','return','shared','try','throw','to_candid','debug_show','query','switch',
+      'true','type','var','while','with','stable','flexible','system',
     ],
     accessmodifiers: ["public", "private", "shared"],
     // prettier-ignore
