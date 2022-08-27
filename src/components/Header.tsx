@@ -48,7 +48,7 @@ export function Header({ shareProject, openTutorial, darkMode = false }) {
       </BrandContainer>
       <ButtonContainer>
         <HeaderLink
-          href="https://sdk.dfinity.org/docs/language-guide/motoko.html"
+          href="https://internetcomputer.org/docs/current/developer-docs/build/cdks/motoko-dfinity/motoko/"
           target="_blank"
           rel="noopener noreferrer"
         >
