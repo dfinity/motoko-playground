@@ -1,4 +1,4 @@
-import { useEffect, useContext } from "react";
+import { useEffect, useContext, useRef, useState } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
 import ReactMarkdown from "react-markdown";
@@ -46,6 +46,19 @@ const MarkdownContainer = styled(EditorContainer)`
   padding: 2rem;
 `;
 
+const FormatMessage = styled.div`
+  color: #888;
+  display: flex;
+  align-content: center;
+  text-transform: none;
+
+  a {
+    display: inline-block;
+    padding-left: 0.5rem;
+    padding-right: 1rem;
+  }
+`;
+
 function setMarkers(diags, codeModel, monaco, fileName) {
   const markers = [];
   diags.forEach((d) => {
@@ -73,6 +86,8 @@ function setMarkers(diags, codeModel, monaco, fileName) {
   monaco.editor.setModelMarkers(codeModel, "moc", markers);
 }
 
+type CodeEditor = import("monaco-editor").editor.IStandaloneCodeEditor;
+
 export function Editor({
   state,
   logger,
@@ -82,6 +97,8 @@ export function Editor({
 }) {
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
+
+  const [formatted, setFormatted] = useState(false);
 
   const fileName = state.selectedFile;
   const fileCode = fileName ? state.files[fileName] : "";
@@ -105,7 +122,12 @@ export function Editor({
       fileName
     );
   };
-  const saveChanges = async (newValue) => {
+  const saveChanges = async () => {
+    const editor = editorRef.current;
+    if (!editor) {
+      return;
+    }
+    const newValue = editor.getValue();
     dispatch({
       type: "saveFile",
       payload: {
@@ -120,8 +142,29 @@ export function Editor({
 
   const debouncedSaveChanges = debounce(saveChanges, 1000, { leading: false });
 
+  const editorRef = useRef<CodeEditor | undefined>();
+  const onEditorMount = (newEditor: CodeEditor) => {
+    editorRef.current = newEditor;
+
+    newEditor.onKeyDown((e) => {
+      // Format keyboard shortcut
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.shiftKey &&
+        e.browserEvent.key === "f"
+      ) {
+        e.stopPropagation();
+        e.preventDefault();
+        formatClick();
+      }
+    });
+  };
   const onEditorChange = (newValue) => {
-    debouncedSaveChanges(newValue);
+    debouncedSaveChanges();
+  };
+  const formatClick = () => {
+    setFormatted(true);
+    editorRef.current?.getAction("editor.action.formatDocument").run();
   };
   const deployClick = async () => {
     const aliases = getActorAliases(state.canisters);
@@ -155,6 +198,25 @@ export function Editor({
       <PanelHeader>
         Editor
         <RightContainer>
+          {!!fileName.endsWith(".mo") && (
+            <>
+              {!!formatted && (
+                <FormatMessage>
+                  Formatting is experimental.
+                  <a
+                    href="https://github.com/dfinity/prettier-plugin-motoko/issues"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Report bugs here.
+                  </a>
+                </FormatMessage>
+              )}
+              <Button onClick={formatClick} variant="secondary" small>
+                <p>Format</p>
+              </Button>
+            </>
+          )}
           <Button
             onClick={deployClick}
             disabled={isDeploying}
@@ -176,8 +238,9 @@ export function Editor({
           defaultLanguage={"motoko"}
           value={fileName === "README" ? "" : fileCode}
           path={fileName}
-          onChange={onEditorChange}
           beforeMount={configureMonaco}
+          onMount={onEditorMount}
+          onChange={onEditorChange}
           options={{
             minimap: { enabled: false },
             wordWrap: "on",
