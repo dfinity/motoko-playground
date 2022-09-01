@@ -1,4 +1,4 @@
-import { useEffect, useContext, useRef } from "react";
+import { useEffect, useContext, useRef, useState } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
 import ReactMarkdown from "react-markdown";
@@ -46,6 +46,18 @@ const MarkdownContainer = styled(EditorContainer)`
   padding: 2rem;
 `;
 
+const FormatMessage = styled.div`
+  display: flex;
+  align-content: center;
+  text-transform: none;
+
+  a {
+    display: inline-block;
+    padding-left: 0.5rem;
+    padding-right: 1rem;
+  }
+`;
+
 function setMarkers(diags, codeModel, monaco, fileName) {
   const markers = [];
   diags.forEach((d) => {
@@ -84,6 +96,8 @@ export function Editor({
 }) {
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
+
+  const [formatted, setFormatted] = useState(false);
 
   const fileName = state.selectedFile;
   const fileCode = fileName ? state.files[fileName] : "";
@@ -143,6 +157,7 @@ export function Editor({
     debouncedSaveChanges(newValue);
   };
   const formatClick = () => {
+    setFormatted(true);
     editorRef.current?.getAction("editor.action.formatDocument").run();
   };
   const deployClick = async () => {
@@ -178,9 +193,23 @@ export function Editor({
         Editor
         <RightContainer>
           {!!fileName.endsWith(".mo") && (
-            <Button onClick={formatClick} variant="secondary" small>
-              <p>Format</p>
-            </Button>
+            <>
+              {!!formatted && (
+                <FormatMessage>
+                  Formatting is experimental.
+                  <a
+                    href="https://github.com/dfinity/prettier-plugin-motoko/issues"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Report bugs here.
+                  </a>
+                </FormatMessage>
+              )}
+              <Button onClick={formatClick} variant="secondary" small>
+                <p>Format</p>
+              </Button>
+            </>
           )}
           <Button
             onClick={deployClick}
