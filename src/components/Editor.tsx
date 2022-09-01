@@ -1,4 +1,4 @@
-import { useEffect, useContext } from "react";
+import { useEffect, useContext, useRef } from "react";
 import styled from "styled-components";
 import MonacoEditor, { useMonaco } from "@monaco-editor/react";
 import ReactMarkdown from "react-markdown";
@@ -73,6 +73,8 @@ function setMarkers(diags, codeModel, monaco, fileName) {
   monaco.editor.setModelMarkers(codeModel, "moc", markers);
 }
 
+type CodeEditor = import("monaco-editor").editor.IStandaloneCodeEditor;
+
 export function Editor({
   state,
   logger,
@@ -120,8 +122,15 @@ export function Editor({
 
   const debouncedSaveChanges = debounce(saveChanges, 1000, { leading: false });
 
+  const editorRef = useRef<CodeEditor | undefined>();
+  const onEditorMount = (newEditor: CodeEditor) => {
+    editorRef.current = newEditor;
+  };
   const onEditorChange = (newValue) => {
     debouncedSaveChanges(newValue);
+  };
+  const formatClick = () => {
+    editorRef.current?.getAction("editor.action.formatDocument").run();
   };
   const deployClick = async () => {
     const aliases = getActorAliases(state.canisters);
@@ -156,6 +165,15 @@ export function Editor({
         Editor
         <RightContainer>
           <Button
+            onClick={formatClick}
+            // disabled={isDeploying}
+            variant="secondary"
+            small
+          >
+            {/* <img src={isDeploying ? iconSpin : iconRabbit} alt="Rabbit icon" /> */}
+            <p>Format</p>
+          </Button>
+          <Button
             onClick={deployClick}
             disabled={isDeploying}
             variant="primary"
@@ -176,8 +194,9 @@ export function Editor({
           defaultLanguage={"motoko"}
           value={fileName === "README" ? "" : fileCode}
           path={fileName}
-          onChange={onEditorChange}
           beforeMount={configureMonaco}
+          onMount={onEditorMount}
+          onChange={onEditorChange}
           options={{
             minimap: { enabled: false },
             wordWrap: "on",
