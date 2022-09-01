@@ -178,13 +178,7 @@ export function Editor({
         Editor
         <RightContainer>
           {!!fileName.endsWith(".mo") && (
-            <Button
-              onClick={formatClick}
-              // disabled={isDeploying}
-              variant="secondary"
-              small
-            >
-              {/* <img src={isDeploying ? iconSpin : iconRabbit} alt="Rabbit icon" /> */}
+            <Button onClick={formatClick} variant="secondary" small>
               <p>Format</p>
             </Button>
           )}
