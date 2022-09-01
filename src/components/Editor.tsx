@@ -125,6 +125,19 @@ export function Editor({
   const editorRef = useRef<CodeEditor | undefined>();
   const onEditorMount = (newEditor: CodeEditor) => {
     editorRef.current = newEditor;
+
+    newEditor.onKeyDown((e) => {
+      // Format keyboard shortcut
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.shiftKey &&
+        e.browserEvent.key === "f"
+      ) {
+        e.stopPropagation();
+        e.preventDefault();
+        formatClick();
+      }
+    });
   };
   const onEditorChange = (newValue) => {
     debouncedSaveChanges(newValue);
