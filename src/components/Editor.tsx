@@ -47,6 +47,7 @@ const MarkdownContainer = styled(EditorContainer)`
 `;
 
 const FormatMessage = styled.div`
+  color: #888;
   display: flex;
   align-content: center;
   text-transform: none;
@@ -121,7 +122,12 @@ export function Editor({
       fileName
     );
   };
-  const saveChanges = async (newValue) => {
+  const saveChanges = async () => {
+    const editor = editorRef.current;
+    if (!editor) {
+      return;
+    }
+    const newValue = editor.getValue();
     dispatch({
       type: "saveFile",
       payload: {
@@ -154,7 +160,7 @@ export function Editor({
     });
   };
   const onEditorChange = (newValue) => {
-    debouncedSaveChanges(newValue);
+    debouncedSaveChanges();
   };
   const formatClick = () => {
     setFormatted(true);
