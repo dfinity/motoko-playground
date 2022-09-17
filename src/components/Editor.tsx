@@ -173,16 +173,25 @@ export function Editor({
     try {
       if (state.files["dfx.json"]) {
         const dfxConfig = JSON.parse(state.files["dfx.json"]);
-        const canisters = Object.entries(
+        const entries = Object.entries(
           dfxConfig.canisters as Record<string, any>
         ).filter(
           ([, canister]) =>
             canister?.main && (!canister.type || canister.type === "motoko")
         );
-        if (canisters.length === 1) {
-          const [name, canister] = canisters[0];
+        if (entries.length === 1) {
+          const [name, canister] = entries[0];
           canisterName = name;
           mainFile = canister.main;
+        } else if (entries.length > 1) {
+          const entry = entries.find(
+            ([, canister]) => canister.main === fileName
+          );
+          if (entry) {
+            const [name, canister] = entry;
+            canisterName = name;
+            mainFile = canister.main;
+          }
         }
       }
     } catch (err) {
@@ -212,7 +221,7 @@ export function Editor({
       await deploySetter.setWasm(undefined);
       await deploySetter.setMainFile(mainFile);
       await deploySetter.setCanisterName(
-        canisterName || getCanisterName(fileName)
+        canisterName || getCanisterName(mainFile)
       );
       await deploySetter.setShowDeployModal(true);
     }
