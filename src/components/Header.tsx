@@ -67,7 +67,7 @@ export function Header({ shareProject, openTutorial, darkMode = false }) {
         </Button>
         <Button width="16.4rem" onClick={openTutorial}>
           <img src={iconPlus} alt="Plus icon" />
-          <p>Open Tutorial</p>
+          <p>Open Example</p>
         </Button>
       </ButtonContainer>
     </StyledHeader>
