@@ -88,6 +88,10 @@ function setMarkers(diags, codeModel, monaco, fileName) {
 
 type CodeEditor = import("monaco-editor").editor.IStandaloneCodeEditor;
 
+const extensionToLanguage = {
+  mo: "motoko",
+};
+
 export function Editor({
   state,
   logger,
@@ -100,7 +104,10 @@ export function Editor({
 
   const [formatted, setFormatted] = useState(false);
 
-  const fileName = state.selectedFile;
+  const fileName: string = state.selectedFile;
+  const fileExtension = fileName.includes(".")
+    ? fileName.substring(fileName.lastIndexOf(".") + 1)
+    : "";
   const fileCode = fileName ? state.files[fileName] : "";
   // TODO
   const mainFile = fileName.endsWith(".mo")
@@ -235,7 +242,7 @@ export function Editor({
       </MarkdownContainer>
       <EditorContainer isHidden={fileName === "README"}>
         <MonacoEditor
-          defaultLanguage={"motoko"}
+          defaultLanguage={extensionToLanguage[fileExtension] || fileExtension}
           value={fileName === "README" ? "" : fileCode}
           path={fileName}
           beforeMount={configureMonaco}

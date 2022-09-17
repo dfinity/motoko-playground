@@ -35,7 +35,7 @@ export function FileModal({ isOpen, close }) {
     if (!fileName) {
       return;
     }
-    const name = fileName.endsWith(".mo") ? fileName : `${fileName}.mo`;
+    const name = fileName.includes(".") ? fileName : `${fileName}.mo`;
     await worker.Moc({ type: "save", file: name, content: "" });
     await dispatch({ type: "saveFile", payload: { path: name, contents: "" } });
     await dispatch({ type: "selectFile", payload: { path: name } });
