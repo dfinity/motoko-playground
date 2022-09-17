@@ -17,7 +17,7 @@ module {
 const dfxJson = trimContent(`
 {
   "canisters": {
-    "backend": {
+    "my_canister": {
       "type": "motoko",
       "main": "Main.mo"
     }
