@@ -34,7 +34,7 @@ export function getDeployedCanisters(
 }
 export function getShareableProject(state: WorkplaceState) {
   const files = Object.entries(state.files)
-    .filter(([name, _]) => name.endsWith(".mo"))
+    .filter(([name, _]) => name.endsWith(".mo") || name.endsWith(".json"))
     .map(([name, content]) => {
       return { name, content };
     });
