@@ -15,37 +15,37 @@ const readmeURL =
 
 export const exampleProjects: Record<string, ExampleProject> = {
   "Hello, world": {
-    repo: { dir: "motoko/echo/src", ...example },
+    repo: { dir: "motoko/echo", ...example },
     readme: `${readmeURL}/echo/README.md`,
     dfxJson: `${readmeURL}/echo/dfx.json`,
   },
   Counter: {
-    repo: { dir: "motoko/counter/src", ...example },
+    repo: { dir: "motoko/counter", ...example },
     readme: `${readmeURL}/counter/README.md`,
     dfxJson: `${readmeURL}/counter/dfx.json`,
   },
   Calculator: {
-    repo: { dir: "motoko/calc/src", ...example },
+    repo: { dir: "motoko/calc", ...example },
     readme: `${readmeURL}/calc/README.md`,
     dfxJson: `${readmeURL}/calc/dfx.json`,
   },
   "Who am I?": {
-    repo: { dir: "motoko/whoami/src", ...example },
+    repo: { dir: "motoko/whoami", ...example },
     readme: `${readmeURL}/whoami/README.md`,
     dfxJson: `${readmeURL}/whoami/dfx.json`,
   },
   "Phone Book": {
-    repo: { dir: "motoko/phone-book/src/phone-book", ...example },
+    repo: { dir: "motoko/phone-book", ...example },
     readme: `${readmeURL}/phone-book/README.md`,
     dfxJson: `${readmeURL}/phone-book/dfx.json`,
   },
   "Super Heroes": {
-    repo: { dir: "motoko/superheroes/src/superheroes", ...example },
+    repo: { dir: "motoko/superheroes", ...example },
     readme: `${readmeURL}/superheroes/README.md`,
     dfxJson: `${readmeURL}/superheores/dfx.json`,
   },
   "Random Maze": {
-    repo: { dir: "motoko/random_maze/src/random_maze", ...example },
+    repo: { dir: "motoko/random_maze/src", ...example },
     readme: `${readmeURL}/random_maze/README.md`,
     dfxJson: `${readmeURL}/random_maze/dfx.json`,
   },
@@ -55,12 +55,12 @@ export const exampleProjects: Record<string, ExampleProject> = {
     dfxJson: `${readmeURL}/life/dfx.json`,
   },
   "Publisher and Subscriber": {
-    repo: { dir: "motoko/pub-sub/src", ...example },
+    repo: { dir: "motoko/pub-sub", ...example },
     readme: `${readmeURL}/pub-sub/README.md`,
     dfxJson: `${readmeURL}/pub-sub/dfx.json`,
   },
   "Actor Classes": {
-    repo: { dir: "motoko/classes/src", ...example },
+    repo: { dir: "motoko/classes", ...example },
     readme: `${readmeURL}/classes/README.md`,
     dfxJson: `${readmeURL}/classes/dfx.json`,
   },
