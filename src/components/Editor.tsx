@@ -109,12 +109,6 @@ export function Editor({
     ? fileName.substring(fileName.lastIndexOf(".") + 1)
     : "";
   const fileCode = fileName ? state.files[fileName] : "";
-  // TODO
-  const mainFile = fileName.endsWith(".mo")
-    ? fileName
-    : state.files["Main.mo"]
-    ? "Main.mo"
-    : "";
 
   const monaco = useMonaco();
   const checkFileAddMarkers = async () => {
@@ -174,6 +168,31 @@ export function Editor({
     editorRef.current?.getAction("editor.action.formatDocument").run();
   };
   const deployClick = async () => {
+    let mainFile = "";
+    try {
+      if (state.files["dfx.json"]) {
+        console.log(state.files["dfx.json"]);
+        const dfxConfig = JSON.parse(state.files["dfx.json"]);
+        const canisters = Object.values(dfxConfig.canisters as any[]).filter(
+          (canister) =>
+            canister?.main && (!canister.type || canister.type === "motoko")
+        );
+        if (canisters.length === 1) {
+          mainFile = canisters[0].main;
+        }
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+    if (!mainFile) {
+      mainFile = fileName.endsWith(".mo")
+        ? fileName
+        : state.files["Main.mo"]
+        ? "Main.mo"
+        : state.files["main.mo"]
+        ? "main.mo"
+        : "";
+    }
     const aliases = getActorAliases(state.canisters);
     await worker.saveWorkplaceToMotoko(state.files);
     await worker.Moc({ type: "setActorAliases", list: aliases });

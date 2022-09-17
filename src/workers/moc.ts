@@ -7,6 +7,8 @@ export * from "./file";
 declare var Motoko: any;
 
 export type MocAction =
+  | { type: "list"; directory: string }
+  | { type: "read"; file: string }
   | { type: "save"; file: string; content: string }
   | { type: "remove"; file: string }
   | { type: "rename"; old: string; new: string }
