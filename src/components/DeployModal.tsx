@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { IDL, renderInput, InputBox } from "@dfinity/candid";
 
 import { Modal } from "./shared/Modal";
-import { CanisterInfo, getCanisterName, deploy, compileWasm } from "../build";
+import { CanisterInfo, deploy, compileWasm } from "../build";
 import { ILoggingStore } from "./Logger";
 import { Button } from "./shared/Button";
 import { WorkerContext } from "../contexts/WorkplaceState";
