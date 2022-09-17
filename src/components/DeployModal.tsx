@@ -90,12 +90,14 @@ export interface DeploySetter {
 
 interface DeployModalProps {
   isOpen: boolean;
-  close: () => void;
-  onDeploy: (string) => void;
-  isDeploy: (tag: boolean) => void;
+  close(): void;
+  onDeploy(info: CanisterInfo): void;
+  isDeploy(tag: boolean): void;
   canisters: Record<string, CanisterInfo>;
   ttl: bigint;
   fileName: string;
+  canisterName: string;
+  deploySetter: DeploySetter;
   wasm: Uint8Array | undefined;
   candid: string;
   initTypes: Array<IDL.Type>;
@@ -109,15 +111,16 @@ export function DeployModal({
   close,
   onDeploy,
   isDeploy,
+  deploySetter,
   canisters,
   ttl,
   fileName,
+  canisterName,
   wasm,
   candid,
   initTypes,
   logger,
 }: DeployModalProps) {
-  const [canisterName, setCanisterName] = useState("");
   const [inputs, setInputs] = useState<InputBox[]>([]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [candidWarning, setCandidWarning] = useState("");
@@ -133,12 +136,12 @@ export function DeployModal({
   const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
   const isMotoko = wasm ? false : true;
 
-  useEffect(() => {
-    if (!exceedsLimit) {
-      setCanisterName(getCanisterName(fileName));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fileName]);
+  // useEffect(() => {
+  //   if (!exceedsLimit && !canisterName) {
+  //     deploySetter.setCanisterName(getCanisterName(fileName));
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [fileName]);
 
   useEffect(() => {
     // This code is very tricky...compileResult takes time to set, so we need useEffect.

@@ -157,12 +157,14 @@ export function App() {
   const [candidCode, setCandidCode] = useState("");
   const [initTypes, setInitTypes] = useState([]);
   const [mainFile, setMainFile] = useState("");
+  const [canisterName, setCanisterName] = useState("");
   const [wasm, setWasm] = useState(undefined);
   const deploySetter: DeploySetter = {
     setMainFile,
     setInitTypes,
     setCandidCode,
     setShowDeployModal,
+    setCanisterName,
     setWasm,
   };
 
@@ -283,9 +285,11 @@ export function App() {
             close={() => setShowDeployModal(false)}
             onDeploy={deployWorkplace}
             isDeploy={setIsDeploying}
+            deploySetter={deploySetter}
             canisters={getDeployedCanisters(workplaceState.canisters)}
             ttl={TTL}
             fileName={mainFile}
+            canisterName={canisterName}
             wasm={wasm}
             candid={candidCode}
             initTypes={initTypes}

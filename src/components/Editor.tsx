@@ -17,7 +17,7 @@ import {
   WorkerContext,
   WorkplaceDispatchContext,
 } from "../contexts/WorkplaceState";
-import { compileCandid } from "../build";
+import { compileCandid, getCanisterName } from "../build";
 import { didToJs } from "../config/actor";
 import { INTEGRATION_HOOKS } from "../integrations/editorIntegration";
 
@@ -169,16 +169,20 @@ export function Editor({
   };
   const deployClick = async () => {
     let mainFile = "";
+    let canisterName = "";
     try {
       if (state.files["dfx.json"]) {
-        console.log(state.files["dfx.json"]);
         const dfxConfig = JSON.parse(state.files["dfx.json"]);
-        const canisters = Object.values(dfxConfig.canisters as any[]).filter(
-          (canister) =>
+        const canisters = Object.entries(
+          dfxConfig.canisters as Record<string, any>
+        ).filter(
+          ([, canister]) =>
             canister?.main && (!canister.type || canister.type === "motoko")
         );
         if (canisters.length === 1) {
-          mainFile = canisters[0].main;
+          const [name, canister] = canisters[0];
+          canisterName = name;
+          mainFile = canister.main;
         }
       }
     } catch (err) {
@@ -207,6 +211,9 @@ export function Editor({
       await deploySetter.setCandidCode(candid);
       await deploySetter.setWasm(undefined);
       await deploySetter.setMainFile(mainFile);
+      await deploySetter.setCanisterName(
+        canisterName || getCanisterName(fileName)
+      );
       await deploySetter.setShowDeployModal(true);
     }
   };
