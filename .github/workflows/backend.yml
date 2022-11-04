@@ -6,6 +6,7 @@ on:
   pull_request:
     paths:
       - 'service/**'
+      - '.github/workflows/backend.yml'
 
 jobs:
   build:
