@@ -1,8 +1,8 @@
 load "../prelude.sh";
 
-let wasm = file "../../../../.dfx/local/canisters/backend/backend.wasm";
-let parent = file ".dfx/local/canisters/Parent/Parent.wasm";
-let deleter = file ".dfx/local/canisters/Deleter/Deleter.wasm";
+let wasm = file("../../../../.dfx/local/canisters/backend/backend.wasm");
+let parent = file(".dfx/local/canisters/Parent/Parent.wasm");
+let deleter = file(".dfx/local/canisters/Deleter/Deleter.wasm");
 
 let S = install(wasm, null, opt 100_000_000_000_000);
 
