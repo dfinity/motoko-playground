@@ -1,7 +1,7 @@
 #!ic-repl
 load "prelude.sh";
 
-let wasm = file "../../../.dfx/local/canisters/backend/backend.wasm";
+let wasm = file("../../../.dfx/local/canisters/backend/backend.wasm");
 
 let init = opt record {
   cycles_per_canister = 105_000_000_000 : nat;

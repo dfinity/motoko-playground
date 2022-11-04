@@ -1,7 +1,7 @@
 #!ic-repl
 load "prelude.sh";
 
-let wasm = file "../../../.dfx/local/canisters/backend/backend.wasm";
+let wasm = file("../../../.dfx/local/canisters/backend/backend.wasm");
 
 identity alice;
 let init = opt record {
