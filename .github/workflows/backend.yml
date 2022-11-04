@@ -62,7 +62,7 @@ jobs:
         run: |
           (for f in service/pool/tests/*.test.sh; do
             echo "==== Run test $f ===="
-            ic-repl -r http://localhost:8000 "$f" || exit
+            ic-repl "$f" || exit
           done)
       - name: Actor class test
         run: |
