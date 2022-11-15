@@ -280,7 +280,10 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     public shared({caller}) func canister_status({ canister_id: ICType.canister_id }) : async { status: { #stopped; #stopping; #running }; memory_size: Nat; cycles: Nat; settings: ICType.definite_canister_settings; module_hash: ?Blob; } {
         switch(sanitizeInputs(caller, canister_id)) {
             case (#ok _) await IC.canister_status { canister_id };
-            case (#err makeMsg) throw Error.reject(makeMsg "canister_status");
+            case (#err makeMsg) {
+                     if (caller == canister_id) { await IC.canister_status { canister_id } }
+                     else { throw Error.reject(makeMsg "canister_status"); };
+                 };
         }
     };
 

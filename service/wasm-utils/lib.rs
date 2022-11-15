@@ -1,4 +1,4 @@
-use ic_cdk::export::candid::{CandidType, Deserialize};
+use candid::{CandidType, Deserialize};
 use serde_bytes::ByteBuf;
 
 use ic_wasm::*;
@@ -8,7 +8,7 @@ struct Config {
     profiling: bool,
     remove_cycles_add: bool,
     limit_stable_memory_page: Option<u32>,
-    backend_canister_id: Option<ic_types::Principal>,
+    backend_canister_id: Option<candid::Principal>,
 }
 
 #[ic_cdk_macros::query]
