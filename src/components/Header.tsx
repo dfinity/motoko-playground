@@ -55,7 +55,7 @@ export function Header({ shareProject, openTutorial, darkMode = false }) {
           Motoko Docs
         </HeaderLink>
         <HeaderLink
-          href="https://sdk.dfinity.org/docs/quickstart/quickstart-intro.html"
+          href="https://internetcomputer.org/docs/current/developer-docs/quickstart/hello10mins"
           target="_blank"
           rel="noopener noreferrer"
         >
