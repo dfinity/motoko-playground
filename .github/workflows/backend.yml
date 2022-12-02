@@ -6,6 +6,7 @@ on:
   pull_request:
     paths:
       - 'service/**'
+      - '.github/workflows/backend.yml'
 
 jobs:
   build:
@@ -13,9 +14,9 @@ jobs:
     strategy:
       fail-fast: false
     env:
-      DFX_VERSION: 0.11.1
+      DFX_VERSION: 0.12.0-beta.6
       VESSEL_VERSION: v0.6.4
-      IC_REPL_VERSION: 0.2.0
+      IC_REPL_VERSION: 0.3.8
     steps:
       - uses: actions/checkout@v2
         with:
@@ -61,7 +62,7 @@ jobs:
         run: |
           (for f in service/pool/tests/*.test.sh; do
             echo "==== Run test $f ===="
-            ic-repl -r http://localhost:8000 "$f" || exit
+            ic-repl "$f" || exit
           done)
       - name: Actor class test
         run: |

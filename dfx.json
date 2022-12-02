@@ -29,11 +29,5 @@
       "output": "build",
       "packtool": "vessel sources"
     }
-  },
-  "networks": {
-    "local": {
-      "bind": "localhost:8000",
-      "type": "ephemeral"
-    }
   }
 }

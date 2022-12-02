@@ -8,7 +8,6 @@ import {
 } from "dfx-generated/saved";
 
 import { idlFactory as didjs_idl } from "../didjs.did";
-import dfxConfig from "../../dfx.json";
 
 function is_local(agent) {
   const hostname = agent._host.hostname;
@@ -35,18 +34,12 @@ const uiCanisterId = is_local(agent)
   ? "rno2w-sqaaa-aaaaa-aaacq-cai"
   : "a4gq6-oaaaa-aaaab-qaa4q-cai";
 export const uiCanisterUrl = is_local(agent)
-  ? `http://${uiCanisterId}.${dfxConfig.networks.local.bind}`
+  ? `http://${uiCanisterId}.localhost:4943`
   : `https://${uiCanisterId}.raw.ic0.app`;
 export const didjs = Actor.createActor(didjs_idl, {
   agent,
   canisterId: Principal.fromText(uiCanisterId),
 });
-
-export function getUiCanisterUrl(canisterId) {
-  return is_local(agent)
-    ? `http://${canisterId}.${dfxConfig.networks.local.bind}`
-    : `https://${canisterId}.raw.ic0.app/?`;
-}
 
 export async function fetchCandidInterface(canisterId) {
   const common_interface: IDL.InterfaceFactory = ({ IDL }) =>

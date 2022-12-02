@@ -9,6 +9,7 @@ on:
       - '**.js'
       - '**.json'
       - '**.tsx'
+      - '.github/workflows/frontend.yml'
 
 jobs:
   build:
