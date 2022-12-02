@@ -17,7 +17,7 @@ import {
   WorkerContext,
   WorkplaceDispatchContext,
 } from "../contexts/WorkplaceState";
-import { compileCandid } from "../build";
+import { compileCandid, getCanisterName } from "../build";
 import { didToJs } from "../config/actor";
 import { INTEGRATION_HOOKS } from "../integrations/editorIntegration";
 
@@ -88,6 +88,10 @@ function setMarkers(diags, codeModel, monaco, fileName) {
 
 type CodeEditor = import("monaco-editor").editor.IStandaloneCodeEditor;
 
+const extensionToLanguage = {
+  mo: "motoko",
+};
+
 export function Editor({
   state,
   logger,
@@ -100,14 +104,11 @@ export function Editor({
 
   const [formatted, setFormatted] = useState(false);
 
-  const fileName = state.selectedFile;
-  const fileCode = fileName ? state.files[fileName] : "";
-  // TODO
-  const mainFile = fileName.endsWith(".mo")
-    ? fileName
-    : state.files["Main.mo"]
-    ? "Main.mo"
+  const fileName: string = state.selectedFile;
+  const fileExtension = fileName.includes(".")
+    ? fileName.substring(fileName.lastIndexOf(".") + 1)
     : "";
+  const fileCode = fileName ? state.files[fileName] : "";
 
   const monaco = useMonaco();
   const checkFileAddMarkers = async () => {
@@ -167,6 +168,44 @@ export function Editor({
     editorRef.current?.getAction("editor.action.formatDocument").run();
   };
   const deployClick = async () => {
+    let mainFile = "";
+    let canisterName = "";
+    try {
+      if (state.files["dfx.json"]) {
+        const dfxConfig = JSON.parse(state.files["dfx.json"]);
+        const entries = Object.entries(
+          dfxConfig.canisters as Record<string, any>
+        ).filter(
+          ([, canister]) =>
+            canister?.main && (!canister.type || canister.type === "motoko")
+        );
+        if (entries.length === 1) {
+          const [name, canister] = entries[0];
+          canisterName = name;
+          mainFile = canister.main;
+        } else if (entries.length > 1) {
+          const entry = entries.find(
+            ([, canister]) => canister.main === fileName
+          );
+          if (entry) {
+            const [name, canister] = entry;
+            canisterName = name;
+            mainFile = canister.main;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+    if (!mainFile) {
+      mainFile = fileName.endsWith(".mo")
+        ? fileName
+        : state.files["Main.mo"]
+        ? "Main.mo"
+        : state.files["main.mo"]
+        ? "main.mo"
+        : "";
+    }
     const aliases = getActorAliases(state.canisters);
     await worker.saveWorkplaceToMotoko(state.files);
     await worker.Moc({ type: "setActorAliases", list: aliases });
@@ -181,6 +220,9 @@ export function Editor({
       await deploySetter.setCandidCode(candid);
       await deploySetter.setWasm(undefined);
       await deploySetter.setMainFile(mainFile);
+      await deploySetter.setCanisterName(
+        canisterName || getCanisterName(mainFile)
+      );
       await deploySetter.setShowDeployModal(true);
     }
   };
@@ -235,7 +277,7 @@ export function Editor({
       </MarkdownContainer>
       <EditorContainer isHidden={fileName === "README"}>
         <MonacoEditor
-          defaultLanguage={"motoko"}
+          defaultLanguage={extensionToLanguage[fileExtension] || fileExtension}
           value={fileName === "README" ? "" : fileCode}
           path={fileName}
           beforeMount={configureMonaco}

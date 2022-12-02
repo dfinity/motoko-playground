@@ -1,5 +1,6 @@
 import * as React from "react";
 import { CanisterInfo } from "../build";
+import { defaultFiles } from "../config/defaultFiles";
 import { PackageInfo } from "../workers/file";
 
 export interface WorkplaceState {
@@ -33,7 +34,7 @@ export function getDeployedCanisters(
 }
 export function getShareableProject(state: WorkplaceState) {
   const files = Object.entries(state.files)
-    .filter(([name, _]) => name.endsWith(".mo"))
+    .filter(([name, _]) => name.endsWith(".mo") || name.endsWith(".json"))
     .map(([name, content]) => {
       return { name, content };
     });
@@ -148,7 +149,7 @@ function selectFirstFile(files: Record<string, string>): string | null {
 export const workplaceReducer = {
   /** Create initial state */
   init(props: {}): WorkplaceState {
-    const files = { "Main.mo": "" };
+    const files = { "Main.mo": defaultFiles["Main.mo"] };
     const selectedFile = "Main.mo";
     const canisters = {};
     return {

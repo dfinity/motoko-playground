@@ -1,5 +1,5 @@
 // If you would like to use the editor integration system in a production environment,
-// please submit a PR including the URL prefix for your application.
+// please submit a PR including the URL pattern for your application.
 // Read more: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage#security_concerns
 
 const ALLOWED_ORIGINS = [

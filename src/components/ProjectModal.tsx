@@ -11,6 +11,7 @@ import { ImportGitHub } from "./ImportGithub";
 import { fetchExample, exampleProjects, ExampleProject } from "../examples";
 import { WorkerContext } from "../contexts/WorkplaceState";
 import iconCaretRight from "../assets/images/icon-caret-right.svg";
+import { defaultFiles } from "../config/defaultFiles";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -71,7 +72,7 @@ export function ProjectModal({
     }
   }
   async function emptyProject() {
-    await importCode({ "Main.mo": "" });
+    await importCode({ "Main.mo": defaultFiles["Main.mo"] });
     close();
   }
 
