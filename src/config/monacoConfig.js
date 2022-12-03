@@ -2,7 +2,9 @@ import { configure } from "motoko/contrib/monaco";
 import prettier from "prettier";
 
 export const configureMonaco = (monaco) => {
-  configure(monaco);
+  configure(monaco, {
+    snippets: true,
+  });
 
   // Asynchronously load WASM
   import("prettier-plugin-motoko/lib/environments/web")
