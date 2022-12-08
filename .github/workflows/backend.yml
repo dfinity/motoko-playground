@@ -14,9 +14,9 @@ jobs:
     strategy:
       fail-fast: false
     env:
-      DFX_VERSION: 0.12.0-beta.6
+      DFX_VERSION: 0.12.1
       VESSEL_VERSION: v0.6.4
-      IC_REPL_VERSION: 0.3.8
+      IC_REPL_VERSION: 0.3.10
     steps:
       - uses: actions/checkout@v2
         with:
@@ -29,7 +29,7 @@ jobs:
           override: true
           target: wasm32-unknown-unknown
       - name: Cache cargo build
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/registry
