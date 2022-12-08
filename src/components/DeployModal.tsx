@@ -390,6 +390,7 @@ export function DeployModal({
                 >
                   <option value="copying">Copying GC (default)</option>
                   <option value="marking">Marking GC</option>
+                  <option value="generational">Generational GC</option>
                 </Field>
                 <Field
                   type="checkbox"
