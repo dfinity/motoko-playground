@@ -206,8 +206,9 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
           <img style={{ width: "1.6rem" }} src={iconPlus} alt="" />
         </MyButton>
       </CategoryTitle>
-      {Object.values(state.packages).map((info) => (
+      {Object.values(state.packages).map((info, i) => (
         <ListButton
+          key={`${info.name}${info.version}${i}`}
           onClick={() => {
             window.open(info.homepage!, "_blank");
           }}
