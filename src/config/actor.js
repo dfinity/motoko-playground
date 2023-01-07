@@ -30,9 +30,8 @@ export const saved = Actor.createActor(savedIdlFactory, {
   canisterId: savedCanisterId,
 });
 
-const uiCanisterId = is_local(agent)
-  ? "rno2w-sqaaa-aaaaa-aaacq-cai"
-  : "a4gq6-oaaaa-aaaab-qaa4q-cai";
+const uiCanisterId =
+  process.env.__CANDID_UI_CANISTER_ID || "a4gq6-oaaaa-aaaab-qaa4q-cai";
 export const uiCanisterUrl = is_local(agent)
   ? `http://${uiCanisterId}.localhost:4943`
   : `https://${uiCanisterId}.raw.ic0.app`;

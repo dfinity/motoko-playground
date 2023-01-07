@@ -332,8 +332,8 @@ export function DeployModal({
         onChange={(e) => setCanisterName(e.target.value)}
       />
       <datalist id="canisters">
-        {Object.keys(canisters).map((canister) => (
-          <option>{canister}</option>
+        {Object.keys(canisters).map((canister, i) => (
+          <option key={`${canister}${i}`}>{canister}</option>
         ))}
       </datalist>
     </>
