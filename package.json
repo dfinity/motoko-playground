@@ -48,7 +48,8 @@
     "deploy": "dfx deploy --argument '(null)'",
     "prestart": "dfx start --background || exit 0",
     "predeploy": "npm run prestart",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "postinstall": "vessel install"
   },
   "eslintConfig": {
     "extends": [
