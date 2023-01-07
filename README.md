@@ -47,12 +47,20 @@ We plan on adding many more features to make playground a full-featured web IDE 
   brew install binaryen
   ```
 
-### To run the Motoko playground locally, proceed as follows after cloning the respository.
+### To run the Motoko Playground locally, proceed as follows after cloning the respository:
 
+```sh
+npm install # Install `npm` and `vessel` dependencies
+dfx start --clean --background # Start the local replica
+dfx deploy # Create and deploy the Motoko Playground canisters
+
+npm start # Run the local development server
 ```
-npm install
-dfx start [--clean] [--background]
-dfx deploy --argument '(null)'
+
+### Deploy the Motoko Playground to your local replica using the following command:
+
+```sh
+dfx deploy
 ```
 
 ### npm audit warnings
@@ -67,7 +75,7 @@ Vulnerabilities from dev dependencies are false positives, we only aim to fix wa
 
 ## Editor Integrations
 
-Motoko Playground supports
+The Motoko Playground supports
 limited [cross-origin communication](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage). If you are
 building a custom smart contract editor or similar application, you can use the following code snippet to open a project in Motoko Playground:
 
@@ -88,7 +96,7 @@ const userPackages = [{
   dir: 'motoko/quicksort/src'
 }]
 
-// Open Motoko Playground in a new window
+// Open the Motoko Playground in a new window
 const playground = window.open(`${PLAYGROUND_ORIGIN}?post=${APP_ID}`, 'playground')
 
 // Call repeatedly until loaded (interval ID used for acknowledgement)
