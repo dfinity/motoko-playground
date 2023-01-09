@@ -315,6 +315,10 @@ export function DeployModal({
         <li>Cycle transfer instructions are silently ignored by the system.</li>
         <li>Canister can use at most 1GB of stable memory.</li>
         <li>
+          Canister can call management canister to manage itself without being
+          the controller.
+        </li>
+        <li>
           Deployed canister expires after{" "}
           {(ttl / BigInt(60_000_000_000)).toString()} minutes.
         </li>
