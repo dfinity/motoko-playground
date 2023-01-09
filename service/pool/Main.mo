@@ -234,7 +234,8 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 #err(func methodName = "Can only call " # methodName # " on canisters in the Motoko Playground")
             };
             case (?info) {
-                if (not pool.isParentOf(caller, callee)) {
+                // Also allow the canister to manage itself, as we don't allow canisters to change settings.
+                if (not (caller == callee) and not pool.isParentOf(caller, callee)) {
                     #err(func methodName = "Can only call " # methodName # " on canisters spawned by your own code")
                 } else {
                     #ok info
@@ -244,6 +245,9 @@ shared(creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     public shared({caller}) func create_canister({ settings: ?ICType.canister_settings }) : async { canister_id: ICType.canister_id } {
+        if (Option.isSome(settings)) {
+            throw Error.reject "Can only call create_canister with null settings";
+        };
         if (not pool.findId caller) {
             throw Error.reject "Only a canister managed by the Motoko Playground can call create_canister";
         };
