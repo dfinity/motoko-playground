@@ -150,11 +150,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
     };
 
-    public func callCanister(info : Types.CanisterInfo, function : Text, args : Blob) : async Blob {
-        if (info.timestamp == 0) {
-            stats := Logs.updateStats(stats, #mismatch);
-            throw Error.reject "Cannot call removed canister";
-        };
+    public func callForward(info : Types.CanisterInfo, function : Text, args : Blob) : async Blob {
         if (not pool.find info) {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot find canister";
