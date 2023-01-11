@@ -41,7 +41,7 @@
   },
   "scripts": {
     "start": "run-p frontend service",
-    "frontend": "craco start",
+    "frontend": "COLOR=1 craco start | cat",
     "service": "mo-dev --deploy",
     "build": "craco build",
     "test": "craco test -- --config=config/jest.config.js",
