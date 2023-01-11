@@ -47,7 +47,8 @@
     "test": "craco test -- --config=config/jest.config.js",
     "eject": "craco eject",
     "deploy": "dfx deploy",
-    "prestart": "dfx start --background || exit 0",
+    "clean": "dfx stop && dfx start --clean --background",
+    "prestart": "dfx start --background; [ -f .dfx/local/canister_ids.json ] || dfx deploy",
     "predeploy": "npm run prestart",
     "prepare": "husky install",
     "postinstall": "vessel install"

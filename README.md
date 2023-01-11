@@ -51,9 +51,6 @@ We plan on adding many more features to make playground a full-featured web IDE 
 
 ```sh
 npm install # Install `npm` and `vessel` dependencies
-dfx start --clean --background # Start the local replica
-dfx deploy # Create and deploy the Motoko Playground canisters
-
 npm start # Run the local development server
 ```
 
