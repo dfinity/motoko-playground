@@ -9,13 +9,16 @@ import {
 
 import { idlFactory as didjs_idl } from "../didjs.did";
 
-function is_local(agent) {
-  const hostname = agent._host.hostname;
-  return hostname === "127.0.0.1" || hostname.endsWith("localhost");
-}
+const LOCAL_PORT = 4943;
 
-export const agent = new HttpAgent({});
-if (is_local(agent)) {
+const hostname = window.location.hostname;
+const local = hostname === "127.0.0.1" || hostname.endsWith("localhost");
+
+export const agent = new HttpAgent({
+  // Prefer calling local replica directly instead of CRA proxy
+  host: local ? `http://localhost:${LOCAL_PORT}` : undefined,
+});
+if (local) {
   agent.fetchRootKey();
 }
 /**
@@ -32,11 +35,9 @@ export const saved = Actor.createActor(savedIdlFactory, {
 
 const uiCanisterId =
   process.env.__CANDID_UI_CANISTER_ID ||
-  (is_local(agent)
-    ? "rno2w-sqaaa-aaaaa-aaacq-cai"
-    : "a4gq6-oaaaa-aaaab-qaa4q-cai");
-export const uiCanisterUrl = is_local(agent)
-  ? `http://${uiCanisterId}.localhost:4943`
+  (local ? "rno2w-sqaaa-aaaaa-aaacq-cai" : "a4gq6-oaaaa-aaaab-qaa4q-cai");
+export const uiCanisterUrl = local
+  ? `http://${uiCanisterId}.localhost:${LOCAL_PORT}`
   : `https://${uiCanisterId}.raw.ic0.app`;
 export const didjs = Actor.createActor(didjs_idl, {
   agent,
