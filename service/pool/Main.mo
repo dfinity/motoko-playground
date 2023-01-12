@@ -151,11 +151,11 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     public func callForward(info : Types.CanisterInfo, function : Text, args : Blob) : async Blob {
-        if (not pool.find info) {
+        if (pool.find info) {
+            await InternetComputer.call(info.id, function, args);
+        } else {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot find canister";
-        } else {
-            await InternetComputer.call(info.id, function, args);
         };
     };
 
@@ -237,8 +237,11 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     /*
-    * The following methods are wrappers / immitations of the management canister 's methods that require controller permissions.* In general;
-    the backend is the sole controller of all playground pool canisters.Any canister that attempts to call the * management canister will be redirected here instead by the wasm transformation above.*/ private func sanitizeInputs(caller : Principal, callee : Principal) : Result.Result<Types.CanisterInfo, Text -> Text> {
+    * The following methods are wrappers / immitations of the management canister 's methods that require controller permissions.
+    * In general, the backend is the sole controller of all playground pool canisters. Any canister that attempts to call the
+    * management canister will be redirected here instead by the wasm transformation above.
+    */
+    private func sanitizeInputs(caller : Principal, callee : Principal) : Result.Result<Types.CanisterInfo, Text -> Text> {
         if (not pool.findId caller) {
             return #err(func methodName = "Only a canister managed by the Motoko Playground can call " # methodName);
         };
@@ -356,7 +359,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         msg : {
             #GCCanisters : Any;
             #balance : Any;
-            #forwardCall: Any;
+            #callForward: Any;
             #dump : Any;
             #getCanisterId : Any;
             #getSubtree : Any;
