@@ -144,7 +144,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             await IC.install_code newArgs;
             stats := Logs.updateStats(stats, #install);
             switch (pool.refresh(info, profiling)) {
-                 case (?newInfo) {
+                case (?newInfo) {
                           let job = func () : async () { await removeCode(newInfo); pool.removeTimer(newInfo.id); };
                           pool.updateTimer(newInfo.id, job);
                           newInfo;
