@@ -57,7 +57,7 @@ module {
         var childrens = TrieMap.TrieMap<Principal, List.List<Principal>>(Principal.equal, Principal.hash);
         var parents = TrieMap.TrieMap<Principal, Principal>(Principal.equal, Principal.hash);
         // A transient map of TimerId, not persisted across upgrades
-        var timers = TrieMap.TrieMap<Principal, Timer.TimerId>(Principal.equal, Principal.hash);
+        let timers = TrieMap.TrieMap<Principal, Timer.TimerId>(Principal.equal, Principal.hash);
 
         public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
 
