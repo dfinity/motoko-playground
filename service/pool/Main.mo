@@ -237,7 +237,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     /*
-    * The following methods are wrappers / immitations of the management canister 's methods that require controller permissions.
+    * The following methods are wrappers/immitations of the management canister's methods that require controller permissions.
     * In general, the backend is the sole controller of all playground pool canisters. Any canister that attempts to call the
     * management canister will be redirected here instead by the wasm transformation above.
     */
