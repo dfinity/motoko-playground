@@ -1,3 +1,7 @@
+// Polyfill for development environment (https://github.com/pmmmwh/react-refresh-webpack-plugin/issues/24)
+(global as any).$RefreshReg$ = () => {};
+(global as any).$RefreshSig$$ = () => () => {};
+
 // @ts-ignore
 importScripts("./moc.js");
 

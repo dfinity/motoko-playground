@@ -185,7 +185,9 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
               />
               <datalist id="canisters">
                 {Object.entries(canisterSet).map(([id, info]) => (
-                  <option value={id}>{info.name}</option>
+                  <option key={id} value={id}>
+                    {info.name}
+                  </option>
                 ))}
               </datalist>
               <Field
