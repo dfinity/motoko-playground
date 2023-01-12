@@ -9,6 +9,7 @@ import Array "mo:base/Array";
 import List "mo:base/List";
 import Option "mo:base/Option";
 import Int "mo:base/Int";
+import Timer "mo:base/Timer";
 
 module {
     public type InitParams = {
@@ -51,9 +52,12 @@ module {
     public class CanisterPool(size: Nat, ttl: Nat, max_family_tree_size: Nat) {
         var len = 0;
         var tree = Splay.Splay<CanisterInfo>(canisterInfoCompare);
+        // Metadata is a replicate of splay tree, which allows lookup without timestamp. Internal use only.
         var metadata = TrieMap.TrieMap<Principal, (Int, Bool)>(Principal.equal, Principal.hash);
         var childrens = TrieMap.TrieMap<Principal, List.List<Principal>>(Principal.equal, Principal.hash);
         var parents = TrieMap.TrieMap<Principal, Principal>(Principal.equal, Principal.hash);
+        // A transient map of TimerId, not persisted across upgrades
+        var timers = TrieMap.TrieMap<Principal, Timer.TimerId>(Principal.equal, Principal.hash);
 
         public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
 
@@ -123,6 +127,20 @@ module {
             return true;
         };
 
+        public func updateTimer(cid: Principal, job : () -> async ()) {
+            let tid = Timer.setTimer(#nanoseconds ttl, job);
+            switch (timers.replace(cid, tid)) {
+            case null {};
+            case (?old_id) {
+                     Timer.cancelTimer(old_id);
+                 };
+            };
+        };
+        
+        public func removeTimer(cid: Principal) {
+            timers.delete cid;
+        };
+        
         private func notExpired(info: CanisterInfo, now: Int) : Bool = (info.timestamp > now - ttl);
 
         // Return a list of canister IDs from which to uninstall code
