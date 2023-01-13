@@ -164,7 +164,7 @@ module {
         public func share() : ([CanisterInfo], [(Principal, (Int, Bool))], [(Principal, [Principal])], [CanisterInfo]) {
             let stableInfos = Iter.toArray(tree.entries());
             let stableMetadata = Iter.toArray(metadata.entries());
-            let stableChildrens = 
+            let stableChildren = 
                 Iter.toArray(
                     Iter.map<(Principal, List.List<Principal>), (Principal, [Principal])>(
                         childrens.entries(),
@@ -176,7 +176,7 @@ module {
                 tree.entries(),
                 func (info) = Option.isSome(timers.get(info.id))
               ));
-            (stableInfos, stableMetadata, stableChildrens, stableTimers)
+            (stableInfos, stableMetadata, stableChildren, stableTimers)
         };
 
         public func unshare(stableInfos: [CanisterInfo], stableMetadata: [(Principal, (Int, Bool))], stableChildrens : [(Principal, [Principal])]) {
