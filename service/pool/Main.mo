@@ -86,7 +86,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     Cycles.add topUpCycles;
                     await IC.deposit_cycles cid;
                 };
-                // Lazily cleanup the reused canister
+                // Mostly like the canister is already uninstalled by the timer. Call uninstall_code just to be safe.
                 await IC.uninstall_code cid;
                 switch (status.status) {
                     case (#stopped or #stopping) {
@@ -145,9 +145,14 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             stats := Logs.updateStats(stats, #install);
             switch (pool.refresh(info, profiling)) {
                 case (?newInfo) {
-                          let job = func () : async () { await removeCode(newInfo); pool.removeTimer(newInfo.id); };
-                          pool.updateTimer(newInfo.id, job);
-                          newInfo;
+                     func job() : async () {
+                         pool.removeTimer(newInfo.id);
+                         // It is important that the timer job checks for the timestamp first.
+                         // This prevents late-runner jobs from deleting newly installed code.
+                         await removeCode(newInfo);
+                     };
+                     pool.updateTimer(newInfo.id, job);
+                     newInfo;
                  };
                 case null { throw Error.reject "Cannot find canister" };
             };

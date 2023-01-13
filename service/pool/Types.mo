@@ -132,6 +132,8 @@ module {
             switch (timers.replace(cid, tid)) {
             case null {};
             case (?old_id) {
+                     // The old job can still run when it has expired, but the future
+                     // just started to run. To be safe, the job needs to check for timestamp.
                      Timer.cancelTimer(old_id);
                  };
             };
