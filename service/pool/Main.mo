@@ -29,13 +29,15 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     stable var stablePool : [Types.CanisterInfo] = [];
     stable var stableMetadata : [(Principal, (Int, Bool))] = [];
     stable var stableChildren : [(Principal, [Principal])] = [];
+    stable var stableTimers : [Types.CanisterInfo] = [];
     stable var previousParam : ?Types.InitParams = null;
 
     system func preupgrade() {
-        let (tree, metadata, children) = pool.share();
+        let (tree, metadata, children, timers) = pool.share();
         stablePool := tree;
         stableMetadata := metadata;
         stableChildren := children;
+        stableTimers := timers;
         previousParam := ?params;
     };
 
@@ -46,6 +48,9 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             };
         };
         pool.unshare(stablePool, stableMetadata, stableChildren);
+        for (info in stableTimers.vals()) {
+            updateTimer(info);
+        }
     };
 
     public query func getInitParams() : async Types.InitParams {
@@ -86,8 +91,9 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     Cycles.add topUpCycles;
                     await IC.deposit_cycles cid;
                 };
-                // Mostly like the canister is already uninstalled by the timer. Call uninstall_code just to be safe.
-                await IC.uninstall_code cid;
+                if (Option.isSome(status.module_hash)) {
+                    await IC.uninstall_code cid;
+                };
                 switch (status.status) {
                     case (#stopped or #stopping) {
                         await IC.start_canister cid;
@@ -145,18 +151,22 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             stats := Logs.updateStats(stats, #install);
             switch (pool.refresh(info, profiling)) {
                 case (?newInfo) {
-                     func job() : async () {
-                         pool.removeTimer(newInfo.id);
-                         // It is important that the timer job checks for the timestamp first.
-                         // This prevents late-runner jobs from deleting newly installed code.
-                         await removeCode(newInfo);
-                     };
-                     pool.updateTimer(newInfo.id, job);
+                     updateTimer(newInfo);
                      newInfo;
                  };
                 case null { throw Error.reject "Cannot find canister" };
             };
         };
+    };
+
+    func updateTimer(info: Types.CanisterInfo) {
+        func job() : async () {
+            pool.removeTimer(info.id);
+            // It is important that the timer job checks for the timestamp first.
+            // This prevents late-runner jobs from deleting newly installed code.
+            await removeCode(info);
+        };
+        pool.updateTimer(info, job);
     };
 
     public func callForward(info : Types.CanisterInfo, function : Text, args : Blob) : async Blob {

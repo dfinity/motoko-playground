@@ -56,7 +56,6 @@ module {
         var metadata = TrieMap.TrieMap<Principal, (Int, Bool)>(Principal.equal, Principal.hash);
         var childrens = TrieMap.TrieMap<Principal, List.List<Principal>>(Principal.equal, Principal.hash);
         var parents = TrieMap.TrieMap<Principal, Principal>(Principal.equal, Principal.hash);
-        // A transient map of TimerId, not persisted across upgrades
         let timers = TrieMap.TrieMap<Principal, Timer.TimerId>(Principal.equal, Principal.hash);
 
         public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
@@ -127,9 +126,11 @@ module {
             return true;
         };
 
-        public func updateTimer(cid: Principal, job : () -> async ()) {
-            let tid = Timer.setTimer(#nanoseconds ttl, job);
-            switch (timers.replace(cid, tid)) {
+        public func updateTimer(info: CanisterInfo, job : () -> async ()) {
+            let elapsed = Time.now() - info.timestamp;
+            let duration = if (elapsed > ttl) { 0 } else { Int.abs(ttl - elapsed) };
+            let tid = Timer.setTimer(#nanoseconds duration, job);
+            switch (timers.replace(info.id, tid)) {
             case null {};
             case (?old_id) {
                      // The old job can still run when it has expired, but the future
@@ -160,7 +161,7 @@ module {
             result
         };
 
-        public func share() : ([CanisterInfo], [(Principal, (Int, Bool))], [(Principal, [Principal])]) {
+        public func share() : ([CanisterInfo], [(Principal, (Int, Bool))], [(Principal, [Principal])], [CanisterInfo]) {
             let stableInfos = Iter.toArray(tree.entries());
             let stableMetadata = Iter.toArray(metadata.entries());
             let stableChildrens = 
@@ -170,7 +171,12 @@ module {
                         func((parent, children)) = (parent, List.toArray(children))
                     )
                 );
-            (stableInfos, stableMetadata, stableChildrens)
+            let stableTimers = Iter.toArray(
+              Iter.filter<CanisterInfo>(
+                tree.entries(),
+                func (info) = Option.isSome(timers.get(info.id))
+              ));
+            (stableInfos, stableMetadata, stableChildrens, stableTimers)
         };
 
         public func unshare(stableInfos: [CanisterInfo], stableMetadata: [(Principal, (Int, Bool))], stableChildrens : [(Principal, [Principal])]) {
