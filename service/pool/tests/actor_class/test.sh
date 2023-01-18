@@ -53,9 +53,7 @@ let args = record { arg = blob ""; wasm_module = parent; mode = variant { instal
 call S.installCode(c1, args, false);
 let c1 = c1.id;
 
-call c1.makeChild(0);
-fail call c1.makeChild(1);
-assert _ ~= "Canister has been uninstalled";
+fail call c1.makeChild(0);
 call S.getCanisterId(nonce);
 call S.getCanisterId(nonce);
 
