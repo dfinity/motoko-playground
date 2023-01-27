@@ -12,7 +12,7 @@
     "@types/react-dom": "^17.0.0",
     "@types/styled-components": "^5.1.10",
     "lodash.debounce": "^4.0.8",
-    "motoko": "^3.1.0",
+    "motoko": "^3.4.0",
     "prettier-plugin-motoko": "^0.1.5",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -34,7 +34,7 @@
     "http-proxy-middleware": "^2.0.6",
     "husky": "^7.0.1",
     "lint-staged": "^11.1.2",
-    "mo-dev": "^0.3.3",
+    "mo-dev": "^0.4.5",
     "prettier": "^2.7.1",
     "react-scripts": "4.0.3",
     "wasm-loader": "^1.3.0"
