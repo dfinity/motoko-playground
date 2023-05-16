@@ -21,7 +21,7 @@ jobs:
           - 14
           - 16
     env:
-      DFX_VERSION: 0.12.1
+      DFX_VERSION: 0.14.0
       VESSEL_VERSION: v0.6.4
       SKIP_WASM: true
     steps:
