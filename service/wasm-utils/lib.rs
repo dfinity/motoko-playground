@@ -15,7 +15,7 @@ struct Config {
 fn transform(wasm: ByteBuf, config: Config) -> ByteBuf {
     let mut m = walrus::Module::from_buffer(&wasm).unwrap();
     if config.profiling {
-        instrumentation::instrument(&mut m);
+        instrumentation::instrument(&mut m, &[]).unwrap();
     }
     let resource_config = limit_resource::Config {
         remove_cycles_add: config.remove_cycles_add,

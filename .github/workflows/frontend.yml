@@ -21,9 +21,10 @@ jobs:
           - 14
           - 16
     env:
-      DFX_VERSION: 0.12.1
+      DFX_VERSION: 0.14.0
       VESSEL_VERSION: v0.6.4
       SKIP_WASM: true
+      MOC_VERSION: 0.9.1
     steps:
       - uses: actions/checkout@v2
       - name: Setup Node.js ${{ matrix.node }}
@@ -38,9 +39,12 @@ jobs:
           wget https://github.com/dfinity/vessel/releases/download/$VESSEL_VERSION/vessel-linux64
           cp ./vessel-linux64 /usr/local/bin/vessel
           chmod a+x /usr/local/bin/vessel
+          dfx cache install
+          cd $(dfx cache show)
+          wget https://github.com/dfinity/motoko/releases/download/$MOC_VERSION/motoko-linux64-$MOC_VERSION.tar.gz
+          tar zxvf motoko-linux64-$MOC_VERSION.tar.gz
       - name: Start dfx
         run: |
-          dfx cache install
           dfx start --background
       - name: Build frontend
         run: |

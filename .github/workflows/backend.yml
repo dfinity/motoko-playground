@@ -14,10 +14,10 @@ jobs:
     strategy:
       fail-fast: false
     env:
-      DFX_VERSION: 0.12.2-beta.0
+      DFX_VERSION: 0.14.0
       VESSEL_VERSION: v0.6.4
-      IC_REPL_VERSION: 0.3.11
-      MOC_VERSION: 0.7.5
+      IC_REPL_VERSION: 0.3.18
+      MOC_VERSION: 0.9.1
     steps:
       - uses: actions/checkout@v2
         with:
