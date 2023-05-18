@@ -13,7 +13,7 @@ ic-cdk-macros = "0.8.0-beta.0"
 serde = "1.0"
 serde_bytes = "0.11"
 candid = "0.9.0-beta.2"
-ic-wasm = { version = "0.3.4", default-features = false }
+ic-wasm = { version = "0.3.7", default-features = false }
 walrus = "0.19"
 
 [profile.release]

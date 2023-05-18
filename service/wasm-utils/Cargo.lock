@@ -222,9 +222,9 @@ dependencies = [
 
 [[package]]
 name = "ic-wasm"
-version = "0.3.4"
+version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ded4fcb7dd2c23df850094a384f50a95d0a6eb1c9ca16b4b554237b4bee50cad"
+checksum = "c02065b062419eedf7fd94cc6721424ba4ced7370de3b129d86c6e2626e2aa84"
 dependencies = [
  "candid",
  "rustc-demangle",

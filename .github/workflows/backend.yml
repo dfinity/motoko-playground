@@ -14,9 +14,10 @@ jobs:
     strategy:
       fail-fast: false
     env:
-      DFX_VERSION: 0.12.1
+      DFX_VERSION: 0.14.0
       VESSEL_VERSION: v0.6.4
-      IC_REPL_VERSION: 0.3.10
+      IC_REPL_VERSION: 0.3.18
+      MOC_VERSION: 0.9.1
     steps:
       - uses: actions/checkout@v2
         with:
@@ -46,9 +47,12 @@ jobs:
           cp ./vessel-linux64 /usr/local/bin/vessel
           chmod a+x /usr/local/bin/vessel
           sudo apt-get install -y binaryen
+          dfx cache install
+          cd $(dfx cache show)
+          wget https://github.com/dfinity/motoko/releases/download/$MOC_VERSION/motoko-linux64-$MOC_VERSION.tar.gz
+          tar zxvf motoko-linux64-$MOC_VERSION.tar.gz
       - name: Start dfx
         run: |
-          dfx cache install
           dfx start --background
       - name: Deploy main branch
         if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
