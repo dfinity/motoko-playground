@@ -13,7 +13,7 @@
     "@types/styled-components": "^5.1.10",
     "lodash.debounce": "^4.0.8",
     "motoko": "^3.5.7",
-    "prettier-plugin-motoko": "^0.1.5",
+    "prettier-plugin-motoko": "^0.5.3",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-markdown": "^6.0.2",
