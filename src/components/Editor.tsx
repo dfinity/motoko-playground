@@ -122,12 +122,7 @@ export function Editor({
       fileName
     );
   };
-  const saveChanges = async () => {
-    const editor = editorRef.current;
-    if (!editor) {
-      return;
-    }
-    const newValue = editor.getValue();
+  const saveChanges = async (newValue) => {
     dispatch({
       type: "saveFile",
       payload: {
@@ -160,7 +155,7 @@ export function Editor({
     });
   };
   const onEditorChange = (newValue) => {
-    debouncedSaveChanges();
+    debouncedSaveChanges(newValue);
   };
   const formatClick = () => {
     setFormatted(true);

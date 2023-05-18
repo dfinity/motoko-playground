@@ -6,7 +6,7 @@
     "@dfinity/agent": "^0.15.1",
     "@dfinity/candid": "^0.15.1",
     "@dfinity/principal": "^0.15.1",
-    "@monaco-editor/react": "^4.4.6",
+    "@monaco-editor/react": "4.4.5",
     "@types/node": "^14.0.0",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
