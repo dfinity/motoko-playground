@@ -1,13 +1,14 @@
 import { configure } from "motoko/contrib/monaco";
 import prettier from "prettier";
 
+const motokoPlugin = import("prettier-plugin-motoko");
+
 export const configureMonaco = (monaco) => {
   configure(monaco, {
     snippets: true,
   });
 
-  // Asynchronously load WASM
-  import("prettier-plugin-motoko")
+  motokoPlugin
     .then((motokoPlugin) => {
       monaco.languages.registerDocumentFormattingEditProvider("motoko", {
         provideDocumentFormattingEdits(model, options, token) {
