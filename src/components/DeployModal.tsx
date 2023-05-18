@@ -124,7 +124,7 @@ export function DeployModal({
   const [stableWarning, setStableWarning] = useState("");
   const [profiling, setProfiling] = useState(false);
   const [forceGC, setForceGC] = useState(false);
-  const [gcMethod, setGCMethod] = useState("copying");
+  const [gcMethod, setGCMethod] = useState("incremental");
   const [compileResult, setCompileResult] = useState({ wasm: undefined });
   const [deployMode, setDeployMode] = useState("");
   const [startDeploy, setStartDeploy] = useState(false);
@@ -392,7 +392,8 @@ export function DeployModal({
                   value={gcMethod}
                   onChange={(e) => setGCMethod(e.target.value)}
                 >
-                  <option value="copying">Copying GC (default)</option>
+                  <option value="incremental">Incremental GC (default)</option>
+                  <option value="copying">Copying GC</option>
                   <option value="marking">Marking GC</option>
                   <option value="generational">Generational GC</option>
                 </Field>

@@ -35,7 +35,7 @@ export const saved = Actor.createActor(savedIdlFactory, {
 
 const uiCanisterId =
   process.env.__CANDID_UI_CANISTER_ID ||
-  (local ? "rno2w-sqaaa-aaaaa-aaacq-cai" : "a4gq6-oaaaa-aaaab-qaa4q-cai");
+  (local ? "bw4dl-smaaa-aaaaa-qaacq-cai" : "a4gq6-oaaaa-aaaab-qaa4q-cai");
 export const uiCanisterUrl = local
   ? `http://${uiCanisterId}.localhost:${LOCAL_PORT}`
   : `https://${uiCanisterId}.raw.ic0.app`;
