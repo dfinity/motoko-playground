@@ -16,7 +16,7 @@ jobs:
     env:
       DFX_VERSION: 0.14.0
       VESSEL_VERSION: v0.6.4
-      IC_REPL_VERSION: 0.3.18
+      IC_REPL_VERSION: 0.4.0
       MOC_VERSION: 0.9.1
     steps:
       - uses: actions/checkout@v2
