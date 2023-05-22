@@ -44,7 +44,8 @@ export const configureMonaco = (monaco) => {
             range,
             contents: [
               {
-                value: explanation,
+                // Remove Markdown heading from explanation
+                value: explanation.replace(/^# M[0-9]+\s+/, ""),
               },
             ],
           };
