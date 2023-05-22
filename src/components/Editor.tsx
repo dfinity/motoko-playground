@@ -249,6 +249,7 @@ export function Editor({
             scrollBeyondLastLine: false,
             fontSize: 16,
             tabSize: 2,
+            fixedOverflowWidgets: true,
           }}
         />
       </EditorContainer>
