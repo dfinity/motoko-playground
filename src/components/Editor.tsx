@@ -21,6 +21,9 @@ import { compileCandid } from "../build";
 import { didToJs } from "../config/actor";
 import { INTEGRATION_HOOKS } from "../integrations/editorIntegration";
 
+const errorCodes =
+  require("motoko/contrib/generated/errorCodes.json") as Record<string, string>;
+
 const EditorColumn = styled.div`
   display: flex;
   flex-direction: column;
@@ -66,6 +69,7 @@ function setMarkers(diags, codeModel, monaco, fileName) {
       // possible if the error comes from external packages
       return;
     }
+    const explanation = errorCodes[d.code];
     const severity =
       d.severity === 1
         ? monaco.MarkerSeverity.Error
@@ -75,7 +79,8 @@ function setMarkers(diags, codeModel, monaco, fileName) {
       startColumn: d.range.start.character + 1,
       endLineNumber: d.range.end.line + 1,
       endColumn: d.range.end.character + 1,
-      message: d.message,
+      message: explanation ? `${d.message}\n\n${explanation}` : d.message,
+      code: d.code,
       severity,
     };
     // Okay to push error for current file only, because we run checkFile when selectedFile changes
