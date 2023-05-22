@@ -29,34 +29,19 @@ export const configureMonaco = (monaco) => {
     })
     .catch((err) => console.error(err));
 
-  const isInDiagnosticRange = (position, diag) => {
-    if (
-      position.lineNumber < diag.startLineNumber ||
-      position.lineNumber > diag.endLineNumber
-    ) {
-      return false;
-    }
-    if (
-      position.lineNumber === diag.startLineNumber &&
-      position.column < diag.startColumn
-    ) {
-      return false;
-    }
-    if (
-      position.lineNumber === diag.endLineNumber &&
-      position.column >= diag.endColumn
-    ) {
-      return false;
-    }
-    return true;
-  };
-
   monaco.languages.registerHoverProvider("motoko", {
-    provideHover(model, position) {
+    provideHover(_model, position) {
       for (const diag of monaco.editor.getModelMarkers()) {
+        const range = new monaco.Range(
+          diag.startLineNumber,
+          diag.startColumn,
+          diag.endLineNumber,
+          diag.endColumn
+        );
         const explanation = errorCodes[diag.code];
-        if (explanation && isInDiagnosticRange(position, diag)) {
+        if (explanation && range.containsPosition(position)) {
           return {
+            range,
             contents: [
               {
                 value: explanation,
