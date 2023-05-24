@@ -30,7 +30,7 @@ export const configureMonaco = (monaco) => {
     .catch((err) => console.error(err));
 
   monaco.languages.registerHoverProvider("motoko", {
-    provideHover(_model, position) {
+    provideHover(model, position, ...args) {
       for (const diag of monaco.editor.getModelMarkers()) {
         const range = new monaco.Range(
           diag.startLineNumber,
@@ -43,6 +43,9 @@ export const configureMonaco = (monaco) => {
           return {
             range,
             contents: [
+              {
+                value: `\`\`\`text\n${diag.message}\n\`\`\``,
+              },
               {
                 // Remove Markdown heading from explanation
                 value: explanation.replace(/^# M[0-9]+\s+/, ""),
