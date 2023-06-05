@@ -11,7 +11,7 @@ struct Config {
     backend_canister_id: Option<candid::Principal>,
 }
 
-#[ic_cdk_macros::query]
+#[ic_cdk_macros::update]
 fn transform(wasm: ByteBuf, config: Config) -> ByteBuf {
     let mut m = walrus::Module::from_buffer(&wasm).unwrap();
     if config.profiling {
