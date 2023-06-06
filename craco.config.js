@@ -1,8 +1,5 @@
 const { addBeforeLoader, loaderByName } = require("@craco/craco");
-const generateAliases = require("./src/config/generateAliases");
 const webpack = require("webpack");
-
-const aliases = generateAliases();
 
 let canisterEnv;
 
@@ -36,7 +33,6 @@ function initCanisterIds() {
 initCanisterIds();
 
 const overrideWebpackConfig = ({ webpackConfig }) => {
-  webpackConfig.resolve.alias = { ...webpackConfig.resolve.alias, ...aliases };
   webpackConfig.resolve.plugins = webpackConfig.resolve.plugins.filter(
     (plugin) =>
       // Removes ModuleScopePlugin so `dfx-generated/` aliases work correctly

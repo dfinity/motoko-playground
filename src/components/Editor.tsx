@@ -76,6 +76,7 @@ function setMarkers(diags, codeModel, monaco, fileName) {
       endLineNumber: d.range.end.line + 1,
       endColumn: d.range.end.character + 1,
       message: d.message,
+      code: d.code,
       severity,
     };
     // Okay to push error for current file only, because we run checkFile when selectedFile changes
@@ -248,6 +249,7 @@ export function Editor({
             scrollBeyondLastLine: false,
             fontSize: 16,
             tabSize: 2,
+            fixedOverflowWidgets: true,
           }}
         />
       </EditorContainer>
