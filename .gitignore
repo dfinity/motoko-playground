@@ -25,7 +25,7 @@ yarn-debug.log*
 yarn-error.log*
 
 .eslintcache
-.vessel
+.mops
 
 /service/wasm-utils/*.old.did
 

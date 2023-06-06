@@ -26,31 +26,20 @@ We plan on adding many more features to make playground a full-featured web IDE 
 
 - [Install Internet Computer SDK](https://sdk.dfinity.org/docs/quickstart/local-quickstart.html)
 - [Install npm](https://nodejs.org/en/download/)
-- [Install Vessel](https://github.com/dfinity/vessel/releases)
-  - Download the latest release to your `/usr/local/bin` folder
-  - Rename from `vessel-{platform}` to `vessel`
-  - Run `chmod +x /usr/local/bin/vessel`
+- [Install mops](https://mops.one/docs/install)
+  ```
+  npm i -g ic-mops
+  ```
 - [Install Rust](https://www.rust-lang.org/tools/install)
 - Add wasm32 target to Rust
   ```
   rustup target add wasm32-unknown-unknown
   ```
-- Install binaryen
-
-  ```
-  apt install binaryen
-  ```
-
-  or
-
-  ```
-  brew install binaryen
-  ```
 
 ### To run the Motoko Playground locally, proceed as follows after cloning the respository:
 
 ```sh
-npm install # Install `npm` and `vessel` dependencies
+npm install # Install `npm` dependencies
 npm start # Run the local development server
 ```
 

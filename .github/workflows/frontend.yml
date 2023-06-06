@@ -21,8 +21,7 @@ jobs:
           - 14
           - 16
     env:
-      DFX_VERSION: 0.14.0
-      VESSEL_VERSION: v0.6.4
+      DFX_VERSION: 0.14.1
       SKIP_WASM: true
       MOC_VERSION: 0.9.1
     steps:
@@ -36,9 +35,7 @@ jobs:
       - name: Install dfx
         run: |
           echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
-          wget https://github.com/dfinity/vessel/releases/download/$VESSEL_VERSION/vessel-linux64
-          cp ./vessel-linux64 /usr/local/bin/vessel
-          chmod a+x /usr/local/bin/vessel
+          npm i -g ic-mops
           dfx cache install
           cd $(dfx cache show)
           wget https://github.com/dfinity/motoko/releases/download/$MOC_VERSION/motoko-linux64-$MOC_VERSION.tar.gz
