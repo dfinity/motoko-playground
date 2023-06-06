@@ -39,8 +39,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-      - name: Install npm packages
-        run: npm ci
       - name: Install dfx
         run: |
           echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
@@ -54,6 +52,8 @@ jobs:
       - name: Start dfx
         run: |
           dfx start --background
+      - name: Install npm packages
+        run: npm ci
       - name: Deploy main branch
         if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
         run: |
