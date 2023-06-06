@@ -33,6 +33,7 @@
     "craco-babel-loader": "^1.0.3",
     "http-proxy-middleware": "^2.0.6",
     "husky": "^7.0.1",
+    "ic-mops": "^0.14.0",
     "lint-staged": "^11.1.2",
     "mo-dev": "^0.7.1",
     "prettier": "^2.7.1",
