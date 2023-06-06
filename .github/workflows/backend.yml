@@ -15,8 +15,7 @@ jobs:
       fail-fast: false
     env:
       DFX_VERSION: 0.14.0
-      VESSEL_VERSION: v0.6.4
-      IC_REPL_VERSION: 0.3.18
+      IC_REPL_VERSION: 0.4.0
       MOC_VERSION: 0.9.1
     steps:
       - uses: actions/checkout@v2
@@ -37,16 +36,16 @@ jobs:
             ~/.cargo/git
             service/wasm-utils/target
           key: cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
       - name: Install dfx
         run: |
           echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
           wget https://github.com/chenyan2002/ic-repl/releases/download/$IC_REPL_VERSION/ic-repl-linux64
           cp ./ic-repl-linux64 /usr/local/bin/ic-repl
           chmod a+x /usr/local/bin/ic-repl
-          wget https://github.com/dfinity/vessel/releases/download/$VESSEL_VERSION/vessel-linux64
-          cp ./vessel-linux64 /usr/local/bin/vessel
-          chmod a+x /usr/local/bin/vessel
-          sudo apt-get install -y binaryen
+          npm i -g ic-mops
           dfx cache install
           cd $(dfx cache show)
           wget https://github.com/dfinity/motoko/releases/download/$MOC_VERSION/motoko-linux64-$MOC_VERSION.tar.gz
