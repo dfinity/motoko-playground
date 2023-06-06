@@ -51,8 +51,7 @@
     "clean": "dfx stop && dfx start --clean --background",
     "prestart": "dfx start --background; [ -f .dfx/local/canister_ids.json ] || dfx deploy",
     "predeploy": "npm run prestart",
-    "prepare": "husky install",
-    "postinstall": "mops install"
+    "prepare": "husky install"
   },
   "eslintConfig": {
     "extends": [
