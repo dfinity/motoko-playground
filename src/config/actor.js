@@ -1,11 +1,11 @@
 import { Actor, HttpAgent, ActorSubclass } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { IDL } from "@dfinity/candid";
-import { idlFactory, canisterId } from "dfx-generated/backend";
+import { idlFactory, canisterId } from "../declarations/backend";
 import {
   idlFactory as savedIdlFactory,
   canisterId as savedCanisterId,
-} from "dfx-generated/saved";
+} from "../declarations/saved";
 
 import { idlFactory as didjs_idl } from "../didjs.did";
 
@@ -16,17 +16,17 @@ const local = hostname === "127.0.0.1" || hostname.endsWith("localhost");
 
 export const agent = new HttpAgent({
   // Prefer calling local replica directly instead of CRA proxy
-  host: local ? `http://localhost:${LOCAL_PORT}` : undefined,
+  host: local ? `http://localhost:${LOCAL_PORT}` : "https://icp-api.io",
 });
 if (local) {
   agent.fetchRootKey();
 }
 /**
- * @type {import("@dfinity/agent").ActorSubclass<import("./backend.did.js")._SERVICE>}
+ * @type {import("@dfinity/agent").ActorSubclass<import("../declarations/backend/backend.did.js")._SERVICE>}
  */
 export const backend = Actor.createActor(idlFactory, { agent, canisterId });
 /**
- * @type {import("@dfinity/agent").ActorSubclass<import("./saved.did.js")._SERVICE>}
+ * @type {import("@dfinity/agent").ActorSubclass<import("../declarations/saved/saved.did.js")._SERVICE>}
  */
 export const saved = Actor.createActor(savedIdlFactory, {
   agent,
