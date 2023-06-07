@@ -30,7 +30,7 @@
   "defaults": {
     "build": {
       "output": "build",
-      "packtool": "npx --no ic-mops sources"
+      "packtool": "npm run --silent sources"
     }
   }
 }

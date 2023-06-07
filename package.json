@@ -49,6 +49,7 @@
     "eject": "craco eject",
     "deploy": "dfx deploy",
     "clean": "dfx stop && dfx start --clean --background",
+    "sources": "mops sources",
     "prestart": "dfx start --background; [ -f .dfx/local/canister_ids.json ] || dfx deploy",
     "predeploy": "npm run prestart",
     "prepare": "husky install",
