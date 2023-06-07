@@ -134,7 +134,11 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
                 backend_canister_id = ?Principal.fromActor(this);
             };
-            let wasm = await Wasm.transform(args.wasm_module, config);
+            let wasm = if (args.wasm_module.size() < 400000) {
+                await Wasm.transform(args.wasm_module, config);
+            } else {
+                await Wasm.transform_update(args.wasm_module, config);
+            };
             let newArgs = {
                 arg = args.arg;
                 wasm_module = wasm;
@@ -359,7 +363,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         msg : {
             #GCCanisters : Any;
             #balance : Any;
-            #callForward: Any;
+            #callForward : Any;
             #dump : Any;
             #getCanisterId : Any;
             #getSubtree : Any;

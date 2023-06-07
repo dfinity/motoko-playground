@@ -11,8 +11,7 @@ struct Config {
     backend_canister_id: Option<candid::Principal>,
 }
 
-#[ic_cdk_macros::update]
-fn transform(wasm: ByteBuf, config: Config) -> ByteBuf {
+fn do_transformation(wasm: ByteBuf, config: Config) -> ByteBuf {
     let mut m = walrus::Module::from_buffer(&wasm).unwrap();
     if config.profiling {
         instrumentation::instrument(&mut m, &[]).unwrap();
@@ -25,4 +24,15 @@ fn transform(wasm: ByteBuf, config: Config) -> ByteBuf {
     limit_resource::limit_resource(&mut m, &resource_config);
     let wasm = m.emit_wasm();
     ByteBuf::from(wasm)
+}
+
+#[ic_cdk_macros::query]
+fn transform(wasm: ByteBuf, config: Config) -> ByteBuf {
+    do_transformation(wasm, config)
+}
+
+// required for large WASMs
+#[ic_cdk_macros::update]
+fn transform_update(wasm: ByteBuf, config: Config) -> ByteBuf {
+    do_transformation(wasm, config)
 }
