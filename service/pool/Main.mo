@@ -134,7 +134,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
                 backend_canister_id = ?Principal.fromActor(this);
             };
-            let wasm = if (args.wasm_module.size() < 400000) {
+            let wasm = if (args.wasm_module.size() < 500000) {
                 await Wasm.transform(args.wasm_module, config);
             } else {
                 await Wasm.transform_update(args.wasm_module, config);
