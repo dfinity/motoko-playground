@@ -11,7 +11,7 @@
   },
   "defaults": {
     "build": {
-      "packtool": "mops sources"
+      "packtool": "npm run --prefix ../../../.. --silent sources"
     }
   }
 }
