@@ -17,12 +17,16 @@ import PoW "./PoW";
 import Logs "./Logs";
 import Metrics "./Metrics";
 import Wasm "canister:wasm-utils";
+import Blob "mo:base/Blob";
+import Buffer "mo:base/Buffer";
+import Nat32 "mo:base/Nat32";
 
 shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     let IC : ICType.Self = actor "aaaaa-aa";
     let params = Option.get(opt_params, Types.defaultParams);
     var pool = Types.CanisterPool(params.max_num_canisters, params.canister_time_to_live, params.max_family_tree_size);
     let nonceCache = PoW.NonceCache(params.nonce_time_to_live);
+    var whitelistedWasmHashes = Buffer.Buffer<Nat32>(4);
 
     stable let controller = creator.caller;
     stable var stats = Logs.defaultStats;
@@ -30,6 +34,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     stable var stableMetadata : [(Principal, (Int, Bool))] = [];
     stable var stableChildren : [(Principal, [Principal])] = [];
     stable var previousParam : ?Types.InitParams = null;
+    stable var whitelistedHashes : [Nat32] = [];
 
     system func preupgrade() {
         let (tree, metadata, children) = pool.share();
@@ -37,6 +42,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         stableMetadata := metadata;
         stableChildren := children;
         previousParam := ?params;
+        whitelistedHashes := Buffer.toArray(whitelistedWasmHashes);
     };
 
     system func postupgrade() {
@@ -46,6 +52,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             };
         };
         pool.unshare(stablePool, stableMetadata, stableChildren);
+        whitelistedWasmHashes := Buffer.fromArray(whitelistedHashes);
     };
 
     public query func getInitParams() : async Types.InitParams {
@@ -63,6 +70,46 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     public func wallet_receive() : async () {
         let amount = Cycles.available();
         ignore Cycles.accept amount;
+    };
+
+    public query func getWhitelistedWasmHashes() : async [Nat32] {
+        Buffer.toArray(whitelistedWasmHashes);
+    };
+
+    public query ({ caller }) func whitelistWasmHash(hash : Nat32) : async () {
+        if (caller != controller) {
+            throw Error.reject "Only called by controller";
+        };
+        whitelistedWasmHashes.add(hash);
+    };
+
+    public query ({ caller }) func whitelistWasm(wasm : Blob) : async () {
+        if (caller != controller) {
+            throw Error.reject "Only called by controller";
+        };
+        let hash = Blob.hash(wasm);
+        whitelistedWasmHashes.add(hash);
+    };
+
+    public query ({ caller }) func removeWhitelistedWasmHash(hash : Nat32) : async () {
+        if (caller != controller) {
+            throw Error.reject "Only called by controller";
+        };
+        switch (Buffer.indexOf<Nat32>(hash, whitelistedWasmHashes, Nat32.equal)) {
+            case (?index) ignore whitelistedWasmHashes.remove(index);
+            case null ();
+        };
+    };
+
+    public query ({ caller }) func removeWhitelistedWasm(wasm : Blob) : async () {
+        if (caller != controller) {
+            throw Error.reject "Only called by controller";
+        };
+        let hash = Blob.hash(wasm);
+        switch (Buffer.indexOf<Nat32>(hash, whitelistedWasmHashes, Nat32.equal)) {
+            case (?index) ignore whitelistedWasmHashes.remove(index);
+            case null ();
+        };
     };
 
     private func getExpiredCanisterInfo() : async Types.CanisterInfo {
@@ -134,7 +181,12 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
                 backend_canister_id = ?Principal.fromActor(this);
             };
-            let wasm = await Wasm.transform(args.wasm_module, config);
+            let wasm_hash = Blob.hash(args.wasm_module);
+            let wasm = if (Buffer.contains<Nat32>(whitelistedWasmHashes, wasm_hash, Nat32.equal)) {
+                args.wasm_module;
+            } else {
+                await Wasm.transform(args.wasm_module, config);
+            };
             let newArgs = {
                 arg = args.arg;
                 wasm_module = wasm;
@@ -359,7 +411,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         msg : {
             #GCCanisters : Any;
             #balance : Any;
-            #callForward: Any;
+            #callForward : Any;
             #dump : Any;
             #getCanisterId : Any;
             #getSubtree : Any;
@@ -370,6 +422,11 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #removeCode : Any;
             #resetStats : Any;
             #wallet_receive : Any;
+            #getWhitelistedWasmHashes : Any;
+            #whitelistWasmHash : Any;
+            #whitelistWasm : Any;
+            #removeWhitelistedWasmHash : Any;
+            #removeWhitelistedWasm : Any;
 
             #create_canister : Any;
             #update_settings : Any;
