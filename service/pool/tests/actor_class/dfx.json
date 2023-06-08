@@ -11,7 +11,7 @@
   },
   "defaults": {
     "build": {
-      "packtool": "npm run --prefix ../../../.. --silent sources"
+      "packtool": "npm run --silent sources"
     }
   }
 }
