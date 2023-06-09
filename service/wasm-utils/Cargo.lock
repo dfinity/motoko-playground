@@ -585,11 +585,13 @@ name = "wasm-utils"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "hex",
  "ic-cdk",
  "ic-cdk-macros",
  "ic-wasm",
  "serde",
  "serde_bytes",
+ "sha2",
  "walrus",
 ]
 

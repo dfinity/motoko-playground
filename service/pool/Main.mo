@@ -26,7 +26,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     let params = Option.get(opt_params, Types.defaultParams);
     var pool = Types.CanisterPool(params.max_num_canisters, params.canister_time_to_live, params.max_family_tree_size);
     let nonceCache = PoW.NonceCache(params.nonce_time_to_live);
-    var whitelistedWasmHashes = Buffer.Buffer<Nat32>(4);
+    var whitelistedWasmHashes = Buffer.Buffer<Text>(4);
 
     stable let controller = creator.caller;
     stable var stats = Logs.defaultStats;
@@ -34,7 +34,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     stable var stableMetadata : [(Principal, (Int, Bool))] = [];
     stable var stableChildren : [(Principal, [Principal])] = [];
     stable var previousParam : ?Types.InitParams = null;
-    stable var whitelistedHashes : [Nat32] = [];
+    stable var whitelistedHashes : [Text] = [];
 
     system func preupgrade() {
         let (tree, metadata, children) = pool.share();
@@ -72,41 +72,41 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         ignore Cycles.accept amount;
     };
 
-    public query func getWhitelistedWasmHashes() : async [Nat32] {
+    public query func getWhitelistedWasmHashes() : async [Text] {
         Buffer.toArray(whitelistedWasmHashes);
     };
 
-    public query ({ caller }) func whitelistWasmHash(hash : Nat32) : async () {
+    public shared ({ caller }) func whitelistWasmHash(hash : Text) : async () {
         if (caller != controller) {
             throw Error.reject "Only called by controller";
         };
         whitelistedWasmHashes.add(hash);
     };
 
-    public query ({ caller }) func whitelistWasm(wasm : Blob) : async () {
+    public shared ({ caller }) func whitelistWasm(wasm : Blob) : async () {
         if (caller != controller) {
             throw Error.reject "Only called by controller";
         };
-        let hash = Blob.hash(wasm);
+        let hash = await Wasm.hash(wasm);
         whitelistedWasmHashes.add(hash);
     };
 
-    public query ({ caller }) func removeWhitelistedWasmHash(hash : Nat32) : async () {
+    public shared ({ caller }) func removeWhitelistedWasmHash(hash : Text) : async () {
         if (caller != controller) {
             throw Error.reject "Only called by controller";
         };
-        switch (Buffer.indexOf<Nat32>(hash, whitelistedWasmHashes, Nat32.equal)) {
+        switch (Buffer.indexOf<Text>(hash, whitelistedWasmHashes, Text.equal)) {
             case (?index) ignore whitelistedWasmHashes.remove(index);
             case null ();
         };
     };
 
-    public query ({ caller }) func removeWhitelistedWasm(wasm : Blob) : async () {
+    public shared ({ caller }) func removeWhitelistedWasm(wasm : Blob) : async () {
         if (caller != controller) {
             throw Error.reject "Only called by controller";
         };
-        let hash = Blob.hash(wasm);
-        switch (Buffer.indexOf<Nat32>(hash, whitelistedWasmHashes, Nat32.equal)) {
+        let hash = await Wasm.hash(wasm);
+        switch (Buffer.indexOf<Text>(hash, whitelistedWasmHashes, Text.equal)) {
             case (?index) ignore whitelistedWasmHashes.remove(index);
             case null ();
         };
@@ -181,8 +181,8 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
                 backend_canister_id = ?Principal.fromActor(this);
             };
-            let wasm_hash = Blob.hash(args.wasm_module);
-            let wasm = if (Buffer.contains<Nat32>(whitelistedWasmHashes, wasm_hash, Nat32.equal)) {
+            let wasm_hash = await Wasm.hash(args.wasm_module);
+            let wasm = if (Buffer.contains<Text>(whitelistedWasmHashes, wasm_hash, Text.equal)) {
                 args.wasm_module;
             } else {
                 await Wasm.transform(args.wasm_module, config);

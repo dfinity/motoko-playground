@@ -2,6 +2,7 @@ use candid::{CandidType, Deserialize};
 use serde_bytes::ByteBuf;
 
 use ic_wasm::*;
+use sha2::Digest;
 
 #[derive(CandidType, Deserialize)]
 struct Config {
@@ -9,6 +10,11 @@ struct Config {
     remove_cycles_add: bool,
     limit_stable_memory_page: Option<u32>,
     backend_canister_id: Option<candid::Principal>,
+}
+
+#[ic_cdk_macros::query]
+fn hash(wasm: ByteBuf) -> String {
+    hex::encode(sha2::Sha256::digest(wasm))
 }
 
 #[ic_cdk_macros::query]
