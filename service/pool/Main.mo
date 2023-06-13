@@ -26,7 +26,6 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     let params = Option.get(opt_params, Types.defaultParams);
     var pool = Types.CanisterPool(params.max_num_canisters, params.canister_time_to_live, params.max_family_tree_size);
     let nonceCache = PoW.NonceCache(params.nonce_time_to_live);
-    var whitelistedWasmHashes = Buffer.Buffer<Text>(4);
 
     stable let controller = creator.caller;
     stable var stats = Logs.defaultStats;
@@ -34,7 +33,6 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     stable var stableMetadata : [(Principal, (Int, Bool))] = [];
     stable var stableChildren : [(Principal, [Principal])] = [];
     stable var previousParam : ?Types.InitParams = null;
-    stable var whitelistedHashes : [Text] = [];
 
     system func preupgrade() {
         let (tree, metadata, children) = pool.share();
@@ -42,7 +40,6 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         stableMetadata := metadata;
         stableChildren := children;
         previousParam := ?params;
-        whitelistedHashes := Buffer.toArray(whitelistedWasmHashes);
     };
 
     system func postupgrade() {
@@ -52,7 +49,6 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             };
         };
         pool.unshare(stablePool, stableMetadata, stableChildren);
-        whitelistedWasmHashes := Buffer.fromArray(whitelistedHashes);
     };
 
     public query func getInitParams() : async Types.InitParams {
@@ -70,46 +66,6 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     public func wallet_receive() : async () {
         let amount = Cycles.available();
         ignore Cycles.accept amount;
-    };
-
-    public query func getWhitelistedWasmHashes() : async [Text] {
-        Buffer.toArray(whitelistedWasmHashes);
-    };
-
-    public shared ({ caller }) func whitelistWasmHash(hash : Text) : async () {
-        if (caller != controller) {
-            throw Error.reject "Only called by controller";
-        };
-        whitelistedWasmHashes.add(hash);
-    };
-
-    public shared ({ caller }) func whitelistWasm(wasm : Blob) : async () {
-        if (caller != controller) {
-            throw Error.reject "Only called by controller";
-        };
-        let hash = await Wasm.hash(wasm);
-        whitelistedWasmHashes.add(hash);
-    };
-
-    public shared ({ caller }) func removeWhitelistedWasmHash(hash : Text) : async () {
-        if (caller != controller) {
-            throw Error.reject "Only called by controller";
-        };
-        switch (Buffer.indexOf<Text>(hash, whitelistedWasmHashes, Text.equal)) {
-            case (?index) ignore whitelistedWasmHashes.remove(index);
-            case null ();
-        };
-    };
-
-    public shared ({ caller }) func removeWhitelistedWasm(wasm : Blob) : async () {
-        if (caller != controller) {
-            throw Error.reject "Only called by controller";
-        };
-        let hash = await Wasm.hash(wasm);
-        switch (Buffer.indexOf<Text>(hash, whitelistedWasmHashes, Text.equal)) {
-            case (?index) ignore whitelistedWasmHashes.remove(index);
-            case null ();
-        };
     };
 
     private func getExpiredCanisterInfo() : async Types.CanisterInfo {
@@ -166,7 +122,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         await getExpiredCanisterInfo();
     };
 
-    public func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, profiling : Bool) : async Types.CanisterInfo {
+    public shared ({ caller }) func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, profiling : Bool, is_whitelisted : Bool) : async Types.CanisterInfo {
         if (info.timestamp == 0) {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot install removed canister";
@@ -181,9 +137,8 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
                 backend_canister_id = ?Principal.fromActor(this);
             };
-            let wasm_hash = await Wasm.hash(args.wasm_module);
-            let wasm = if (Buffer.contains<Text>(whitelistedWasmHashes, wasm_hash, Text.equal)) {
-                args.wasm_module;
+            let wasm = if (caller == controller or is_whitelisted) {
+                await Wasm.is_whitelisted(args.wasm_module);
             } else {
                 await Wasm.transform(args.wasm_module, config);
             };
@@ -342,11 +297,12 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         wasm_module : ICType.wasm_module;
         mode : { #reinstall; #upgrade; #install };
         canister_id : ICType.canister_id;
+        is_whitelisted : Bool;
     }) : async () {
         switch (sanitizeInputs(caller, canister_id)) {
             case (#ok info) {
                 let args = { arg; wasm_module; mode; canister_id };
-                ignore await installCode(info, args, pool.profiling caller); // inherit the profiling of the parent
+                ignore await installCode(info, args, pool.profiling caller, is_whitelisted); // inherit the profiling of the parent
             };
             case (#err makeMsg) throw Error.reject(makeMsg "install_code");
         };

@@ -12,9 +12,16 @@ struct Config {
     backend_canister_id: Option<candid::Principal>,
 }
 
+const WHITELISTED_WASMS: [&str; 1] = [ "not_an_actual_hash"];
+
 #[ic_cdk_macros::query]
-fn hash(wasm: ByteBuf) -> String {
-    hex::encode(sha2::Sha256::digest(wasm))
+fn is_whitelisted(wasm: ByteBuf) -> ByteBuf {
+    let wasm_hash = hex::encode(sha2::Sha256::digest(&wasm)).as_str();
+    if WHITELISTED_WASMS.contains(&wasm_hash) {
+        wasm
+    } else {
+        ic_cdk::trap("Wasm is not whitelisted")
+    }
 }
 
 #[ic_cdk_macros::query]
