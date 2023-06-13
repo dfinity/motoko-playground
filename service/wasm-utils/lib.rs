@@ -12,7 +12,9 @@ struct Config {
     backend_canister_id: Option<candid::Principal>,
 }
 
-const WHITELISTED_WASMS: [&str; 1] = [ "not_an_actual_hash"];
+const WHITELISTED_WASMS: [&str; 1] = [ 
+    "651425d92d3796ddae581191452e0e87484eeff4ff6352fe9a59c7e1f97a2310", // dfx 0.14.1 frontend canister
+];
 
 #[ic_cdk_macros::query]
 fn is_whitelisted(wasm: ByteBuf) -> ByteBuf {
