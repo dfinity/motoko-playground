@@ -378,11 +378,6 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #removeCode : Any;
             #resetStats : Any;
             #wallet_receive : Any;
-            #getWhitelistedWasmHashes : Any;
-            #whitelistWasmHash : Any;
-            #whitelistWasm : Any;
-            #removeWhitelistedWasmHash : Any;
-            #removeWhitelistedWasm : Any;
 
             #create_canister : Any;
             #update_settings : Any;
