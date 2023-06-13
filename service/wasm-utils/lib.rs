@@ -18,8 +18,8 @@ const WHITELISTED_WASMS: [&str; 1] = [
 
 #[ic_cdk_macros::query]
 fn is_whitelisted(wasm: ByteBuf) -> ByteBuf {
-    let wasm_hash = hex::encode(sha2::Sha256::digest(&wasm)).as_str();
-    if WHITELISTED_WASMS.contains(&wasm_hash) {
+    let wasm_hash = hex::encode(sha2::Sha256::digest(&wasm));
+    if WHITELISTED_WASMS.contains(&wasm_hash.as_str()) {
         wasm
     } else {
         ic_cdk::trap("Wasm is not whitelisted")
