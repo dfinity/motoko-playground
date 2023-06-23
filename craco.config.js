@@ -71,4 +71,8 @@ module.exports = {
       },
     },
   ],
+  output: {
+    // Fix error on node 18
+    hashFunction: 'sha256',
+  },
 };
