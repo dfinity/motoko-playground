@@ -92,6 +92,7 @@ type InstallArgs =
            upgrade;
          };
    wasm_module: blob;
+   is_whitelisted: bool;
  };
 type InitParams = 
  record {
