@@ -55,6 +55,9 @@ const overrideWebpackConfig = ({ webpackConfig }) => {
     loaders: ["wasm-loader"],
   });
 
+  // Fix error on node 18
+  webpackConfig.output.hashFunction = require("xxhash-addon").XXHash64;
+
   return webpackConfig;
 };
 
@@ -71,8 +74,4 @@ module.exports = {
       },
     },
   ],
-  output: {
-    // Fix error on node 18
-    hashFunction: require('xxhash-addon').XXHash64,
-  },
 };
