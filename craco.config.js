@@ -56,7 +56,7 @@ const overrideWebpackConfig = ({ webpackConfig }) => {
   });
 
   // Fix error on node 18
-  webpackConfig.output.hashFunction = "sha256";
+  webpackConfig.output.hashFunction = "sha512";
 
   return webpackConfig;
 };
