@@ -56,7 +56,10 @@ const overrideWebpackConfig = ({ webpackConfig }) => {
   });
 
   // Fix error on node 18
-  webpackConfig.output.hashFunction = "sha512";
+  const crypto = require("crypto");
+  const { createHash } = crypto;
+  crypto.createHash = (algorithm) =>
+    createHash(algorithm === "md4" ? "sha256" : algorithm);
 
   return webpackConfig;
 };
