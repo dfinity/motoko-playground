@@ -2,6 +2,20 @@
 load "prelude.sh";
 
 let wasm = file("../../../.dfx/local/canisters/backend/backend.wasm");
+let empty_wasm = blob "\00asm\01\00\00\00";
+
+let init = opt record {
+  cycles_per_canister = 105_000_000_000 : nat;
+  max_num_canisters = 2 : nat;
+  nonce_time_to_live = 1 : nat;
+  canister_time_to_live = 5_000_000_000 : nat;
+  max_family_tree_size = 5 : nat;
+};
+let S = install(wasm, init, null);
+let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
+let CID = call S.getCanisterId(nonce);
+call S.installCode(CID, record { arg = blob ""; wasm_module = empty_wasm; mode = variant { install }; canister_id = CID.id }, false);
+metadata(CID.id, "module_hash");
 
 // Immediately expire
 let init = opt record {
@@ -13,7 +27,6 @@ let init = opt record {
 };
 let S = install(wasm, init, null);
 
-let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
 let c1 = call S.getCanisterId(nonce);
 c1;
 let c2 = call S.getCanisterId(nonce);
@@ -64,3 +77,7 @@ call ic.provisional_top_up_canister(
   },
 );
 call S.getCanisterId(nonce);
+
+// Enough time has passed that the timer has removed the canister code
+fail metadata(CID.id, "module_hash");
+assert _ ~= "unknown";
