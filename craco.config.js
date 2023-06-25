@@ -1,6 +1,12 @@
 const { addBeforeLoader, loaderByName } = require("@craco/craco");
 const webpack = require("webpack");
 
+// Patch unsupported MD4 hash function for Node >= 17.x
+const crypto = require("crypto");
+const { createHash } = crypto;
+crypto.createHash = (algorithm) =>
+  createHash(algorithm === "md4" ? "sha256" : algorithm);
+
 let canisterEnv;
 
 function initCanisterIds() {
@@ -71,8 +77,4 @@ module.exports = {
       },
     },
   ],
-  output: {
-    // Fix error on node 18
-    hashFunction: require('xxhash-addon').XXHash64,
-  },
 };
