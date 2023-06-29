@@ -190,7 +190,8 @@ async function install(
   const new_info = await backend.installCode(
     canisterInfo,
     installArgs,
-    profiling
+    profiling,
+    false
   );
   canisterInfo = new_info;
   logger.log(`Code installed at canister id ${canisterInfo.id}`);

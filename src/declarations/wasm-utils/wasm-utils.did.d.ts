@@ -8,6 +8,7 @@ export interface Config {
   limit_stable_memory_page: [] | [number];
 }
 export interface _SERVICE {
+  is_whitelisted: ActorMethod<[Uint8Array | number[]], Uint8Array | number[]>;
   transform: ActorMethod<
     [Uint8Array | number[], Config],
     Uint8Array | number[]
