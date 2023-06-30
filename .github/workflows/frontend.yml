@@ -18,8 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - 14
           - 16
+          - 18
     env:
       DFX_VERSION: 0.14.1
       SKIP_WASM: true
