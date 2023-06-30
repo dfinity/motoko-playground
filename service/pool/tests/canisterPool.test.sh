@@ -14,7 +14,7 @@ let init = opt record {
 let S = install(wasm, init, null);
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
 let CID = call S.getCanisterId(nonce);
-call S.installCode(CID, record { arg = blob ""; wasm_module = empty_wasm; mode = variant { install }; canister_id = CID.id }, false);
+call S.installCode(CID, record { arg = blob ""; wasm_module = empty_wasm; mode = variant { install }; canister_id = CID.id }, false, false);
 metadata(CID.id, "module_hash");
 
 // Immediately expire
