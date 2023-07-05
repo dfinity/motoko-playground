@@ -100,7 +100,7 @@ export const idlFactory = ({ IDL }) => {
     ),
     http_request: IDL.Func([HttpRequest], [HttpResponse], ["query"]),
     installCode: IDL.Func(
-      [CanisterInfo, InstallArgs, IDL.Bool],
+      [CanisterInfo, InstallArgs, IDL.Bool, IDL.Bool],
       [CanisterInfo],
       []
     ),

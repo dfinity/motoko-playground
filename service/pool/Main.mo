@@ -125,7 +125,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         await getExpiredCanisterInfo();
     };
 
-    public func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, profiling : Bool) : async Types.CanisterInfo {
+    public shared ({ caller }) func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, profiling : Bool, is_whitelisted : Bool) : async Types.CanisterInfo {
         if (info.timestamp == 0) {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot install removed canister";
@@ -140,7 +140,13 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
                 backend_canister_id = ?Principal.fromActor(this);
             };
-            let wasm = await Wasm.transform(args.wasm_module, config);
+            let wasm = if (caller == controller and is_whitelisted) {
+                args.wasm_module;
+            } else if (is_whitelisted) {
+                await Wasm.is_whitelisted(args.wasm_module);
+            } else {
+                await Wasm.transform(args.wasm_module, config);
+            };
             let newArgs = {
                 arg = args.arg;
                 wasm_module = wasm;
@@ -313,7 +319,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         switch (sanitizeInputs(caller, canister_id)) {
             case (#ok info) {
                 let args = { arg; wasm_module; mode; canister_id };
-                ignore await installCode(info, args, pool.profiling caller); // inherit the profiling of the parent
+                ignore await installCode(info, args, pool.profiling caller, false); // inherit the profiling of the parent
             };
             case (#err makeMsg) throw Error.reject(makeMsg "install_code");
         };
@@ -378,7 +384,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         msg : {
             #GCCanisters : Any;
             #balance : Any;
-            #callForward: Any;
+            #callForward : Any;
             #dump : Any;
             #getCanisterId : Any;
             #getSubtree : Any;

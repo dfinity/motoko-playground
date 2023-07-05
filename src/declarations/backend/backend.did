@@ -53,7 +53,7 @@ type Self =
            vec CanisterInfo;
          }) query;
    http_request: (HttpRequest) -> (HttpResponse) query;
-   installCode: (CanisterInfo, InstallArgs, bool) -> (CanisterInfo);
+   installCode: (CanisterInfo, InstallArgs, bool, bool) -> (CanisterInfo);
    install_code:
     (record {
        arg: blob;

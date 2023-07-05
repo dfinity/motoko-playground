@@ -9,7 +9,7 @@ let S = install(wasm, null, opt 100_000_000_000_000);
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
 let c1 = call S.getCanisterId(nonce);
 let args = record { arg = blob ""; wasm_module = parent; mode = variant { install }; canister_id = c1.id };
-call S.installCode(c1, args, false);
+call S.installCode(c1, args, false, false);
 
 let c1 = c1.id;
 
@@ -50,7 +50,7 @@ let S = install(wasm, init, opt 100_000_000_000_000);
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
 let c1 = call S.getCanisterId(nonce);
 let args = record { arg = blob ""; wasm_module = parent; mode = variant { install }; canister_id = c1.id };
-call S.installCode(c1, args, false);
+call S.installCode(c1, args, false, false);
 let c1 = c1.id;
 
 fail call c1.makeChild(0);
@@ -63,11 +63,11 @@ let S = install(wasm, null, opt 100_000_000_000_000);
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
 let c1 = call S.getCanisterId(nonce);
 let args = record { arg = blob ""; wasm_module = parent; mode = variant { install }; canister_id = c1.id };
-call S.installCode(c1, args, false);
+call S.installCode(c1, args, false, false);
 
 let c2 = call S.getCanisterId(nonce);
 let args = record { arg = blob ""; wasm_module = deleter; mode = variant { install }; canister_id = c2.id };
-call S.installCode(c2, args, false);
+call S.installCode(c2, args, false, false);
 
 let c1 = c1.id;
 let c2 = c2.id;

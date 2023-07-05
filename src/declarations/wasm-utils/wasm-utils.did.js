@@ -6,7 +6,16 @@ export const idlFactory = ({ IDL }) => {
     limit_stable_memory_page: IDL.Opt(IDL.Nat32),
   });
   return IDL.Service({
-    transform: IDL.Func([IDL.Vec(IDL.Nat8), Config], [IDL.Vec(IDL.Nat8)], []),
+    is_whitelisted: IDL.Func(
+      [IDL.Vec(IDL.Nat8)],
+      [IDL.Vec(IDL.Nat8)],
+      ["query"]
+    ),
+    transform: IDL.Func(
+      [IDL.Vec(IDL.Nat8), Config],
+      [IDL.Vec(IDL.Nat8)],
+      ["query"]
+    ),
   });
 };
 export const init = ({ IDL }) => {

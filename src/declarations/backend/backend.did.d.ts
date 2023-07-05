@@ -64,7 +64,10 @@ export interface Self {
     Array<[Principal, Array<CanisterInfo>]>
   >;
   http_request: ActorMethod<[HttpRequest], HttpResponse>;
-  installCode: ActorMethod<[CanisterInfo, InstallArgs, boolean], CanisterInfo>;
+  installCode: ActorMethod<
+    [CanisterInfo, InstallArgs, boolean, boolean],
+    CanisterInfo
+  >;
   install_code: ActorMethod<
     [
       {
