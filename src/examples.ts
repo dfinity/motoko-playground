@@ -53,6 +53,10 @@ export const exampleProjects: Record<string, ExampleProject> = {
     repo: { dir: "motoko/classes/src", ...example },
     readme: `${readmeURL}/classes/README.md`,
   },
+  "Basic DAO": {
+    repo: { dir: "motoko/basic_dao/src", ...example },
+    readme: `${readmeURL}/basic_dao/README.md`,
+  },
 };
 
 export async function fetchExample(
