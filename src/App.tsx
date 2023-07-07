@@ -24,7 +24,7 @@ import { DeployModal, DeploySetter } from "./components/DeployModal";
 import { backend, saved } from "./config/actor";
 import { setupEditorIntegration } from "./integrations/editorIntegration";
 
-const MOC_VERSION = "0.9.5";
+const MOC_VERSION = "0.9.6";
 
 const GlobalStyles = createGlobalStyle`
   :root {
