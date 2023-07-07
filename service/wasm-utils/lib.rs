@@ -16,7 +16,7 @@ const WHITELISTED_WASMS: [&str; 1] = [
     "651425d92d3796ddae581191452e0e87484eeff4ff6352fe9a59c7e1f97a2310", // dfx 0.14.1 frontend canister
 ];
 
-#[ic_cdk_macros::query]
+#[ic_cdk::query]
 fn is_whitelisted(wasm: ByteBuf) -> ByteBuf {
     let wasm_hash = hex::encode(sha2::Sha256::digest(&wasm));
     if WHITELISTED_WASMS.contains(&wasm_hash.as_str()) {
@@ -26,7 +26,7 @@ fn is_whitelisted(wasm: ByteBuf) -> ByteBuf {
     }
 }
 
-#[ic_cdk_macros::query]
+#[ic_cdk::query]
 fn transform(wasm: ByteBuf, config: Config) -> ByteBuf {
     let mut m = walrus::Module::from_buffer(&wasm).unwrap();
     if config.profiling {
