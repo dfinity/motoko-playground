@@ -28,7 +28,7 @@ fn is_whitelisted(wasm: ByteBuf) -> ByteBuf {
 
 #[ic_cdk::query]
 fn transform(wasm: ByteBuf, config: Config) -> ByteBuf {
-    let mut m = walrus::Module::from_buffer(&wasm).unwrap();
+    let mut m = utils::parse_wasm(&wasm, false).unwrap();
     if config.profiling {
         instrumentation::instrument(&mut m, &[]).unwrap();
     }
