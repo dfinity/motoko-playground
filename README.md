@@ -66,7 +66,7 @@ limited [cross-origin communication](https://developer.mozilla.org/en-US/docs/We
 building a custom smart contract editor or similar application, you can use the following code snippet to open a project in Motoko Playground:
 
 ```js
-const PLAYGROUND_ORIGIN = 'https://m7sm4-2iaaa-aaaab-qabra-cai.raw.icp0.io'
+const PLAYGROUND_ORIGIN = 'https://play.motoko.org'
 const APP_ID = 'MyEditor'
 
 // Workplace files for a project
