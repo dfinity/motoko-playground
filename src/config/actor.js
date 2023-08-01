@@ -38,7 +38,7 @@ const uiCanisterId =
   (local ? "bw4dl-smaaa-aaaaa-qaacq-cai" : "a4gq6-oaaaa-aaaab-qaa4q-cai");
 export const uiCanisterUrl = local
   ? `http://${uiCanisterId}.localhost:${LOCAL_PORT}`
-  : `https://${uiCanisterId}.raw.ic0.app`;
+  : `https://${uiCanisterId}.raw.icp0.io`;
 export const didjs = Actor.createActor(didjs_idl, {
   agent,
   canisterId: Principal.fromText(uiCanisterId),
