@@ -1,7 +1,7 @@
 [package]
 name = "wasm-utils"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 
 [lib]
 path = "lib.rs"
@@ -18,4 +18,4 @@ sha2 = "0.10.6"
 
 [profile.release]
 lto = true
-opt-level = 'z'
+opt-level = 2
