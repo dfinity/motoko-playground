@@ -18,7 +18,7 @@ jobs:
       IC_REPL_VERSION: 0.4.1
       MOC_VERSION: 0.9.5
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Setup Rust
@@ -58,7 +58,7 @@ jobs:
         run: |
           git checkout main
           dfx deploy backend
-          git checkout `$(/usr/bin/git log -1 --format='%H')`
+          git checkout $(/usr/bin/git log -1 --format='%H')
       - name: Deploy current branch
         run: dfx deploy backend
       - name: CanisterPool test
