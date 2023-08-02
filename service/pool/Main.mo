@@ -125,7 +125,8 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         await getExpiredCanisterInfo();
     };
 
-    public shared ({ caller }) func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, profiling : Bool, is_whitelisted : Bool) : async Types.CanisterInfo {
+    public shared ({ caller }) func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, profiling : Bool) : async Types.CanisterInfo {
+        let is_whitelisted = false;
         if (info.timestamp == 0) {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot install removed canister";
