@@ -1,8 +1,10 @@
-use candid::{CandidType, Deserialize};
-use serde_bytes::ByteBuf;
+mod whitelisted_wasms;
 
+use candid::{CandidType, Deserialize};
 use ic_wasm::*;
+use serde_bytes::ByteBuf;
 use sha2::Digest;
+use whitelisted_wasms::WHITELISTED_WASMS;
 
 #[derive(CandidType, Deserialize)]
 struct Config {
@@ -11,8 +13,6 @@ struct Config {
     limit_stable_memory_page: Option<u32>,
     backend_canister_id: Option<candid::Principal>,
 }
-
-const WHITELISTED_WASMS: &str = include_str!("whitelisted_wasms.txt");
 
 #[ic_cdk::query]
 fn is_whitelisted(wasm: ByteBuf) -> ByteBuf {
