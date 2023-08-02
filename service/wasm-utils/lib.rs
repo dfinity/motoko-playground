@@ -12,9 +12,7 @@ struct Config {
     backend_canister_id: Option<candid::Principal>,
 }
 
-const WHITELISTED_WASMS: [&str; 1] = [
-    "88d1e5795d29debc1ff56fa0696dcb3adfa67f82fe2739d1aa644263838174b9", // dfx 0.15.0 frontend canister
-];
+const WHITELISTED_WASMS: &str = include_str!("whitelisted_wasms.txt");
 
 #[ic_cdk::query]
 fn is_whitelisted(wasm: ByteBuf) -> ByteBuf {
