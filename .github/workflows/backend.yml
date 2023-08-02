@@ -58,7 +58,7 @@ jobs:
         run: |
           git checkout main
           dfx deploy backend
-          git checkout "${GITHUB_HEAD_REF}"
+          git checkout `$(git log -1 --format='%H')`
       - name: Deploy current branch
         run: dfx deploy backend
       - name: CanisterPool test
