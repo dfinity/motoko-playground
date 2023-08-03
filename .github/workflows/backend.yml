@@ -14,13 +14,10 @@ jobs:
     strategy:
       fail-fast: false
     env:
-      DFX_VERSION: 0.14.2
+      DFX_VERSION: 0.14.3
       IC_REPL_VERSION: 0.4.1
-      MOC_VERSION: 0.9.5
+      MOC_VERSION: 0.9.7
     steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -53,12 +50,16 @@ jobs:
       - name: Start dfx
         run: |
           dfx start --background
+      - name: Checkout base branch
+        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.base_ref }}
       - name: Deploy main branch
         if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
         run: |
-          git checkout main
           dfx deploy backend
-          git checkout ${GITHUB_HEAD_REF}
+      - uses: actions/checkout@v3
       - name: Deploy current branch
         run: dfx deploy backend
       - name: CanisterPool test
