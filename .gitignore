@@ -28,7 +28,6 @@ yarn-error.log*
 .mops
 
 /service/wasm-utils/*.old.did
-/service/wasm-utils/whitelisted_wasms.rs
 
 # IDEs
 /.idea
