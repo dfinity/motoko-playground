@@ -1,7 +1,6 @@
 use candid::{CandidType, Deserialize};
-use serde_bytes::ByteBuf;
-
 use ic_wasm::*;
+use serde_bytes::ByteBuf;
 use sha2::Digest;
 
 #[derive(CandidType, Deserialize)]
@@ -12,14 +11,11 @@ struct Config {
     backend_canister_id: Option<candid::Principal>,
 }
 
-const WHITELISTED_WASMS: [&str; 1] = [
-    "88d1e5795d29debc1ff56fa0696dcb3adfa67f82fe2739d1aa644263838174b9", // dfx 0.15.0 frontend canister
-];
-
 #[ic_cdk::query]
 fn is_whitelisted(wasm: ByteBuf) -> ByteBuf {
     let wasm_hash = hex::encode(sha2::Sha256::digest(&wasm));
-    if WHITELISTED_WASMS.contains(&wasm_hash.as_str()) {
+    let white_list = include!("whitelisted_wasms.txt");
+    if white_list.contains(&wasm_hash.as_str()) {
         wasm
     } else {
         ic_cdk::trap("Wasm is not whitelisted")
@@ -40,4 +36,11 @@ fn transform(wasm: ByteBuf, config: Config) -> ByteBuf {
     limit_resource::limit_resource(&mut m, &resource_config);
     let wasm = m.emit_wasm();
     ByteBuf::from(wasm)
+}
+
+#[test]
+fn test_parsing_whitelisted_wasms_txt() {
+    let white_list = include!("whitelisted_wasms.txt");
+    let hash = "88d1e5795d29debc1ff56fa0696dcb3adfa67f82fe2739d1aa644263838174b9";
+    assert!(white_list.contains(&hash));
 }
