@@ -1,3 +1,1 @@
-[
-    "88d1e5795d29debc1ff56fa0696dcb3adfa67f82fe2739d1aa644263838174b9", // dfx 0.15.0 frontend canister
-]
+88d1e5795d29debc1ff56fa0696dcb3adfa67f82fe2739d1aa644263838174b9 dfx 0.15.0 frontend canister

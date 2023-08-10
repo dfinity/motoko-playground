@@ -14,7 +14,10 @@ struct Config {
 #[ic_cdk::query]
 fn is_whitelisted(wasm: ByteBuf) -> ByteBuf {
     let wasm_hash = hex::encode(sha2::Sha256::digest(&wasm));
-    let white_list = include!("whitelisted_wasms.txt");
+    let white_list = include_str!("whitelisted_wasms.txt")
+        .lines()
+        .filter_map(|line| line.split_whitespace().next())
+        .collect::<Vec<_>>();
     if white_list.contains(&wasm_hash.as_str()) {
         wasm
     } else {
@@ -40,7 +43,11 @@ fn transform(wasm: ByteBuf, config: Config) -> ByteBuf {
 
 #[test]
 fn test_parsing_whitelisted_wasms_txt() {
-    let white_list = include!("whitelisted_wasms.txt");
+    let white_list = include_str!("whitelisted_wasms.txt")
+        .lines()
+        .filter_map(|line| line.split_whitespace().next())
+        .collect::<Vec<_>>();
+    dbg!(&white_list);
     let hash = "88d1e5795d29debc1ff56fa0696dcb3adfa67f82fe2739d1aa644263838174b9";
     assert!(white_list.contains(&hash));
 }
