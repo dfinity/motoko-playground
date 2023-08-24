@@ -16,7 +16,7 @@ jobs:
     env:
       DFX_VERSION: 0.14.3
       IC_REPL_VERSION: 0.4.1
-      MOC_VERSION: 0.9.7
+      MOC_VERSION: 0.9.8
     steps:
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
@@ -45,8 +45,8 @@ jobs:
           npm i -g ic-mops
           dfx cache install
           cd $(dfx cache show)
-          wget https://github.com/dfinity/motoko/releases/download/$MOC_VERSION/motoko-linux64-$MOC_VERSION.tar.gz
-          tar zxvf motoko-linux64-$MOC_VERSION.tar.gz
+          wget https://github.com/dfinity/motoko/releases/download/$MOC_VERSION/motoko-Linux-x86_64-$MOC_VERSION.tar.gz
+          tar zxvf motoko-Linux-x86_64-$MOC_VERSION.tar.gz
       - name: Start dfx
         run: |
           dfx start --background
