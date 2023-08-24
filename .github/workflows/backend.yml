@@ -16,7 +16,7 @@ jobs:
     env:
       DFX_VERSION: 0.14.3
       IC_REPL_VERSION: 0.4.1
-      MOC_VERSION: 0.9.7
+      MOC_VERSION: 0.9.8
     steps:
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
