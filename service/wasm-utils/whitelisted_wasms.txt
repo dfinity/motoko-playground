@@ -1,3 +1,5 @@
 [
+    "1286960c50eb7a773cfb5fdd77cc238588f39e21f189cc3eb0f35199a99b9c7e", // dfx 0.14.x frontend canister
     "88d1e5795d29debc1ff56fa0696dcb3adfa67f82fe2739d1aa644263838174b9", // dfx 0.15.0 frontend canister
+    "cd3e7fa2b826f84cdd107eef28633b0c669b4687ae1598dd854828e82d2e4652" // dfx 0.15.1 frontend canister
 ]
