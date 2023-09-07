@@ -75,7 +75,7 @@ export function ProjectModal({
     }
     await dispatch({
       type: "setOrigin",
-      payload: { origin: `playground:example:${project.repo}` },
+      payload: { origin: `playground:example:${project.name}` },
     });
   }
   async function emptyProject() {
@@ -135,12 +135,12 @@ export function ProjectModal({
               <ProjectButton onClick={emptyProject}>
                 New Motoko project
               </ProjectButton>
-              {Object.entries(exampleProjects).map(([name, project]) => (
+              {exampleProjects.map((project) => (
                 <ProjectButton
-                  key={name}
+                  key={project.name}
                   onClick={() => handleSelectProjectAndClose(project)}
                 >
-                  {name}
+                  {project.name}
                 </ProjectButton>
               ))}
             </SelectList>

@@ -1,6 +1,7 @@
 import { RepoInfo } from "./workers/file";
 
 export interface ExampleProject {
+  name: string;
   repo: RepoInfo;
   readme?: string;
 }
@@ -12,52 +13,63 @@ const example = {
 const readmeURL =
   "https://raw.githubusercontent.com/dfinity/examples/master/motoko";
 
-export const exampleProjects: Record<string, ExampleProject> = {
-  "Hello, world": {
+export const exampleProjects: ExampleProject[] = [
+  {
+    name: "Hello, world",
     repo: { dir: "motoko/echo/src", ...example },
     readme: `${readmeURL}/echo/README.md`,
   },
-  Counter: {
+  {
+    name: "Counter",
     repo: { dir: "motoko/counter/src", ...example },
     readme: `${readmeURL}/counter/README.md`,
   },
-  Calculator: {
+  {
+    name: "Calculator",
     repo: { dir: "motoko/calc/src", ...example },
     readme: `${readmeURL}/calc/README.md`,
   },
-  "Who am I?": {
+  {
+    name: "Who am I?",
     repo: { dir: "motoko/whoami/src", ...example },
     readme: `${readmeURL}/whoami/README.md`,
   },
-  "Phone Book": {
+  {
+    name: "Phone Book",
     repo: { dir: "motoko/phone-book/src/phone-book", ...example },
     readme: `${readmeURL}/phone-book/README.md`,
   },
-  "Super Heroes": {
+  {
+    name: "Super Heroes",
     repo: { dir: "motoko/superheroes/src/superheroes", ...example },
     readme: `${readmeURL}/superheroes/README.md`,
   },
-  "Random Maze": {
+  {
+    name: "Random Maze",
     repo: { dir: "motoko/random_maze/src/random_maze", ...example },
     readme: `${readmeURL}/random_maze/README.md`,
   },
-  "Game of Life": {
+  {
+    name: "Game of Life",
     repo: { dir: "motoko/life", ...example },
     readme: `${readmeURL}/life/README.md`,
   },
-  "Publisher and Subscriber": {
+  {
+    name: "Publisher and Subscriber",
     repo: { dir: "motoko/pub-sub/src", ...example },
     readme: `${readmeURL}/pub-sub/README.md`,
   },
-  "Actor Classes": {
+  {
+    name: "Actor Classes",
     repo: { dir: "motoko/classes/src", ...example },
     readme: `${readmeURL}/classes/README.md`,
   },
-  "Basic DAO": {
+  {
+    name: "Basic DAO",
     repo: { dir: "motoko/basic_dao/src", ...example },
     readme: `${readmeURL}/basic_dao/README.md`,
   },
-};
+];
 
 export async function fetchExample(
   worker,
