@@ -83,7 +83,7 @@ export function ProjectModal({
     close();
     await dispatch({
       type: "setOrigin",
-      payload: { origin: `playground:new` },
+      payload: { origin: "playground:new" },
     });
   }
 
