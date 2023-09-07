@@ -29,6 +29,11 @@ export interface InstallArgs {
   mode: { reinstall: null } | { upgrade: null } | { install: null };
   canister_id: Principal;
 }
+export interface InstallConfig {
+  origin: string;
+  profiling: boolean;
+  is_whitelisted: boolean;
+}
 export interface Nonce {
   nonce: bigint;
   timestamp: bigint;
@@ -56,16 +61,19 @@ export interface Self {
   >;
   delete_canister: ActorMethod<[{ canister_id: canister_id }], undefined>;
   dump: ActorMethod<[], Array<CanisterInfo>>;
-  getCanisterId: ActorMethod<[Nonce], CanisterInfo>;
+  getCanisterId: ActorMethod<[Nonce, string], CanisterInfo>;
   getInitParams: ActorMethod<[], InitParams>;
-  getStats: ActorMethod<[], Stats>;
+  getStats: ActorMethod<
+    [],
+    [Stats, Array<[string, bigint]>, Array<[string, bigint]>]
+  >;
   getSubtree: ActorMethod<
     [CanisterInfo],
     Array<[Principal, Array<CanisterInfo>]>
   >;
   http_request: ActorMethod<[HttpRequest], HttpResponse>;
   installCode: ActorMethod<
-    [CanisterInfo, InstallArgs, boolean, boolean],
+    [CanisterInfo, InstallArgs, InstallConfig],
     CanisterInfo
   >;
   install_code: ActorMethod<

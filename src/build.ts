@@ -156,7 +156,7 @@ async function createCanister(
 ): Promise<CanisterInfo> {
   const timestamp = BigInt(Date.now()) * BigInt(1_000_000);
   const nonce = await worker.pow(timestamp);
-  const info = await backend.getCanisterId(nonce);
+  const info = await backend.getCanisterId(nonce, "playground");
   logger.log(`Got canister id ${info.id}`);
   return {
     id: info.id,
@@ -187,11 +187,15 @@ async function install(
     mode: { [mode]: null },
     canister_id: canisterId,
   };
+  const installConfig = {
+    profiling,
+    is_whitelisted: false,
+    origin: "playground",
+  };
   const new_info = await backend.installCode(
     canisterInfo,
     installArgs,
-    profiling,
-    false
+    installConfig
   );
   canisterInfo = new_info;
   logger.log(`Code installed at canister id ${canisterInfo.id}`);

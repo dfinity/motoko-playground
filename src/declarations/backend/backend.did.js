@@ -53,6 +53,11 @@ export const idlFactory = ({ IDL }) => {
     }),
     canister_id: IDL.Principal,
   });
+  const InstallConfig = IDL.Record({
+    origin: IDL.Text,
+    profiling: IDL.Bool,
+    is_whitelisted: IDL.Bool,
+  });
   const wasm_module = IDL.Vec(IDL.Nat8);
   const Self = IDL.Service({
     GCCanisters: IDL.Func([], [], ["oneway"]),
@@ -90,9 +95,17 @@ export const idlFactory = ({ IDL }) => {
       []
     ),
     dump: IDL.Func([], [IDL.Vec(CanisterInfo)], ["query"]),
-    getCanisterId: IDL.Func([Nonce], [CanisterInfo], []),
+    getCanisterId: IDL.Func([Nonce, IDL.Text], [CanisterInfo], []),
     getInitParams: IDL.Func([], [InitParams], ["query"]),
-    getStats: IDL.Func([], [Stats], ["query"]),
+    getStats: IDL.Func(
+      [],
+      [
+        Stats,
+        IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat)),
+        IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat)),
+      ],
+      ["query"]
+    ),
     getSubtree: IDL.Func(
       [CanisterInfo],
       [IDL.Vec(IDL.Tuple(IDL.Principal, IDL.Vec(CanisterInfo)))],
@@ -100,7 +113,7 @@ export const idlFactory = ({ IDL }) => {
     ),
     http_request: IDL.Func([HttpRequest], [HttpResponse], ["query"]),
     installCode: IDL.Func(
-      [CanisterInfo, InstallArgs, IDL.Bool, IDL.Bool],
+      [CanisterInfo, InstallArgs, InstallConfig],
       [CanisterInfo],
       []
     ),
