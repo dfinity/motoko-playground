@@ -8,6 +8,7 @@ export interface WorkplaceState {
   canisters: Record<string, CanisterInfo>;
   selectedCanister: string | null;
   packages: Record<string, PackageInfo>;
+  origin: string | undefined;
 }
 export function getActorAliases(
   canisters: Record<string, CanisterInfo>
@@ -121,8 +122,14 @@ export type WorkplaceReducerAction =
       payload: {
         /** path of file that should be updated. Should correspond to a property in state.files */
         canister: CanisterInfo;
-        do_not_select?: bool;
+        do_not_select?: boolean;
         /** new contents of file */
+      };
+    }
+  | {
+      type: "setOrigin";
+      payload: {
+        origin: string | undefined;
       };
     };
 
@@ -157,6 +164,7 @@ export const workplaceReducer = {
       canisters,
       selectedCanister: null,
       packages: {},
+      origin: undefined,
     };
   },
   /** Return updated state based on an action */
@@ -219,6 +227,13 @@ export const workplaceReducer = {
             ...state.canisters,
             [name]: action.payload.canister,
           },
+        };
+      }
+      case "setOrigin": {
+        const { origin } = action.payload;
+        return {
+          ...state,
+          origin,
         };
       }
       default:

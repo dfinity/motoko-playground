@@ -9,7 +9,10 @@ import { Tab, Tabs } from "./shared/Tabs";
 
 import { ImportGitHub } from "./ImportGithub";
 import { fetchExample, exampleProjects, ExampleProject } from "../examples";
-import { WorkerContext } from "../contexts/WorkplaceState";
+import {
+  WorkerContext,
+  WorkplaceDispatchContext,
+} from "../contexts/WorkplaceState";
 import iconCaretRight from "../assets/images/icon-caret-right.svg";
 
 const ModalContainer = styled.div`
@@ -63,16 +66,25 @@ export function ProjectModal({
   isFirstOpen,
 }: ProjectModalProps) {
   const worker = useContext(WorkerContext);
+  const dispatch = useContext(WorkplaceDispatchContext);
   async function handleSelectProjectAndClose(project: ExampleProject) {
     const files = await fetchExample(worker, project);
     if (files) {
       await importCode(files);
       close();
     }
+    await dispatch({
+      type: "setOrigin",
+      payload: { origin: `playground:example:${project.repo}` },
+    });
   }
   async function emptyProject() {
     await importCode({ "Main.mo": "" });
     close();
+    await dispatch({
+      type: "setOrigin",
+      payload: { origin: `playground:new` },
+    });
   }
 
   const welcomeText = (
