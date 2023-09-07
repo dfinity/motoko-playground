@@ -303,6 +303,7 @@ export function App() {
             candid={candidCode}
             initTypes={initTypes}
             logger={logger}
+            origin={workplaceState.origin}
           />
           <AppContainer candidWidth={candidWidth} consoleHeight={consoleHeight}>
             <Explorer

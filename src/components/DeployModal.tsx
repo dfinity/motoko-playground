@@ -100,6 +100,7 @@ interface DeployModalProps {
   candid: string;
   initTypes: Array<IDL.Type>;
   logger: ILoggingStore;
+  origin: string | undefined;
 }
 
 const MAX_CANISTERS = 3;
@@ -116,6 +117,7 @@ export function DeployModal({
   candid,
   initTypes,
   logger,
+  origin,
 }: DeployModalProps) {
   const [canisterName, setCanisterName] = useState("");
   const [inputs, setInputs] = useState<InputBox[]>([]);
@@ -244,7 +246,8 @@ export function DeployModal({
         mode,
         compileResult.wasm,
         profiling,
-        logger
+        logger,
+        origin
       );
       await isDeploy(false);
       if (info) {

@@ -27,8 +27,8 @@ module {
             }
         };
         public func dump() : ([(Text, Nat)], [(Text, Nat)]) {
-            (canisters.entries() |> toArray<(Text, Nat)>(_),
-             installs.entries() |> toArray<(Text, Nat)>(_))
+            (toArray<(Text, Nat)>(canisters.entries()),
+             toArray<(Text, Nat)>(installs.entries()))
         };
         public func metrics() : Text {
             var result = "";

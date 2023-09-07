@@ -109,7 +109,8 @@ export async function deploy(
   mode: string,
   wasm: Uint8Array,
   profiling: boolean,
-  logger: ILoggingStore
+  logger: ILoggingStore,
+  origin: string
 ): Promise<CanisterInfo | undefined> {
   try {
     logger.log(`Deploying code...`);
@@ -126,7 +127,8 @@ export async function deploy(
         args,
         "install",
         profiling,
-        logger
+        logger,
+        origin
       );
     } else {
       if (mode !== "reinstall" && mode !== "upgrade") {
@@ -138,7 +140,8 @@ export async function deploy(
         args,
         mode,
         profiling,
-        logger
+        logger,
+        origin
       );
     }
     //updatedState.candid = candid_source;
@@ -175,11 +178,13 @@ async function install(
   args: Uint8Array,
   mode: string,
   profiling: boolean,
-  logger: ILoggingStore
+  logger: ILoggingStore,
+  origin: string | undefined
 ): Promise<CanisterInfo> {
   if (!canisterInfo) {
     throw new Error("no canister id");
   }
+  origin ||= "playground";
   const canisterId = canisterInfo.id;
   const installArgs = {
     arg: [...args],
@@ -190,7 +195,7 @@ async function install(
   const installConfig = {
     profiling,
     is_whitelisted: false,
-    origin: "playground",
+    origin,
   };
   const new_info = await backend.installCode(
     canisterInfo,
@@ -199,6 +204,7 @@ async function install(
   );
   canisterInfo = new_info;
   logger.log(`Code installed at canister id ${canisterInfo.id}`);
+  console.log("Installed with origin:", origin);
   return canisterInfo;
 }
 
