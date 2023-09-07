@@ -135,7 +135,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         await getExpiredCanisterInfo(origin);
     };
 
-    type InstallConfig = { profiling: Bool; is_whitelisted: Bool; origin: Text };
+    type InstallConfig = { profiling: Bool; is_whitelisted: Bool; origin: Text; referrer: ?Text };
     public shared ({ caller }) func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, install_config : InstallConfig) : async Types.CanisterInfo {
         if (install_config.origin == "") {
             throw Error.reject "Please specify an origin";

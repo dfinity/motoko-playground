@@ -196,6 +196,7 @@ async function install(
     profiling,
     is_whitelisted: false,
     origin,
+    referrer: document.referrer || (window.opener && "(opener)") || undefined,
   };
   const new_info = await backend.installCode(
     canisterInfo,
