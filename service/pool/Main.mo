@@ -335,7 +335,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         switch (sanitizeInputs(caller, canister_id)) {
             case (#ok info) {
                 let args = { arg; wasm_module; mode; canister_id };
-                let config = { profiling = pool.profiling caller; is_whitelisted = false; origin = "spawn" };
+                let config = { profiling = pool.profiling caller; is_whitelisted = false; origin = "spawned" };
                 ignore await installCode(info, args, config); // inherit the profiling of the parent
             };
             case (#err makeMsg) throw Error.reject(makeMsg "install_code");
