@@ -77,11 +77,15 @@ async function fetchFromUrlParams(
   const tag = urlParams.get("tag");
   const editorKey = urlParams.get("post");
   if (editorKey) {
-    await dispatch({
-      type: "setOrigin",
-      payload: { origin: `playground:post:${editorKey}` },
-    });
-    return setupEditorIntegration(editorKey, dispatch, worker);
+    const result = await setupEditorIntegration(editorKey, dispatch, worker);
+    if (result) {
+      const { origin, files } = result;
+      await dispatch({
+        type: "setOrigin",
+        payload: { origin: `playground:post:${origin}` },
+      });
+      return files;
+    }
   }
   if (git) {
     const repo = {
@@ -91,7 +95,7 @@ async function fetchFromUrlParams(
     };
     await dispatch({
       type: "setOrigin",
-      payload: { origin: `playground:git:${git}` },
+      payload: { origin: "playground:git" },
     });
     return await worker.fetchGithub(repo);
   }
@@ -143,7 +147,7 @@ async function fetchFromUrlParams(
       }
       await dispatch({
         type: "setOrigin",
-        payload: { origin: `playground:tag:${tag}` },
+        payload: { origin: "playground:tag" },
       });
       return files;
     }
