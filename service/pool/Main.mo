@@ -169,7 +169,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             };
             await IC.install_code newArgs;
             stats := Logs.updateStats(stats, #install);
-            statsByOrigin.addInstall(install_config.origin);
+            statsByOrigin.addInstall(install_config.origin, install_config.referrer);
             switch (pool.refresh(info, install_config.profiling)) {
                 case (?newInfo) {
                      updateTimer(newInfo);
@@ -335,7 +335,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         switch (sanitizeInputs(caller, canister_id)) {
             case (#ok info) {
                 let args = { arg; wasm_module; mode; canister_id };
-                let config = { profiling = pool.profiling caller; is_whitelisted = false; origin = "spawned" };
+                let config = { profiling = pool.profiling caller; is_whitelisted = false; origin = "spawned"; referrer = null };
                 ignore await installCode(info, args, config); // inherit the profiling of the parent
             };
             case (#err makeMsg) throw Error.reject(makeMsg "install_code");

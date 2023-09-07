@@ -20,7 +20,8 @@ module {
             case (?n) { canisters.put(origin, n + 1) };
             }
         };
-        public func addInstall(origin: Text) {
+        public func addInstall(origin: Text, referrer: ?Text) {
+            // TODO: keep track of `referrer`
             switch (installs.get(origin)) {
             case null { installs.put(origin, 1) };
             case (?n) { installs.put(origin, n + 1) };
