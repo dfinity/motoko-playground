@@ -13,7 +13,7 @@ let init = opt record {
 };
 let S = install(wasm, init, null);
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
-let CID = call S.getCanisterId(nonce);
+let CID = call S.getCanisterId(nonce, "test");
 call S.installCode(CID, record { arg = blob ""; wasm_module = empty_wasm; mode = variant { install }; canister_id = CID.id }, record { profiling = false; is_whitelisted = false; origin = "test" });
 metadata(CID.id, "module_hash");
 
