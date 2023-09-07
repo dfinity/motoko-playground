@@ -20,15 +20,16 @@ module {
             case (?n) { canisters.put(origin, n + 1) };
             }
         };
-        public func addInstall(origin: Text) {
+        public func addInstall(origin: Text, referrer: ?Text) {
+            // TODO: keep track of `referrer`
             switch (installs.get(origin)) {
             case null { installs.put(origin, 1) };
             case (?n) { installs.put(origin, n + 1) };
             }
         };
         public func dump() : ([(Text, Nat)], [(Text, Nat)]) {
-            (canisters.entries() |> toArray<(Text, Nat)>(_),
-             installs.entries() |> toArray<(Text, Nat)>(_))
+            (toArray<(Text, Nat)>(canisters.entries()),
+             toArray<(Text, Nat)>(installs.entries()))
         };
         public func metrics() : Text {
             var result = "";

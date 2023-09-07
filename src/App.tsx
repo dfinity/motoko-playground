@@ -18,6 +18,7 @@ import {
   getActorAliases,
   getDeployedCanisters,
   getShareableProject,
+  WorkplaceReducerAction,
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
 import { DeployModal, DeploySetter } from "./components/DeployModal";
@@ -70,13 +71,21 @@ const hasUrlParams = !!(
   urlParams.get("post")
 );
 async function fetchFromUrlParams(
-  dispatch: (WorkplaceReducerAction) => void
+  dispatch: (action: WorkplaceReducerAction) => void
 ): Promise<Record<string, string> | undefined> {
   const git = urlParams.get("git");
   const tag = urlParams.get("tag");
   const editorKey = urlParams.get("post");
   if (editorKey) {
-    return setupEditorIntegration(editorKey, dispatch, worker);
+    const result = await setupEditorIntegration(editorKey, dispatch, worker);
+    if (result) {
+      const { origin, files } = result;
+      await dispatch({
+        type: "setOrigin",
+        payload: { origin: `playground:post:${origin}` },
+      });
+      return files;
+    }
   }
   if (git) {
     const repo = {
@@ -84,6 +93,10 @@ async function fetchFromUrlParams(
       branch: urlParams.get("branch") || "main",
       dir: urlParams.get("dir") || "",
     };
+    await dispatch({
+      type: "setOrigin",
+      payload: { origin: `playground:git:${git}` },
+    });
     return await worker.fetchGithub(repo);
   }
   if (tag) {
@@ -132,6 +145,10 @@ async function fetchFromUrlParams(
           });
         }
       }
+      await dispatch({
+        type: "setOrigin",
+        payload: { origin: `playground:tag:${tag}` },
+      });
       return files;
     }
   }
@@ -290,6 +307,7 @@ export function App() {
             candid={candidCode}
             initTypes={initTypes}
             logger={logger}
+            origin={workplaceState.origin}
           />
           <AppContainer candidWidth={candidWidth} consoleHeight={consoleHeight}>
             <Explorer
