@@ -1,4 +1,57 @@
+import Map "mo:base/RBTree";
+import {compare} "mo:base/Text";
+import {toArray} "mo:base/Iter";
+import {now = timeNow} "mo:base/Time";
+import {toText} "mo:base/Int";
+
 module {
+    public type SharedStatsByOrigin = (Map.Tree<Text,Nat>, Map.Tree<Text,Nat>);
+    public class StatsByOrigin() {
+        var canisters = Map.RBTree<Text, Nat>(compare);
+        var installs = Map.RBTree<Text, Nat>(compare);
+        public func share() : SharedStatsByOrigin = (canisters.share(), installs.share());
+        public func unshare(x : SharedStatsByOrigin) {
+            canisters.unshare(x.0);
+            installs.unshare(x.1);
+        };
+        public func addCanister(origin: Text) {
+            switch (canisters.get(origin)) {
+            case null { canisters.put(origin, 1) };
+            case (?n) { canisters.put(origin, n + 1) };
+            }
+        };
+        public func addInstall(origin: Text) {
+            switch (installs.get(origin)) {
+            case null { installs.put(origin, 1) };
+            case (?n) { installs.put(origin, n + 1) };
+            }
+        };
+        public func dump() : ([(Text, Nat)], [(Text, Nat)]) {
+            (canisters.entries() |> toArray<(Text, Nat)>(_),
+             installs.entries() |> toArray<(Text, Nat)>(_))
+        };
+        public func metrics() : Text {
+            var result = "";
+            let now = timeNow() / 1_000_000;
+            for ((origin, count) in canisters.entries()) {
+                let name = "canisters_" # origin;
+                let desc = "Number of canisters deployed from " # origin;
+                result := result # encode_single_value("counter", name, count, desc, now);
+            };
+            for ((origin, count) in installs.entries()) {
+                let name = "installs_" # origin;
+                let desc = "Number of Wasm installed from " # origin;
+                result := result # encode_single_value("counter", name, count, desc, now);
+            };
+            result;
+        };
+    };
+    public func encode_single_value(kind: Text, name: Text, number: Int, desc: Text, time: Int) : Text {
+        "# HELP " # name # " " # desc # "\n" #
+        "# TYPE " # name # " " # kind # "\n" #
+        name # " " # toText(number) # " " # toText(time) # "\n"
+    };
+
     public type Stats = {
         num_of_canisters: Nat;
         num_of_installs: Nat;
