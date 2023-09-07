@@ -75,7 +75,7 @@ export function ProjectModal({
     }
     await dispatch({
       type: "setOrigin",
-      payload: { origin: `playground:example:${project.name}` },
+      payload: { origin: "playground", tags: [`example:${project.name}`] },
     });
   }
   async function emptyProject() {
@@ -83,7 +83,7 @@ export function ProjectModal({
     close();
     await dispatch({
       type: "setOrigin",
-      payload: { origin: "playground:new" },
+      payload: { origin: "playground", tags: ["file:new"] },
     });
   }
 

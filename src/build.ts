@@ -1,6 +1,7 @@
 import { Principal } from "@dfinity/principal";
 import { backend } from "./config/actor";
 import { ILoggingStore } from "./components/Logger";
+import { Origin } from "./contexts/WorkplaceState";
 
 export interface CanisterInfo {
   id: Principal;
@@ -110,7 +111,7 @@ export async function deploy(
   wasm: Uint8Array,
   profiling: boolean,
   logger: ILoggingStore,
-  origin: string
+  origin: Origin
 ): Promise<CanisterInfo | undefined> {
   try {
     logger.log(`Deploying code...`);
@@ -120,7 +121,7 @@ export async function deploy(
         throw new Error(`Cannot ${mode} for new canister`);
       }
       logger.log(`Requesting a new canister id...`);
-      canisterInfo = await createCanister(worker, logger);
+      canisterInfo = await createCanister(worker, logger, origin);
       updatedState = await install(
         canisterInfo,
         wasm,
@@ -155,11 +156,14 @@ export async function deploy(
 
 async function createCanister(
   worker,
-  logger: ILoggingStore
+  logger: ILoggingStore,
+  origin: Origin
 ): Promise<CanisterInfo> {
   const timestamp = BigInt(Date.now()) * BigInt(1_000_000);
   const nonce = await worker.pow(timestamp);
-  const info = await backend.getCanisterId(nonce, "playground");
+  // remove tags for create canister to avoid duplicate counting
+  const no_tags = { origin: origin.origin, tags: [] };
+  const info = await backend.getCanisterId(nonce, no_tags);
   logger.log(`Got canister id ${info.id}`);
   return {
     id: info.id,
@@ -179,12 +183,11 @@ async function install(
   mode: string,
   profiling: boolean,
   logger: ILoggingStore,
-  origin: string | undefined
+  origin: Origin
 ): Promise<CanisterInfo> {
   if (!canisterInfo) {
     throw new Error("no canister id");
   }
-  origin ||= "playground";
   const canisterId = canisterInfo.id;
   const installArgs = {
     arg: [...args],
@@ -196,7 +199,6 @@ async function install(
     profiling,
     is_whitelisted: false,
     origin,
-    referrer: document.referrer || (window.opener && "(opener)") || undefined,
   };
   const new_info = await backend.installCode(
     canisterInfo,
@@ -205,7 +207,6 @@ async function install(
   );
   canisterInfo = new_info;
   logger.log(`Code installed at canister id ${canisterInfo.id}`);
-  console.log("Installed with origin:", origin);
   return canisterInfo;
 }
 

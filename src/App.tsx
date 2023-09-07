@@ -82,7 +82,7 @@ async function fetchFromUrlParams(
       const { origin, files } = result;
       await dispatch({
         type: "setOrigin",
-        payload: { origin: `playground:post:${origin}` },
+        payload: { origin: `playground:post:${origin}`, tags: [] },
       });
       return files;
     }
@@ -95,7 +95,7 @@ async function fetchFromUrlParams(
     };
     await dispatch({
       type: "setOrigin",
-      payload: { origin: `playground:git:${git}` },
+      payload: { origin: "playground:git", tags: [`git:${git}`] },
     });
     return await worker.fetchGithub(repo);
   }
@@ -147,7 +147,7 @@ async function fetchFromUrlParams(
       }
       await dispatch({
         type: "setOrigin",
-        payload: { origin: `playground:tag:${tag}` },
+        payload: { origin: "playground:tag", tags: [`tag:${tag}`] },
       });
       return files;
     }

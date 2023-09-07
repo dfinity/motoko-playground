@@ -5,31 +5,47 @@ import {now = timeNow} "mo:base/Time";
 import {toText} "mo:base/Int";
 
 module {
-    public type SharedStatsByOrigin = (Map.Tree<Text,Nat>, Map.Tree<Text,Nat>);
+    public type Origin = { origin: Text; tags: [Text] };
+    public type SharedStatsByOrigin = (Map.Tree<Text,Nat>, Map.Tree<Text,Nat>, Map.Tree<Text, Nat>);
     public class StatsByOrigin() {
         var canisters = Map.RBTree<Text, Nat>(compare);
         var installs = Map.RBTree<Text, Nat>(compare);
-        public func share() : SharedStatsByOrigin = (canisters.share(), installs.share());
+        var tags = Map.RBTree<Text, Nat>(compare);
+        public func share() : SharedStatsByOrigin = (canisters.share(), installs.share(), tags.share());
         public func unshare(x : SharedStatsByOrigin) {
             canisters.unshare(x.0);
             installs.unshare(x.1);
+            tags.unshare(x.2);
         };
-        public func addCanister(origin: Text) {
-            switch (canisters.get(origin)) {
-            case null { canisters.put(origin, 1) };
-            case (?n) { canisters.put(origin, n + 1) };
-            }
+        func addTags(list: [Text]) {
+            for (tag in list.vals()) {
+                switch (tags.get(tag)) {
+                case null { tags.put(tag, 1) };
+                case (?n) { tags.put(tag, n + 1) };
+                };
+            };
         };
-        public func addInstall(origin: Text, referrer: ?Text) {
-            // TODO: keep track of `referrer`
-            switch (installs.get(origin)) {
-            case null { installs.put(origin, 1) };
-            case (?n) { installs.put(origin, n + 1) };
-            }
+        public func addCanister(origin: Origin) {
+            switch (canisters.get(origin.origin)) {
+            case null { canisters.put(origin.origin, 1) };
+            case (?n) { canisters.put(origin.origin, n + 1) };
+            };
+            // Not storing tags for create canister to avoid duplicate counting of tags
+            // addTags(origin.tags);
         };
-        public func dump() : ([(Text, Nat)], [(Text, Nat)]) {
+        public func addInstall(origin: Origin) {
+            switch (installs.get(origin.origin)) {
+            case null { installs.put(origin.origin, 1) };
+            case (?n) { installs.put(origin.origin, n + 1) };
+            };
+            // Only record tags for canister install
+            addTags(origin.tags);
+        };
+        public func dump() : ([(Text, Nat)], [(Text, Nat)], [(Text, Nat)]) {
             (toArray<(Text, Nat)>(canisters.entries()),
-             toArray<(Text, Nat)>(installs.entries()))
+             toArray<(Text, Nat)>(installs.entries()),
+             toArray<(Text, Nat)>(tags.entries())
+            )
         };
         public func metrics() : Text {
             var result = "";

@@ -32,7 +32,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     stable var stableChildren : [(Principal, [Principal])] = [];
     stable var stableTimers : [Types.CanisterInfo] = [];
     stable var previousParam : ?Types.InitParams = null;
-    stable var stableStatsByOrigin : Logs.SharedStatsByOrigin = (#leaf, #leaf);
+    stable var stableStatsByOrigin : Logs.SharedStatsByOrigin = (#leaf, #leaf, #leaf);
 
     system func preupgrade() {
         let (tree, metadata, children, timers) = pool.share();
@@ -61,9 +61,9 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         params;
     };
 
-    public query func getStats() : async (Logs.Stats, [(Text, Nat)], [(Text, Nat)]) {
-        let (canister, install) = statsByOrigin.dump();
-        (stats, canister, install);
+    public query func getStats() : async (Logs.Stats, [(Text, Nat)], [(Text, Nat)], [(Text, Nat)]) {
+        let (canister, install, tags) = statsByOrigin.dump();
+        (stats, canister, install, tags);
     };
 
     public query func balance() : async Nat {
@@ -75,7 +75,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         ignore Cycles.accept amount;
     };
 
-    private func getExpiredCanisterInfo(origin : Text) : async Types.CanisterInfo {
+    private func getExpiredCanisterInfo(origin : Logs.Origin) : async Types.CanisterInfo {
         switch (pool.getExpiredCanisterId()) {
             case (#newId) {
                 Cycles.add(params.cycles_per_canister);
@@ -118,8 +118,8 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
     };
 
-    public shared ({ caller }) func getCanisterId(nonce : PoW.Nonce, origin : Text) : async Types.CanisterInfo {
-        if (origin == "") {
+    public shared ({ caller }) func getCanisterId(nonce : PoW.Nonce, origin : Logs.Origin) : async Types.CanisterInfo {
+        if (origin.origin == "") {
             throw Error.reject "Please specify an origin";
         };
         if (caller != controller and not nonceCache.checkProofOfWork(nonce)) {
@@ -135,9 +135,9 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         await getExpiredCanisterInfo(origin);
     };
 
-    type InstallConfig = { profiling: Bool; is_whitelisted: Bool; origin: Text; referrer: ?Text };
+    type InstallConfig = { profiling: Bool; is_whitelisted: Bool; origin: Logs.Origin };
     public shared ({ caller }) func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, install_config : InstallConfig) : async Types.CanisterInfo {
-        if (install_config.origin == "") {
+        if (install_config.origin.origin == "") {
             throw Error.reject "Please specify an origin";
         };
         if (info.timestamp == 0) {
@@ -169,7 +169,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             };
             await IC.install_code newArgs;
             stats := Logs.updateStats(stats, #install);
-            statsByOrigin.addInstall(install_config.origin, install_config.referrer);
+            statsByOrigin.addInstall(install_config.origin);
             switch (pool.refresh(info, install_config.profiling)) {
                 case (?newInfo) {
                      updateTimer(newInfo);
@@ -310,7 +310,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         if (not pool.findId caller) {
             throw Error.reject "Only a canister managed by the Motoko Playground can call create_canister";
         };
-        let info = await getExpiredCanisterInfo("spawned");
+        let info = await getExpiredCanisterInfo({origin="spawned"; tags=[]});
         let result = pool.setChild(caller, info.id);
         if (not result) {
             throw Error.reject("In the Motoko Playground, each top level canister can only spawn " # Nat.toText(params.max_family_tree_size) # " descendants including itself");
@@ -335,7 +335,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         switch (sanitizeInputs(caller, canister_id)) {
             case (#ok info) {
                 let args = { arg; wasm_module; mode; canister_id };
-                let config = { profiling = pool.profiling caller; is_whitelisted = false; origin = "spawned"; referrer = null };
+                let config = { profiling = pool.profiling caller; is_whitelisted = false; origin = {origin = "spawned"; tags = [] } };
                 ignore await installCode(info, args, config); // inherit the profiling of the parent
             };
             case (#err makeMsg) throw Error.reject(makeMsg "install_code");

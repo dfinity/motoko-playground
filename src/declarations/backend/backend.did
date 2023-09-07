@@ -44,7 +44,7 @@ type Self =
     (record {canister_id: canister_id;});
    delete_canister: (record {canister_id: canister_id;}) -> ();
    dump: () -> (vec CanisterInfo) query;
-   getCanisterId: (Nonce, text) -> (CanisterInfo);
+   getCanisterId: (Nonce, Origin) -> (CanisterInfo);
    getInitParams: () -> (InitParams) query;
    getStats: () -> (Stats, vec record {
                                  text;
@@ -52,7 +52,10 @@ type Self =
                                }, vec record {
                                         text;
                                         nat;
-                                      }) query;
+                                      }, vec record {
+                                               text;
+                                               nat;
+                                             }) query;
    getSubtree: (CanisterInfo) ->
     (vec record {
            principal;
@@ -83,6 +86,11 @@ type Self =
      }) -> ();
    wallet_receive: () -> ();
  };
+type Origin = 
+ record {
+   origin: text;
+   tags: vec text;
+ };
 type Nonce = 
  record {
    nonce: nat;
@@ -91,7 +99,7 @@ type Nonce =
 type InstallConfig = 
  record {
    is_whitelisted: bool;
-   origin: text;
+   origin: Origin;
    profiling: bool;
  };
 type InstallArgs = 

@@ -24,6 +24,10 @@ export const idlFactory = ({ IDL }) => {
     compute_allocation: IDL.Opt(IDL.Nat),
   });
   const Nonce = IDL.Record({ nonce: IDL.Nat, timestamp: IDL.Int });
+  const Origin = IDL.Record({
+    origin: IDL.Text,
+    tags: IDL.Vec(IDL.Text),
+  });
   const Stats = IDL.Record({
     num_of_installs: IDL.Nat,
     num_of_canisters: IDL.Nat,
@@ -54,7 +58,7 @@ export const idlFactory = ({ IDL }) => {
     canister_id: IDL.Principal,
   });
   const InstallConfig = IDL.Record({
-    origin: IDL.Text,
+    origin: Origin,
     profiling: IDL.Bool,
     is_whitelisted: IDL.Bool,
   });
@@ -95,12 +99,13 @@ export const idlFactory = ({ IDL }) => {
       []
     ),
     dump: IDL.Func([], [IDL.Vec(CanisterInfo)], ["query"]),
-    getCanisterId: IDL.Func([Nonce, IDL.Text], [CanisterInfo], []),
+    getCanisterId: IDL.Func([Nonce, Origin], [CanisterInfo], []),
     getInitParams: IDL.Func([], [InitParams], ["query"]),
     getStats: IDL.Func(
       [],
       [
         Stats,
+        IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat)),
         IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat)),
         IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat)),
       ],

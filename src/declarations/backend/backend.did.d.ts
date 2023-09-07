@@ -30,13 +30,17 @@ export interface InstallArgs {
   canister_id: Principal;
 }
 export interface InstallConfig {
-  origin: string;
+  origin: Origin;
   profiling: boolean;
   is_whitelisted: boolean;
 }
 export interface Nonce {
   nonce: bigint;
   timestamp: bigint;
+}
+export interface Origin {
+  origin: string;
+  tags: Array<string>;
 }
 export interface Self {
   GCCanisters: ActorMethod<[], undefined>;
@@ -61,11 +65,16 @@ export interface Self {
   >;
   delete_canister: ActorMethod<[{ canister_id: canister_id }], undefined>;
   dump: ActorMethod<[], Array<CanisterInfo>>;
-  getCanisterId: ActorMethod<[Nonce, string], CanisterInfo>;
+  getCanisterId: ActorMethod<[Nonce, Origin], CanisterInfo>;
   getInitParams: ActorMethod<[], InitParams>;
   getStats: ActorMethod<
     [],
-    [Stats, Array<[string, bigint]>, Array<[string, bigint]>]
+    [
+      Stats,
+      Array<[string, bigint]>,
+      Array<[string, bigint]>,
+      Array<[string, bigint]>
+    ]
   >;
   getSubtree: ActorMethod<
     [CanisterInfo],

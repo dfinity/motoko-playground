@@ -2,13 +2,17 @@ import * as React from "react";
 import { CanisterInfo } from "../build";
 import { PackageInfo } from "../workers/file";
 
+export interface Origin {
+  origin: string;
+  tags: Array<string>;
+}
 export interface WorkplaceState {
   files: Record<string, string>;
   selectedFile: string | null;
   canisters: Record<string, CanisterInfo>;
   selectedCanister: string | null;
   packages: Record<string, PackageInfo>;
-  origin: string | undefined;
+  origin: Origin | undefined;
 }
 export function getActorAliases(
   canisters: Record<string, CanisterInfo>
@@ -128,9 +132,7 @@ export type WorkplaceReducerAction =
     }
   | {
       type: "setOrigin";
-      payload: {
-        origin: string | undefined;
-      };
+      payload: Origin;
     };
 
 function selectFirstFile(files: Record<string, string>): string | null {
@@ -230,10 +232,14 @@ export const workplaceReducer = {
         };
       }
       case "setOrigin": {
-        const { origin } = action.payload;
+        let refer =
+          document.referrer || (window.opener && "(opener)") || undefined;
+        if (refer) {
+          action.payload.tags.push(`ref:${refer}`);
+        }
         return {
           ...state,
-          origin,
+          origin: action.payload,
         };
       }
       default:
