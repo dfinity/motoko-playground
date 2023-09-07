@@ -14,7 +14,7 @@ let init = opt record {
 let S = install(wasm, init, null);
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
 let CID = call S.getCanisterId(nonce);
-call S.installCode(CID, record { arg = blob ""; wasm_module = empty_wasm; mode = variant { install }; canister_id = CID.id }, false, false);
+call S.installCode(CID, record { arg = blob ""; wasm_module = empty_wasm; mode = variant { install }; canister_id = CID.id }, record { profiling = false; is_whitelisted = false; origin = "test" });
 metadata(CID.id, "module_hash");
 
 // Immediately expire
@@ -27,13 +27,13 @@ let init = opt record {
 };
 let S = install(wasm, init, null);
 
-let c1 = call S.getCanisterId(nonce);
+let c1 = call S.getCanisterId(nonce, "test");
 c1;
-let c2 = call S.getCanisterId(nonce);
+let c2 = call S.getCanisterId(nonce, "test");
 c2;
-let c3 = call S.getCanisterId(nonce);
+let c3 = call S.getCanisterId(nonce, "test");
 c3;
-let c4 = call S.getCanisterId(nonce);
+let c4 = call S.getCanisterId(nonce, "test");
 c4;
 assert c1.id != c2.id;
 assert c1.id == c3.id;
@@ -48,14 +48,14 @@ let init = opt record {
   max_family_tree_size = 5 : nat;
 };
 reinstall(S, wasm, init);
-let c3 = call S.getCanisterId(nonce);
+let c3 = call S.getCanisterId(nonce, "test");
 c3;
-let c4 = call S.getCanisterId(nonce);
+let c4 = call S.getCanisterId(nonce, "test");
 c4;
-fail call S.getCanisterId(nonce);
+fail call S.getCanisterId(nonce, "test");
 assert _ ~= "No available canister id";
 call S.removeCode(c4);
-call S.getCanisterId(nonce);
+call S.getCanisterId(nonce, "test");
 assert _.id == c4.id;
 assert _.timestamp != c4.timestamp;
 
@@ -68,7 +68,7 @@ let init = opt record {
   max_family_tree_size = 5 : nat;
 };
 let S = install(wasm, init, opt 100_000_000_000);
-fail call S.getCanisterId(nonce);
+fail call S.getCanisterId(nonce, "test");
 assert _ ~= "105_000_000_000 cycles";
 call ic.provisional_top_up_canister(
   record {
@@ -76,7 +76,7 @@ call ic.provisional_top_up_canister(
     amount = 100_000_000_000_000;
   },
 );
-call S.getCanisterId(nonce);
+call S.getCanisterId(nonce, "test");
 
 // Enough time has passed that the timer has removed the canister code
 fail metadata(CID.id, "module_hash");

@@ -13,11 +13,11 @@ let init = opt record {
 };
 let S = install(wasm, init, null);
 
-call S.getCanisterId(record { timestamp = 4780472194_000_000_000; nonce = 1 });
-fail call S.getCanisterId(record { timestamp = 4780472194_000_000_000; nonce = 1 });
+call S.getCanisterId(record { timestamp = 4780472194_000_000_000; nonce = 1 }, "test");
+fail call S.getCanisterId(record { timestamp = 4780472194_000_000_000; nonce = 1 }, "test");
 assert _ ~= "Nonce already used";
-call S.getCanisterId(record { timestamp = 4780472194_000_000_001; nonce = 1 });
+call S.getCanisterId(record { timestamp = 4780472194_000_000_001; nonce = 1 }, "test");
 
 identity bob;
-fail call S.getCanisterId(record { timestamp = 4780472194_000_000_002; nonce = 1 });
+fail call S.getCanisterId(record { timestamp = 4780472194_000_000_002; nonce = 1 }, "test");
 assert _ ~= "Proof of work check failed";

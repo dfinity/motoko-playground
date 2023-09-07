@@ -13,15 +13,15 @@ let init = opt record {
 let S = install(wasm, init, null);
 
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
-let c1 = call S.getCanisterId(nonce);
+let c1 = call S.getCanisterId(nonce, "test");
 c1;
-let c2 = call S.getCanisterId(nonce);
+let c2 = call S.getCanisterId(nonce, "test");
 c2;
 
 upgrade(S, wasm, init);
-let c3 = call S.getCanisterId(nonce);
+let c3 = call S.getCanisterId(nonce, "test");
 c3;
-let c4 = call S.getCanisterId(nonce);
+let c4 = call S.getCanisterId(nonce, "test");
 c4;
 assert c1.id != c2.id;
 assert c1.id == c3.id;
@@ -35,12 +35,16 @@ let init = opt record {
   canister_time_to_live = 3600_000_000_000 : nat;
   max_family_tree_size = 5 : nat;
 };
+let stats = call S.getStats();
 upgrade(S, wasm, init);
-let c5 = call S.getCanisterId(nonce);
+// stats are preserved after upgrade
+call S.getStats();
+assert _ == stats;
+let c5 = call S.getCanisterId(nonce, "test");
 c5;
 assert c5.id != c1.id;
 assert c5.id != c2.id;
-fail call S.getCanisterId(nonce);
+fail call S.getCanisterId(nonce, "test");
 assert _ ~= "No available canister id";
 
 // Cannot reduce pool
@@ -54,5 +58,5 @@ let init = opt record {
 fail upgrade(S, wasm, init);
 assert _ ~= "Cannot reduce canisterPool for upgrade";
 // still old canister, new TTL does not apply
-fail call S.getCanisterId(nonce);
+fail call S.getCanisterId(nonce, "test");
 assert _ ~= "No available canister id";

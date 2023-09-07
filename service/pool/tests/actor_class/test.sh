@@ -7,9 +7,9 @@ let deleter = file(".dfx/local/canisters/Deleter/Deleter.wasm");
 let S = install(wasm, null, opt 100_000_000_000_000);
 
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
-let c1 = call S.getCanisterId(nonce);
+let c1 = call S.getCanisterId(nonce, "test");
 let args = record { arg = blob ""; wasm_module = parent; mode = variant { install }; canister_id = c1.id };
-call S.installCode(c1, args, false, false);
+call S.installCode(c1, args, record { profiling = false; is_whitelisted = false; origin = "test" });
 
 let c1 = c1.id;
 
@@ -48,26 +48,26 @@ let init = opt record {
 let S = install(wasm, init, opt 100_000_000_000_000);
 
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
-let c1 = call S.getCanisterId(nonce);
+let c1 = call S.getCanisterId(nonce, "test");
 let args = record { arg = blob ""; wasm_module = parent; mode = variant { install }; canister_id = c1.id };
-call S.installCode(c1, args, false, false);
+call S.installCode(c1, args, record { profiling = false; is_whitelisted = false; origin = "test" });
 let c1 = c1.id;
 
 fail call c1.makeChild(0);
-call S.getCanisterId(nonce);
-call S.getCanisterId(nonce);
+call S.getCanisterId(nonce, "test");
+call S.getCanisterId(nonce, "test");
 
 // Security check
 let S = install(wasm, null, opt 100_000_000_000_000);
 
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
-let c1 = call S.getCanisterId(nonce);
+let c1 = call S.getCanisterId(nonce, "test");
 let args = record { arg = blob ""; wasm_module = parent; mode = variant { install }; canister_id = c1.id };
-call S.installCode(c1, args, false, false);
+call S.installCode(c1, args, record { profiling = false; is_whitelisted = false; origin = "test" });
 
-let c2 = call S.getCanisterId(nonce);
+let c2 = call S.getCanisterId(nonce, "test");
 let args = record { arg = blob ""; wasm_module = deleter; mode = variant { install }; canister_id = c2.id };
-call S.installCode(c2, args, false, false);
+call S.installCode(c2, args, record { profiling = false; is_whitelisted = false; origin = "test" });
 
 let c1 = c1.id;
 let c2 = c2.id;
