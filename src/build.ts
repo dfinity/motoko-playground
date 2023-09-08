@@ -57,6 +57,23 @@ function logDiags(diagnostics: Diagnostics[], logger: ILoggingStore) {
   });
 }
 
+export async function extractCandidFromWasm(
+  wasm: Uint8Array
+): Promise<ArrayBuffer> {
+  const mod = await WebAssembly.compile(wasm);
+  let section = WebAssembly.Module.customSections(
+    mod,
+    "icp:public candid:args"
+  );
+  if (section.length === 0) {
+    section = WebAssembly.Module.customSections(mod, "icp:private candid:args");
+  }
+  if (section.length === 0) {
+    throw new Error("Cannot find candid:args metadata in Wasm module");
+  }
+  return section;
+}
+
 export async function compileCandid(
   worker,
   file: string,

@@ -10,7 +10,7 @@ import {
   WorkplaceDispatchContext,
 } from "../contexts/WorkplaceState";
 import { fetchCandidInterface, didjs, didToJs } from "../config/actor";
-import { CanisterInfo } from "../build";
+import { CanisterInfo, extractCandidFromWasm } from "../build";
 import { canisterSet } from "../config/canister-set";
 import { Field } from "./shared/Field";
 import { Tab, Tabs } from "./shared/Tabs";
@@ -153,8 +153,15 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
   }
   function handleWasmUpload(e) {
     const reader = new FileReader();
-    reader.addEventListener("load", () => {
-      setWasm(new Uint8Array(reader.result));
+    reader.addEventListener("load", async () => {
+      const wasm = new Uint8Array(reader.result);
+      setWasm(wasm);
+      try {
+        const init = await extractCandidFromWasm(wasm);
+        console.log(init);
+      } catch (e) {
+        setError(e.toString());
+      }
     });
     const file = e.target.files[0];
     if (file.size > 2097152) {
