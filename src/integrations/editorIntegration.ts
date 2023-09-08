@@ -18,6 +18,11 @@ type EditorIntegrationResponse = {
   acknowledge: number;
 };
 
+export interface EditorIntegrationResult {
+  origin: string;
+  files: Record<string, string>;
+}
+
 export const INTEGRATION_HOOKS: Partial<EditorIntegrationHooks> = {};
 
 // Cached return value to ensure at most one initialization
@@ -35,7 +40,7 @@ export async function setupEditorIntegration(
   editorKey: string,
   dispatch: (WorkplaceReducerAction) => void,
   worker // MocWorker
-): Promise<Record<string, string> | undefined> {
+): Promise<EditorIntegrationResult | undefined> {
   if (previousResult) {
     return previousResult;
   }
@@ -111,7 +116,10 @@ export async function setupEditorIntegration(
 
   // Load a default empty project
   previousResult = {
-    "Main.mo": "",
+    origin,
+    files: {
+      "Main.mo": "",
+    },
   };
   return previousResult;
 }

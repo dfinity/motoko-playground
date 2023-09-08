@@ -2,12 +2,17 @@ import * as React from "react";
 import { CanisterInfo } from "../build";
 import { PackageInfo } from "../workers/file";
 
+export interface Origin {
+  origin: string;
+  tags: Array<string>;
+}
 export interface WorkplaceState {
   files: Record<string, string>;
   selectedFile: string | null;
   canisters: Record<string, CanisterInfo>;
   selectedCanister: string | null;
   packages: Record<string, PackageInfo>;
+  origin: Origin | undefined;
 }
 export function getActorAliases(
   canisters: Record<string, CanisterInfo>
@@ -121,9 +126,13 @@ export type WorkplaceReducerAction =
       payload: {
         /** path of file that should be updated. Should correspond to a property in state.files */
         canister: CanisterInfo;
-        do_not_select?: bool;
+        do_not_select?: boolean;
         /** new contents of file */
       };
+    }
+  | {
+      type: "setOrigin";
+      payload: Origin;
     };
 
 function selectFirstFile(files: Record<string, string>): string | null {
@@ -157,6 +166,7 @@ export const workplaceReducer = {
       canisters,
       selectedCanister: null,
       packages: {},
+      origin: undefined,
     };
   },
   /** Return updated state based on an action */
@@ -219,6 +229,17 @@ export const workplaceReducer = {
             ...state.canisters,
             [name]: action.payload.canister,
           },
+        };
+      }
+      case "setOrigin": {
+        let refer =
+          document.referrer || (window.opener && "(opener)") || undefined;
+        if (refer) {
+          action.payload.tags.push(`ref:${refer}`);
+        }
+        return {
+          ...state,
+          origin: action.payload,
         };
       }
       default:

@@ -6,6 +6,7 @@ import Option "mo:base/Option";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import Array "mo:base/Array";
+import Buffer "mo:base/Buffer";
 import List "mo:base/List";
 import Deque "mo:base/Deque";
 import Result "mo:base/Result";
@@ -23,6 +24,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     let params = Option.get(opt_params, Types.defaultParams);
     var pool = Types.CanisterPool(params.max_num_canisters, params.canister_time_to_live, params.max_family_tree_size);
     let nonceCache = PoW.NonceCache(params.nonce_time_to_live);
+    var statsByOrigin = Logs.StatsByOrigin();
 
     stable let controller = creator.caller;
     stable var stats = Logs.defaultStats;
@@ -31,6 +33,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     stable var stableChildren : [(Principal, [Principal])] = [];
     stable var stableTimers : [Types.CanisterInfo] = [];
     stable var previousParam : ?Types.InitParams = null;
+    stable var stableStatsByOrigin : Logs.SharedStatsByOrigin = (#leaf, #leaf, #leaf);
 
     system func preupgrade() {
         let (tree, metadata, children, timers) = pool.share();
@@ -39,6 +42,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         stableChildren := children;
         stableTimers := timers;
         previousParam := ?params;
+        stableStatsByOrigin := statsByOrigin.share();
     };
 
     system func postupgrade() {
@@ -50,15 +54,17 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         pool.unshare(stablePool, stableMetadata, stableChildren);
         for (info in stableTimers.vals()) {
             updateTimer(info);
-        }
+        };
+        statsByOrigin.unshare(stableStatsByOrigin);
     };
 
     public query func getInitParams() : async Types.InitParams {
         params;
     };
 
-    public query func getStats() : async Logs.Stats {
-        stats;
+    public query func getStats() : async (Logs.Stats, [(Text, Nat)], [(Text, Nat)], [(Text, Nat)]) {
+        let (canister, install, tags) = statsByOrigin.dump();
+        (stats, canister, install, tags);
     };
 
     public query func balance() : async Nat {
@@ -70,7 +76,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         ignore Cycles.accept amount;
     };
 
-    private func getExpiredCanisterInfo() : async Types.CanisterInfo {
+    private func getExpiredCanisterInfo(origin : Logs.Origin) : async Types.CanisterInfo {
         switch (pool.getExpiredCanisterId()) {
             case (#newId) {
                 Cycles.add(params.cycles_per_canister);
@@ -79,6 +85,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 let info = { id = cid.canister_id; timestamp = now };
                 pool.add info;
                 stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
+                statsByOrigin.addCanister(origin);
                 info;
             };
             case (#reuse info) {
@@ -101,6 +108,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     case _ {};
                 };
                 stats := Logs.updateStats(stats, #getId topUpCycles);
+                statsByOrigin.addCanister(origin);
                 info;
             };
             case (#outOfCapacity time) {
@@ -111,7 +119,10 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
     };
 
-    public shared ({ caller }) func getCanisterId(nonce : PoW.Nonce) : async Types.CanisterInfo {
+    public shared ({ caller }) func getCanisterId(nonce : PoW.Nonce, origin : Logs.Origin) : async Types.CanisterInfo {
+        if (origin.origin == "") {
+            throw Error.reject "Please specify an origin";
+        };
         if (caller != controller and not nonceCache.checkProofOfWork(nonce)) {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Proof of work check failed";
@@ -122,10 +133,14 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "Nonce already used";
         };
         nonceCache.add nonce;
-        await getExpiredCanisterInfo();
+        await getExpiredCanisterInfo(origin);
     };
 
-    public shared ({ caller }) func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, profiling : Bool, is_whitelisted : Bool) : async Types.CanisterInfo {
+    type InstallConfig = { profiling: Bool; is_whitelisted: Bool; origin: Logs.Origin };
+    public shared ({ caller }) func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, install_config : InstallConfig) : async Types.CanisterInfo {
+        if (install_config.origin.origin == "") {
+            throw Error.reject "Please specify an origin";
+        };
         if (info.timestamp == 0) {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot install removed canister";
@@ -135,14 +150,14 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "Cannot find canister";
         } else {
             let config = {
-                profiling;
+                profiling = install_config.profiling;
                 remove_cycles_add = true;
                 limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
                 backend_canister_id = ?Principal.fromActor(this);
             };
-            let wasm = if (caller == controller and is_whitelisted) {
+            let wasm = if (caller == controller and install_config.is_whitelisted) {
                 args.wasm_module;
-            } else if (is_whitelisted) {
+            } else if (install_config.is_whitelisted) {
                 await Wasm.is_whitelisted(args.wasm_module);
             } else {
                 await Wasm.transform(args.wasm_module, config);
@@ -155,7 +170,23 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             };
             await IC.install_code newArgs;
             stats := Logs.updateStats(stats, #install);
-            switch (pool.refresh(info, profiling)) {
+
+            // Build tags from install arguments
+            let tags = Buffer.fromArray<Text>(install_config.origin.tags);
+            if (install_config.profiling) {
+                tags.add("profiling");
+            };
+            if (install_config.is_whitelisted) {
+                tags.add("asset");
+            };
+            switch (args.mode) {
+            case (#install) { tags.add("install") };
+            case (#upgrade) { tags.add("upgrade") };
+            case (#reinstall) { tags.add("reinstall") };
+            };
+            let origin = { origin = install_config.origin.origin; tags = Buffer.toArray(tags) };
+            statsByOrigin.addInstall(origin);
+            switch (pool.refresh(info, install_config.profiling)) {
                 case (?newInfo) {
                      updateTimer(newInfo);
                      newInfo;
@@ -241,12 +272,13 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "Only called by controller";
         };
         stats := Logs.defaultStats;
+        statsByOrigin := Logs.StatsByOrigin();
     };
 
     // Metrics
     public query func http_request(req : Metrics.HttpRequest) : async Metrics.HttpResponse {
         if (req.url == "/metrics") {
-            let body = Metrics.metrics stats;
+            let body = Metrics.metrics(stats, statsByOrigin);
             {
                 status_code = 200;
                 headers = [("Content-Type", "text/plain; version=0.0.4"), ("Content-Length", Nat.toText(body.size()))];
@@ -294,7 +326,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         if (not pool.findId caller) {
             throw Error.reject "Only a canister managed by the Motoko Playground can call create_canister";
         };
-        let info = await getExpiredCanisterInfo();
+        let info = await getExpiredCanisterInfo({origin="spawned"; tags=[]});
         let result = pool.setChild(caller, info.id);
         if (not result) {
             throw Error.reject("In the Motoko Playground, each top level canister can only spawn " # Nat.toText(params.max_family_tree_size) # " descendants including itself");
@@ -319,7 +351,8 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         switch (sanitizeInputs(caller, canister_id)) {
             case (#ok info) {
                 let args = { arg; wasm_module; mode; canister_id };
-                ignore await installCode(info, args, pool.profiling caller, false); // inherit the profiling of the parent
+                let config = { profiling = pool.profiling caller; is_whitelisted = false; origin = {origin = "spawned"; tags = [] } };
+                ignore await installCode(info, args, config); // inherit the profiling of the parent
             };
             case (#err makeMsg) throw Error.reject(makeMsg "install_code");
         };

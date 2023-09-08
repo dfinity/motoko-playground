@@ -1,6 +1,7 @@
 import { Principal } from "@dfinity/principal";
 import { backend } from "./config/actor";
 import { ILoggingStore } from "./components/Logger";
+import { Origin } from "./contexts/WorkplaceState";
 
 export interface CanisterInfo {
   id: Principal;
@@ -109,7 +110,8 @@ export async function deploy(
   mode: string,
   wasm: Uint8Array,
   profiling: boolean,
-  logger: ILoggingStore
+  logger: ILoggingStore,
+  origin: Origin
 ): Promise<CanisterInfo | undefined> {
   try {
     logger.log(`Deploying code...`);
@@ -119,14 +121,15 @@ export async function deploy(
         throw new Error(`Cannot ${mode} for new canister`);
       }
       logger.log(`Requesting a new canister id...`);
-      canisterInfo = await createCanister(worker, logger);
+      canisterInfo = await createCanister(worker, logger, origin);
       updatedState = await install(
         canisterInfo,
         wasm,
         args,
         "install",
         profiling,
-        logger
+        logger,
+        origin
       );
     } else {
       if (mode !== "reinstall" && mode !== "upgrade") {
@@ -138,7 +141,8 @@ export async function deploy(
         args,
         mode,
         profiling,
-        logger
+        logger,
+        origin
       );
     }
     //updatedState.candid = candid_source;
@@ -152,11 +156,14 @@ export async function deploy(
 
 async function createCanister(
   worker,
-  logger: ILoggingStore
+  logger: ILoggingStore,
+  origin: Origin
 ): Promise<CanisterInfo> {
   const timestamp = BigInt(Date.now()) * BigInt(1_000_000);
   const nonce = await worker.pow(timestamp);
-  const info = await backend.getCanisterId(nonce);
+  // remove tags for create canister to avoid duplicate counting
+  const no_tags = { origin: origin.origin, tags: [] };
+  const info = await backend.getCanisterId(nonce, no_tags);
   logger.log(`Got canister id ${info.id}`);
   return {
     id: info.id,
@@ -175,7 +182,8 @@ async function install(
   args: Uint8Array,
   mode: string,
   profiling: boolean,
-  logger: ILoggingStore
+  logger: ILoggingStore,
+  origin: Origin
 ): Promise<CanisterInfo> {
   if (!canisterInfo) {
     throw new Error("no canister id");
@@ -187,11 +195,15 @@ async function install(
     mode: { [mode]: null },
     canister_id: canisterId,
   };
+  const installConfig = {
+    profiling,
+    is_whitelisted: false,
+    origin,
+  };
   const new_info = await backend.installCode(
     canisterInfo,
     installArgs,
-    profiling,
-    false
+    installConfig
   );
   canisterInfo = new_info;
   logger.log(`Code installed at canister id ${canisterInfo.id}`);

@@ -1,4 +1,86 @@
+import Map "mo:base/RBTree";
+import {compare} "mo:base/Text";
+import {toArray} "mo:base/Iter";
+import {now = timeNow} "mo:base/Time";
+import {toText} "mo:base/Int";
+import {get} "mo:base/Option";
+
 module {
+    public type Origin = { origin: Text; tags: [Text] };
+    public type SharedStatsByOrigin = (Map.Tree<Text,Nat>, Map.Tree<Text,Nat>, Map.Tree<Text, Nat>);
+    public class StatsByOrigin() {
+        var canisters = Map.RBTree<Text, Nat>(compare);
+        var installs = Map.RBTree<Text, Nat>(compare);
+        var tags = Map.RBTree<Text, Nat>(compare);
+        public func share() : SharedStatsByOrigin = (canisters.share(), installs.share(), tags.share());
+        public func unshare(x : SharedStatsByOrigin) {
+            canisters.unshare(x.0);
+            installs.unshare(x.1);
+            tags.unshare(x.2);
+        };
+        func addTags(list: [Text]) {
+            for (tag in list.vals()) {
+                switch (tags.get(tag)) {
+                case null { tags.put(tag, 1) };
+                case (?n) { tags.put(tag, n + 1) };
+                };
+            };
+        };
+        public func addCanister(origin: Origin) {
+            switch (canisters.get(origin.origin)) {
+            case null { canisters.put(origin.origin, 1) };
+            case (?n) { canisters.put(origin.origin, n + 1) };
+            };
+            // Not storing tags for create canister to avoid duplicate counting of tags
+            // addTags(origin.tags);
+        };
+        public func addInstall(origin: Origin) {
+            switch (installs.get(origin.origin)) {
+            case null { installs.put(origin.origin, 1) };
+            case (?n) { installs.put(origin.origin, n + 1) };
+            };
+            // Only record tags for canister install
+            addTags(origin.tags);
+        };
+        public func dump() : ([(Text, Nat)], [(Text, Nat)], [(Text, Nat)]) {
+            (toArray<(Text, Nat)>(canisters.entries()),
+             toArray<(Text, Nat)>(installs.entries()),
+             toArray<(Text, Nat)>(tags.entries())
+            )
+        };
+        public func metrics() : Text {
+            var result = "";
+            let now = timeNow() / 1_000_000;
+            for ((origin, count) in canisters.entries()) {
+                let name = "canisters_" # origin;
+                let desc = "Number of canisters requested from " # origin;
+                result := result # encode_single_value("counter", name, count, desc, now);
+            };
+            for ((origin, count) in installs.entries()) {
+                let name = "installs_" # origin;
+                let desc = "Number of Wasm installed from " # origin;
+                result := result # encode_single_value("counter", name, count, desc, now);
+            };
+            let profiling = get(tags.get("profiling"), 0);
+            let asset = get(tags.get("asset"), 0);
+            let install = get(tags.get("install"), 0);
+            let reinstall = get(tags.get("reinstall"), 0);
+            let upgrade = get(tags.get("upgrade"), 0);
+            result := result
+            # encode_single_value("counter", "profiling", profiling, "Number of Wasm profiled", now)
+            # encode_single_value("counter", "asset", asset, "Number of asset Wasm canister installed", now)
+            # encode_single_value("counter", "install", install, "Number of Wasm with install mode", now)
+            # encode_single_value("counter", "reinstall", reinstall, "Number of Wasm with reinstall mode", now)
+            # encode_single_value("counter", "upgrade", upgrade, "Number of Wasm with upgrad mode", now);
+            result;
+        };
+    };
+    public func encode_single_value(kind: Text, name: Text, number: Int, desc: Text, time: Int) : Text {
+        "# HELP " # name # " " # desc # "\n" #
+        "# TYPE " # name # " " # kind # "\n" #
+        name # " " # toText(number) # " " # toText(time) # "\n"
+    };
+
     public type Stats = {
         num_of_canisters: Nat;
         num_of_installs: Nat;

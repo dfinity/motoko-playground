@@ -9,7 +9,10 @@ import { Tab, Tabs } from "./shared/Tabs";
 
 import { ImportGitHub } from "./ImportGithub";
 import { fetchExample, exampleProjects, ExampleProject } from "../examples";
-import { WorkerContext } from "../contexts/WorkplaceState";
+import {
+  WorkerContext,
+  WorkplaceDispatchContext,
+} from "../contexts/WorkplaceState";
 import iconCaretRight from "../assets/images/icon-caret-right.svg";
 
 const ModalContainer = styled.div`
@@ -63,16 +66,25 @@ export function ProjectModal({
   isFirstOpen,
 }: ProjectModalProps) {
   const worker = useContext(WorkerContext);
+  const dispatch = useContext(WorkplaceDispatchContext);
   async function handleSelectProjectAndClose(project: ExampleProject) {
     const files = await fetchExample(worker, project);
     if (files) {
       await importCode(files);
       close();
     }
+    await dispatch({
+      type: "setOrigin",
+      payload: { origin: "playground", tags: [`example:${project.name}`] },
+    });
   }
   async function emptyProject() {
     await importCode({ "Main.mo": "" });
     close();
+    await dispatch({
+      type: "setOrigin",
+      payload: { origin: "playground", tags: ["file:new"] },
+    });
   }
 
   const welcomeText = (
@@ -123,12 +135,12 @@ export function ProjectModal({
               <ProjectButton onClick={emptyProject}>
                 New Motoko project
               </ProjectButton>
-              {Object.entries(exampleProjects).map(([name, project]) => (
+              {exampleProjects.map((project) => (
                 <ProjectButton
-                  key={name}
+                  key={project.name}
                   onClick={() => handleSelectProjectAndClose(project)}
                 >
-                  {name}
+                  {project.name}
                 </ProjectButton>
               ))}
             </SelectList>

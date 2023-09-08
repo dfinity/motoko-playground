@@ -2,7 +2,10 @@ import styled from "styled-components";
 import { useState, useContext } from "react";
 import { Button } from "./shared/Button";
 import { PackageInfo } from "../workers/file";
-import { WorkerContext } from "../contexts/WorkplaceState";
+import {
+  WorkerContext,
+  WorkplaceDispatchContext,
+} from "../contexts/WorkplaceState";
 import { Field } from "./shared/Field";
 
 const Container = styled.div`
@@ -33,12 +36,17 @@ export function ImportGitHub({ importCode, close, isPackageModal = false }) {
   const [error, setError] = useState("");
   const [name, setName] = useState("");
   const worker = useContext(WorkerContext);
+  const dispatch = useContext(WorkplaceDispatchContext);
   async function fetchCode() {
     const files = await worker.fetchGithub({ repo, branch, dir });
     if (files) {
       setError("");
       importCode(files);
       close();
+      await dispatch({
+        type: "setOrigin",
+        payload: { origin: "playground:git", tags: [`git:${repo}`] },
+      });
     } else {
       setError(`Cannot find repo or the directory contains no ".mo" files.`);
     }
