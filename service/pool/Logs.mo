@@ -3,6 +3,7 @@ import {compare} "mo:base/Text";
 import {toArray} "mo:base/Iter";
 import {now = timeNow} "mo:base/Time";
 import {toText} "mo:base/Int";
+import {get} "mo:base/Option";
 
 module {
     public type Origin = { origin: Text; tags: [Text] };
@@ -52,7 +53,7 @@ module {
             let now = timeNow() / 1_000_000;
             for ((origin, count) in canisters.entries()) {
                 let name = "canisters_" # origin;
-                let desc = "Number of canisters deployed from " # origin;
+                let desc = "Number of canisters requested from " # origin;
                 result := result # encode_single_value("counter", name, count, desc, now);
             };
             for ((origin, count) in installs.entries()) {
@@ -60,6 +61,17 @@ module {
                 let desc = "Number of Wasm installed from " # origin;
                 result := result # encode_single_value("counter", name, count, desc, now);
             };
+            let profiling = get(tags.get("profiling"), 0);
+            let asset = get(tags.get("asset"), 0);
+            let install = get(tags.get("install"), 0);
+            let reinstall = get(tags.get("reinstall"), 0);
+            let upgrade = get(tags.get("upgrade"), 0);
+            result := result
+            # encode_single_value("counter", "profiling", profiling, "Number of Wasm profiled", now)
+            # encode_single_value("counter", "asset", asset, "Number of asset Wasm canister installed", now)
+            # encode_single_value("counter", "install", install, "Number of Wasm with install mode", now)
+            # encode_single_value("counter", "reinstall", reinstall, "Number of Wasm with reinstall mode", now)
+            # encode_single_value("counter", "upgrade", upgrade, "Number of Wasm with upgrad mode", now);
             result;
         };
     };

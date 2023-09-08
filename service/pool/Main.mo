@@ -6,6 +6,7 @@ import Option "mo:base/Option";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import Array "mo:base/Array";
+import Buffer "mo:base/Buffer";
 import List "mo:base/List";
 import Deque "mo:base/Deque";
 import Result "mo:base/Result";
@@ -169,7 +170,22 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             };
             await IC.install_code newArgs;
             stats := Logs.updateStats(stats, #install);
-            statsByOrigin.addInstall(install_config.origin);
+
+            // Build tags from install arguments
+            let tags = Buffer.fromArray<Text>(install_config.origin.tags);
+            if (install_config.profiling) {
+                tags.add("profiling");
+            };
+            if (install_config.is_whitelisted) {
+                tags.add("asset");
+            };
+            switch (args.mode) {
+            case (#install) { tags.add("install") };
+            case (#upgrade) { tags.add("upgrade") };
+            case (#reinstall) { tags.add("reinstall") };
+            };
+            let origin = { origin = install_config.origin.origin; tags = Buffer.toArray(tags) };
+            statsByOrigin.addInstall(origin);
             switch (pool.refresh(info, install_config.profiling)) {
                 case (?newInfo) {
                      updateTimer(newInfo);
