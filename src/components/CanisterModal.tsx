@@ -108,6 +108,10 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
     await deploySetter.setInitTypes(init);
     await deploySetter.setCandidCode(candid);
     await deploySetter.setShowDeployModal(true);
+    await dispatch({
+      type: "setOrigin",
+      payload: { origin: "playground:wasm", tags: [] },
+    });
   }
   async function addCanister() {
     if (error || !canisterName || !canisterId || !candid) {
