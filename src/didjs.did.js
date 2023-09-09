@@ -7,6 +7,11 @@ export const idlFactory = ({ IDL }) => {
       [IDL.Variant({ Ok: IDL.Null, Err: IDL.Text })],
       ["query"]
     ),
+    merge_init_args: IDL.Func(
+      [IDL.Text, IDL.Text],
+      [IDL.Opt(IDL.Text)],
+      ["query"]
+    ),
   });
 };
 export const init = ({ IDL }) => {

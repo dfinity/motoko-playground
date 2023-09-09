@@ -101,6 +101,7 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
 
   async function deployWasm() {
     if (!candid || !wasm) return;
+    setError("");
     const candidJS = await didToJs(candid);
     const init = candidJS.init({ IDL });
     await close();
@@ -157,8 +158,17 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
       const wasm = new Uint8Array(reader.result);
       setWasm(wasm);
       try {
-        const init = await extractCandidFromWasm(wasm);
-        console.log(init);
+        const [serv, init] = await extractCandidFromWasm(wasm);
+        if (init) {
+          const candid = (await didjs.merge_init_args(serv, init))[0];
+          if (!candid) {
+            setError("Cannot merge candid:args with candid:service from Wasm");
+            return;
+          }
+          setCandid(candid);
+        } else {
+          setCandid(serv);
+        }
       } catch (e) {
         setError(e.toString());
       }
@@ -238,12 +248,14 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
                 accept=".wasm"
                 onChange={handleWasmUpload}
               />
-              <Field
-                type="file"
-                labelText="Upload did file"
-                accept=".did"
-                onChange={handleDidUpload}
-              />
+              {error && (
+                <Field
+                  type="file"
+                  labelText="Upload did file"
+                  accept=".did"
+                  onChange={handleDidUpload}
+                />
+              )}
               {error && <Error>{error}</Error>}
               <ButtonContainer>
                 <MyButton variant="primary" onClick={deployWasm}>
