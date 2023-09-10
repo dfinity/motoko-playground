@@ -180,9 +180,9 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 tags.add("wasm:asset");
             };
             switch (args.mode) {
-            case (#install) { tags.add("wasm:install") };
-            case (#upgrade) { tags.add("wasm:upgrade") };
-            case (#reinstall) { tags.add("wasm:reinstall") };
+            case (#install) { tags.add("wasm:mode:install") };
+            case (#upgrade) { tags.add("wasm:mode:upgrade") };
+            case (#reinstall) { tags.add("wasm:mode:reinstall") };
             };
             let origin = { origin = install_config.origin.origin; tags = Buffer.toArray(tags) };
             statsByOrigin.addInstall(origin);

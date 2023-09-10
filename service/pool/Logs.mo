@@ -46,9 +46,9 @@ module {
             let install_dfx = get(installs.get("origin:dfx"), 0);
             let profiling = get(installs.get("wasm:profiling"), 0);
             let asset = get(installs.get("wasm:asset"), 0);
-            let install = get(installs.get("wasm:install"), 0);
-            let reinstall = get(installs.get("wasm:reinstall"), 0);
-            let upgrade = get(installs.get("wasm:upgrade"), 0);
+            let install = get(installs.get("wasm:mode:install"), 0);
+            let reinstall = get(installs.get("wasm:mode:reinstall"), 0);
+            let upgrade = get(installs.get("wasm:mode:upgrade"), 0);
             result := result
             # encode_single_value("counter", "create_from_playground", canister_playground, "Number of canisters created from playground", now)
             # encode_single_value("counter", "install_from_playground", install_playground, "Number of Wasms installed from playground", now)
