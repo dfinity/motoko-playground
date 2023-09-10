@@ -24,6 +24,21 @@ module {
                 };
             };
         };
+        // if to is null, delete the from tag
+        func merge_tag_(map: Map.RBTree<Text,Nat>, from: Text, opt_to: ?Text) {
+            ignore do ? {
+                let n1 = map.remove(from)!;
+                let to = opt_to!;
+                switch (map.get(to)) {
+                case null { map.put(to, n1) };
+                case (?n2) { map.put(to, n1 + n2) };
+                };
+            };
+        };
+        public func merge_tag(from: Text, to: ?Text) {
+            merge_tag_(canisters, from, to);
+            merge_tag_(installs, from, to);
+        };
         public func addCanister(origin: Origin) {
             addTags(canisters, ["origin:" # origin.origin]);
             addTags(canisters, origin.tags);
@@ -46,9 +61,9 @@ module {
             let install_dfx = get(installs.get("origin:dfx"), 0);
             let profiling = get(installs.get("wasm:profiling"), 0);
             let asset = get(installs.get("wasm:asset"), 0);
-            let install = get(installs.get("wasm:mode:install"), 0);
-            let reinstall = get(installs.get("wasm:mode:reinstall"), 0);
-            let upgrade = get(installs.get("wasm:mode:upgrade"), 0);
+            let install = get(installs.get("mode:install"), 0);
+            let reinstall = get(installs.get("mode:reinstall"), 0);
+            let upgrade = get(installs.get("mode:upgrade"), 0);
             result := result
             # encode_single_value("counter", "create_from_playground", canister_playground, "Number of canisters created from playground", now)
             # encode_single_value("counter", "install_from_playground", install_playground, "Number of Wasms installed from playground", now)

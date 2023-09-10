@@ -240,7 +240,7 @@ export function DeployModal({
 
   async function addTags() {
     if (initTypes.length > 0) {
-      await dispatch({ type: "addSessionTag", payload: "moc:init_args" });
+      await dispatch({ type: "addSessionTag", payload: "wasm:init_args" });
     }
     if (forceGC) {
       await dispatch({ type: "addSessionTag", payload: "moc:gc:force" });

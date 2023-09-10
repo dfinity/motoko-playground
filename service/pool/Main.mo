@@ -180,9 +180,9 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 tags.add("wasm:asset");
             };
             switch (args.mode) {
-            case (#install) { tags.add("wasm:mode:install") };
-            case (#upgrade) { tags.add("wasm:mode:upgrade") };
-            case (#reinstall) { tags.add("wasm:mode:reinstall") };
+            case (#install) { tags.add("mode:install") };
+            case (#upgrade) { tags.add("mode:upgrade") };
+            case (#reinstall) { tags.add("mode:reinstall") };
             };
             let origin = { origin = install_config.origin.origin; tags = Buffer.toArray(tags) };
             statsByOrigin.addInstall(origin);
@@ -273,6 +273,12 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
         stats := Logs.defaultStats;
         statsByOrigin := Logs.StatsByOrigin();
+    };
+    public shared ({ caller }) func mergeTags(from: Text, to: ?Text) : async () {
+        if (caller != controller) {
+            throw Error.reject "Only called by controller";
+        };
+        statsByOrigin.merge_tag(from, to);
     };
 
     // Metrics
@@ -427,6 +433,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #installCode : Any;
             #removeCode : Any;
             #resetStats : Any;
+            #mergeTags : Any;
             #wallet_receive : Any;
 
             #create_canister : Any;
