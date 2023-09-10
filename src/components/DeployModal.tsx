@@ -6,7 +6,10 @@ import { Modal } from "./shared/Modal";
 import { CanisterInfo, getCanisterName, deploy, compileWasm } from "../build";
 import { ILoggingStore } from "./Logger";
 import { Button } from "./shared/Button";
-import { WorkerContext } from "../contexts/WorkplaceState";
+import {
+  WorkerContext,
+  WorkplaceDispatchContext,
+} from "../contexts/WorkplaceState";
 import { didjs } from "../config/actor";
 import { Field } from "./shared/Field";
 import { Confirm } from "./shared/Confirm";
@@ -131,6 +134,7 @@ export function DeployModal({
   const [deployMode, setDeployMode] = useState("");
   const [startDeploy, setStartDeploy] = useState(false);
   const worker = useContext(WorkerContext);
+  const dispatch = useContext(WorkplaceDispatchContext);
 
   const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
   const isMotoko = wasm ? false : true;
@@ -234,8 +238,20 @@ export function DeployModal({
     }
   }
 
+  async function addTags() {
+    if (initTypes.length > 0) {
+      await dispatch({ type: "addSessionTag", payload: "moc:init_args" });
+    }
+    if (forceGC) {
+      await dispatch({ type: "addSessionTag", payload: "moc:gc:force" });
+    }
+    await dispatch({ type: "addSessionTag", payload: `moc:gc:${gcMethod}` });
+  }
+
   async function handleDeploy(mode: string) {
     const args = parse();
+    await addTags();
+    console.log(origin);
     try {
       await isDeploy(true);
       const info = await deploy(
@@ -261,8 +277,10 @@ export function DeployModal({
         onDeploy(info);
       }
       setCompileResult({ wasm: undefined });
+      await dispatch({ type: "clearSessionTags" });
     } catch (err) {
       isDeploy(false);
+      await dispatch({ type: "clearSessionTags" });
       throw err;
     }
   }

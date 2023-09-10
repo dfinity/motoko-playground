@@ -33,7 +33,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     stable var stableChildren : [(Principal, [Principal])] = [];
     stable var stableTimers : [Types.CanisterInfo] = [];
     stable var previousParam : ?Types.InitParams = null;
-    stable var stableStatsByOrigin : Logs.SharedStatsByOrigin = (#leaf, #leaf, #leaf);
+    stable var stableStatsByOrigin : Logs.SharedStatsByOrigin = (#leaf, #leaf);
 
     system func preupgrade() {
         let (tree, metadata, children, timers) = pool.share();
@@ -62,9 +62,9 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         params;
     };
 
-    public query func getStats() : async (Logs.Stats, [(Text, Nat)], [(Text, Nat)], [(Text, Nat)]) {
-        let (canister, install, tags) = statsByOrigin.dump();
-        (stats, canister, install, tags);
+    public query func getStats() : async (Logs.Stats, [(Text, Nat)], [(Text, Nat)]) {
+        let (canister, install) = statsByOrigin.dump();
+        (stats, canister, install);
     };
 
     public query func balance() : async Nat {
@@ -174,15 +174,15 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             // Build tags from install arguments
             let tags = Buffer.fromArray<Text>(install_config.origin.tags);
             if (install_config.profiling) {
-                tags.add("profiling");
+                tags.add("wasm:profiling");
             };
             if (install_config.is_whitelisted) {
-                tags.add("asset");
+                tags.add("wasm:asset");
             };
             switch (args.mode) {
-            case (#install) { tags.add("install") };
-            case (#upgrade) { tags.add("upgrade") };
-            case (#reinstall) { tags.add("reinstall") };
+            case (#install) { tags.add("wasm:install") };
+            case (#upgrade) { tags.add("wasm:upgrade") };
+            case (#reinstall) { tags.add("wasm:reinstall") };
             };
             let origin = { origin = install_config.origin.origin; tags = Buffer.toArray(tags) };
             statsByOrigin.addInstall(origin);
