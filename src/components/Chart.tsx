@@ -1,7 +1,6 @@
 import { Chart as GChart } from "react-google-charts";
 
 export function Chart({ title, data }) {
-  const height = 100 * (data.length - 1);
   const options = {
     title,
     chartArea: { width: "50%" },
@@ -9,13 +8,17 @@ export function Chart({ title, data }) {
     bars: "horizontal",
   };
   return (
-    <GChart
-      chartType="BarChart"
-      data={data}
-      options={options}
-      width="80%"
-      height="{height}px"
-      legendToggle
-    />
+    <>
+      {data.length > 1 ? (
+        <GChart
+          chartType="BarChart"
+          data={data}
+          options={options}
+          width="80%"
+          height="{100 * (data.length - 1)}px"
+          legendToggle
+        />
+      ) : null}
+    </>
   );
 }

@@ -2,11 +2,10 @@ import { useState, useEffect } from "react";
 import { backend } from "./config/actor";
 import { Chart } from "./components/Chart";
 
-function extract_slice(raw, prefix) {
-  const len = prefix.length;
+function extract_slice(raw, cond) {
   return raw
-    .filter(([name, _]) => name.startsWith(prefix))
-    .map(([name, n]) => [name.slice(len), Number(n)]);
+    .filter(([name, _]) => cond(name))
+    .map(([name, n]) => [name, Number(n)]);
 }
 function join_slice(left, right) {
   const l = Object.fromEntries(left);
@@ -18,30 +17,76 @@ function join_slice(left, right) {
   ];
   return full_key.map((name) => [name, l[name] || 0, r[name] || 0]);
 }
-function two_metric(canisters, installs, title, prefix) {
-  const new_canister = extract_slice(canisters, prefix);
-  const wasm = extract_slice(installs, prefix);
+function two_metric(canisters, installs, title, cond) {
+  const new_canister = extract_slice(canisters, cond);
+  const wasm = extract_slice(installs, cond);
   return [[title, "Canister", "Wasm"]].concat(join_slice(new_canister, wasm));
 }
-function one_metric(map, title, prefix) {
-  const slice = extract_slice(map, prefix);
-  return [[title, "Count"]].concat(slice);
+function one_metric(map, title, cond) {
+  const slice = extract_slice(map, cond);
+  return [[title, "Wasm"]].concat(slice);
 }
 
 export function Stats() {
   const [example, setExample] = useState([]);
   const [moc, setMoc] = useState([]);
+  const [ref, setRef] = useState([]);
+  const [origin, setOrigin] = useState([]);
+  const [imports, setImports] = useState([]);
+  const [wasm, setWasm] = useState([]);
+  const [mode, setMode] = useState([]);
 
-  useEffect(async () => {
-    const [_, canisters, installs] = await backend.getStats();
-    setExample(two_metric(canisters, installs, "Example", "example:"));
-    setMoc(one_metric(installs, "Moc", "moc:"));
+  useEffect(() => {
+    async function doit() {
+      const [_, canisters, installs] = await backend.getStats();
+      setExample(
+        two_metric(
+          canisters,
+          installs,
+          "Example",
+          (name) => name.startsWith("example:") || name.startsWith("file:new")
+        )
+      );
+      setRef(
+        two_metric(canisters, installs, "Ref link", (name) =>
+          name.startsWith("ref:")
+        )
+      );
+      setOrigin(
+        two_metric(canisters, installs, "Origin", (name) =>
+          name.startsWith("origin:")
+        )
+      );
+      setImports(
+        two_metric(
+          canisters,
+          installs,
+          "Playground imports",
+          (name) =>
+            name.startsWith("post:") ||
+            name.startsWith("git:") ||
+            name.startsWith("tag:") ||
+            name.startsWith("upload:wasm")
+        )
+      );
+      setMoc(one_metric(installs, "Moc", (name) => name.startsWith("moc:")));
+      setWasm(one_metric(installs, "Wasm", (name) => name.startsWith("wasm:")));
+      setMode(
+        one_metric(installs, "Install mode", (name) => name.startsWith("mode:"))
+      );
+    }
+    doit();
   }, []);
 
   return (
     <>
       <Chart title="Example" data={example} />
+      <Chart title="Ref link" data={ref} />
+      <Chart title="Install mode" data={mode} />
+      <Chart title="Origin" data={origin} />
+      <Chart title="Playground imports" data={imports} />
       <Chart title="Moc" data={moc} />
+      <Chart title="Wasm" data={wasm} />
     </>
   );
 }
