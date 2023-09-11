@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { backend } from "./config/actor";
-import { Chart } from "./components/Chart";
+import { Chart, Pie } from "./components/Chart";
 
 function extract_slice(raw, cond) {
-  return raw
+  const res = raw
     .filter(([name, _]) => cond(name))
     .map(([name, n]) => [name, Number(n)]);
+  res.sort((a, b) => b[1] - a[1]);
+  return res;
 }
 function join_slice(left, right) {
   const l = Object.fromEntries(left);
@@ -15,7 +17,9 @@ function join_slice(left, right) {
       left.map(([name, _]) => name).concat(right.map(([name, _]) => name))
     ),
   ];
-  return full_key.map((name) => [name, l[name] || 0, r[name] || 0]);
+  const res = full_key.map((name) => [name, l[name] || 0, r[name] || 0]);
+  res.sort((a, b) => b[2] - a[2]);
+  return res;
 }
 function two_metric(canisters, installs, title, cond) {
   const new_canister = extract_slice(canisters, cond);
@@ -38,6 +42,7 @@ export function Stats() {
 
   useEffect(() => {
     async function doit() {
+      // eslint-disable-next-line
       const [_, canisters, installs] = await backend.getStats();
       setExample(
         two_metric(
@@ -48,7 +53,7 @@ export function Stats() {
         )
       );
       setRef(
-        two_metric(canisters, installs, "Ref link", (name) =>
+        two_metric(canisters, installs, "Reference link", (name) =>
           name.startsWith("ref:")
         )
       );
@@ -80,9 +85,9 @@ export function Stats() {
 
   return (
     <>
+      <Pie title="Install mode" data={mode} />
       <Chart title="Example" data={example} />
-      <Chart title="Ref link" data={ref} />
-      <Chart title="Install mode" data={mode} />
+      <Chart title="Reference link" data={ref} />
       <Chart title="Origin" data={origin} />
       <Chart title="Playground imports" data={imports} />
       <Chart title="Moc" data={moc} />
