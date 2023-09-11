@@ -89,6 +89,10 @@ export function Stats() {
 
   return (
     <>
+      <div style={{ textAlign: "center" }}>
+        <h1 style={{ margin: 0 }}>Motoko Playground</h1>
+        <h2 style={{ opacity: 0.5 }}>Usage Statistics</h2>
+      </div>
       <Pie title="Install mode" data={mode} />
       <Chart title="Example" data={example} />
       <Chart title="Reference link" data={ref} />
