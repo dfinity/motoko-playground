@@ -14,7 +14,7 @@ export function Chart({ title, data }) {
           chartType="BarChart"
           data={data}
           options={options}
-          width="80%"
+          width="100%"
           height="{100 * (data.length - 1)}px"
           legendToggle
         />
@@ -36,7 +36,7 @@ export function Pie({ title, data }) {
           chartType="PieChart"
           data={data}
           options={options}
-          width="80%"
+          width="100%"
           height="300px"
         />
       ) : null}
