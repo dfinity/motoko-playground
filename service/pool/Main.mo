@@ -118,10 +118,22 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             };
         };
     };
+    func validateOrigin(origin: Logs.Origin) : Bool {
+        if (origin.origin == "") {
+            return false;
+        };
+        for (tag in origin.tags.vals()) {
+            // reject server side tags
+            if (tag == "mode:install" or tag == "mode:reinstall" or tag == "mode:upgrade" or tag == "wasm:profiling" or tag == "wasm:asset") {
+                return false;
+            }
+        };
+        return true;
+    };
 
     public shared ({ caller }) func getCanisterId(nonce : PoW.Nonce, origin : Logs.Origin) : async Types.CanisterInfo {
-        if (origin.origin == "") {
-            throw Error.reject "Please specify an origin";
+        if (not validateOrigin(origin)) {
+            throw Error.reject "Please specify a valid origin";
         };
         if (caller != controller and not nonceCache.checkProofOfWork(nonce)) {
             stats := Logs.updateStats(stats, #mismatch);
@@ -138,8 +150,8 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
 
     type InstallConfig = { profiling: Bool; is_whitelisted: Bool; origin: Logs.Origin };
     public shared ({ caller }) func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, install_config : InstallConfig) : async Types.CanisterInfo {
-        if (install_config.origin.origin == "") {
-            throw Error.reject "Please specify an origin";
+        if (not validateOrigin(install_config.origin)) {
+            throw Error.reject "Please specify a valid origin";
         };
         if (info.timestamp == 0) {
             stats := Logs.updateStats(stats, #mismatch);
