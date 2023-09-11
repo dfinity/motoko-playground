@@ -9,6 +9,7 @@ import { Button } from "./shared/Button";
 import {
   WorkerContext,
   WorkplaceDispatchContext,
+  WorkplaceState,
 } from "../contexts/WorkplaceState";
 import { didjs } from "../config/actor";
 import { Field } from "./shared/Field";
@@ -92,6 +93,7 @@ export interface DeploySetter {
 }
 
 interface DeployModalProps {
+  state: WorkplaceState;
   isOpen: boolean;
   close: () => void;
   onDeploy: (string) => void;
@@ -109,6 +111,7 @@ interface DeployModalProps {
 const MAX_CANISTERS = 3;
 
 export function DeployModal({
+  state,
   isOpen,
   close,
   onDeploy,
@@ -245,7 +248,32 @@ export function DeployModal({
     if (forceGC) {
       await dispatch({ type: "addSessionTag", payload: "moc:gc:force" });
     }
-    await dispatch({ type: "addSessionTag", payload: `moc:gc:${gcMethod}` });
+    if (gcMethod !== "incremental") {
+      await dispatch({ type: "addSessionTag", payload: `moc:gc:${gcMethod}` });
+    }
+    for (const pack of Object.values(state.packages)) {
+      if (pack.name !== "base") {
+        let repo = pack.repo;
+        if (
+          pack.repo.startsWith("https://github.com/") &&
+          pack.repo.endsWith(".git")
+        ) {
+          repo = pack.repo.slice(19, -4);
+        }
+        await dispatch({
+          type: "addSessionTag",
+          payload: `import:package:${repo}`,
+        });
+      }
+    }
+    for (const canister of Object.values(state.canisters)) {
+      if (canister.isExternal) {
+        await dispatch({
+          type: "addSessionTag",
+          payload: `import:canister:${canister.id}`,
+        });
+      }
+    }
   }
 
   async function handleDeploy(mode: string) {

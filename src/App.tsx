@@ -296,6 +296,7 @@ export function App() {
             isFirstOpen={isFirstVisit}
           />
           <DeployModal
+            state={workplaceState}
             isOpen={showDeployModal}
             close={() => setShowDeployModal(false)}
             onDeploy={deployWorkplace}

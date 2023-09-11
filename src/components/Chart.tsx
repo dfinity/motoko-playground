@@ -26,7 +26,7 @@ export function Chart({ title, data }) {
 export function Pie({ title, data }) {
   const options = {
     title,
-    pieHole: 0.4,
+    pieHole: 0.3,
     is3D: false,
   };
   return (

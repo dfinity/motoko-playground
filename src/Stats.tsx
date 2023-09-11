@@ -39,6 +39,7 @@ export function Stats() {
   const [imports, setImports] = useState([]);
   const [wasm, setWasm] = useState([]);
   const [mode, setMode] = useState([]);
+  const [packages, setPackages] = useState([]);
 
   useEffect(() => {
     async function doit() {
@@ -79,6 +80,9 @@ export function Stats() {
       setMode(
         one_metric(installs, "Install mode", (name) => name.startsWith("mode:"))
       );
+      setPackages(
+        one_metric(installs, "Imports", (name) => name.startsWith("import:"))
+      );
     }
     doit();
   }, []);
@@ -89,7 +93,8 @@ export function Stats() {
       <Chart title="Example" data={example} />
       <Chart title="Reference link" data={ref} />
       <Chart title="Origin" data={origin} />
-      <Chart title="Playground imports" data={imports} />
+      <Chart title="Playground code imports" data={imports} />
+      <Chart title="External package/canister imports" data={packages} />
       <Chart title="Moc" data={moc} />
       <Chart title="Wasm" data={wasm} />
     </>
