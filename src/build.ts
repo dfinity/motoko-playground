@@ -57,6 +57,35 @@ function logDiags(diagnostics: Diagnostics[], logger: ILoggingStore) {
   });
 }
 
+function get_wasm_metadata(
+  wasm: WebAssembly.Module,
+  name: string
+): string | undefined {
+  let section = WebAssembly.Module.customSections(wasm, `icp:public ${name}`);
+  if (section.length === 0) {
+    section = WebAssembly.Module.customSections(wasm, `icp:private ${name}`);
+  }
+  if (section.length === 0) {
+    return undefined;
+  }
+  const decoder = new TextDecoder();
+  const bytes = new Uint8Array(section[0]);
+  const str = decoder.decode(bytes);
+  return str;
+}
+
+export async function extractCandidFromWasm(
+  wasm: Uint8Array
+): Promise<[string, undefined | string]> {
+  const mod = await WebAssembly.compile(wasm);
+  const serv = get_wasm_metadata(mod, "candid:service");
+  if (!serv) {
+    throw new Error("Cannot find candid:service metadata in Wasm module");
+  }
+  const init = get_wasm_metadata(mod, "candid:args");
+  return [serv, init];
+}
+
 export async function compileCandid(
   worker,
   file: string,

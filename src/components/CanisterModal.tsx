@@ -10,7 +10,7 @@ import {
   WorkplaceDispatchContext,
 } from "../contexts/WorkplaceState";
 import { fetchCandidInterface, didjs, didToJs } from "../config/actor";
-import { CanisterInfo } from "../build";
+import { CanisterInfo, extractCandidFromWasm } from "../build";
 import { canisterSet } from "../config/canister-set";
 import { Field } from "./shared/Field";
 import { Tab, Tabs } from "./shared/Tabs";
@@ -101,6 +101,7 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
 
   async function deployWasm() {
     if (!candid || !wasm) return;
+    setError("");
     const candidJS = await didToJs(candid);
     const init = candidJS.init({ IDL });
     await close();
@@ -153,8 +154,24 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
   }
   function handleWasmUpload(e) {
     const reader = new FileReader();
-    reader.addEventListener("load", () => {
-      setWasm(new Uint8Array(reader.result));
+    reader.addEventListener("load", async () => {
+      const wasm = new Uint8Array(reader.result);
+      setWasm(wasm);
+      try {
+        const [serv, init] = await extractCandidFromWasm(wasm);
+        if (init) {
+          const candid = (await didjs.merge_init_args(serv, init))[0];
+          if (!candid) {
+            setError("Cannot merge candid:args with candid:service from Wasm");
+            return;
+          }
+          setCandid(candid);
+        } else {
+          setCandid(serv);
+        }
+      } catch (e) {
+        setError(e.toString());
+      }
     });
     const file = e.target.files[0];
     if (file.size > 2097152) {
@@ -231,12 +248,14 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
                 accept=".wasm"
                 onChange={handleWasmUpload}
               />
-              <Field
-                type="file"
-                labelText="Upload did file"
-                accept=".did"
-                onChange={handleDidUpload}
-              />
+              {error && (
+                <Field
+                  type="file"
+                  labelText="Upload did file"
+                  accept=".did"
+                  onChange={handleDidUpload}
+                />
+              )}
               {error && <Error>{error}</Error>}
               <ButtonContainer>
                 <MyButton variant="primary" onClick={deployWasm}>
