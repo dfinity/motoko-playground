@@ -296,7 +296,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     // Metrics
     public query func http_request(req : Metrics.HttpRequest) : async Metrics.HttpResponse {
         if (req.url == "/metrics") {
-            let body = Metrics.metrics(stats, statsByOrigin);
+            let body = Metrics.metrics(stats);
             {
                 status_code = 200;
                 headers = [("Content-Type", "text/plain; version=0.0.4"), ("Content-Length", Nat.toText(body.size()))];
