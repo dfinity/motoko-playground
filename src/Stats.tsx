@@ -89,59 +89,12 @@ export function Stats() {
   const [canisters, setCanisters] = useState([]);
   const [installs, setInstalls] = useState([]);
 
-  const [example, setExample] = useState([]);
-  const [codeSource, setCodeSource] = useState([]);
-  const [moc, setMoc] = useState([]);
-  const [ref, setRef] = useState([]);
-  const [origin, setOrigin] = useState([]);
-  const [imports, setImports] = useState([]);
-  const [wasm, setWasm] = useState([]);
-  const [mode, setMode] = useState([]);
-  const [packages, setPackages] = useState([]);
-
   useEffect(() => {
     async function doit() {
       // eslint-disable-next-line
       const [_, canisters, installs] = await backend.getStats();
-      setExample(
-        two_metric(
-          canisters,
-          installs,
-          "Example",
-          (name) => name.startsWith("example:") || name.startsWith("file:new")
-        )
-      );
-      setCodeSource(generateCodeSourceData(installs));
-      setRef(
-        two_metric(canisters, installs, "Reference link", (name) =>
-          name.startsWith("ref:")
-        )
-      );
-      setOrigin(
-        two_metric(canisters, installs, "Origin", (name) =>
-          name.startsWith("origin:")
-        )
-      );
-      setImports(
-        two_metric(
-          canisters,
-          installs,
-          "Playground imports",
-          (name) =>
-            name.startsWith("post:") ||
-            name.startsWith("git:") ||
-            name.startsWith("tag:") ||
-            name.startsWith("upload:wasm")
-        )
-      );
-      setMoc(one_metric(installs, "Moc", (name) => name.startsWith("moc:")));
-      setWasm(one_metric(installs, "Wasm", (name) => name.startsWith("wasm:")));
-      setMode(
-        one_metric(installs, "Install mode", (name) => name.startsWith("mode:"))
-      );
-      setPackages(
-        one_metric(installs, "Imports", (name) => name.startsWith("import:"))
-      );
+      setCanisters(canisters);
+      setInstalls(installs);
     }
     doit();
   }, []);
@@ -152,15 +105,64 @@ export function Stats() {
         <h1 style={{ margin: 0 }}>Motoko Playground</h1>
         <h2 style={{ opacity: 0.5 }}>Usage Statistics</h2>
       </div>
-      <Pie title="Install mode" data={mode} />
-      <Pie title="Playground code source" data={codeSource} />
-      <Chart title="Origin" data={origin} />
-      <Chart title="Example" data={example} />
-      <Chart title="Playground code imports" data={imports} />
-      <Chart title="Reference link" data={ref} />
-      <Chart title="Project imports" data={packages} />
-      <Chart title="Moc flags" data={moc} />
-      <Chart title="Wasm properties" data={wasm} />
+      <Pie
+        title="Install mode"
+        data={one_metric(installs, "Install mode", (name) =>
+          name.startsWith("mode:")
+        )}
+      />
+      <Pie
+        title="Playground code source"
+        data={generateCodeSourceData(installs)}
+      />
+      <Chart
+        title="Origin"
+        data={two_metric(canisters, installs, "Origin", (name) =>
+          name.startsWith("origin:")
+        )}
+      />
+      <Chart
+        title="Example"
+        data={two_metric(
+          canisters,
+          installs,
+          "Example",
+          (name) => name.startsWith("example:") || name.startsWith("file:new")
+        )}
+      />
+      <Chart
+        title="Playground code imports"
+        data={two_metric(
+          canisters,
+          installs,
+          "Playground imports",
+          (name) =>
+            name.startsWith("post:") ||
+            name.startsWith("git:") ||
+            name.startsWith("tag:") ||
+            name.startsWith("upload:wasm")
+        )}
+      />
+      <Chart
+        title="Reference link"
+        data={two_metric(canisters, installs, "Reference link", (name) =>
+          name.startsWith("ref:")
+        )}
+      />
+      <Chart
+        title="Project imports"
+        data={one_metric(installs, "Imports", (name) =>
+          name.startsWith("import:")
+        )}
+      />
+      <Chart
+        title="Moc flags"
+        data={one_metric(installs, "Moc", (name) => name.startsWith("moc:"))}
+      />
+      <Chart
+        title="Wasm properties"
+        data={one_metric(installs, "Wasm", (name) => name.startsWith("wasm:"))}
+      />
     </>
   );
 }
