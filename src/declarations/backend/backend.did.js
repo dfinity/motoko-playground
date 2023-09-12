@@ -107,7 +107,6 @@ export const idlFactory = ({ IDL }) => {
         Stats,
         IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat)),
         IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat)),
-        IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat)),
       ],
       ["query"]
     ),
@@ -138,6 +137,7 @@ export const idlFactory = ({ IDL }) => {
       [],
       []
     ),
+    mergeTags: IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [], []),
     removeCode: IDL.Func([CanisterInfo], [], []),
     resetStats: IDL.Func([], [], []),
     start_canister: IDL.Func(
