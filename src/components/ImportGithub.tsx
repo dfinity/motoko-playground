@@ -45,7 +45,7 @@ export function ImportGitHub({ importCode, close, isPackageModal = false }) {
       close();
       await dispatch({
         type: "setOrigin",
-        payload: { origin: "playground:git", tags: [`git:${repo}`] },
+        payload: { origin: "playground", tags: [`git:${repo}`] },
       });
     } else {
       setError(`Cannot find repo or the directory contains no ".mo" files.`);

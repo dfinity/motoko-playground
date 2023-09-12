@@ -111,7 +111,7 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
     await deploySetter.setShowDeployModal(true);
     await dispatch({
       type: "setOrigin",
-      payload: { origin: "playground:wasm", tags: [] },
+      payload: { origin: "playground", tags: [`upload:wasm`] },
     });
   }
   async function addCanister() {

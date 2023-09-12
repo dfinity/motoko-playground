@@ -52,10 +52,7 @@ type Self =
                                }, vec record {
                                         text;
                                         nat;
-                                      }, vec record {
-                                               text;
-                                               nat;
-                                             }) query;
+                                      }) query;
    getSubtree: (CanisterInfo) ->
     (vec record {
            principal;
@@ -74,6 +71,7 @@ type Self =
              };
        wasm_module: wasm_module;
      }) -> ();
+   mergeTags: (text, opt text) -> ();
    removeCode: (CanisterInfo) -> ();
    resetStats: () -> ();
    start_canister: (record {canister_id: canister_id;}) -> ();

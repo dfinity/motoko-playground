@@ -5,6 +5,8 @@ import { PackageInfo } from "../workers/file";
 export interface Origin {
   origin: string;
   tags: Array<string>;
+  // only added for install_code, and will be clear after each deploy
+  session_tags?: Array<string>;
 }
 export interface WorkplaceState {
   files: Record<string, string>;
@@ -12,7 +14,7 @@ export interface WorkplaceState {
   canisters: Record<string, CanisterInfo>;
   selectedCanister: string | null;
   packages: Record<string, PackageInfo>;
-  origin: Origin | undefined;
+  origin: Origin;
 }
 export function getActorAliases(
   canisters: Record<string, CanisterInfo>
@@ -133,6 +135,13 @@ export type WorkplaceReducerAction =
   | {
       type: "setOrigin";
       payload: Origin;
+    }
+  | {
+      type: "addSessionTag";
+      payload: string;
+    }
+  | {
+      type: "clearSessionTags";
     };
 
 function selectFirstFile(files: Record<string, string>): string | null {
@@ -166,7 +175,7 @@ export const workplaceReducer = {
       canisters,
       selectedCanister: null,
       packages: {},
-      origin: undefined,
+      origin: { origin: "playground", tags: [], session_tags: [] },
     };
   },
   /** Return updated state based on an action */
@@ -240,6 +249,24 @@ export const workplaceReducer = {
         return {
           ...state,
           origin: action.payload,
+        };
+      }
+      case "addSessionTag": {
+        if (state.origin.session_tags) {
+          state.origin.session_tags.push(action.payload);
+        } else {
+          state.origin.session_tags = [action.payload];
+        }
+        return state;
+      }
+      case "clearSessionTags": {
+        return {
+          ...state,
+          origin: {
+            origin: state.origin.origin,
+            tags: state.origin.tags,
+            session_tags: [],
+          },
         };
       }
       default:

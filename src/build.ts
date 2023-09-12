@@ -183,6 +183,14 @@ export async function deploy(
   }
 }
 
+function mkOrigin(origin: Origin, is_install: boolean) {
+  const tags =
+    origin.session_tags && is_install
+      ? origin.tags.concat(origin.session_tags)
+      : origin.tags;
+  return { origin: origin.origin, tags: [...new Set(tags)] };
+}
+
 async function createCanister(
   worker,
   logger: ILoggingStore,
@@ -190,9 +198,7 @@ async function createCanister(
 ): Promise<CanisterInfo> {
   const timestamp = BigInt(Date.now()) * BigInt(1_000_000);
   const nonce = await worker.pow(timestamp);
-  // remove tags for create canister to avoid duplicate counting
-  const no_tags = { origin: origin.origin, tags: [] };
-  const info = await backend.getCanisterId(nonce, no_tags);
+  const info = await backend.getCanisterId(nonce, mkOrigin(origin, false));
   logger.log(`Got canister id ${info.id}`);
   return {
     id: info.id,
@@ -227,7 +233,7 @@ async function install(
   const installConfig = {
     profiling,
     is_whitelisted: false,
-    origin,
+    origin: mkOrigin(origin, true),
   };
   const new_info = await backend.installCode(
     canisterInfo,

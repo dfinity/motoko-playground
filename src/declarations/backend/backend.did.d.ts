@@ -69,12 +69,7 @@ export interface Self {
   getInitParams: ActorMethod<[], InitParams>;
   getStats: ActorMethod<
     [],
-    [
-      Stats,
-      Array<[string, bigint]>,
-      Array<[string, bigint]>,
-      Array<[string, bigint]>
-    ]
+    [Stats, Array<[string, bigint]>, Array<[string, bigint]>]
   >;
   getSubtree: ActorMethod<
     [CanisterInfo],
@@ -96,6 +91,7 @@ export interface Self {
     ],
     undefined
   >;
+  mergeTags: ActorMethod<[string, [] | [string]], undefined>;
   removeCode: ActorMethod<[CanisterInfo], undefined>;
   resetStats: ActorMethod<[], undefined>;
   start_canister: ActorMethod<[{ canister_id: canister_id }], undefined>;

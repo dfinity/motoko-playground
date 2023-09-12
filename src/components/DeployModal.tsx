@@ -6,7 +6,11 @@ import { Modal } from "./shared/Modal";
 import { CanisterInfo, getCanisterName, deploy, compileWasm } from "../build";
 import { ILoggingStore } from "./Logger";
 import { Button } from "./shared/Button";
-import { WorkerContext } from "../contexts/WorkplaceState";
+import {
+  WorkerContext,
+  WorkplaceDispatchContext,
+  WorkplaceState,
+} from "../contexts/WorkplaceState";
 import { didjs } from "../config/actor";
 import { Field } from "./shared/Field";
 import { Confirm } from "./shared/Confirm";
@@ -89,6 +93,7 @@ export interface DeploySetter {
 }
 
 interface DeployModalProps {
+  state: WorkplaceState;
   isOpen: boolean;
   close: () => void;
   onDeploy: (string) => void;
@@ -106,6 +111,7 @@ interface DeployModalProps {
 const MAX_CANISTERS = 3;
 
 export function DeployModal({
+  state,
   isOpen,
   close,
   onDeploy,
@@ -131,6 +137,7 @@ export function DeployModal({
   const [deployMode, setDeployMode] = useState("");
   const [startDeploy, setStartDeploy] = useState(false);
   const worker = useContext(WorkerContext);
+  const dispatch = useContext(WorkplaceDispatchContext);
 
   const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
   const isMotoko = wasm ? false : true;
@@ -234,8 +241,45 @@ export function DeployModal({
     }
   }
 
+  async function addTags() {
+    if (initTypes.length > 0) {
+      await dispatch({ type: "addSessionTag", payload: "wasm:init_args" });
+    }
+    if (forceGC) {
+      await dispatch({ type: "addSessionTag", payload: "moc:gc:force" });
+    }
+    if (gcMethod !== "incremental") {
+      await dispatch({ type: "addSessionTag", payload: `moc:gc:${gcMethod}` });
+    }
+    for (const pack of Object.values(state.packages)) {
+      if (pack.name !== "base") {
+        let repo = pack.repo;
+        if (
+          pack.repo.startsWith("https://github.com/") &&
+          pack.repo.endsWith(".git")
+        ) {
+          repo = pack.repo.slice(19, -4);
+        }
+        await dispatch({
+          type: "addSessionTag",
+          payload: `import:package:${repo}`,
+        });
+      }
+    }
+    for (const canister of Object.values(state.canisters)) {
+      if (canister.isExternal) {
+        await dispatch({
+          type: "addSessionTag",
+          payload: `import:canister:${canister.id}`,
+        });
+      }
+    }
+  }
+
   async function handleDeploy(mode: string) {
     const args = parse();
+    await addTags();
+    console.log(origin);
     try {
       await isDeploy(true);
       const info = await deploy(
@@ -261,8 +305,10 @@ export function DeployModal({
         onDeploy(info);
       }
       setCompileResult({ wasm: undefined });
+      await dispatch({ type: "clearSessionTags" });
     } catch (err) {
       isDeploy(false);
+      await dispatch({ type: "clearSessionTags" });
       throw err;
     }
   }

@@ -25,7 +25,7 @@ import { DeployModal, DeploySetter } from "./components/DeployModal";
 import { backend, saved } from "./config/actor";
 import { setupEditorIntegration } from "./integrations/editorIntegration";
 
-const MOC_VERSION = "0.9.8";
+const MOC_VERSION = "0.10.0";
 
 const GlobalStyles = createGlobalStyle`
   :root {
@@ -82,7 +82,7 @@ async function fetchFromUrlParams(
       const { origin, files } = result;
       await dispatch({
         type: "setOrigin",
-        payload: { origin: `playground:post:${origin}`, tags: [] },
+        payload: { origin: "playground", tags: [`post:${origin}`] },
       });
       return files;
     }
@@ -95,7 +95,7 @@ async function fetchFromUrlParams(
     };
     await dispatch({
       type: "setOrigin",
-      payload: { origin: "playground:git", tags: [`git:${git}`] },
+      payload: { origin: "playground", tags: [`git:${git}`] },
     });
     return await worker.fetchGithub(repo);
   }
@@ -147,7 +147,7 @@ async function fetchFromUrlParams(
       }
       await dispatch({
         type: "setOrigin",
-        payload: { origin: "playground:tag", tags: [`tag:${tag}`] },
+        payload: { origin: "playground", tags: [`tag:${tag}`] },
       });
       return files;
     }
@@ -296,6 +296,7 @@ export function App() {
             isFirstOpen={isFirstVisit}
           />
           <DeployModal
+            state={workplaceState}
             isOpen={showDeployModal}
             close={() => setShowDeployModal(false)}
             onDeploy={deployWorkplace}
