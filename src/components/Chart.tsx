@@ -15,7 +15,7 @@ export function Chart({ title, data }) {
           data={data}
           options={options}
           width="100%"
-          height="{100 * (data.length - 1)}px"
+          height={`${80 * (data.length - 1)}px`}
           legendToggle
         />
       ) : null}
