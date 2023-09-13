@@ -209,10 +209,18 @@ export function DeployModal({
         post: "post.most",
       });
       if (result.diagnostics) {
-        const err = result.diagnostics.map((d) => d.message).join("\n");
+        const err = result.diagnostics
+          .map((d) => `[${d.code}] ${d.message}`)
+          .join("\n");
         await setStableWarning(err);
         if (err) {
           hasWarning = true;
+          for (const warn of result.diagnostics) {
+            await dispatch({
+              type: "addSessionTag",
+              payload: `moc:warn:${warn.code}`,
+            });
+          }
         }
       } else {
         await setStableWarning("");
@@ -229,6 +237,7 @@ export function DeployModal({
         await setCandidWarning(err);
         if (err) {
           hasWarning = true;
+          await dispatch({ type: "addSessionTag", payload: `moc:warn:candid` });
         }
       } else {
         await setCandidWarning("");
@@ -319,6 +328,7 @@ export function DeployModal({
       return;
     }
     await close();
+    await dispatch({ type: "clearSessionTags" });
     try {
       setStartDeploy(false);
       setDeployMode(mode);
@@ -337,7 +347,13 @@ export function DeployModal({
         if (!result) {
           throw new Error("syntax error");
         }
-        await setCompileResult(result);
+        await setCompileResult(result[0]);
+        for (const warn of result[1]) {
+          await dispatch({
+            type: "addSessionTag",
+            payload: `moc:warn:${warn}`,
+          });
+        }
       } else {
         await setCompileResult({ wasm: wasm, candid: candid });
       }

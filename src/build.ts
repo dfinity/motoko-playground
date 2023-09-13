@@ -36,6 +36,7 @@ interface Diagnostics {
   };
   severity: number;
   source: string;
+  code: string;
 }
 interface CompileResult {
   wasm: Uint8Array;
@@ -50,9 +51,10 @@ function logDiags(diagnostics: Diagnostics[], logger: ILoggingStore) {
       severity,
       source,
       range: { start },
+      code,
     } = d;
     const severityText = severity === 1 ? "Error" : "Warning";
-    const out = `${severityText} in file ${source}:${start.line}:${start.character}   ${message}`;
+    const out = `${severityText} [${code}] in file ${source}:${start.line}:${start.character}   ${message}`;
     logger.log(out);
   });
 }
@@ -109,7 +111,7 @@ export async function compileWasm(
   worker,
   file: string,
   logger: ILoggingStore
-): Promise<CompileResult | undefined> {
+): Promise<[CompileResult, string[]] | undefined> {
   logger.log("Compiling code...");
   const out = await worker.Moc({ type: "compile", file });
   if (out.diagnostics) logDiags(out.diagnostics, logger);
@@ -128,7 +130,11 @@ export async function compileWasm(
   logger.log(
     `Compiled Wasm size: ${Math.floor(out.code.wasm.length / 1024)}KB`
   );
-  return out.code;
+  let warn_code = [];
+  if (out.diagnostics) {
+    warn_code = out.diagnostics.map((d) => d.code);
+  }
+  return [out.code, warn_code];
 }
 
 export async function deploy(
