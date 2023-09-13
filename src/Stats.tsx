@@ -35,6 +35,8 @@ playground:
   moc flags
     moc:gc:force
     moc:gc:{method}
+    moc:warn:{code}
+    moc:warn:candid
   ref:{url}
 */
 
