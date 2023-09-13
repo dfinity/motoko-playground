@@ -79,11 +79,7 @@ async function fetchFromUrlParams(
   if (editorKey) {
     const result = await setupEditorIntegration(editorKey, dispatch, worker);
     if (result) {
-      const { origin, files } = result;
-      await dispatch({
-        type: "setOrigin",
-        payload: { origin: "playground", tags: [`post:${origin}`] },
-      });
+      const { files } = result;
       return files;
     }
   }

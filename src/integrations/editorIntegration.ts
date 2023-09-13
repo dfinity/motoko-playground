@@ -19,7 +19,6 @@ type EditorIntegrationResponse = {
 };
 
 export interface EditorIntegrationResult {
-  origin: string;
   files: Record<string, string>;
 }
 
@@ -106,6 +105,11 @@ export async function setupEditorIntegration(
             });
           }
         }
+
+        await dispatch({
+          type: "setOrigin",
+          payload: { origin: "playground", tags: [`post:${origin}`] },
+        });
       } catch (e) {
         console.error("Error in editor integration message listener:");
         console.error(e);
@@ -116,7 +120,6 @@ export async function setupEditorIntegration(
 
   // Load a default empty project
   previousResult = {
-    origin,
     files: {
       "Main.mo": "",
     },
