@@ -401,7 +401,11 @@ export function DeployModal({
   );
   const RegionCode = `import Region "mo:base/Region";
 actor {
-  stable let profiling = Region.grow(Region.new(), 32);
+  stable let profiling = do {
+    let r = Region.new();
+    ignore Region.grow(r, 32);
+    r
+  };
   ...
 `;
   const RegionNotes = (
@@ -410,12 +414,19 @@ actor {
       <ul>
         <li>
           If you do not need to profile canister upgrade and the canister code
-          doesn't access stable memory, you are good to go.
+          doesn't access stable memory, you do not need to do anything else.
         </li>
         <li>
           Otherwise, you need to check the "Reserved the first region in stable
           memory for profiling" checkbox, and add the following code at the top
-          of the actor:
+          of the actor: (see{" "}
+          <a
+            target="_blank"
+            href="https://github.com/dfinity/ic-wasm#working-with-upgrades-and-stable-memory"
+          >
+            this doc
+          </a>{" "}
+          for more background)
         </li>
       </ul>
       <CodeBlock>{RegionCode}</CodeBlock>
