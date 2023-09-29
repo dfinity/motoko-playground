@@ -392,6 +392,11 @@ export function DeployModal({
       </ul>
     </WarningContainer>
   );
+  const RegionCode = `import Region "mo:base/Region";
+actor {
+  stable let profiling = Region.grow(Region.new(), 32);
+  ...
+`;
   const RegionNotes = (
     <WarningContainer>
       <WarningLabel>Note on Profiling</WarningLabel>
@@ -404,13 +409,7 @@ export function DeployModal({
           Otherwise, you need to check the "Reserved the first region in stable
           memory for profiling" checkbox, and add the following code at the top
           of the actor:
-          <pre>
-            <blockquote>
-              import Region "mo:base/Region"; actor &#123; stable let profiling
-              = do &#123; let r = Region.new(); ignore Region.grow(r, 32); r;
-              &#125;; ...
-            </blockquote>
-          </pre>
+          <pre>{RegionCode}</pre>
         </li>
         <li>
           We cannot check if you have added the above code in your canister, but
