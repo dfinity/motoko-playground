@@ -460,56 +460,60 @@ export function DeployModal({
         shouldCloseOnOverlayClick
       >
         <ModalContainer>
-          {welcomeText}
-          <FormContainer>
-            {exceedsLimit ? selectDeploy : newDeploy}
-            {initTypes.length > 0 && (
-              <InitContainer>
-                <p>
-                  This service requires the following installation arguments:
-                </p>
-                <p>({initTypes.map((arg) => arg.name).join(", ")})</p>
-                <div className="InitArgs" ref={initArgs} />
-              </InitContainer>
-            )}
-            <Field
-              type="checkbox"
-              labelText="Enable profiling (experimental)"
-              checked={profiling}
-              onChange={(e) => setProfiling(e.target.checked)}
-            />
-            {profiling ? (
+          <div style={{ maxHeight: 600, overflowY: "auto", width: "100%" }}>
+            {welcomeText}
+            <FormContainer>
+              {exceedsLimit ? selectDeploy : newDeploy}
+              {initTypes.length > 0 && (
+                <InitContainer>
+                  <p>
+                    This service requires the following installation arguments:
+                  </p>
+                  <p>({initTypes.map((arg) => arg.name).join(", ")})</p>
+                  <div className="InitArgs" ref={initArgs} />
+                </InitContainer>
+              )}
               <Field
                 type="checkbox"
-                labelText="Reserved the first region in stable memory for profiling"
-                checked={hasStartPage}
-                onChange={(e) => setHasStartPage(e.target.checked)}
+                labelText="Enable profiling (experimental)"
+                checked={profiling}
+                onChange={(e) => setProfiling(e.target.checked)}
               />
-            ) : null}
-            {isMotoko ? (
-              <InitContainer>
-                <Field
-                  type="select"
-                  labelText="GC strategy"
-                  value={gcMethod}
-                  onChange={(e) => setGCMethod(e.target.value)}
-                >
-                  <option value="incremental">Incremental GC (default)</option>
-                  <option value="copying">Copying GC</option>
-                  <option value="marking">Marking GC</option>
-                  <option value="generational">Generational GC</option>
-                </Field>
+              {profiling ? (
                 <Field
                   type="checkbox"
-                  labelText="Force garbage collection (only if you want to test GC)"
-                  checked={forceGC}
-                  onChange={(e) => setForceGC(e.target.checked)}
+                  labelText="Reserved the first region in stable memory for profiling"
+                  checked={hasStartPage}
+                  onChange={(e) => setHasStartPage(e.target.checked)}
                 />
-              </InitContainer>
-            ) : null}
-          </FormContainer>
-          {profiling ? <>{RegionNotes}</> : null}
-          {Warnings}
+              ) : null}
+              {isMotoko ? (
+                <InitContainer>
+                  <Field
+                    type="select"
+                    labelText="GC strategy"
+                    value={gcMethod}
+                    onChange={(e) => setGCMethod(e.target.value)}
+                  >
+                    <option value="incremental">
+                      Incremental GC (default)
+                    </option>
+                    <option value="copying">Copying GC</option>
+                    <option value="marking">Marking GC</option>
+                    <option value="generational">Generational GC</option>
+                  </Field>
+                  <Field
+                    type="checkbox"
+                    labelText="Force garbage collection (only if you want to test GC)"
+                    checked={forceGC}
+                    onChange={(e) => setForceGC(e.target.checked)}
+                  />
+                </InitContainer>
+              ) : null}
+            </FormContainer>
+            {profiling ? <>{RegionNotes}</> : null}
+            {Warnings}
+          </div>
           <ButtonContainer>
             {canisters.hasOwnProperty(canisterName) ? (
               <>
