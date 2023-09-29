@@ -33,6 +33,8 @@ export interface InstallConfig {
   origin: Origin;
   profiling: boolean;
   is_whitelisted: boolean;
+  start_page: [] | [number];
+  page_limit: [] | [number];
 }
 export interface Nonce {
   nonce: bigint;

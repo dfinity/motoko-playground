@@ -32,6 +32,17 @@ module {
         mode : { #reinstall; #upgrade; #install };
         canister_id : Principal;
     };
+    public type InstallConfig = {
+        profiling: Bool;
+        is_whitelisted: Bool;
+        origin: { origin: Text; tags: [Text] };
+        start_page: ?Nat32;
+        page_limit: ?Nat32;
+    };
+    public type ProfilingConfig = {
+        start_page: ?Nat32;
+        page_limit: ?Nat32;
+    };
     public type CanisterInfo = {
         id: Principal;
         timestamp: Int;

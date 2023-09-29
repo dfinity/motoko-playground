@@ -124,7 +124,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
         for (tag in origin.tags.vals()) {
             // reject server side tags
-            if (tag == "mode:install" or tag == "mode:reinstall" or tag == "mode:upgrade" or tag == "wasm:profiling" or tag == "wasm:asset") {
+            if (tag == "mode:install" or tag == "mode:reinstall" or tag == "mode:upgrade" or tag == "wasm:profiling" or tag == "wasm:asset" or tag == "wasm:profiling:stable") {
                 return false;
             }
         };
@@ -147,9 +147,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         nonceCache.add nonce;
         await getExpiredCanisterInfo(origin);
     };
-
-    type InstallConfig = { profiling: Bool; is_whitelisted: Bool; origin: Logs.Origin };
-    public shared ({ caller }) func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, install_config : InstallConfig) : async Types.CanisterInfo {
+    public shared ({ caller }) func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, install_config : Types.InstallConfig) : async Types.CanisterInfo {
         if (not validateOrigin(install_config.origin)) {
             throw Error.reject "Please specify a valid origin";
         };
@@ -161,8 +159,13 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot find canister";
         } else {
+            let profiling_config: ?Types.ProfilingConfig = if (install_config.profiling) {
+                ?{ start_page = install_config.start_page; page_limit = install_config.page_limit }
+            } else {
+                null
+            };
             let config = {
-                profiling = install_config.profiling;
+                profiling = profiling_config;
                 remove_cycles_add = true;
                 limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
                 backend_canister_id = ?Principal.fromActor(this);
@@ -186,7 +189,10 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             // Build tags from install arguments
             let tags = Buffer.fromArray<Text>(install_config.origin.tags);
             if (install_config.profiling) {
-                tags.add("wasm:profiling");
+                switch (install_config.start_page) {
+                case null { tags.add("wasm:profiling") };
+                case _ { tags.add("wasm:profiling:stable") };
+                };
             };
             if (install_config.is_whitelisted) {
                 tags.add("wasm:asset");
@@ -369,7 +375,8 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         switch (sanitizeInputs(caller, canister_id)) {
             case (#ok info) {
                 let args = { arg; wasm_module; mode; canister_id };
-                let config = { profiling = pool.profiling caller; is_whitelisted = false; origin = {origin = "spawned"; tags = [] } };
+                // TODO: propagate start_page and page_limit
+                let config = { profiling = pool.profiling caller; is_whitelisted = false; origin = {origin = "spawned"; tags = [] }; start_page = null; page_limit = null };
                 ignore await installCode(info, args, config); // inherit the profiling of the parent
             };
             case (#err makeMsg) throw Error.reject(makeMsg "install_code");

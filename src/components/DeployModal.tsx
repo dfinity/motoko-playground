@@ -131,6 +131,7 @@ export function DeployModal({
   const [candidWarning, setCandidWarning] = useState("");
   const [stableWarning, setStableWarning] = useState("");
   const [profiling, setProfiling] = useState(false);
+  const [hasStartPage, setHasStartPage] = useState(false);
   const [forceGC, setForceGC] = useState(false);
   const [gcMethod, setGCMethod] = useState("incremental");
   const [compileResult, setCompileResult] = useState({ wasm: undefined });
@@ -299,6 +300,7 @@ export function DeployModal({
         mode,
         compileResult.wasm,
         profiling,
+        hasStartPage,
         logger,
         origin
       );
@@ -390,6 +392,33 @@ export function DeployModal({
       </ul>
     </WarningContainer>
   );
+  const RegionNotes = (
+    <WarningContainer>
+      <WarningLabel>Note on Profiling</WarningLabel>
+      <ul>
+        <li>
+          If you do not need to profile canister upgrade and the canister code
+          doesn't access stable memory, you are good to go.
+        </li>
+        <li>
+          Otherwise, you need to check the "Reserved the first region in stable
+          memory for profiling" checkbox, and add the following code at the top
+          of the actor:
+          <pre>
+            <blockquote>
+              import Region "mo:base/Region"; actor &#123; stable let profiling
+              = do &#123; let r = Region.new(); ignore Region.grow(r, 32); r;
+              &#125;; ...
+            </blockquote>
+          </pre>
+        </li>
+        <li>
+          We cannot check if you have added the above code in your canister, but
+          if you don't, the profiling may not work properly.
+        </li>
+      </ul>
+    </WarningContainer>
+  );
   const deployLabelText = "Select a canister name";
   const newDeploy = (
     <>
@@ -449,6 +478,14 @@ export function DeployModal({
               checked={profiling}
               onChange={(e) => setProfiling(e.target.checked)}
             />
+            {profiling ? (
+              <Field
+                type="checkbox"
+                labelText="Reserved the first region in stable memory for profiling"
+                checked={hasStartPage}
+                onChange={(e) => setHasStartPage(e.target.checked)}
+              />
+            ) : null}
             {isMotoko ? (
               <InitContainer>
                 <Field
@@ -471,11 +508,12 @@ export function DeployModal({
               </InitContainer>
             ) : null}
           </FormContainer>
+          {profiling ? <>{RegionNotes}</> : null}
           {Warnings}
           <ButtonContainer>
             {canisters.hasOwnProperty(canisterName) ? (
               <>
-                {!profiling ? (
+                {!profiling || (profiling && hasStartPage) ? (
                   <MyButton
                     variant="primary"
                     onClick={() => deployClick("upgrade")}

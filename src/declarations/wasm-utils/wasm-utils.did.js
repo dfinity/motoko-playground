@@ -2,7 +2,12 @@ export const idlFactory = ({ IDL }) => {
   const Config = IDL.Record({
     backend_canister_id: IDL.Opt(IDL.Principal),
     remove_cycles_add: IDL.Bool,
-    profiling: IDL.Bool,
+    profiling: IDL.Opt(
+      IDL.Record({
+        start_page: IDL.Opt(IDL.Nat32),
+        page_limit: IDL.Opt(IDL.Nat32),
+      })
+    ),
     limit_stable_memory_page: IDL.Opt(IDL.Nat32),
   });
   return IDL.Service({

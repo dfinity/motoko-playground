@@ -61,6 +61,8 @@ export const idlFactory = ({ IDL }) => {
     origin: Origin,
     profiling: IDL.Bool,
     is_whitelisted: IDL.Bool,
+    start_page: IDL.Opt(IDL.Nat32),
+    page_limit: IDL.Opt(IDL.Nat32),
   });
   const wasm_module = IDL.Vec(IDL.Nat8);
   const Self = IDL.Service({

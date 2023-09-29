@@ -98,7 +98,9 @@ type InstallConfig =
  record {
    is_whitelisted: bool;
    origin: Origin;
+   page_limit: opt nat32;
    profiling: bool;
+   start_page: opt nat32;
  };
 type InstallArgs = 
  record {

@@ -28,6 +28,7 @@ install mode:
 playground:
   wasm property
     wasm:profiling (*)
+    wasm:profiling:stable (*)
     wasm:init_args
   project imports
     import:package:{repo}
