@@ -422,6 +422,7 @@ actor {
           of the actor: (see{" "}
           <a
             target="_blank"
+            rel="noreferrer"
             href="https://github.com/dfinity/ic-wasm#working-with-upgrades-and-stable-memory"
           >
             this doc
