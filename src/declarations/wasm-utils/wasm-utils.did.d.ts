@@ -4,7 +4,7 @@ import type { ActorMethod } from "@dfinity/agent";
 export interface Config {
   backend_canister_id: [] | [Principal];
   remove_cycles_add: boolean;
-  profiling: boolean;
+  profiling: [] | [{ start_page: [] | [number]; page_limit: [] | [number] }];
   limit_stable_memory_page: [] | [number];
 }
 export interface _SERVICE {

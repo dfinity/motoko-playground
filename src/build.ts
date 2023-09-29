@@ -145,6 +145,7 @@ export async function deploy(
   mode: string,
   wasm: Uint8Array,
   profiling: boolean,
+  hasStartPage: boolean,
   logger: ILoggingStore,
   origin: Origin
 ): Promise<CanisterInfo | undefined> {
@@ -163,6 +164,7 @@ export async function deploy(
         args,
         "install",
         profiling,
+        hasStartPage,
         logger,
         origin
       );
@@ -176,6 +178,7 @@ export async function deploy(
         args,
         mode,
         profiling,
+        hasStartPage,
         logger,
         origin
       );
@@ -223,6 +226,7 @@ async function install(
   args: Uint8Array,
   mode: string,
   profiling: boolean,
+  hasStartPage: boolean,
   logger: ILoggingStore,
   origin: Origin
 ): Promise<CanisterInfo> {
@@ -236,10 +240,13 @@ async function install(
     mode: { [mode]: null },
     canister_id: canisterId,
   };
+  const start_page = profiling && hasStartPage ? [16] : [];
   const installConfig = {
     profiling,
     is_whitelisted: false,
     origin: mkOrigin(origin, true),
+    start_page,
+    page_limit: [],
   };
   const new_info = await backend.installCode(
     canisterInfo,

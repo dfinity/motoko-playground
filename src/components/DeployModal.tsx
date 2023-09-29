@@ -84,6 +84,13 @@ const MyButton = styled(Button)`
   width: 12rem;
 `;
 
+const CodeBlock = styled("pre")`
+  display: block;
+  border-radius: 12px;
+  padding: 12px;
+  background-color: rgba(255, 255, 255, 0.5);
+`;
+
 export interface DeploySetter {
   setMainFile: (name: string) => void;
   setCandidCode: (code: string) => void;
@@ -131,6 +138,7 @@ export function DeployModal({
   const [candidWarning, setCandidWarning] = useState("");
   const [stableWarning, setStableWarning] = useState("");
   const [profiling, setProfiling] = useState(false);
+  const [hasStartPage, setHasStartPage] = useState(false);
   const [forceGC, setForceGC] = useState(false);
   const [gcMethod, setGCMethod] = useState("incremental");
   const [compileResult, setCompileResult] = useState({ wasm: undefined });
@@ -299,6 +307,7 @@ export function DeployModal({
         mode,
         compileResult.wasm,
         profiling,
+        hasStartPage,
         logger,
         origin
       );
@@ -390,6 +399,46 @@ export function DeployModal({
       </ul>
     </WarningContainer>
   );
+  const RegionCode = `import Region "mo:base/Region";
+actor {
+  stable let profiling = do {
+    let r = Region.new();
+    ignore Region.grow(r, 32);
+    r
+  };
+  ...
+`;
+  const RegionNotes = (
+    <WarningContainer>
+      <WarningLabel>Note on Profiling</WarningLabel>
+      <ul>
+        <li>
+          If you do not need to profile canister upgrade and the canister code
+          doesn't access stable memory, you do not need to do anything else.
+        </li>
+        <li>
+          Otherwise, you need to check the "Reserved the first region in stable
+          memory for profiling" checkbox, and add the following code at the top
+          of the actor: (see{" "}
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href="https://github.com/dfinity/ic-wasm#working-with-upgrades-and-stable-memory"
+          >
+            this doc
+          </a>{" "}
+          for more background)
+        </li>
+      </ul>
+      <CodeBlock>{RegionCode}</CodeBlock>
+      <ul>
+        <li>
+          We cannot check if you have added the above code in your canister, but
+          if you don't, the profiling may not work properly.
+        </li>
+      </ul>
+    </WarningContainer>
+  );
   const deployLabelText = "Select a canister name";
   const newDeploy = (
     <>
@@ -431,51 +480,64 @@ export function DeployModal({
         shouldCloseOnOverlayClick
       >
         <ModalContainer>
-          {welcomeText}
-          <FormContainer>
-            {exceedsLimit ? selectDeploy : newDeploy}
-            {initTypes.length > 0 && (
-              <InitContainer>
-                <p>
-                  This service requires the following installation arguments:
-                </p>
-                <p>({initTypes.map((arg) => arg.name).join(", ")})</p>
-                <div className="InitArgs" ref={initArgs} />
-              </InitContainer>
-            )}
-            <Field
-              type="checkbox"
-              labelText="Enable profiling (experimental)"
-              checked={profiling}
-              onChange={(e) => setProfiling(e.target.checked)}
-            />
-            {isMotoko ? (
-              <InitContainer>
-                <Field
-                  type="select"
-                  labelText="GC strategy"
-                  value={gcMethod}
-                  onChange={(e) => setGCMethod(e.target.value)}
-                >
-                  <option value="incremental">Incremental GC (default)</option>
-                  <option value="copying">Copying GC</option>
-                  <option value="marking">Marking GC</option>
-                  <option value="generational">Generational GC</option>
-                </Field>
+          <div style={{ maxHeight: 680, overflowY: "auto", width: "100%" }}>
+            {welcomeText}
+            <FormContainer>
+              {exceedsLimit ? selectDeploy : newDeploy}
+              {initTypes.length > 0 && (
+                <InitContainer>
+                  <p>
+                    This service requires the following installation arguments:
+                  </p>
+                  <p>({initTypes.map((arg) => arg.name).join(", ")})</p>
+                  <div className="InitArgs" ref={initArgs} />
+                </InitContainer>
+              )}
+              <Field
+                type="checkbox"
+                labelText="Enable profiling (experimental)"
+                checked={profiling}
+                onChange={(e) => setProfiling(e.target.checked)}
+              />
+              {profiling ? (
                 <Field
                   type="checkbox"
-                  labelText="Force garbage collection (only if you want to test GC)"
-                  checked={forceGC}
-                  onChange={(e) => setForceGC(e.target.checked)}
+                  labelText="Reserved the first region in stable memory for profiling"
+                  checked={hasStartPage}
+                  onChange={(e) => setHasStartPage(e.target.checked)}
                 />
-              </InitContainer>
-            ) : null}
-          </FormContainer>
-          {Warnings}
+              ) : null}
+              {isMotoko ? (
+                <InitContainer>
+                  <Field
+                    type="select"
+                    labelText="GC strategy"
+                    value={gcMethod}
+                    onChange={(e) => setGCMethod(e.target.value)}
+                  >
+                    <option value="incremental">
+                      Incremental GC (default)
+                    </option>
+                    <option value="copying">Copying GC</option>
+                    <option value="marking">Marking GC</option>
+                    <option value="generational">Generational GC</option>
+                  </Field>
+                  <Field
+                    type="checkbox"
+                    labelText="Force garbage collection (only if you want to test GC)"
+                    checked={forceGC}
+                    onChange={(e) => setForceGC(e.target.checked)}
+                  />
+                </InitContainer>
+              ) : null}
+            </FormContainer>
+            {profiling ? <>{RegionNotes}</> : null}
+            {Warnings}
+          </div>
           <ButtonContainer>
             {canisters.hasOwnProperty(canisterName) ? (
               <>
-                {!profiling ? (
+                {!profiling || (profiling && hasStartPage) ? (
                   <MyButton
                     variant="primary"
                     onClick={() => deployClick("upgrade")}

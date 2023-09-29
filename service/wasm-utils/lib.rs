@@ -4,8 +4,14 @@ use serde_bytes::ByteBuf;
 use sha2::Digest;
 
 #[derive(CandidType, Deserialize)]
+struct ProfilingConfig {
+    start_page: Option<u32>,
+    page_limit: Option<u32>,
+}
+
+#[derive(CandidType, Deserialize)]
 struct Config {
-    profiling: bool,
+    profiling: Option<ProfilingConfig>,
     remove_cycles_add: bool,
     limit_stable_memory_page: Option<u32>,
     backend_canister_id: Option<candid::Principal>,
@@ -25,8 +31,16 @@ fn is_whitelisted(wasm: ByteBuf) -> ByteBuf {
 #[ic_cdk::query]
 fn transform(wasm: ByteBuf, config: Config) -> ByteBuf {
     let mut m = utils::parse_wasm(&wasm, false).unwrap();
-    if config.profiling {
-        instrumentation::instrument(&mut m, &[]).unwrap();
+    if let Some(config) = config.profiling {
+        if config.page_limit.is_some() {
+            assert!(config.start_page.is_some());
+        }
+        let instr_config = instrumentation::Config {
+            trace_only_funcs: vec![],
+            start_address: config.start_page.map(|page| page as i32 * 65536),
+            page_limit: config.page_limit.map(|x| x as i32),
+        };
+        instrumentation::instrument(&mut m, instr_config).unwrap();
     }
     let resource_config = limit_resource::Config {
         remove_cycles_add: config.remove_cycles_add,

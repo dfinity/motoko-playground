@@ -81,4 +81,4 @@ call S.getCanisterId(nonce, origin);
 
 // Enough time has passed that the timer has removed the canister code
 fail metadata(CID.id, "module_hash");
-assert _ ~= "unknown";
+assert _ ~= "absent";
