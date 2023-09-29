@@ -84,6 +84,13 @@ const MyButton = styled(Button)`
   width: 12rem;
 `;
 
+const CodeBlock = styled("pre")`
+  display: block;
+  border-radius: 12px;
+  padding: 12px;
+  background-color: rgba(255, 255, 255, 0.5);
+`;
+
 export interface DeploySetter {
   setMainFile: (name: string) => void;
   setCandidCode: (code: string) => void;
@@ -409,8 +416,10 @@ actor {
           Otherwise, you need to check the "Reserved the first region in stable
           memory for profiling" checkbox, and add the following code at the top
           of the actor:
-          <pre>{RegionCode}</pre>
         </li>
+      </ul>
+      <CodeBlock>{RegionCode}</CodeBlock>
+      <ul>
         <li>
           We cannot check if you have added the above code in your canister, but
           if you don't, the profiling may not work properly.
