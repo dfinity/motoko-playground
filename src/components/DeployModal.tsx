@@ -468,7 +468,7 @@ actor {
         shouldCloseOnOverlayClick
       >
         <ModalContainer>
-          <div style={{ maxHeight: 650, overflowY: "auto", width: "100%" }}>
+          <div style={{ maxHeight: 680, overflowY: "auto", width: "100%" }}>
             {welcomeText}
             <FormContainer>
               {exceedsLimit ? selectDeploy : newDeploy}
