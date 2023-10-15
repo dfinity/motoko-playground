@@ -7,7 +7,6 @@ use sha2::Digest;
 struct ProfilingConfig {
     start_page: Option<u32>,
     page_limit: Option<u32>,
-    use_new_metering: bool,
 }
 
 #[derive(CandidType, Deserialize)]
