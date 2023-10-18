@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
     env:
       DFX_VERSION: 0.15.1
-      IC_REPL_VERSION: 0.6.0
+      IC_REPL_VERSION: 0.5.1
       MOC_VERSION: 0.10.1
     steps:
       - name: Setup Rust
