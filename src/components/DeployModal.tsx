@@ -3,7 +3,13 @@ import styled from "styled-components";
 import { IDL, renderInput, InputBox } from "@dfinity/candid";
 
 import { Modal } from "./shared/Modal";
-import { CanisterInfo, getCanisterName, deploy, compileWasm } from "../build";
+import {
+  CanisterInfo,
+  getCanisterName,
+  deploy,
+  compileWasm,
+  getBaseDeps,
+} from "../build";
 import { ILoggingStore } from "./Logger";
 import { Button } from "./shared/Button";
 import {
@@ -291,6 +297,15 @@ export function DeployModal({
         });
       }
     }
+    try {
+      const pkgs = await getBaseDeps(worker, fileName);
+      for (const pkg of pkgs) {
+        await dispatch({
+          type: "addSessionTag",
+          payload: `import:base:${pkg}`,
+        });
+      }
+    } catch (err) {}
   }
 
   async function handleDeploy(mode: string) {

@@ -33,6 +33,7 @@ playground:
   project imports
     import:package:{repo}
     import:canister:{id}
+    import:base:{pkg}
   moc flags
     moc:gc:force
     moc:gc:{method}

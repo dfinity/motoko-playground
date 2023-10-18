@@ -87,6 +87,38 @@ export async function extractCandidFromWasm(
   const init = get_wasm_metadata(mod, "candid:args");
   return [serv, init];
 }
+export async function getBaseDeps(
+  worker,
+  entry: string
+): Promise<Array<string>> {
+  const visited = new Set();
+  const result = new Set();
+  async function go(file: string) {
+    if (visited.has(file)) {
+      return;
+    }
+    console.log(file);
+    visited.add(file);
+    const deps = await worker.Moc({
+      type: "printDeps",
+      file,
+    });
+    for (const imp of deps.split("\n")) {
+      if (imp.indexOf(":") > 0) {
+        if (imp.startsWith("mo:base/")) {
+          result.add(imp.slice(8));
+        }
+      } else {
+        const path = imp.split(" ");
+        if (path.length === 2) {
+          await go(path[1]);
+        }
+      }
+    }
+  }
+  await go(entry);
+  return Array.from(result);
+}
 
 export async function compileCandid(
   worker,
