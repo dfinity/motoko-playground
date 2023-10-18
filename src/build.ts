@@ -97,7 +97,6 @@ export async function getBaseDeps(
     if (visited.has(file)) {
       return;
     }
-    console.log(file);
     visited.add(file);
     const deps = await worker.Moc({
       type: "printDeps",
