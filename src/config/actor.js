@@ -33,9 +33,9 @@ export const saved = Actor.createActor(savedIdlFactory, {
   canisterId: savedCanisterId,
 });
 
-const uiCanisterId = "avqkn-guaaa-aaaaa-qaaea-cai";
-//  process.env.__CANDID_UI_CANISTER_ID ||
-//  (local ? "bw4dl-smaaa-aaaaa-qaacq-cai" : "a4gq6-oaaaa-aaaab-qaa4q-cai");
+const uiCanisterId =
+  process.env.__CANDID_UI_CANISTER_ID ||
+  (local ? "bw4dl-smaaa-aaaaa-qaacq-cai" : "a4gq6-oaaaa-aaaab-qaa4q-cai");
 export const uiCanisterUrl = local
   ? `http://${uiCanisterId}.localhost:${LOCAL_PORT}`
   : `https://${uiCanisterId}.raw.icp0.io`;
