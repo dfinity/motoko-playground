@@ -42,7 +42,7 @@ export function ImportGitHub({ importCode, close, isPackageModal = false }) {
     let files = await worker.fetchGithub({ repo, branch, dir });
     const readme = await (await fetch(readmeUrl)).text();
     if (readme) {
-      files = { ...files, "README.md": readme };
+      files = { ...files, README: readme };
     }
     if (files) {
       setError("");
