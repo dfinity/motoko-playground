@@ -7,7 +7,7 @@ interface ExtraFile {
 
 const extraFiles: ExtraFile[] = [
   {
-    match: /(^|\/)readme\.md$/i,
+    match: /^readme\.md$/i,
     resolveName: () => "README",
   },
 ];
