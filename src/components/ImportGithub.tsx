@@ -37,8 +37,13 @@ export function ImportGitHub({ importCode, close, isPackageModal = false }) {
   const [name, setName] = useState("");
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
+  const readmeUrl = `https://raw.githubusercontent.com/${repo}/${branch}/README.md`;
   async function fetchCode() {
-    const files = await worker.fetchGithub({ repo, branch, dir });
+    let files = await worker.fetchGithub({ repo, branch, dir });
+    const readme = await (await fetch(readmeUrl)).text();
+    if (readme) {
+      files = { ...files, "README.md": readme };
+    }
     if (files) {
       setError("");
       importCode(files);
