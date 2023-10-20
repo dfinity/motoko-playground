@@ -74,11 +74,16 @@ async function fetchFromCDN(
   const promises: any[] = [];
   const files = {};
   for (const f of json.files) {
-    if (f.name.startsWith(`/${repo.dir}/`) && /\.mo$/.test(f.name)) {
+    const isReadme = /\/?readme\.md$/i.test(f.path);
+    if (
+      f.name.startsWith(`/${repo.dir}/`) &&
+      (/\.mo$/i.test(f.name) || isReadme)
+    ) {
       const promise = (async () => {
         const content = await (await fetch(base_url + f.name)).text();
-        const stripped =
-          target_dir + f.name.slice(repo.dir ? repo.dir.length + 1 : 0);
+        const stripped = isReadme
+          ? "README"
+          : target_dir + f.name.slice(repo.dir ? repo.dir.length + 1 : 0);
         Motoko.saveFile(stripped, content);
         files[stripped] = content;
       })();
@@ -107,17 +112,19 @@ async function fetchFromGithub(
   const promises: any[] = [];
   const files = {};
   for (const f of json.tree) {
+    const isReadme = /\/?readme\.md$/i.test(f.path);
     if (
       f.path.startsWith(repo.dir ? `${repo.dir}/` : "") &&
       f.type === "blob" &&
-      /\.mo$/.test(f.path)
+      (/\.mo$/i.test(f.path) || isReadme)
     ) {
       const promise = (async () => {
         const content = await (await fetch(base_url + f.path)).text();
-        const stripped =
-          target_dir +
-          (target_dir ? "/" : "") +
-          f.path.slice(repo.dir ? repo.dir.length + 1 : 0);
+        const stripped = isReadme
+          ? "README"
+          : target_dir +
+            (target_dir ? "/" : "") +
+            f.path.slice(repo.dir ? repo.dir.length + 1 : 0);
         Motoko.saveFile(stripped, content);
         files[stripped] = content;
       })();
