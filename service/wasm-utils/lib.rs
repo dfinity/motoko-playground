@@ -39,6 +39,7 @@ fn transform(wasm: ByteBuf, config: Config) -> ByteBuf {
             trace_only_funcs: vec![],
             start_address: config.start_page.map(|page| page as i32 * 65536),
             page_limit: config.page_limit.map(|x| x as i32),
+            use_new_metering: false,
         };
         instrumentation::instrument(&mut m, instr_config).unwrap();
     }
