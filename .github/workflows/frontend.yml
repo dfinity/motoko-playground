@@ -21,9 +21,9 @@ jobs:
           - 16
           - 18
     env:
-      DFX_VERSION: 0.15.0
+      DFX_VERSION: 0.15.1
       SKIP_WASM: true
-      MOC_VERSION: 0.10.0
+      MOC_VERSION: 0.10.1
     steps:
       - uses: actions/checkout@v2
       - name: Setup Node.js ${{ matrix.node }}
