@@ -1,5 +1,17 @@
 declare var Motoko: any;
 
+interface ExtraFile {
+  match: RegExp;
+  resolveName(results: RegExpExecArray): string;
+}
+
+const extraFiles: ExtraFile[] = [
+  {
+    match: /^readme\.md$/i,
+    resolveName: () => "README",
+  },
+];
+
 export interface PackageInfo {
   name: string;
   repo: string;
@@ -74,10 +86,18 @@ async function fetchFromCDN(
   const promises: any[] = [];
   const files = {};
   for (const f of json.files) {
-    if (f.name.startsWith(`/${repo.dir}/`) && /\.mo$/.test(f.name)) {
+    const extraFileName = extraFiles.flatMap(({ match, resolveName }) => {
+      const results = match.exec(f.path);
+      return results ? [resolveName(results)] : [];
+    })[0];
+    if (
+      f.name.startsWith(`/${repo.dir}/`) &&
+      (extraFileName || /\.mo$/i.test(f.name))
+    ) {
       const promise = (async () => {
         const content = await (await fetch(base_url + f.name)).text();
         const stripped =
+          extraFileName ||
           target_dir + f.name.slice(repo.dir ? repo.dir.length + 1 : 0);
         Motoko.saveFile(stripped, content);
         files[stripped] = content;
@@ -107,17 +127,22 @@ async function fetchFromGithub(
   const promises: any[] = [];
   const files = {};
   for (const f of json.tree) {
+    const extraFileName = extraFiles.flatMap(({ match, resolveName }) => {
+      const results = match.exec(f.path);
+      return results ? [resolveName(results)] : [];
+    })[0];
     if (
       f.path.startsWith(repo.dir ? `${repo.dir}/` : "") &&
       f.type === "blob" &&
-      /\.mo$/.test(f.path)
+      (extraFileName || /\.mo$/i.test(f.path))
     ) {
       const promise = (async () => {
         const content = await (await fetch(base_url + f.path)).text();
         const stripped =
+          extraFileName ||
           target_dir +
-          (target_dir ? "/" : "") +
-          f.path.slice(repo.dir ? repo.dir.length + 1 : 0);
+            (target_dir ? "/" : "") +
+            f.path.slice(repo.dir ? repo.dir.length + 1 : 0);
         Motoko.saveFile(stripped, content);
         files[stripped] = content;
       })();
