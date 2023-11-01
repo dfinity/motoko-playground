@@ -33,8 +33,11 @@ jobs:
           cache: 'npm'
           cache-dependency-path: package-lock.json
       - name: Install dfx
+        uses: dfinity/setup-dfx@main
+        with:
+          dfx-version: ${{ env.DFX_VERSION }}
+      - name: Install dfx dependencies
         run: |
-          echo y | DFX_VERSION=$DFX_VERSION bash -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
           npm i -g ic-mops
           dfx cache install
           cd $(dfx cache show)
