@@ -14,9 +14,9 @@ jobs:
     strategy:
       fail-fast: false
     env:
-      DFX_VERSION: 0.15.1
-      IC_REPL_VERSION: 0.5.1
-      MOC_VERSION: 0.10.1
+      DFX_VERSION: 0.15.2-beta.3
+      IC_REPL_VERSION: 0.6.0
+      MOC_VERSION: 0.10.2
     steps:
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
