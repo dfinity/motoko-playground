@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
+import { runNpmCli } from "npm-in-browser";
+import memfs from "memfs";
 
 // @ts-ignore
 // eslint-disable-next-line import/no-webpack-loader-syntax
@@ -241,6 +243,24 @@ export function App() {
       });
       logger.log(`moc version ${MOC_VERSION}`);
       logger.log(`base library version ${baseInfo.version}`);
+      await runNpmCli(["install", "react"], {
+        fs: memfs.fs,
+        cwd: "/home/web",
+        stdout: (s) => {
+          logger.log("stdout" + s);
+        },
+        stderr: (s) => {
+          logger.log("stderr" + s);
+        },
+        timings: {
+          start: (s) => {
+            logger.log("START: " + s);
+          },
+          end: (s) => {
+            logger.log("END: " + s);
+          },
+        },
+      });
       // fetch code after loading base library
       if (hasUrlParams) {
         const files = await fetchFromUrlParams(workplaceDispatch);
