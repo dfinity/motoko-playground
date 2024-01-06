@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
+import memfs from "memfs";
 
 // @ts-ignore
 // eslint-disable-next-line import/no-webpack-loader-syntax
@@ -235,7 +236,6 @@ export function App() {
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
       const { runNpmCli } = await globalThis.npmInBrowser;
-      const memfs = await globalThis.memfs;
 
       await worker.fetchPackage(baseInfo);
       await workplaceDispatch({
@@ -251,17 +251,17 @@ export function App() {
         fs: memfs.fs,
         cwd: "/home/web",
         stdout: (s) => {
-          logger.log("stdout" + s);
+          logger.log("[stdout] " + s);
         },
         stderr: (s) => {
-          logger.log("stderr" + s);
+          logger.log("[stderr] " + s);
         },
         timings: {
           start: (s) => {
-            logger.log("START: " + s);
+            console.log("START: " + s);
           },
           end: (s) => {
-            logger.log("END: " + s);
+            console.log("END: " + s);
           },
         },
       });

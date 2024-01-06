@@ -12,6 +12,7 @@
     "@types/react-dom": "^17.0.0",
     "@types/styled-components": "^5.1.10",
     "lodash.debounce": "^4.0.8",
+    "memfs": "^4.6.0",
     "motoko": "^3.6.10",
     "prettier-plugin-motoko": "^0.8.1",
     "react": "^17.0.2",
