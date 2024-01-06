@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
+import memfs from "memfs";
 
 // @ts-ignore
 // eslint-disable-next-line import/no-webpack-loader-syntax
@@ -231,6 +232,11 @@ export function App() {
       homepage: "https://sdk.dfinity.org/docs/base-libraries/stdlib-intro.html",
     };
     (async () => {
+      while (!("npmInBrowser" in globalThis)) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      const { runNpmCli } = await globalThis.npmInBrowser;
+
       await worker.fetchPackage(baseInfo);
       await workplaceDispatch({
         type: "loadPackage",
@@ -241,6 +247,24 @@ export function App() {
       });
       logger.log(`moc version ${MOC_VERSION}`);
       logger.log(`base library version ${baseInfo.version}`);
+      await runNpmCli(["install", "react"], {
+        fs: memfs.fs,
+        cwd: "/home/web",
+        stdout: (s) => {
+          logger.log("[stdout] " + s);
+        },
+        stderr: (s) => {
+          logger.log("[stderr] " + s);
+        },
+        timings: {
+          start: (s) => {
+            console.log("START: " + s);
+          },
+          end: (s) => {
+            console.log("END: " + s);
+          },
+        },
+      });
       // fetch code after loading base library
       if (hasUrlParams) {
         const files = await fetchFromUrlParams(workplaceDispatch);
