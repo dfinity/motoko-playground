@@ -12,6 +12,10 @@
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>Motoko Playground - DFINITY</title>
+    <script type="module">
+      window.memfs = import("https://esm.sh/memfs@4.5.0");
+      window.npmInBrowser = import("https://esm.sh/npm-in-browser@0.1.0");
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

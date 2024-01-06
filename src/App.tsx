@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
-import { runNpmCli } from "npm-in-browser";
-import memfs from "memfs";
 
 // @ts-ignore
 // eslint-disable-next-line import/no-webpack-loader-syntax
@@ -233,6 +231,12 @@ export function App() {
       homepage: "https://sdk.dfinity.org/docs/base-libraries/stdlib-intro.html",
     };
     (async () => {
+      while (!("npmInBrowser" in window)) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      const { runNpmCli } = await (window as any).npmInBrowser;
+      const memfs = await (window as any).memfs;
+
       await worker.fetchPackage(baseInfo);
       await workplaceDispatch({
         type: "loadPackage",
