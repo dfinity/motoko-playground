@@ -231,11 +231,11 @@ export function App() {
       homepage: "https://sdk.dfinity.org/docs/base-libraries/stdlib-intro.html",
     };
     (async () => {
-      while (!("npmInBrowser" in window)) {
+      while (!("npmInBrowser" in globalThis)) {
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
-      const { runNpmCli } = await (window as any).npmInBrowser;
-      const memfs = await (window as any).memfs;
+      const { runNpmCli } = await globalThis.npmInBrowser;
+      const memfs = await globalThis.memfs;
 
       await worker.fetchPackage(baseInfo);
       await workplaceDispatch({
