@@ -359,8 +359,8 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
 
     // Disabled to prevent the user from updating the controller list (amongst other settings)
     public shared func update_settings({
-        _canister_id : ICType.canister_id;
-        _settings : ICType.canister_settings;
+        canister_id : ICType.canister_id;
+        settings : ICType.canister_settings;
     }) : async () {
         throw Error.reject "Cannot call update_settings from within Motoko Playground";
     };

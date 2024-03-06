@@ -33,7 +33,7 @@ actor Parent {
   };
 
   public func makeChild(i : Nat) : async Principal {
-    Cycles.add 550_000_000_000;
+    Cycles.add<system> 550_000_000_000;
     let b = await Child.Child();
     children[i] := ?b;
     Principal.fromActor b
