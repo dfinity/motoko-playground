@@ -1,4 +1,3 @@
 [dependencies]
-base = "https://github.com/dfinity/motoko-base#master"
+base = "0.11.0"
 splay = "0.1.0"
-
