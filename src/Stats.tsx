@@ -44,7 +44,7 @@ playground:
 
 function extract_slice(raw, cond) {
   const res = raw
-    .filter(([name, _]) => cond(name))
+    .filter(([name, n]) => cond(name) && Number(n) > 1)
     .map(([name, n]) => [name, Number(n)]);
   res.sort((a, b) => b[1] - a[1]);
   return res;
