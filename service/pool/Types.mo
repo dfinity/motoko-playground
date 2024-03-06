@@ -137,10 +137,10 @@ module {
             return true;
         };
 
-        public func updateTimer(info: CanisterInfo, job : () -> async ()) {
+        public func updateTimer<system>(info: CanisterInfo, job : () -> async ()) {
             let elapsed = Time.now() - info.timestamp;
             let duration = if (elapsed > ttl) { 0 } else { Int.abs(ttl - elapsed) };
-            let tid = Timer.setTimer(#nanoseconds duration, job);
+            let tid = Timer.setTimer<system>(#nanoseconds duration, job);
             switch (timers.replace(info.id, tid)) {
             case null {};
             case (?old_id) {
@@ -151,7 +151,7 @@ module {
             };
         };
         
-        public func removeTimer(cid: Principal) {
+        public func removeTimer<system>(cid: Principal) {
             timers.delete cid;
         };
         

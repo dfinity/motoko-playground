@@ -5,7 +5,6 @@ import Error "mo:base/Error";
 import Option "mo:base/Option";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
-import Array "mo:base/Array";
 import Buffer "mo:base/Buffer";
 import List "mo:base/List";
 import Deque "mo:base/Deque";
@@ -53,7 +52,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
         pool.unshare(stablePool, stableMetadata, stableChildren);
         for (info in stableTimers.vals()) {
-            updateTimer(info);
+            updateTimer<system>(info);
         };
         statsByOrigin.unshare(stableStatsByOrigin);
     };
@@ -73,13 +72,13 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
 
     public func wallet_receive() : async () {
         let amount = Cycles.available();
-        ignore Cycles.accept amount;
+        ignore Cycles.accept<system> amount;
     };
 
     private func getExpiredCanisterInfo(origin : Logs.Origin) : async Types.CanisterInfo {
         switch (pool.getExpiredCanisterId()) {
             case (#newId) {
-                Cycles.add(params.cycles_per_canister);
+                Cycles.add<system>(params.cycles_per_canister);
                 let cid = await IC.create_canister { settings = null };
                 let now = Time.now();
                 let info = { id = cid.canister_id; timestamp = now };
@@ -95,7 +94,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     params.cycles_per_canister - status.cycles;
                 } else { 0 };
                 if (topUpCycles > 0) {
-                    Cycles.add topUpCycles;
+                    Cycles.add<system> topUpCycles;
                     await IC.deposit_cycles cid;
                 };
                 if (Option.isSome(status.module_hash)) {
@@ -206,7 +205,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             statsByOrigin.addInstall(origin);
             switch (pool.refresh(info, install_config.profiling)) {
                 case (?newInfo) {
-                     updateTimer(newInfo);
+                     updateTimer<system>(newInfo);
                      newInfo;
                  };
                 case null { throw Error.reject "Cannot find canister" };
@@ -214,14 +213,14 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
     };
 
-    func updateTimer(info: Types.CanisterInfo) {
+    func updateTimer<system>(info: Types.CanisterInfo) {
         func job() : async () {
-            pool.removeTimer(info.id);
+            pool.removeTimer<system>(info.id);
             // It is important that the timer job checks for the timestamp first.
             // This prevents late-runner jobs from deleting newly installed code.
             await removeCode(info);
         };
-        pool.updateTimer(info, job);
+        pool.updateTimer<system>(info, job);
     };
 
     public func callForward(info : Types.CanisterInfo, function : Text, args : Blob) : async Blob {
@@ -359,9 +358,9 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     // Disabled to prevent the user from updating the controller list (amongst other settings)
-    public shared ({ caller }) func update_settings({
-        canister_id : ICType.canister_id;
-        settings : ICType.canister_settings;
+    public shared func update_settings({
+        _canister_id : ICType.canister_id;
+        _settings : ICType.canister_settings;
     }) : async () {
         throw Error.reject "Cannot call update_settings from within Motoko Playground";
     };
