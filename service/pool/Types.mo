@@ -151,7 +151,7 @@ module {
             };
         };
         
-        public func removeTimer<system>(cid: Principal) {
+        public func removeTimer(cid: Principal) {
             timers.delete cid;
         };
         

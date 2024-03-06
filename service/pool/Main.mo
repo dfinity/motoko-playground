@@ -215,7 +215,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
 
     func updateTimer<system>(info: Types.CanisterInfo) {
         func job() : async () {
-            pool.removeTimer<system>(info.id);
+            pool.removeTimer(info.id);
             // It is important that the timer job checks for the timestamp first.
             // This prevents late-runner jobs from deleting newly installed code.
             await removeCode(info);
