@@ -17,57 +17,57 @@ export const exampleProjects: ExampleProject[] = [
   {
     name: "Hello, world",
     repo: { dir: "motoko/echo/src", ...example },
-    readme: `${readmeURL}/echo/README.mdx`,
+    readme: `${readmeURL}/echo/README.md`,
   },
   {
     name: "Counter",
     repo: { dir: "motoko/counter/src", ...example },
-    readme: `${readmeURL}/counter/README.mdx`,
+    readme: `${readmeURL}/counter/README.md`,
   },
   {
     name: "Calculator",
     repo: { dir: "motoko/calc/src", ...example },
-    readme: `${readmeURL}/calc/README.mdx`,
+    readme: `${readmeURL}/calc/README.md`,
   },
   {
     name: "Who am I?",
     repo: { dir: "motoko/whoami/src", ...example },
-    readme: `${readmeURL}/whoami/README.mdx`,
+    readme: `${readmeURL}/whoami/README.md`,
   },
   {
     name: "Phone Book",
     repo: { dir: "motoko/phone-book/src/phone-book", ...example },
-    readme: `${readmeURL}/phone-book/README.mdx`,
+    readme: `${readmeURL}/phone-book/README.md`,
   },
   {
     name: "Super Heroes",
     repo: { dir: "motoko/superheroes/src/superheroes", ...example },
-    readme: `${readmeURL}/superheroes/README.mdx`,
+    readme: `${readmeURL}/superheroes/README.md`,
   },
   {
     name: "Random Maze",
     repo: { dir: "motoko/random_maze/src/random_maze", ...example },
-    readme: `${readmeURL}/random_maze/README.mdx`,
+    readme: `${readmeURL}/random_maze/README.md`,
   },
   {
     name: "Game of Life",
     repo: { dir: "motoko/life", ...example },
-    readme: `${readmeURL}/life/README.mdx`,
+    readme: `${readmeURL}/life/README.md`,
   },
   {
     name: "Publisher and Subscriber",
     repo: { dir: "motoko/pub-sub/src", ...example },
-    readme: `${readmeURL}/pub-sub/README.mdx`,
+    readme: `${readmeURL}/pub-sub/README.md`,
   },
   {
     name: "Actor Classes",
     repo: { dir: "motoko/classes/src", ...example },
-    readme: `${readmeURL}/classes/README.mdx`,
+    readme: `${readmeURL}/classes/README.md`,
   },
   {
     name: "Basic DAO",
     repo: { dir: "motoko/basic_dao/src", ...example },
-    readme: `${readmeURL}/basic_dao/README.mdx`,
+    readme: `${readmeURL}/basic_dao/README.md`,
   },
 ];
 
