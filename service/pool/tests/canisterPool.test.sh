@@ -16,7 +16,7 @@ let S = install(wasm, init, null);
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
 let CID = call S.getCanisterId(nonce, origin);
 call S.installCode(CID, record { arg = blob ""; wasm_module = empty_wasm; mode = variant { install }; canister_id = CID.id }, record { profiling = false; is_whitelisted = false; origin = origin });
-metadata(CID.id, "module_hash");
+read_state("canister", CID.id, "module_hash");
 
 // Immediately expire
 let init = opt record {
@@ -80,5 +80,5 @@ call ic.provisional_top_up_canister(
 call S.getCanisterId(nonce, origin);
 
 // Enough time has passed that the timer has removed the canister code
-fail metadata(CID.id, "module_hash");
+fail read_state("canister", CID.id, "module_hash");
 assert _ ~= "absent";
