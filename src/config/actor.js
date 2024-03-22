@@ -1,4 +1,9 @@
-import { Actor, HttpAgent, ActorSubclass } from "@dfinity/agent";
+import {
+  Actor,
+  HttpAgent,
+  ActorSubclass,
+  CanisterStatus,
+} from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { IDL } from "@dfinity/candid";
 import { idlFactory, canisterId } from "../declarations/backend";
@@ -44,7 +49,19 @@ export const didjs = Actor.createActor(didjs_idl, {
   canisterId: Principal.fromText(uiCanisterId),
 });
 
-export async function fetchCandidInterface(canisterId) {
+async function getDidFromMetadata(
+  canisterId: Principal
+): Promise<null | string> {
+  const status = await CanisterStatus.request({
+    agent,
+    canisterId,
+    paths: ["candid"],
+  });
+  const did = status.get("candid");
+  return did;
+}
+
+async function getDidFromTmpHack(canisterId: Principal) {
   const common_interface: IDL.InterfaceFactory = ({ IDL }) =>
     IDL.Service({
       __get_candid_interface_tmp_hack: IDL.Func([], [IDL.Text], ["query"]),
@@ -55,6 +72,13 @@ export async function fetchCandidInterface(canisterId) {
   });
   const candid_source = await actor.__get_candid_interface_tmp_hack();
   return candid_source;
+}
+export async function fetchCandidInterface(canisterId: Principal) {
+  const did = await getDidFromMetadata(canisterId);
+  if (did) {
+    return did;
+  }
+  return await getDidFromTmpHack(canisterId);
 }
 
 export async function didToJs(source) {
