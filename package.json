@@ -24,7 +24,7 @@
     "web-vitals": "^1.0.1"
   },
   "devDependencies": {
-    "@craco/craco": "^6.0.0",
+    "@craco/craco": "^7.1.0",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
@@ -37,7 +37,7 @@
     "lint-staged": "^11.1.2",
     "mo-dev": "^0.12.0",
     "prettier": "^2.7.1",
-    "react-scripts": "4.0.3",
+    "react-scripts": "5.0.1",
     "wasm-loader": "^1.3.0"
   },
   "scripts": {
