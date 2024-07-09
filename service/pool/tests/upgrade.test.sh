@@ -57,6 +57,7 @@ let init = opt record {
   nonce_time_to_live = 1;
   canister_time_to_live = 1;
   max_family_tree_size = 5;
+  no_uninstall = false;
 };
 fail upgrade(S, wasm, init);
 assert _ ~= "Cannot reduce canisterPool for upgrade";
