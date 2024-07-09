@@ -97,7 +97,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     Cycles.add<system> topUpCycles;
                     await IC.deposit_cycles cid;
                 };
-                if ((not Option.get(params.no_uninstall, false)) and Option.isSome(status.module_hash)) {
+                if (not Option.get(params.no_uninstall, false) and Option.isSome(status.module_hash)) {
                     await IC.uninstall_code cid;
                 };
                 switch (status.status) {
@@ -134,7 +134,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         if (not validateOrigin(origin)) {
             throw Error.reject "Please specify a valid origin";
         };
-        if (caller != controller and not nonceCache.checkProofOfWork(nonce)) {
+        if (not Principal.isController(caller) and not nonceCache.checkProofOfWork(nonce)) {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Proof of work check failed";
         };
@@ -169,7 +169,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
                 backend_canister_id = ?Principal.fromActor(this);
             };
-            let wasm = if (caller == controller and install_config.is_whitelisted) {
+            let wasm = if (Principal.isController(caller) and install_config.is_whitelisted) {
                 args.wasm_module;
             } else if (install_config.is_whitelisted) {
                 await Wasm.is_whitelisted(args.wasm_module);
@@ -281,21 +281,21 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     public query ({ caller }) func dump() : async [Types.CanisterInfo] {
-        if (caller != controller) {
+        if (not Principal.isController(caller)) {
             throw Error.reject "Only called by controller";
         };
         pool.share().0;
     };
 
     public shared ({ caller }) func resetStats() : async () {
-        if (caller != controller) {
+        if (not Principal.isController(caller)) {
             throw Error.reject "Only called by controller";
         };
         stats := Logs.defaultStats;
         statsByOrigin := Logs.StatsByOrigin();
     };
     public shared ({ caller }) func mergeTags(from: Text, to: ?Text) : async () {
-        if (caller != controller) {
+        if (not Principal.isController(caller)) {
             throw Error.reject "Only called by controller";
         };
         statsByOrigin.merge_tag(from, to);
