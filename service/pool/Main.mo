@@ -97,7 +97,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     Cycles.add<system> topUpCycles;
                     await IC.deposit_cycles cid;
                 };
-                if ((not params.no_uninstall) and Option.isSome(status.module_hash)) {
+                if ((not Option.get(params.no_uninstall, false)) and Option.isSome(status.module_hash)) {
                     await IC.uninstall_code cid;
                 };
                 switch (status.status) {
@@ -214,7 +214,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     func updateTimer<system>(info: Types.CanisterInfo) {
-        if (params.no_uninstall) {
+        if (Option.get(params.no_uninstall, false)) {
             return;
         };
         func job() : async () {

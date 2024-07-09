@@ -40,7 +40,6 @@ let init = opt record {
   nonce_time_to_live = 1;
   canister_time_to_live = 1;
   max_family_tree_size = 5;
-  no_uninstall = false;
 };
 let S = install(wasm, init, null);
 
@@ -63,7 +62,6 @@ let init = opt record {
   nonce_time_to_live = 1;
   canister_time_to_live = 3600_000_000_000;
   max_family_tree_size = 5;
-  no_uninstall = false;
 };
 reinstall(S, wasm, init);
 let c3 = call S.getCanisterId(nonce, origin);
@@ -84,7 +82,6 @@ let init = opt record {
   nonce_time_to_live = 1;
   canister_time_to_live = 60_000_000_000;
   max_family_tree_size = 5;
-  no_uninstall = false;
 };
 let S = install(wasm, init, opt 100_000_000_000);
 fail call S.getCanisterId(nonce, origin);

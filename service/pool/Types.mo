@@ -18,7 +18,7 @@ module {
         canister_time_to_live: Nat;
         nonce_time_to_live: Nat;
         max_family_tree_size: Nat;
-        no_uninstall: Bool;
+        no_uninstall: ?Bool;
     };
     public let defaultParams : InitParams = {
         cycles_per_canister = 550_000_000_000;
@@ -26,7 +26,7 @@ module {
         canister_time_to_live = 1200_000_000_000;
         nonce_time_to_live = 300_000_000_000;
         max_family_tree_size = 5;
-        no_uninstall = false;
+        no_uninstall = null;
     };
     public type InstallArgs = {
         arg : Blob;

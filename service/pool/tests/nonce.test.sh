@@ -11,7 +11,6 @@ let init = opt record {
   nonce_time_to_live = 3600_000_000_000;
   canister_time_to_live = 1;
   max_family_tree_size = 5;
-  no_uninstall = false;
 };
 let S = install(wasm, init, null);
 
