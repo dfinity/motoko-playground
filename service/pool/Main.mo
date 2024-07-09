@@ -88,6 +88,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 (info, #install);
             };
             case (#reuse info) {
+                let no_uninstall = Option.get(params.no_uninstall, false);
                 let cid = { canister_id = info.id };
                 let status = await IC.canister_status cid;
                 let topUpCycles : Nat = if (status.cycles < params.cycles_per_canister) {
@@ -97,7 +98,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     Cycles.add<system> topUpCycles;
                     await IC.deposit_cycles cid;
                 };
-                if (not Option.get(params.no_uninstall, false) and Option.isSome(status.module_hash)) {
+                if (not no_uninstall and Option.isSome(status.module_hash)) {
                     await IC.uninstall_code cid;
                 };
                 switch (status.status) {
@@ -108,7 +109,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 };
                 stats := Logs.updateStats(stats, #getId topUpCycles);
                 statsByOrigin.addCanister(origin);
-                let mode = if (Option.get(params.no_uninstall, false)) { #reinstall } else { #install };
+                let mode = if (no_uninstall) { #reinstall } else { #install };
                 (info, mode);
             };
             case (#outOfCapacity time) {
@@ -159,6 +160,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                      mode = mode;
                      canister_id = info.id;
                  };
+                 stats := Logs.updateStats(stats, #install);
              };
         case null {};
         };
