@@ -6,11 +6,12 @@ let empty_wasm = blob "\00asm\01\00\00\00";
 let origin = record { origin = "test"; tags = vec {"tag"} };
 
 let init = opt record {
-  cycles_per_canister = 105_000_000_000 : nat;
-  max_num_canisters = 2 : nat;
-  nonce_time_to_live = 1 : nat;
-  canister_time_to_live = 5_000_000_000 : nat;
-  max_family_tree_size = 5 : nat;
+  cycles_per_canister = 105_000_000_000;
+  max_num_canisters = 2;
+  nonce_time_to_live = 1;
+  canister_time_to_live = 5_000_000_000;
+  max_family_tree_size = 5;
+  no_uninstall = false;
 };
 let S = install(wasm, init, null);
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
@@ -20,11 +21,12 @@ read_state("canister", CID.id, "module_hash");
 
 // Immediately expire
 let init = opt record {
-  cycles_per_canister = 105_000_000_000 : nat;
-  max_num_canisters = 2 : nat;
-  nonce_time_to_live = 1 : nat;
-  canister_time_to_live = 1 : nat;
-  max_family_tree_size = 5 : nat;
+  cycles_per_canister = 105_000_000_000;
+  max_num_canisters = 2;
+  nonce_time_to_live = 1;
+  canister_time_to_live = 1;
+  max_family_tree_size = 5;
+  no_uninstall = false;
 };
 let S = install(wasm, init, null);
 
@@ -42,11 +44,12 @@ assert c2.id == c4.id;
 
 // Out of capacity
 let init = opt record {
-  cycles_per_canister = 105_000_000_000 : nat;
-  max_num_canisters = 2 : nat;
-  nonce_time_to_live = 1 : nat;
-  canister_time_to_live = 3600_000_000_000 : nat;
-  max_family_tree_size = 5 : nat;
+  cycles_per_canister = 105_000_000_000;
+  max_num_canisters = 2;
+  nonce_time_to_live = 1;
+  canister_time_to_live = 3600_000_000_000;
+  max_family_tree_size = 5;
+  no_uninstall = false;
 };
 reinstall(S, wasm, init);
 let c3 = call S.getCanisterId(nonce, origin);
@@ -62,11 +65,12 @@ assert _.timestamp != c4.timestamp;
 
 // Out of cycle
 let init = opt record {
-  cycles_per_canister = 105_000_000_000 : nat;
-  max_num_canisters = 2 : nat;
-  nonce_time_to_live = 1 : nat;
-  canister_time_to_live = 60_000_000_000 : nat;
-  max_family_tree_size = 5 : nat;
+  cycles_per_canister = 105_000_000_000;
+  max_num_canisters = 2;
+  nonce_time_to_live = 1;
+  canister_time_to_live = 60_000_000_000;
+  max_family_tree_size = 5;
+  no_uninstall = false;
 };
 let S = install(wasm, init, opt 100_000_000_000);
 fail call S.getCanisterId(nonce, origin);

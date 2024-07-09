@@ -97,7 +97,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     Cycles.add<system> topUpCycles;
                     await IC.deposit_cycles cid;
                 };
-                if (Option.isSome(status.module_hash)) {
+                if ((not params.no_uninstall) and Option.isSome(status.module_hash)) {
                     await IC.uninstall_code cid;
                 };
                 switch (status.status) {
@@ -214,6 +214,9 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     func updateTimer<system>(info: Types.CanisterInfo) {
+        if (params.no_uninstall) {
+            return;
+        };
         func job() : async () {
             pool.removeTimer(info.id);
             // It is important that the timer job checks for the timestamp first.
