@@ -75,7 +75,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         ignore Cycles.accept<system> amount;
     };
 
-    private func getExpiredCanisterInfo(origin : Logs.Origin) : async Types.CanisterInfo {
+    private func getExpiredCanisterInfo(origin : Logs.Origin) : async* (Types.CanisterInfo, {#install; #reinstall}) {
         switch (pool.getExpiredCanisterId()) {
             case (#newId) {
                 Cycles.add<system>(params.cycles_per_canister);
@@ -85,9 +85,10 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 pool.add info;
                 stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
                 statsByOrigin.addCanister(origin);
-                info;
+                (info, #install);
             };
             case (#reuse info) {
+                let no_uninstall = Option.get(params.no_uninstall, false);
                 let cid = { canister_id = info.id };
                 let status = await IC.canister_status cid;
                 let topUpCycles : Nat = if (status.cycles < params.cycles_per_canister) {
@@ -97,7 +98,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     Cycles.add<system> topUpCycles;
                     await IC.deposit_cycles cid;
                 };
-                if (Option.isSome(status.module_hash)) {
+                if (not no_uninstall and Option.isSome(status.module_hash)) {
                     await IC.uninstall_code cid;
                 };
                 switch (status.status) {
@@ -108,7 +109,8 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 };
                 stats := Logs.updateStats(stats, #getId topUpCycles);
                 statsByOrigin.addCanister(origin);
-                info;
+                let mode = if (no_uninstall) { #reinstall } else { #install };
+                (info, mode);
             };
             case (#outOfCapacity time) {
                 let second = time / 1_000_000_000;
@@ -130,11 +132,46 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         return true;
     };
 
+    // Combine create_canister and install_code into a single update call. If no_uninstall is set, args should be null, and returns the current available canister id.
+    public shared ({ caller }) func deployCanister(opt_info: ?Types.CanisterInfo, args: ?Types.DeployArgs) : async Types.CanisterInfo {
+        if (not Principal.isController(caller)) {
+            throw Error.reject "Only called by controller";
+        };
+        let no_uninstall = Option.get(params.no_uninstall, false);
+        if (no_uninstall and Option.isSome(args)) {
+            throw Error.reject "Cannot specify args when no_uninstall is set";
+        };
+        let origin = { origin = "admin"; tags = [] };
+        let (info, mode) = switch (opt_info) {
+        case null { await* getExpiredCanisterInfo(origin) };
+        case (?info) {
+                 if (not pool.find info) {
+                     await* getExpiredCanisterInfo(origin)
+                 } else {
+                     (info, #upgrade)
+                 };
+             };
+        };
+        switch (args) {
+        case (?args) {
+                 await IC.install_code {
+                     arg = args.arg;
+                     wasm_module = args.wasm_module;
+                     mode = mode;
+                     canister_id = info.id;
+                 };
+                 stats := Logs.updateStats(stats, #install);
+             };
+        case null {};
+        };
+        info
+    };
+
     public shared ({ caller }) func getCanisterId(nonce : PoW.Nonce, origin : Logs.Origin) : async Types.CanisterInfo {
         if (not validateOrigin(origin)) {
             throw Error.reject "Please specify a valid origin";
         };
-        if (caller != controller and not nonceCache.checkProofOfWork(nonce)) {
+        if (not Principal.isController(caller) and not nonceCache.checkProofOfWork(nonce)) {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Proof of work check failed";
         };
@@ -144,7 +181,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "Nonce already used";
         };
         nonceCache.add nonce;
-        await getExpiredCanisterInfo(origin);
+        (await* getExpiredCanisterInfo(origin)).0;
     };
     public shared ({ caller }) func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, install_config : Types.InstallConfig) : async Types.CanisterInfo {
         if (not validateOrigin(install_config.origin)) {
@@ -169,7 +206,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
                 backend_canister_id = ?Principal.fromActor(this);
             };
-            let wasm = if (caller == controller and install_config.is_whitelisted) {
+            let wasm = if (Principal.isController(caller) and install_config.is_whitelisted) {
                 args.wasm_module;
             } else if (install_config.is_whitelisted) {
                 await Wasm.is_whitelisted(args.wasm_module);
@@ -214,6 +251,9 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     func updateTimer<system>(info: Types.CanisterInfo) {
+        if (Option.get(params.no_uninstall, false)) {
+            return;
+        };
         func job() : async () {
             pool.removeTimer(info.id);
             // It is important that the timer job checks for the timestamp first.
@@ -278,21 +318,21 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     public query ({ caller }) func dump() : async [Types.CanisterInfo] {
-        if (caller != controller) {
+        if (not Principal.isController(caller)) {
             throw Error.reject "Only called by controller";
         };
         pool.share().0;
     };
 
     public shared ({ caller }) func resetStats() : async () {
-        if (caller != controller) {
+        if (not Principal.isController(caller)) {
             throw Error.reject "Only called by controller";
         };
         stats := Logs.defaultStats;
         statsByOrigin := Logs.StatsByOrigin();
     };
     public shared ({ caller }) func mergeTags(from: Text, to: ?Text) : async () {
-        if (caller != controller) {
+        if (not Principal.isController(caller)) {
             throw Error.reject "Only called by controller";
         };
         statsByOrigin.merge_tag(from, to);
@@ -349,7 +389,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         if (not pool.findId caller) {
             throw Error.reject "Only a canister managed by the Motoko Playground can call create_canister";
         };
-        let info = await getExpiredCanisterInfo({origin="spawned"; tags=[]});
+        let info = (await* getExpiredCanisterInfo({origin="spawned"; tags=[]})).0;
         let result = pool.setChild(caller, info.id);
         if (not result) {
             throw Error.reject("In the Motoko Playground, each top level canister can only spawn " # Nat.toText(params.max_family_tree_size) # " descendants including itself");
@@ -449,6 +489,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #getStats : Any;
             #http_request : Any;
             #installCode : Any;
+            #deployCanister : Any;
             #removeCode : Any;
             #resetStats : Any;
             #mergeTags : Any;

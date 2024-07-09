@@ -5,11 +5,11 @@ let wasm = file("../../../.dfx/local/canisters/backend/backend.wasm");
 let origin = record { origin = "test"; tags = vec {"tag"} };
 
 let init = opt record {
-  cycles_per_canister = 105_000_000_000 : nat;
-  max_num_canisters = 2 : nat;
-  nonce_time_to_live = 1 : nat;
-  canister_time_to_live = 1 : nat;
-  max_family_tree_size = 5 : nat;
+  cycles_per_canister = 105_000_000_000;
+  max_num_canisters = 2;
+  nonce_time_to_live = 1;
+  canister_time_to_live = 1;
+  max_family_tree_size = 5;
 };
 let S = install(wasm, init, null);
 
@@ -30,11 +30,11 @@ assert c2.id == c4.id;
 
 // Okay to increase pool and TTL
 let init = opt record {
-  cycles_per_canister = 105_000_000_000 : nat;
-  max_num_canisters = 3 : nat;
-  nonce_time_to_live = 1 : nat;
-  canister_time_to_live = 3600_000_000_000 : nat;
-  max_family_tree_size = 5 : nat;
+  cycles_per_canister = 105_000_000_000;
+  max_num_canisters = 3;
+  nonce_time_to_live = 1;
+  canister_time_to_live = 3600_000_000_000;
+  max_family_tree_size = 5;
 };
 let stats = call S.getStats();
 upgrade(S, wasm, init);
@@ -50,11 +50,11 @@ assert _ ~= "No available canister id";
 
 // Cannot reduce pool
 let init = opt record {
-  cycles_per_canister = 105_000_000_000 : nat;
-  max_num_canisters = 1 : nat;
-  nonce_time_to_live = 1 : nat;
-  canister_time_to_live = 1 : nat;
-  max_family_tree_size = 5 : nat;
+  cycles_per_canister = 105_000_000_000;
+  max_num_canisters = 1;
+  nonce_time_to_live = 1;
+  canister_time_to_live = 1;
+  max_family_tree_size = 5;
 };
 fail upgrade(S, wasm, init);
 assert _ ~= "Cannot reduce canisterPool for upgrade";

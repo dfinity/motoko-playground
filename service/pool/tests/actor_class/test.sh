@@ -40,11 +40,11 @@ call c1.makeChild(3);
 
 // Child expiration 
 let init = opt record {
-  cycles_per_canister = 550_000_000_000 : nat;
-  max_num_canisters = 2 : nat;
-  nonce_time_to_live = 1 : nat;
-  canister_time_to_live = 1 : nat;
-  max_family_tree_size = 5 : nat;
+  cycles_per_canister = 550_000_000_000;
+  max_num_canisters = 2;
+  nonce_time_to_live = 1;
+  canister_time_to_live = 1;
+  max_family_tree_size = 5;
 };
 let S = install(wasm, init, opt 100_000_000_000_000);
 

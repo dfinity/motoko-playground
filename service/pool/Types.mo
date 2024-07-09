@@ -18,6 +18,8 @@ module {
         canister_time_to_live: Nat;
         nonce_time_to_live: Nat;
         max_family_tree_size: Nat;
+        // Used for asset canister. If set to true, will not use timer to kill expired canisters, and will not uninstall code when fetching an expired canister.
+        no_uninstall: ?Bool;
     };
     public let defaultParams : InitParams = {
         cycles_per_canister = 550_000_000_000;
@@ -25,12 +27,17 @@ module {
         canister_time_to_live = 1200_000_000_000;
         nonce_time_to_live = 300_000_000_000;
         max_family_tree_size = 5;
+        no_uninstall = null;
     };
     public type InstallArgs = {
         arg : Blob;
         wasm_module : Blob;
         mode : { #reinstall; #upgrade; #install };
         canister_id : Principal;
+    };
+    public type DeployArgs = {
+        arg : Blob;
+        wasm_module : Blob;
     };
     public type InstallConfig = {
         profiling: Bool;
