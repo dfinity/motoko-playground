@@ -75,7 +75,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         ignore Cycles.accept<system> amount;
     };
 
-    private func getExpiredCanisterInfo(origin : Logs.Origin) : async Types.CanisterInfo {
+    private func getExpiredCanisterInfo(origin : Logs.Origin) : async* Types.CanisterInfo {
         switch (pool.getExpiredCanisterId()) {
             case (#newId) {
                 Cycles.add<system>(params.cycles_per_canister);
@@ -144,7 +144,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "Nonce already used";
         };
         nonceCache.add nonce;
-        await getExpiredCanisterInfo(origin);
+        await* getExpiredCanisterInfo(origin);
     };
     public shared ({ caller }) func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, install_config : Types.InstallConfig) : async Types.CanisterInfo {
         if (not validateOrigin(install_config.origin)) {
@@ -352,7 +352,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         if (not pool.findId caller) {
             throw Error.reject "Only a canister managed by the Motoko Playground can call create_canister";
         };
-        let info = await getExpiredCanisterInfo({origin="spawned"; tags=[]});
+        let info = await* getExpiredCanisterInfo({origin="spawned"; tags=[]});
         let result = pool.setChild(caller, info.id);
         if (not result) {
             throw Error.reject("In the Motoko Playground, each top level canister can only spawn " # Nat.toText(params.max_family_tree_size) # " descendants including itself");
