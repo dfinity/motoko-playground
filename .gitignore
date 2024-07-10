@@ -12,6 +12,7 @@
 .dfx
 /build
 target/
+*.env
 
 # misc
 .DS_Store
