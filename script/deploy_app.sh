@@ -1,19 +1,19 @@
 #!ic-repl
 
 identity dfx "~/.config/dfx/identity/default/identity.pem";
-load "deployed.env";
+load "testnet.env";
 
 function is_expired(info, ttl) {
-  let now = exec("date", "+%s000000000");
+  let now = exec_silence("date", "+%s000000000");
   let elapsed = sub(now, info.timestamp);
-  let _ = gte(elapsed, ttl);
+  gte(elapsed, ttl);
 };
 
 function deploy_backend(wasm) {
   let info = ite(exist(backend_info), opt backend_info, null);
   let new_info = call Backend.deployCanister(info, opt record { arg = encode (); wasm_module = wasm; });
   stringify("Deployed canister id ", new_info[0].id, " with ", new_info[1]);
-  let _ = new_info[0];
+  new_info[0];
 };
 
 function deploy_frontend(dist) {
@@ -27,8 +27,8 @@ function deploy_frontend(dist) {
   };
   let id = new_info[0].id;
   stringify("Uploading assets to canister ", id);
-  let _ = exec("./chunked-sync", dist, "--canister-id", stringify(id));
-  let _ = new_info[0];
+  exec("./chunked-sync", dist, "--canister-id", stringify(id));
+  new_info[0];
 };
 
 function __main(name, backend_wasm_path, frontend_dist_path) {
@@ -36,5 +36,5 @@ function __main(name, backend_wasm_path, frontend_dist_path) {
   load stringify(env, "?");
   let backend_info = deploy_backend(file(backend_wasm_path));
   let frontend_info = deploy_frontend(frontend_dist_path);
-  let _ = export(env, backend_info, frontend_info);
+  export(env, backend_info, frontend_info);
 };
