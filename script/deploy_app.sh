@@ -10,6 +10,7 @@ function is_expired(info, ttl) {
 };
 
 function deploy_backend(wasm) {
+  // TODO: check candid and stable types compatibility
   let info = ite(exist(backend_info), opt backend_info, null);
   let new_info = call Backend.deployCanister(info, opt record { arg = encode (); wasm_module = wasm; });
   stringify("Deployed canister id ", new_info[0].id, " with ", new_info[1]);
