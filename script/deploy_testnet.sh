@@ -22,7 +22,7 @@ function start_testnet() {
     cycles_per_canister = 105_000_000_000;
     max_num_canisters = 2;
     nonce_time_to_live = 300_000_000_000;
-    canister_time_to_live = 5_000_000_000;
+    canister_time_to_live = 60_000_000_000;
     max_family_tree_size = 5;
     no_uninstall = opt false;
   };
@@ -30,7 +30,7 @@ function start_testnet() {
     cycles_per_canister = 105_000_000_000;
     max_num_canisters = 2;
     nonce_time_to_live = 300_000_000_000;
-    canister_time_to_live = 5_000_000_000;
+    canister_time_to_live = 60_000_000_000;
     max_family_tree_size = 5;
     no_uninstall = opt true;
   };
@@ -46,8 +46,9 @@ function start_testnet() {
 function populate_asset_canister(Frontend, n) {
   let asset = file("./chunked_map.wasm");
   while gt(n, 0) {
-    stringify("deploying asset canister ", n);
-    let _ = call Frontend.deployCanister(null, opt record { arg = encode (); wasm_module = asset; });
+    let info = call Frontend.deployCanister(null, opt record { arg = encode (); wasm_module = asset; });
+    assert info[1] == variant { install };
+    stringify("deploying asset canister ", n, " with id ", info[0].id);
     let n = sub(n, 1);
   };
   let _ = call Frontend.releaseAllCanisters();

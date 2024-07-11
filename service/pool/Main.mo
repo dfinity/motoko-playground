@@ -133,7 +133,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     // Combine create_canister and install_code into a single update call. Returns the current available canister id.
-    public shared ({ caller }) func deployCanister(opt_info: ?Types.CanisterInfo, args: ?Types.DeployArgs) : async Types.CanisterInfo {
+    public shared ({ caller }) func deployCanister(opt_info: ?Types.CanisterInfo, args: ?Types.DeployArgs) : async (Types.CanisterInfo, {#install; #upgrade; #reinstall}) {
         if (not Principal.isController(caller)) {
             throw Error.reject "Only called by controller";
         };
@@ -160,7 +160,13 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
              };
         case null {};
         };
-        info
+        switch (pool.refresh(info, false)) {
+        case (?newInfo) {
+                 updateTimer<system>(newInfo);
+                 (newInfo, mode);
+             };
+        case null { throw Error.reject "Cannot find canister" };
+        };
     };
 
     public shared ({ caller }) func getCanisterId(nonce : PoW.Nonce, origin : Logs.Origin) : async Types.CanisterInfo {
