@@ -1,0 +1,6 @@
+{
+  "canister_name": "backend",
+  "canister_name_ident": "backend",
+  "actor_export": "\nexport const backend = canisterId ? createActor(canisterId) : undefined;"
+}
+

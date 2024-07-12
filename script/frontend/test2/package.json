@@ -1,0 +1,22 @@
+{
+  "name": "test2",
+  "private": true,
+  "dependencies": {
+    "react": "*",
+    "react-dom": "*",
+    "@dfinity/agent": "*",
+    "@dfinity/candid": "*",
+    "@dfinity/principal": "*"
+  },
+  "devDependencies": {
+    "@types/react": "*",
+    "@types/react-dom": "*",
+    "@vitejs/plugin-react": "*",
+    "dotenv": "*",
+    "sass": "*",
+    "typescript": "*",
+    "vite": "*",
+    "vite-plugin-environment": "*"
+  }
+}
+
