@@ -28,7 +28,7 @@ function deploy_frontend(dist) {
   };
   let id = new_info[0].id;
   stringify("Uploading assets to canister ", id);
-  exec("./chunked-sync", dist, "--canister-id", stringify(id));
+  let _ = exec("./chunked-sync", dist, "--canister-id", stringify(id));
   new_info[0];
 };
 
