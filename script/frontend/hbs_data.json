@@ -1,7 +1,0 @@
-{
-  "canister_name": "backend",
-  "canister_name_ident": "backend",
-  "canister_name_process_env": "\"aaaaa-aa\"",
-  "actor_export": "export const backend = canisterId ? createActor(canisterId) : undefined;"
-}
-

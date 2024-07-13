@@ -39,4 +39,4 @@ export const createActor = (canisterId, options = {}) => {
   });
 };
 
-{{{actor_export}}}
+export const backend = canisterId ? createActor(canisterId) : undefined;
