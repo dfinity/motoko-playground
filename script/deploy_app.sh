@@ -21,11 +21,13 @@ function build_frontend(name) {
   "Building frontend...";
   let project_path = stringify("frontend/", name, "/");
   let hbs_data = stringify(project_path, "hbs_data.json");
-  let _ = output(hbs_data, stringify("{ \"canister_name\": \"backend\", \"canister_name_ident\": \"backend\", \"canister_name_process_env\": \"", backend_info.id, "\" }"));
+  exec("rm", "-f", hbs_data);
+  let _ = output(hbs_data, stringify("{ \"canister_name\": \"backend\", \"canister_name_ident\": \"backend\", \"canister_name_process_env\": \"'", backend_info.id, "'\" }"));
   let candid_file = stringify("../backend/", name, "/backend.did");
   let declaration_path = stringify(project_path, "declarations");
   let data_path = stringify(name, "/hbs_data.json");
   let _ = exec("node", "bindgen.js", candid_file, declaration_path, data_path, record { cwd = "frontend" });
+  let _ = exec("npm", "run", "build", record { cwd = project_path });
 };
 
 function deploy_frontend(dist) {
