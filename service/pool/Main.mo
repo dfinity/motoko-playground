@@ -132,14 +132,10 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         return true;
     };
 
-    // Combine create_canister and install_code into a single update call. If no_uninstall is set, args should be null, and returns the current available canister id.
-    public shared ({ caller }) func deployCanister(opt_info: ?Types.CanisterInfo, args: ?Types.DeployArgs) : async Types.CanisterInfo {
+    // Combine create_canister and install_code into a single update call. Returns the current available canister id.
+    public shared ({ caller }) func deployCanister(opt_info: ?Types.CanisterInfo, args: ?Types.DeployArgs) : async (Types.CanisterInfo, {#install; #upgrade; #reinstall}) {
         if (not Principal.isController(caller)) {
             throw Error.reject "Only called by controller";
-        };
-        let no_uninstall = Option.get(params.no_uninstall, false);
-        if (no_uninstall and Option.isSome(args)) {
-            throw Error.reject "Cannot specify args when no_uninstall is set";
         };
         let origin = { origin = "admin"; tags = [] };
         let (info, mode) = switch (opt_info) {
@@ -164,7 +160,13 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
              };
         case null {};
         };
-        info
+        switch (pool.refresh(info, false)) {
+        case (?newInfo) {
+                 updateTimer<system>(newInfo);
+                 (newInfo, mode);
+             };
+        case null { throw Error.reject "Cannot find canister" };
+        };
     };
 
     public shared ({ caller }) func getCanisterId(nonce : PoW.Nonce, origin : Logs.Origin) : async Types.CanisterInfo {
@@ -278,6 +280,17 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             ignore pool.retire info;
         } else {
             stats := Logs.updateStats(stats, #mismatch);
+        };
+    };
+    public shared({caller}) func releaseAllCanisters() : async () {
+        if (not Principal.isController(caller)) {
+            throw Error.reject "only called by controllers";
+        };
+        for (info in pool.getAllCanisters()) {
+            if (not Option.get(params.no_uninstall, false)) {
+                await IC.uninstall_code { canister_id = info.id };
+            };
+            ignore pool.retire info;
         };
     };
 
@@ -490,6 +503,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #http_request : Any;
             #installCode : Any;
             #deployCanister : Any;
+            #releaseAllCanisters : Any;
             #removeCode : Any;
             #resetStats : Any;
             #mergeTags : Any;

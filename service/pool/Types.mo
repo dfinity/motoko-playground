@@ -178,6 +178,9 @@ module {
             };
             result
         };
+        public func getAllCanisters() : Iter.Iter<CanisterInfo> {
+            tree.entries();
+        };
 
         public func share() : ([CanisterInfo], [(Principal, (Int, Bool))], [(Principal, [Principal])], [CanisterInfo]) {
             let stableInfos = Iter.toArray(tree.entries());
