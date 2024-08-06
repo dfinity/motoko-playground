@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@dfinity/agent": "^1.4.0",
-    "@dfinity/candid": "^1.4.0",
-    "@dfinity/principal": "^1.4.0",
+    "@dfinity/agent": "^2.0.0",
+    "@dfinity/candid": "^2.0.0",
+    "@dfinity/principal": "^2.0.0",
     "@monaco-editor/react": "4.4.6",
     "@types/node": "^14.0.0",
     "@types/react": "^17.0.0",
