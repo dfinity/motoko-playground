@@ -38,6 +38,7 @@ module {
     public type DeployArgs = {
         arg : Blob;
         wasm_module : Blob;
+        bypass_wasm_transform : ?Bool;
     };
     public type InstallConfig = {
         profiling: Bool;

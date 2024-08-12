@@ -150,9 +150,20 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
         switch (args) {
         case (?args) {
+                 let wasm = if (Option.get(args.bypass_wasm_transform, false)) {
+                     args.wasm_module
+                 } else {
+                     let config = {
+                         profiling = null;
+                         remove_cycles_add = true;
+                         limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
+                         backend_canister_id = ?Principal.fromActor(this);
+                     };
+                     await Wasm.transform(args.wasm_module, config);
+                 };
                  await IC.install_code {
                      arg = args.arg;
-                     wasm_module = args.wasm_module;
+                     wasm_module = wasm;
                      mode = mode;
                      canister_id = info.id;
                  };
