@@ -31,15 +31,17 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     stable var stableMetadata : [(Principal, (Int, Bool))] = [];
     stable var stableChildren : [(Principal, [Principal])] = [];
     stable var stableTimers : [Types.CanisterInfo] = [];
+    stable var stableSnapshots : [(Principal, Blob)] = [];
     stable var previousParam : ?Types.InitParams = null;
     stable var stableStatsByOrigin : Logs.SharedStatsByOrigin = (#leaf, #leaf);
 
     system func preupgrade() {
-        let (tree, metadata, children, timers) = pool.share();
+        let (tree, metadata, children, timers, snapshots) = pool.share();
         stablePool := tree;
         stableMetadata := metadata;
         stableChildren := children;
         stableTimers := timers;
+        stableSnapshots := snapshots;
         previousParam := ?params;
         stableStatsByOrigin := statsByOrigin.share();
     };
@@ -50,7 +52,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 Debug.trap("Cannot reduce canisterPool for upgrade");
             };
         };
-        pool.unshare(stablePool, stableMetadata, stableChildren);
+        pool.unshare(stablePool, stableMetadata, stableChildren, stableSnapshots);
         for (info in stableTimers.vals()) {
             updateTimer<system>(info);
         };
@@ -74,7 +76,12 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         let amount = Cycles.available();
         ignore Cycles.accept<system> amount;
     };
-
+    private func pool_uninstall_code(cid : Principal) : async* () {
+        let f1 = IC.uninstall_code { canister_id = cid };
+        let f2 = removeSnapshot cid;
+        await f1;
+        await* f2;
+    };
     private func getExpiredCanisterInfo(origin : Logs.Origin) : async* (Types.CanisterInfo, {#install; #reinstall}) {
         switch (pool.getExpiredCanisterId()) {
             case (#newId) {
@@ -99,7 +106,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     await IC.deposit_cycles cid;
                 };
                 if (not no_uninstall and Option.isSome(status.module_hash)) {
-                    await IC.uninstall_code cid;
+                    await* pool_uninstall_code(cid.canister_id);
                 };
                 switch (status.status) {
                     case (#stopped or #stopping) {
@@ -284,10 +291,54 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "Cannot find canister";
         };
     };
+    public func takeSnapshot(info : Types.CanisterInfo) : async ?Blob {
+        if (pool.find info) {
+            let snapshot = await IC.take_canister_snapshot({ canister_id = info.id; replace_snapshot = pool.getSnapshot(info.id) });
+            pool.setSnapshot(info.id, snapshot.id);
+            ?snapshot.id;
+        } else {
+            stats := Logs.updateStats(stats, #mismatch);
+            null;
+        }
+    };
+    public func loadSnapshot(info : Types.CanisterInfo) : async () {
+        if (pool.find info) {
+            switch (pool.getSnapshot(info.id)) {
+              case (?snapshot) await IC.load_canister_snapshot({ canister_id = info.id; snapshot_id = snapshot });
+              case null throw Error.reject "Cannot find snapshot";
+            };
+        } else {
+            stats := Logs.updateStats(stats, #mismatch);
+        }
+    };
+    private func removeSnapshot(id : Principal) : async* () {
+        switch (pool.getSnapshot(id)) {
+          case (?snapshot) {
+                 await IC.delete_canister_snapshot({ canister_id = id; snapshot_id = snapshot });
+                 pool.removeSnapshot(id);
+             };
+          case null {};
+        };
+    };
+    public func deleteSnapshot(info : Types.CanisterInfo) : async () {
+        if (pool.find info) {
+            await* removeSnapshot(info.id);
+        } else {
+            stats := Logs.updateStats(stats, #mismatch);
+        }
+    };
+    public func listSnapshots(info : Types.CanisterInfo) : async [ICType.snapshot] {
+        if (pool.find info) {
+            await IC.list_canister_snapshots({ canister_id = info.id });
+        } else {
+            stats := Logs.updateStats(stats, #mismatch);
+            []
+        }
+    };
 
     public func removeCode(info : Types.CanisterInfo) : async () {
         if (pool.find info) {
-            await IC.uninstall_code { canister_id = info.id };
+            await* pool_uninstall_code(info.id);
             ignore pool.retire info;
         } else {
             stats := Logs.updateStats(stats, #mismatch);
@@ -299,7 +350,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
         for (info in pool.getAllCanisters()) {
             if (not Option.get(params.no_uninstall, false)) {
-                await IC.uninstall_code { canister_id = info.id };
+                await* pool_uninstall_code(info.id);
             };
             ignore pool.retire info;
         };
@@ -307,7 +358,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
 
     public func GCCanisters() {
         for (id in pool.gcList().vals()) {
-            await IC.uninstall_code { canister_id = id };
+            await* pool_uninstall_code(id);
         };
     };
 
@@ -450,7 +501,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         canister_id : ICType.canister_id;
     }) : async () {
         switch (sanitizeInputs(caller, canister_id)) {
-            case (#ok _) await IC.uninstall_code { canister_id };
+            case (#ok _) await* pool_uninstall_code(canister_id);
             case (#err makeMsg) throw Error.reject(makeMsg "uninstall_code");
         };
     };
@@ -519,6 +570,10 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #resetStats : Any;
             #mergeTags : Any;
             #wallet_receive : Any;
+            #takeSnapshot : Any;
+            #loadSnapshot : Any;
+            #deleteSnapshot : Any;
+            #listSnapshots : Any;
 
             #create_canister : Any;
             #update_settings : Any;

@@ -76,6 +76,7 @@ module {
         var childrens = TrieMap.TrieMap<Principal, List.List<Principal>>(Principal.equal, Principal.hash);
         var parents = TrieMap.TrieMap<Principal, Principal>(Principal.equal, Principal.hash);
         let timers = TrieMap.TrieMap<Principal, Timer.TimerId>(Principal.equal, Principal.hash);
+        var snapshots = TrieMap.TrieMap<Principal, Blob>(Principal.equal, Principal.hash);
 
         public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
 
@@ -162,6 +163,15 @@ module {
         public func removeTimer(cid: Principal) {
             timers.delete cid;
         };
+        public func getSnapshot(cid: Principal) : ?Blob {
+            snapshots.get cid
+        };
+        public func setSnapshot(cid: Principal, snapshot: Blob) {
+            snapshots.put(cid, snapshot);
+        };
+        public func removeSnapshot(cid: Principal) {
+            snapshots.delete cid;
+        };
         
         private func notExpired(info: CanisterInfo, now: Int) : Bool = (info.timestamp > now - ttl);
 
@@ -183,7 +193,7 @@ module {
             tree.entries();
         };
 
-        public func share() : ([CanisterInfo], [(Principal, (Int, Bool))], [(Principal, [Principal])], [CanisterInfo]) {
+        public func share() : ([CanisterInfo], [(Principal, (Int, Bool))], [(Principal, [Principal])], [CanisterInfo], [(Principal, Blob)]) {
             let stableInfos = Iter.toArray(tree.entries());
             let stableMetadata = Iter.toArray(metadata.entries());
             let stableChildren = 
@@ -198,10 +208,11 @@ module {
                 tree.entries(),
                 func (info) = Option.isSome(timers.get(info.id))
               ));
-            (stableInfos, stableMetadata, stableChildren, stableTimers)
+            let stableSnapshots = Iter.toArray(snapshots.entries());
+            (stableInfos, stableMetadata, stableChildren, stableTimers, stableSnapshots)
         };
 
-        public func unshare(stableInfos: [CanisterInfo], stableMetadata: [(Principal, (Int, Bool))], stableChildrens : [(Principal, [Principal])]) {
+        public func unshare(stableInfos: [CanisterInfo], stableMetadata: [(Principal, (Int, Bool))], stableChildrens : [(Principal, [Principal])], stableSnapshots: [(Principal, Blob)]) {
             len := stableInfos.size();
             tree.fromArray stableInfos;
 
@@ -237,6 +248,7 @@ module {
                     )
                 );
             parents := TrieMap.fromEntries(parentsEntries.vals(), Principal.equal, Principal.hash);
+            snapshots := TrieMap.fromEntries(stableSnapshots.vals(), Principal.equal, Principal.hash);
         };
 
         public func getChildren(parent: Principal) : List.List<Principal> {
