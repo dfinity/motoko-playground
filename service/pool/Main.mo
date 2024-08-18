@@ -551,6 +551,34 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             case (#err makeMsg) throw Error.reject(makeMsg "delete_canister");
         };
     };
+    public shared ({ caller }) func list_canister_snapshots({ canister_id : Principal }) : async [ICType.snapshot] {
+        switch (sanitizeInputs(caller, canister_id)) {
+            case (#ok info) await IC.list_canister_snapshots({ canister_id });
+            case (#err makeMsg) throw Error.reject(makeMsg "list_canister_snapshots");
+        };
+    };
+    public shared ({ caller }) func take_canister_snapshot({ canister_id : Principal; replace_snapshot : ?Blob }) : async ICType.snapshot {
+        switch (sanitizeInputs(caller, canister_id)) {
+            case (#ok info) {
+                     let snapshot = await IC.take_canister_snapshot({ canister_id; replace_snapshot });
+                     pool.setSnapshot(canister_id, snapshot.id);
+                     snapshot;
+             };
+            case (#err makeMsg) throw Error.reject(makeMsg "take_canister_snapshots");
+        };
+    };
+    public shared ({ caller }) func delete_canister_snapshot({ canister_id : Principal; snapshot_id : Blob }) : async () {
+        switch (sanitizeInputs(caller, canister_id)) {
+            case (#ok info) {
+                     await IC.delete_canister_snapshot({ canister_id; snapshot_id });
+                     pool.removeSnapshot(canister_id);
+             };
+            case (#err makeMsg) throw Error.reject(makeMsg "delete_canister_snapshots");
+        };
+    };
+    public shared ({ caller }) func load_canister_snapshot({ canister_id : Principal; snapshot_id : Blob }) : async () {
+        throw Error.reject("Cannot call load_canister_snapshot from canister itself");
+    };
 
     system func inspect({
         msg : {
@@ -583,6 +611,10 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #start_canister : Any;
             #stop_canister : Any;
             #delete_canister : Any;
+            #list_canister_snapshots : Any;
+            #take_canister_snapshot : Any;
+            #delete_canister_snapshot : Any;
+            #load_canister_snapshot : Any;
         };
     }) : Bool {
         switch msg {
@@ -594,6 +626,10 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             case (#start_canister _) false;
             case (#stop_canister _) false;
             case (#delete_canister _) false;
+            case (#list_canister_snapshots _) false;
+            case (#take_canister_snapshot _) false;
+            case (#delete_canister_snapshot _) false;
+            case (#load_canister_snapshot _) false;
             case _ true;
         };
     };
