@@ -2,9 +2,5 @@
   {
     "match": ".well-known",
     "ignore": false
-  },
-  {
-    "match": "**/*",
-    "security_policy": "standard"
   }
 ]

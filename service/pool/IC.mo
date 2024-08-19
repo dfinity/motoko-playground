@@ -19,6 +19,26 @@ module {
       total_size : Nat64;
       taken_at_timestamp : Nat64;
   };
+  public type http_header = { value : Text; name : Text };
+  public type http_request_args = {
+    url : Text;
+    method : { #get; #head; #post };
+    max_response_bytes : ?Nat64;
+    body : ?Blob;
+    transform : ?{
+      function : shared query {
+          context : Blob;
+          response : http_request_result;
+        } -> async http_request_result;
+      context : Blob;
+    };
+    headers : [http_header];
+  };
+  public type http_request_result = {
+    status : Nat;
+    body : Blob;
+    headers : [http_header];
+  };
   public type user_id = Principal;
   public type wasm_module = Blob;
   public type Self = actor {
@@ -44,6 +64,7 @@ module {
     take_canister_snapshot : shared { replace_snapshot : ?snapshot_id; canister_id : canister_id } -> async snapshot;
     load_canister_snapshot : shared { canister_id : canister_id; snapshot_id : snapshot_id } -> async ();
     delete_canister_snapshot : shared { canister_id : canister_id; snapshot_id : snapshot_id } -> async ();
+    http_request : shared http_request_args -> async http_request_result;
     provisional_create_canister_with_cycles : shared {
         settings : ?canister_settings;
         amount : ?Nat;

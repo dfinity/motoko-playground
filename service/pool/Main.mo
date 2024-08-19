@@ -473,10 +473,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     // Disabled to prevent the user from updating the controller list (amongst other settings)
-    public shared func update_settings({
-        canister_id : ICType.canister_id;
-        settings : ICType.canister_settings;
-    }) : async () {
+    public shared func update_settings({}) : async () {
         throw Error.reject "Cannot call update_settings from within Motoko Playground";
     };
 
@@ -576,8 +573,23 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             case (#err makeMsg) throw Error.reject(makeMsg "delete_canister_snapshots");
         };
     };
-    public shared ({ caller }) func load_canister_snapshot({ canister_id : Principal; snapshot_id : Blob }) : async () {
+    public shared func load_canister_snapshot({}) : async () {
         throw Error.reject("Cannot call load_canister_snapshot from canister itself");
+    };
+    public shared ({ caller }) func _ttp_request(request : ICType.http_request_args) : async ICType.http_request_result {
+        if (not pool.findId caller) {
+            throw Error.reject "Only a canister managed by the Motoko Playground can call http_request";
+        };
+        let cycles = 250_000_000_000;
+        if (pool.spendCycles(caller, cycles)) {
+            Cycles.add<system> cycles;
+            let res = await IC.http_request(request);
+            let refunded = -Cycles.refunded();
+            ignore pool.spendCycles(caller, refunded);
+            res;
+        } else {
+            throw Error.reject "http_request exceeds cycle spend limit";
+        };
     };
 
     system func inspect({
@@ -615,6 +627,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #take_canister_snapshot : Any;
             #delete_canister_snapshot : Any;
             #load_canister_snapshot : Any;
+            #_ttp_request : Any;
         };
     }) : Bool {
         switch msg {
@@ -630,6 +643,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             case (#take_canister_snapshot _) false;
             case (#delete_canister_snapshot _) false;
             case (#load_canister_snapshot _) false;
+            case (#_ttp_request _) false;
             case _ true;
         };
     };

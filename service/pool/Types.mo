@@ -77,6 +77,8 @@ module {
         var parents = TrieMap.TrieMap<Principal, Principal>(Principal.equal, Principal.hash);
         let timers = TrieMap.TrieMap<Principal, Timer.TimerId>(Principal.equal, Principal.hash);
         var snapshots = TrieMap.TrieMap<Principal, Blob>(Principal.equal, Principal.hash);
+        // Cycles spent by each canister, not persisted for upgrades
+        var cycles = TrieMap.TrieMap<Principal, Int>(Principal.equal, Principal.hash);
 
         public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
 
@@ -171,6 +173,15 @@ module {
         };
         public func removeSnapshot(cid: Principal) {
             snapshots.delete cid;
+        };
+        public func spendCycles(cid: Principal, n: Int) : Bool {
+            let old = Option.get(cycles.get(cid), 0);
+            let new = old + n;
+            if (new > defaultParams.cycles_per_canister or new < 0) {
+                return false;
+            };
+            cycles.put(cid, new);
+            true;
         };
         
         private func notExpired(info: CanisterInfo, now: Int) : Bool = (info.timestamp > now - ttl);
