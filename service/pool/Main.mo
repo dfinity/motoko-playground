@@ -585,7 +585,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             Cycles.add<system> cycles;
             let res = await IC.http_request(request);
             let refunded = -Cycles.refunded();
-            ignore pool.spendCycles(caller, refunded);
+            assert(pool.spendCycles(caller, refunded) == true);
             res;
         } else {
             throw Error.reject "http_request exceeds cycle spend limit";
