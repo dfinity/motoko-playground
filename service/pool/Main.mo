@@ -583,6 +583,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         let cycles = 250_000_000_000;
         if (pool.spendCycles(caller, cycles)) {
             Cycles.add<system> cycles;
+            // transform doesn't work at the moment, as it require self query call for transform
             let res = await IC.http_request(request);
             let refunded = -Cycles.refunded();
             assert(pool.spendCycles(caller, refunded) == true);
