@@ -16,11 +16,12 @@ import ICType "./IC";
 import PoW "./PoW";
 import Logs "./Logs";
 import Metrics "./Metrics";
-import Wasm "canister:wasm-utils";
+import WasmUtilsType "./Wasm-utils";
 
 shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     let IC : ICType.Self = actor "aaaaa-aa";
     let params = Option.get(opt_params, Types.defaultParams);
+    let Wasm : WasmUtilsType.Self = actor(Option.get(params.wasm_utils_principal, "ozk6r-tyaaa-aaaab-qab4a-cai"));
     var pool = Types.CanisterPool(params.max_num_canisters, params.canister_time_to_live, params.max_family_tree_size);
     let nonceCache = PoW.NonceCache(params.nonce_time_to_live);
     var statsByOrigin = Logs.StatsByOrigin();
