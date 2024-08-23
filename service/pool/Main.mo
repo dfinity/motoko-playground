@@ -87,7 +87,14 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         switch (pool.getExpiredCanisterId()) {
             case (#newId) {
                 Cycles.add<system>(params.cycles_per_canister);
-                let cid = await IC.create_canister { settings = null };
+                let settings = ?{
+                    controllers = null;
+                    freezing_threshold = null;
+                    memory_allocation = null;
+                    compute_allocation = null;
+                    wasm_memory_limit = ?1_073_741_824;
+                };
+                let cid = await IC.create_canister { settings };
                 let now = Time.now();
                 let info = { id = cid.canister_id; timestamp = now };
                 pool.add info;

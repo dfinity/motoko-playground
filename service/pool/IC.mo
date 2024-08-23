@@ -7,12 +7,14 @@ module {
     freezing_threshold : ?Nat;
     memory_allocation : ?Nat;
     compute_allocation : ?Nat;
+    wasm_memory_limit : ?Nat;
   };
   public type definite_canister_settings = {
     controllers : [Principal];
     freezing_threshold : Nat;
     memory_allocation : Nat;
     compute_allocation : Nat;
+    wasm_memory_limit : Nat;
   };
   public type snapshot = {
       id : snapshot_id;
