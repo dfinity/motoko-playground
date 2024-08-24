@@ -140,6 +140,26 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         return true;
     };
 
+    // Before this call, make sure the installed wasm is not instrumented
+    public shared ({ caller }) func transferOwnership(info: Types.CanisterInfo, controllers: [Principal]) : async () {
+        if (not Principal.isController(caller)) {
+            throw Error.reject "Only called by controller";
+        };
+        if (pool.find info) {
+            await* removeSnapshot(info.id);
+            pool.removeCanister(info);
+            let settings = {
+                controllers = ?controllers;
+                freezing_threshold = null;
+                memory_allocation = null;
+                compute_allocation = null;
+                wasm_memory_limit = null;
+            };
+            await IC.update_settings { canister_id = info.id; settings };
+        } else {
+            throw Error.reject "Cannot find canister";
+        };
+    };
     // Combine create_canister and install_code into a single update call. Returns the current available canister id.
     public shared ({ caller }) func deployCanister(opt_info: ?Types.CanisterInfo, args: ?Types.DeployArgs) : async (Types.CanisterInfo, {#install; #upgrade; #reinstall}) {
         if (not Principal.isController(caller)) {
@@ -616,6 +636,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #loadSnapshot : Any;
             #deleteSnapshot : Any;
             #listSnapshots : Any;
+            #transferOwnership : Any;
 
             #create_canister : Any;
             #update_settings : Any;

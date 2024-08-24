@@ -108,6 +108,19 @@ module {
                 };
             };
         };
+        public func removeCanister(info: CanisterInfo) {
+            tree.remove info;
+            metadata.delete(info.id);
+            deleteFamilyNode(info.id);
+            cycles.delete(info.id);
+            switch (timers.remove(info.id)) {
+                case null {};
+                case (?tid) {
+                    Timer.cancelTimer(tid);
+                };
+            };
+            len -= 1;
+        };
 
         public func add(info: CanisterInfo) {
             if (len >= size) {
