@@ -160,6 +160,16 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "Cannot find canister";
         };
     };
+    // Install code after transferOwnership. This call can fail if the user removes the playground from its controllers.
+    public shared ({ caller }) func installExternalCanister(args : Types.InstallArgs) : async () {
+        if (not Principal.isController(caller)) {
+            throw Error.reject "Only called by controller";
+        };
+        if (pool.findId(args.canister_id)) {
+            throw Error.reject "Canister is still solely controlled by the playground";
+        };
+        await IC.install_code args;
+    };
     // Combine create_canister and install_code into a single update call. Returns the current available canister id.
     public shared ({ caller }) func deployCanister(opt_info: ?Types.CanisterInfo, args: ?Types.DeployArgs) : async (Types.CanisterInfo, {#install; #upgrade; #reinstall}) {
         if (not Principal.isController(caller)) {
@@ -637,6 +647,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #deleteSnapshot : Any;
             #listSnapshots : Any;
             #transferOwnership : Any;
+            #installExternalCanister : Any;
 
             #create_canister : Any;
             #update_settings : Any;
