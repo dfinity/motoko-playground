@@ -2,6 +2,3 @@
 base = "0.12.1"
 splay = "0.1.0"
 
-[[canister]]
-name = "wasm-utils"
-canister_id = "ozk6r-tyaaa-aaaab-qab4a-cai"

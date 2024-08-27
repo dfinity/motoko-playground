@@ -195,6 +195,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                          profiling = null;
                          remove_cycles_add = true;
                          limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
+                         limit_heap_memory_page = ?(16384 : Nat32); // Limit to 1G of heap memory
                          backend_canister_id = ?Principal.fromActor(this);
                      };
                      await Wasm.transform(args.wasm_module, config);
@@ -255,6 +256,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 profiling = profiling_config;
                 remove_cycles_add = true;
                 limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
+                limit_heap_memory_page = ?(16384 : Nat32); // Limit to 1G of heap memory
                 backend_canister_id = ?Principal.fromActor(this);
             };
             let wasm = if (Principal.isController(caller) and install_config.is_whitelisted) {
