@@ -14,4 +14,3 @@ module {
     transform : shared query (Blob, Config) -> async Blob;
   }
 }
-
