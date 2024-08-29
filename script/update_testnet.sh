@@ -7,7 +7,7 @@ let testnet_env = env_name("testnet");
 function populate_asset_canister(Frontend, n) {
   let asset = file("./chunked_map.wasm");
   while gt(n, 0) {
-    let info = call Frontend.deployCanister(null, opt record { arg = encode (); wasm_module = asset; });
+    let info = call Frontend.deployCanister(null, opt record { arg = encode (); wasm_module = asset; bypass_wasm_transform = opt true });
     stringify("deploying asset canister ", n, " with id ", info[0].id);
     let n = sub(n, 1);
   };
