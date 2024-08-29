@@ -146,7 +146,6 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "Only called by controller";
         };
         if (pool.find info) {
-            await* removeSnapshot(info.id);
             pool.removeCanister(info);
             let settings = {
                 controllers = ?controllers;
@@ -156,6 +155,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 wasm_memory_limit = null;
             };
             await IC.update_settings { canister_id = info.id; settings };
+            statsByOrigin.addCanister({ origin = "external"; tags = [] });
         } else {
             throw Error.reject "Cannot find canister";
         };
@@ -169,6 +169,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "Canister is still solely controlled by the playground";
         };
         await IC.install_code args;
+        statsByOrigin.addInstall({ origin = "external"; tags = [] });
     };
     // Combine create_canister and install_code into a single update call. Returns the current available canister id.
     public shared ({ caller }) func deployCanister(opt_info: ?Types.CanisterInfo, args: ?Types.DeployArgs) : async (Types.CanisterInfo, {#install; #upgrade; #reinstall}) {
@@ -317,7 +318,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     public func callForward(info : Types.CanisterInfo, function : Text, args : Blob) : async Blob {
-        if (pool.find info) {
+        if (pool.find info or not pool.findId(info.id)) {
             await InternetComputer.call(info.id, function, args);
         } else {
             stats := Logs.updateStats(stats, #mismatch);
@@ -325,7 +326,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
     };
     public func takeSnapshot(info : Types.CanisterInfo) : async ?Blob {
-        if (pool.find info) {
+        if (pool.find info or not pool.findId(info.id)) {
             let snapshot = await IC.take_canister_snapshot({ canister_id = info.id; replace_snapshot = pool.getSnapshot(info.id) });
             pool.setSnapshot(info.id, snapshot.id);
             ?snapshot.id;
@@ -335,7 +336,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         }
     };
     public func loadSnapshot(info : Types.CanisterInfo) : async () {
-        if (pool.find info) {
+        if (pool.find info or not pool.findId(info.id)) {
             switch (pool.getSnapshot(info.id)) {
               case (?snapshot) await IC.load_canister_snapshot({ canister_id = info.id; snapshot_id = snapshot });
               case null throw Error.reject "Cannot find snapshot";
@@ -354,14 +355,14 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
     };
     public func deleteSnapshot(info : Types.CanisterInfo) : async () {
-        if (pool.find info) {
+        if (pool.find info or not pool.findId(info.id)) {
             await* removeSnapshot(info.id);
         } else {
             stats := Logs.updateStats(stats, #mismatch);
         }
     };
     public func listSnapshots(info : Types.CanisterInfo) : async [ICType.snapshot] {
-        if (pool.find info) {
+        if (pool.find info or not pool.findId(info.id)) {
             await IC.list_canister_snapshots({ canister_id = info.id });
         } else {
             stats := Logs.updateStats(stats, #mismatch);

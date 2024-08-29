@@ -113,6 +113,7 @@ module {
             metadata.delete(info.id);
             deleteFamilyNode(info.id);
             cycles.delete(info.id);
+            // Note that we didn't remove snapshots, as users can continue to use them after the transfer
             switch (timers.remove(info.id)) {
                 case null {};
                 case (?tid) {
