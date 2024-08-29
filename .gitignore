@@ -13,6 +13,7 @@ node_modules
 /build
 target/
 *.env
+.history
 
 # misc
 .DS_Store
