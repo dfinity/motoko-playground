@@ -53,15 +53,15 @@ jobs:
       - name: Start dfx
         run: |
           dfx start --background
-      - name: Checkout base branch
-        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.base_ref }}
-      - name: Deploy main branch
-        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
-        run: |
-          dfx deploy backend
+#      - name: Checkout base branch
+#        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
+#        uses: actions/checkout@v4
+#        with:
+#          ref: ${{ github.base_ref }}
+#      - name: Deploy main branch
+#        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
+#        run: |
+#          dfx deploy backend
       - uses: actions/checkout@v4
       - name: Deploy current branch
         run: dfx deploy backend
