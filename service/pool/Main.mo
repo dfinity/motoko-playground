@@ -16,11 +16,12 @@ import ICType "./IC";
 import PoW "./PoW";
 import Logs "./Logs";
 import Metrics "./Metrics";
-import Wasm "canister:wasm-utils";
+import WasmUtilsType "./Wasm-utils";
 
 shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     let IC : ICType.Self = actor "aaaaa-aa";
     let params = Option.get(opt_params, Types.defaultParams);
+    let Wasm : WasmUtilsType.Self = actor(Option.get(params.wasm_utils_principal, "ozk6r-tyaaa-aaaab-qab4a-cai"));
     var pool = Types.CanisterPool(params.max_num_canisters, params.canister_time_to_live, params.max_family_tree_size);
     let nonceCache = PoW.NonceCache(params.nonce_time_to_live);
     var statsByOrigin = Logs.StatsByOrigin();
@@ -31,15 +32,17 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     stable var stableMetadata : [(Principal, (Int, Bool))] = [];
     stable var stableChildren : [(Principal, [Principal])] = [];
     stable var stableTimers : [Types.CanisterInfo] = [];
+    stable var stableSnapshots : [(Principal, Blob)] = [];
     stable var previousParam : ?Types.InitParams = null;
     stable var stableStatsByOrigin : Logs.SharedStatsByOrigin = (#leaf, #leaf);
 
     system func preupgrade() {
-        let (tree, metadata, children, timers) = pool.share();
+        let (tree, metadata, children, timers, snapshots) = pool.share();
         stablePool := tree;
         stableMetadata := metadata;
         stableChildren := children;
         stableTimers := timers;
+        stableSnapshots := snapshots;
         previousParam := ?params;
         stableStatsByOrigin := statsByOrigin.share();
     };
@@ -50,7 +53,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 Debug.trap("Cannot reduce canisterPool for upgrade");
             };
         };
-        pool.unshare(stablePool, stableMetadata, stableChildren);
+        pool.unshare(stablePool, stableMetadata, stableChildren, stableSnapshots);
         for (info in stableTimers.vals()) {
             updateTimer<system>(info);
         };
@@ -74,7 +77,12 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         let amount = Cycles.available();
         ignore Cycles.accept<system> amount;
     };
-
+    private func pool_uninstall_code(cid : Principal) : async* () {
+        let f1 = IC.uninstall_code { canister_id = cid };
+        let f2 = removeSnapshot cid;
+        await f1;
+        await* f2;
+    };
     private func getExpiredCanisterInfo(origin : Logs.Origin) : async* (Types.CanisterInfo, {#install; #reinstall}) {
         switch (pool.getExpiredCanisterId()) {
             case (#newId) {
@@ -99,7 +107,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     await IC.deposit_cycles cid;
                 };
                 if (not no_uninstall and Option.isSome(status.module_hash)) {
-                    await IC.uninstall_code cid;
+                    await* pool_uninstall_code(cid.canister_id);
                 };
                 switch (status.status) {
                     case (#stopped or #stopping) {
@@ -132,6 +140,37 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         return true;
     };
 
+    // Before this call, make sure the installed wasm is not instrumented
+    public shared ({ caller }) func transferOwnership(info: Types.CanisterInfo, controllers: [Principal]) : async () {
+        if (not Principal.isController(caller)) {
+            throw Error.reject "Only called by controller";
+        };
+        if (pool.find info) {
+            pool.removeCanister(info);
+            let settings = {
+                controllers = ?controllers;
+                freezing_threshold = null;
+                memory_allocation = null;
+                compute_allocation = null;
+                wasm_memory_limit = null;
+            };
+            await IC.update_settings { canister_id = info.id; settings };
+            statsByOrigin.addCanister({ origin = "external"; tags = [] });
+        } else {
+            throw Error.reject "Cannot find canister";
+        };
+    };
+    // Install code after transferOwnership. This call can fail if the user removes the playground from its controllers.
+    public shared ({ caller }) func installExternalCanister(args : Types.InstallArgs) : async () {
+        if (not Principal.isController(caller)) {
+            throw Error.reject "Only called by controller";
+        };
+        if (pool.findId(args.canister_id)) {
+            throw Error.reject "Canister is still solely controlled by the playground";
+        };
+        await IC.install_code args;
+        statsByOrigin.addInstall({ origin = "external"; tags = [] });
+    };
     // Combine create_canister and install_code into a single update call. Returns the current available canister id.
     public shared ({ caller }) func deployCanister(opt_info: ?Types.CanisterInfo, args: ?Types.DeployArgs) : async (Types.CanisterInfo, {#install; #upgrade; #reinstall}) {
         if (not Principal.isController(caller)) {
@@ -150,9 +189,21 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
         switch (args) {
         case (?args) {
+                 let wasm = if (Option.get(args.bypass_wasm_transform, false)) {
+                     args.wasm_module
+                 } else {
+                     let config = {
+                         profiling = null;
+                         remove_cycles_add = true;
+                         limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
+                         limit_heap_memory_page = ?(16384 : Nat32); // Limit to 1G of heap memory
+                         backend_canister_id = ?Principal.fromActor(this);
+                     };
+                     await Wasm.transform(args.wasm_module, config);
+                 };
                  await IC.install_code {
                      arg = args.arg;
-                     wasm_module = args.wasm_module;
+                     wasm_module = wasm;
                      mode = mode;
                      canister_id = info.id;
                  };
@@ -206,6 +257,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 profiling = profiling_config;
                 remove_cycles_add = true;
                 limit_stable_memory_page = ?(16384 : Nat32); // Limit to 1G of stable memory
+                limit_heap_memory_page = ?(16384 : Nat32); // Limit to 1G of heap memory
                 backend_canister_id = ?Principal.fromActor(this);
             };
             let wasm = if (Principal.isController(caller) and install_config.is_whitelisted) {
@@ -266,17 +318,61 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     public func callForward(info : Types.CanisterInfo, function : Text, args : Blob) : async Blob {
-        if (pool.find info) {
+        if (pool.find info or not pool.findId(info.id)) {
             await InternetComputer.call(info.id, function, args);
         } else {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot find canister";
         };
     };
+    public func takeSnapshot(info : Types.CanisterInfo) : async ?Blob {
+        if (pool.find info or not pool.findId(info.id)) {
+            let snapshot = await IC.take_canister_snapshot({ canister_id = info.id; replace_snapshot = pool.getSnapshot(info.id) });
+            pool.setSnapshot(info.id, snapshot.id);
+            ?snapshot.id;
+        } else {
+            stats := Logs.updateStats(stats, #mismatch);
+            null;
+        }
+    };
+    public func loadSnapshot(info : Types.CanisterInfo) : async () {
+        if (pool.find info or not pool.findId(info.id)) {
+            switch (pool.getSnapshot(info.id)) {
+              case (?snapshot) await IC.load_canister_snapshot({ canister_id = info.id; snapshot_id = snapshot });
+              case null throw Error.reject "Cannot find snapshot";
+            };
+        } else {
+            stats := Logs.updateStats(stats, #mismatch);
+        }
+    };
+    private func removeSnapshot(id : Principal) : async* () {
+        switch (pool.getSnapshot(id)) {
+          case (?snapshot) {
+                 await IC.delete_canister_snapshot({ canister_id = id; snapshot_id = snapshot });
+                 pool.removeSnapshot(id);
+             };
+          case null {};
+        };
+    };
+    public func deleteSnapshot(info : Types.CanisterInfo) : async () {
+        if (pool.find info or not pool.findId(info.id)) {
+            await* removeSnapshot(info.id);
+        } else {
+            stats := Logs.updateStats(stats, #mismatch);
+        }
+    };
+    public func listSnapshots(info : Types.CanisterInfo) : async [ICType.snapshot] {
+        if (pool.find info or not pool.findId(info.id)) {
+            await IC.list_canister_snapshots({ canister_id = info.id });
+        } else {
+            stats := Logs.updateStats(stats, #mismatch);
+            []
+        }
+    };
 
     public func removeCode(info : Types.CanisterInfo) : async () {
         if (pool.find info) {
-            await IC.uninstall_code { canister_id = info.id };
+            await* pool_uninstall_code(info.id);
             ignore pool.retire info;
         } else {
             stats := Logs.updateStats(stats, #mismatch);
@@ -288,7 +384,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
         for (info in pool.getAllCanisters()) {
             if (not Option.get(params.no_uninstall, false)) {
-                await IC.uninstall_code { canister_id = info.id };
+                await* pool_uninstall_code(info.id);
             };
             ignore pool.retire info;
         };
@@ -296,7 +392,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
 
     public func GCCanisters() {
         for (id in pool.gcList().vals()) {
-            await IC.uninstall_code { canister_id = id };
+            await* pool_uninstall_code(id);
         };
     };
 
@@ -411,10 +507,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     // Disabled to prevent the user from updating the controller list (amongst other settings)
-    public shared func update_settings({
-        canister_id : ICType.canister_id;
-        settings : ICType.canister_settings;
-    }) : async () {
+    public shared func update_settings({}) : async () {
         throw Error.reject "Cannot call update_settings from within Motoko Playground";
     };
 
@@ -439,7 +532,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         canister_id : ICType.canister_id;
     }) : async () {
         switch (sanitizeInputs(caller, canister_id)) {
-            case (#ok _) await IC.uninstall_code { canister_id };
+            case (#ok _) await* pool_uninstall_code(canister_id);
             case (#err makeMsg) throw Error.reject(makeMsg "uninstall_code");
         };
     };
@@ -489,6 +582,50 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             case (#err makeMsg) throw Error.reject(makeMsg "delete_canister");
         };
     };
+    public shared ({ caller }) func list_canister_snapshots({ canister_id : Principal }) : async [ICType.snapshot] {
+        switch (sanitizeInputs(caller, canister_id)) {
+            case (#ok info) await IC.list_canister_snapshots({ canister_id });
+            case (#err makeMsg) throw Error.reject(makeMsg "list_canister_snapshots");
+        };
+    };
+    public shared ({ caller }) func take_canister_snapshot({ canister_id : Principal; replace_snapshot : ?Blob }) : async ICType.snapshot {
+        switch (sanitizeInputs(caller, canister_id)) {
+            case (#ok info) {
+                     let snapshot = await IC.take_canister_snapshot({ canister_id; replace_snapshot });
+                     pool.setSnapshot(canister_id, snapshot.id);
+                     snapshot;
+             };
+            case (#err makeMsg) throw Error.reject(makeMsg "take_canister_snapshots");
+        };
+    };
+    public shared ({ caller }) func delete_canister_snapshot({ canister_id : Principal; snapshot_id : Blob }) : async () {
+        switch (sanitizeInputs(caller, canister_id)) {
+            case (#ok info) {
+                     await IC.delete_canister_snapshot({ canister_id; snapshot_id });
+                     pool.removeSnapshot(canister_id);
+             };
+            case (#err makeMsg) throw Error.reject(makeMsg "delete_canister_snapshots");
+        };
+    };
+    public shared func load_canister_snapshot({}) : async () {
+        throw Error.reject("Cannot call load_canister_snapshot from canister itself");
+    };
+    public shared ({ caller }) func _ttp_request(request : ICType.http_request_args) : async ICType.http_request_result {
+        if (not pool.findId caller) {
+            throw Error.reject "Only a canister managed by the Motoko Playground can call http_request";
+        };
+        let cycles = 250_000_000_000;
+        if (pool.spendCycles(caller, cycles)) {
+            Cycles.add<system> cycles;
+            // transform doesn't work at the moment, as it require self query call for transform
+            let res = await IC.http_request(request);
+            let refunded = -Cycles.refunded();
+            assert(pool.spendCycles(caller, refunded) == true);
+            res;
+        } else {
+            throw Error.reject "http_request exceeds cycle spend limit";
+        };
+    };
 
     system func inspect({
         msg : {
@@ -508,6 +645,12 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #resetStats : Any;
             #mergeTags : Any;
             #wallet_receive : Any;
+            #takeSnapshot : Any;
+            #loadSnapshot : Any;
+            #deleteSnapshot : Any;
+            #listSnapshots : Any;
+            #transferOwnership : Any;
+            #installExternalCanister : Any;
 
             #create_canister : Any;
             #update_settings : Any;
@@ -517,6 +660,11 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #start_canister : Any;
             #stop_canister : Any;
             #delete_canister : Any;
+            #list_canister_snapshots : Any;
+            #take_canister_snapshot : Any;
+            #delete_canister_snapshot : Any;
+            #load_canister_snapshot : Any;
+            #_ttp_request : Any;
         };
     }) : Bool {
         switch msg {
@@ -528,6 +676,11 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             case (#start_canister _) false;
             case (#stop_canister _) false;
             case (#delete_canister _) false;
+            case (#list_canister_snapshots _) false;
+            case (#take_canister_snapshot _) false;
+            case (#delete_canister_snapshot _) false;
+            case (#load_canister_snapshot _) false;
+            case (#_ttp_request _) false;
             case _ true;
         };
     };

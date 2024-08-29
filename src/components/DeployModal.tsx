@@ -402,7 +402,9 @@ export function DeployModal({
           </li>
         )}
         <li>Cycle transfer instructions are silently ignored by the system.</li>
-        <li>Canister can use at most 1GB of stable memory.</li>
+        <li>
+          Canister can use at most 1GB of stable memory and 1GB of heap memory.
+        </li>
         <li>
           Canister can call management canister to manage itself without being
           the controller.
@@ -549,31 +551,33 @@ actor {
             {profiling ? <>{RegionNotes}</> : null}
             {Warnings}
           </div>
-          <ButtonContainer>
-            {canisters.hasOwnProperty(canisterName) ? (
-              <>
-                {!profiling || (profiling && hasStartPage) ? (
-                  <MyButton
-                    variant="primary"
-                    onClick={() => deployClick("upgrade")}
-                  >
-                    Upgrade
+          {canisterName ? (
+            <ButtonContainer>
+              {canisters.hasOwnProperty(canisterName) ? (
+                <>
+                  {!profiling || (profiling && hasStartPage) ? (
+                    <MyButton
+                      variant="primary"
+                      onClick={() => deployClick("upgrade")}
+                    >
+                      Upgrade
+                    </MyButton>
+                  ) : null}
+                  <MyButton onClick={() => deployClick("reinstall")}>
+                    Reinstall
                   </MyButton>
-                ) : null}
-                <MyButton onClick={() => deployClick("reinstall")}>
-                  Reinstall
+                </>
+              ) : (
+                <MyButton
+                  variant="primary"
+                  onClick={() => deployClick("install")}
+                >
+                  Install
                 </MyButton>
-              </>
-            ) : (
-              <MyButton
-                variant="primary"
-                onClick={() => deployClick("install")}
-              >
-                Install
-              </MyButton>
-            )}
-            <MyButton onClick={close}>Cancel</MyButton>
-          </ButtonContainer>
+              )}
+              <MyButton onClick={close}>Cancel</MyButton>
+            </ButtonContainer>
+          ) : null}
         </ModalContainer>
       </Modal>
 

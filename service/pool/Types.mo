@@ -20,6 +20,7 @@ module {
         max_family_tree_size: Nat;
         // Used for asset canister. If set to true, will not use timer to kill expired canisters, and will not uninstall code when fetching an expired canister.
         no_uninstall: ?Bool;
+        wasm_utils_principal: ?Text;
     };
     public let defaultParams : InitParams = {
         cycles_per_canister = 550_000_000_000;
@@ -28,6 +29,7 @@ module {
         nonce_time_to_live = 300_000_000_000;
         max_family_tree_size = 5;
         no_uninstall = null;
+        wasm_utils_principal = ?"ozk6r-tyaaa-aaaab-qab4a-cai";
     };
     public type InstallArgs = {
         arg : Blob;
@@ -38,6 +40,7 @@ module {
     public type DeployArgs = {
         arg : Blob;
         wasm_module : Blob;
+        bypass_wasm_transform : ?Bool;
     };
     public type InstallConfig = {
         profiling: Bool;
@@ -75,6 +78,9 @@ module {
         var childrens = TrieMap.TrieMap<Principal, List.List<Principal>>(Principal.equal, Principal.hash);
         var parents = TrieMap.TrieMap<Principal, Principal>(Principal.equal, Principal.hash);
         let timers = TrieMap.TrieMap<Principal, Timer.TimerId>(Principal.equal, Principal.hash);
+        var snapshots = TrieMap.TrieMap<Principal, Blob>(Principal.equal, Principal.hash);
+        // Cycles spent by each canister, not persisted for upgrades
+        var cycles = TrieMap.TrieMap<Principal, Int>(Principal.equal, Principal.hash);
 
         public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
 
@@ -101,6 +107,20 @@ module {
                      };
                 };
             };
+        };
+        public func removeCanister(info: CanisterInfo) {
+            tree.remove info;
+            metadata.delete(info.id);
+            deleteFamilyNode(info.id);
+            cycles.delete(info.id);
+            // Note that we didn't remove snapshots, as users can continue to use them after the transfer
+            switch (timers.remove(info.id)) {
+                case null {};
+                case (?tid) {
+                    Timer.cancelTimer(tid);
+                };
+            };
+            len -= 1;
         };
 
         public func add(info: CanisterInfo) {
@@ -161,6 +181,24 @@ module {
         public func removeTimer(cid: Principal) {
             timers.delete cid;
         };
+        public func getSnapshot(cid: Principal) : ?Blob {
+            snapshots.get cid
+        };
+        public func setSnapshot(cid: Principal, snapshot: Blob) {
+            snapshots.put(cid, snapshot);
+        };
+        public func removeSnapshot(cid: Principal) {
+            snapshots.delete cid;
+        };
+        public func spendCycles(cid: Principal, n: Int) : Bool {
+            let old = Option.get(cycles.get(cid), 0);
+            let new = old + n;
+            if (new > defaultParams.cycles_per_canister or new < 0) {
+                return false;
+            };
+            cycles.put(cid, new);
+            true;
+        };
         
         private func notExpired(info: CanisterInfo, now: Int) : Bool = (info.timestamp > now - ttl);
 
@@ -182,7 +220,7 @@ module {
             tree.entries();
         };
 
-        public func share() : ([CanisterInfo], [(Principal, (Int, Bool))], [(Principal, [Principal])], [CanisterInfo]) {
+        public func share() : ([CanisterInfo], [(Principal, (Int, Bool))], [(Principal, [Principal])], [CanisterInfo], [(Principal, Blob)]) {
             let stableInfos = Iter.toArray(tree.entries());
             let stableMetadata = Iter.toArray(metadata.entries());
             let stableChildren = 
@@ -197,10 +235,11 @@ module {
                 tree.entries(),
                 func (info) = Option.isSome(timers.get(info.id))
               ));
-            (stableInfos, stableMetadata, stableChildren, stableTimers)
+            let stableSnapshots = Iter.toArray(snapshots.entries());
+            (stableInfos, stableMetadata, stableChildren, stableTimers, stableSnapshots)
         };
 
-        public func unshare(stableInfos: [CanisterInfo], stableMetadata: [(Principal, (Int, Bool))], stableChildrens : [(Principal, [Principal])]) {
+        public func unshare(stableInfos: [CanisterInfo], stableMetadata: [(Principal, (Int, Bool))], stableChildrens : [(Principal, [Principal])], stableSnapshots: [(Principal, Blob)]) {
             len := stableInfos.size();
             tree.fromArray stableInfos;
 
@@ -236,6 +275,7 @@ module {
                     )
                 );
             parents := TrieMap.fromEntries(parentsEntries.vals(), Principal.equal, Principal.hash);
+            snapshots := TrieMap.fromEntries(stableSnapshots.vals(), Principal.equal, Principal.hash);
         };
 
         public func getChildren(parent: Principal) : List.List<Principal> {

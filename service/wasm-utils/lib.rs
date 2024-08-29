@@ -14,6 +14,7 @@ struct Config {
     profiling: Option<ProfilingConfig>,
     remove_cycles_add: bool,
     limit_stable_memory_page: Option<u32>,
+    limit_heap_memory_page: Option<u32>,
     backend_canister_id: Option<candid::Principal>,
 }
 
@@ -45,6 +46,7 @@ fn transform(wasm: ByteBuf, config: Config) -> ByteBuf {
     let resource_config = limit_resource::Config {
         remove_cycles_add: config.remove_cycles_add,
         limit_stable_memory_page: config.limit_stable_memory_page,
+        limit_heap_memory_page: config.limit_heap_memory_page,
         playground_canister_id: config.backend_canister_id,
     };
     limit_resource::limit_resource(&mut m, &resource_config);

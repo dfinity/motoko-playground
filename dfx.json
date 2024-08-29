@@ -3,6 +3,7 @@
     "wasm-utils": {
       "type": "custom",
       "candid": "service/wasm-utils/wasm-utils.did",
+      "specified_id": "ozk6r-tyaaa-aaaab-qab4a-cai",
       "wasm": "service/wasm-utils/target/wasm32-unknown-unknown/release/wasm_utils.wasm",
       "build": ["sh -c 'cd service/wasm-utils && ./build.sh'"],
       "metadata": [
@@ -13,17 +14,20 @@
     },
     "backend": {
       "dependencies": ["wasm-utils"],
+      "specified_id": "mwrha-maaaa-aaaab-qabqq-cai",
       "main": "service/pool/Main.mo",
       "type": "motoko",
       "optimize": "cycles"
     },
     "saved": {
+      "specified_id": "vhtho-raaaa-aaaab-qadoq-cai",
       "main": "service/saved/Saved.mo",
       "type": "motoko",
       "optimize": "cycles"
     },
     "react_app": {
       "dependencies": ["backend", "saved"],
+      "specified_id": "m7sm4-2iaaa-aaaab-qabra-cai",
       "frontend": {
         "entrypoint": "public/index.html"
       },
