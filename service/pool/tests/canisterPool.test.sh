@@ -21,8 +21,8 @@ read_state("canister", CID2.id, "module_hash");
 let c1 = call S.deployCanister(null, opt record { arg = blob ""; wasm_module = empty_wasm; bypass_wasm_transform = opt true });
 let c1 = c1[0];
 call S.transferOwnership(c1, vec {c1.id; S});
-let c2 = call S.deployCanister(opt c1, opt record { arg = blob ""; wasm_module = empty_wasm; bypass_wasm_transform = opt true });
-assert c2[0].id != c1.id;
+fail call S.deployCanister(opt c1, opt record { arg = blob ""; wasm_module = empty_wasm; bypass_wasm_transform = opt true });
+assert _ ~= "Cannot find canister";
 
 let init = opt record {
   cycles_per_canister = 105_000_000_000;

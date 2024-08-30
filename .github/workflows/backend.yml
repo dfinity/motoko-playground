@@ -69,13 +69,13 @@ jobs:
         run: |
           (for f in service/pool/tests/*.test.sh; do
             echo "==== Run test $f ===="
-            ic-repl "$f" || exit
+            ic-repl -v "$f" || exit
           done)
       - name: Actor class test
         run: |
           cd ./service/pool/tests/actor_class
           dfx canister create --all
           dfx build
-          ic-repl ./test.sh
+          ic-repl -v ./test.sh
       - name: Stop dfx
         run: dfx stop
