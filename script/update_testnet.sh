@@ -25,7 +25,7 @@ function populate_backend(Backend, n) {
 load testnet_env;
 let backend_init = opt record {
     cycles_per_canister = 550_000_000_000;
-    max_num_canisters = 50;
+    max_num_canisters = 1000;
     nonce_time_to_live = 300_000_000_000;
     canister_time_to_live = 2700_000_000_000;
     max_family_tree_size = 5;
@@ -33,7 +33,7 @@ let backend_init = opt record {
 };
 let frontend_init = opt record {
     cycles_per_canister = 550_000_000_000;
-    max_num_canisters = 50;
+    max_num_canisters = 1000;
     nonce_time_to_live = 300_000_000_000;
     canister_time_to_live = 2700_000_000_000;
     max_family_tree_size = 5;
@@ -43,7 +43,7 @@ let wasm = file("../target/pool/pool.wasm");
 //install(Backend, wasm, backend_init, variant { upgrade });
 //install(Frontend, wasm, frontend_init, variant { upgrade });
 //call Frontend.releaseAllCanisters();
-populate_asset_canister(Frontend, frontend_init?.max_num_canisters);
+//populate_asset_canister(Frontend, frontend_init?.max_num_canisters);
 //call Backend.releaseAllCanisters();
 populate_backend(Backend, backend_init?.max_num_canisters);
 export(testnet_env, Backend, Frontend, backend_init, frontend_init);
