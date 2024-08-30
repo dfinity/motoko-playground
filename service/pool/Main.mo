@@ -157,6 +157,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             await IC.update_settings { canister_id = info.id; settings };
             statsByOrigin.addCanister({ origin = "external"; tags = [] });
         } else {
+            stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot find canister";
         };
     };
@@ -166,6 +167,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "Only called by controller";
         };
         if (pool.findId(args.canister_id)) {
+            stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Canister is still solely controlled by the playground";
         };
         await IC.install_code args;
@@ -180,10 +182,15 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         let (info, mode) = switch (opt_info) {
         case null { await* getExpiredCanisterInfo(origin) };
         case (?info) {
-                 if (not pool.find info) {
-                     await* getExpiredCanisterInfo(origin)
-                 } else {
+                 if (pool.find info) {
                      (info, #upgrade)
+                 } else {
+                     if (pool.findId(info.id)) {
+                         await* getExpiredCanisterInfo(origin)
+                     } else {
+                         stats := Logs.updateStats(stats, #mismatch);
+                         throw Error.reject "Cannot find canister";
+                     };
                  };
              };
         };
