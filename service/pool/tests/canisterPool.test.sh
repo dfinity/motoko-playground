@@ -32,7 +32,7 @@ let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
 let CID = call S.getCanisterId(nonce, origin);
 call S.installCode(CID, record { arg = blob ""; wasm_module = empty_wasm; mode = variant { install }; canister_id = CID.id }, record { profiling = false; is_whitelisted = false; origin = origin });
 read_state("canister", CID.id, "module_hash");
-let CID3 = call S.deployCanister(null, record { arg = blob ""; wasm_module = empty_wasm; bypass_wasm_transform = opt true });
+let CID3 = call S.deployCanister(null, opt record { arg = blob ""; wasm_module = empty_wasm; bypass_wasm_transform = opt true });
 call S.transferOwnership(CID3, vec {CID3.id; S});
 
 // Immediately expire
