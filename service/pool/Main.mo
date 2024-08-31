@@ -158,7 +158,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             statsByOrigin.addCanister({ origin = "external"; tags = [] });
         } else {
             stats := Logs.updateStats(stats, #mismatch);
-            throw Error.reject "Cannot find canister";
+            throw Error.reject "transferOwnership: Cannot find canister";
         };
     };
     // Install code after transferOwnership. This call can fail if the user removes the playground from its controllers.
@@ -189,7 +189,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                          await* getExpiredCanisterInfo(origin)
                      } else {
                          stats := Logs.updateStats(stats, #mismatch);
-                         throw Error.reject "Cannot find canister";
+                         throw Error.reject "deployCanister: Cannot find canister";
                      };
                  };
              };
@@ -223,7 +223,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                  updateTimer<system>(newInfo);
                  (newInfo, mode);
              };
-        case null { throw Error.reject "Cannot find canister" };
+        case null { throw Error.reject "pool.refresh: Cannot find canister" };
         };
     };
 
