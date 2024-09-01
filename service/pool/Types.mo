@@ -86,6 +86,8 @@ module {
 
         public func getExpiredCanisterId() : NewId {
             if (len < size) {
+                // increment len here to prevent race condition
+                len += 1;
                 #newId
             } else {
                 switch (tree.entries().next()) {
@@ -124,10 +126,10 @@ module {
         };
 
         public func add(info: CanisterInfo) {
-            if (len >= size) {
+            if (len > size) {
                 assert false;
             };
-            len += 1;
+            // len already incremented in getExpiredCanisterId
             tree.insert info;
             metadata.put(info.id, (info.timestamp, false));
         };
