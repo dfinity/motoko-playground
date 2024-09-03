@@ -147,7 +147,7 @@ export function DeployModal({
   const [hasStartPage, setHasStartPage] = useState(false);
   const [forceGC, setForceGC] = useState(false);
   const [gcMethod, setGCMethod] = useState("incremental");
-  const [compileResult, setCompileResult] = useState({ wasm: undefined });
+  const [compileResult, setCompileResult] = useState<any>({ wasm: undefined });
   const [deployMode, setDeployMode] = useState("");
   const [startDeploy, setStartDeploy] = useState(false);
   const worker = useContext(WorkerContext);
@@ -318,13 +318,13 @@ export function DeployModal({
         worker,
         canisterName,
         canisters[canisterName],
-        args,
+        args as any,
         mode,
         compileResult.wasm,
         profiling,
         hasStartPage,
         logger,
-        origin
+        origin as any
       );
       await isDeploy(false);
       if (info) {

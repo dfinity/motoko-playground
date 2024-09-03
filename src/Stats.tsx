@@ -57,7 +57,11 @@ function join_slice(left, right) {
       left.map(([name, _]) => name).concat(right.map(([name, _]) => name))
     ),
   ];
-  const res = full_key.map((name) => [name, l[name] || 0, r[name] || 0]);
+  const res = full_key.map((name) => [
+    name,
+    l[name as any] || 0,
+    r[name as any] || 0,
+  ]);
   res.sort((a, b) => b[2] - a[2]);
   return res;
 }
@@ -90,8 +94,8 @@ function generateCodeSourceData(map) {
 }
 
 export function Stats() {
-  const [canisters, setCanisters] = useState([]);
-  const [installs, setInstalls] = useState([]);
+  const [canisters, setCanisters] = useState<[string, bigint][]>([]);
+  const [installs, setInstalls] = useState<[string, bigint][]>([]);
 
   useEffect(() => {
     async function doit() {

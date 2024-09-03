@@ -92,7 +92,7 @@ export async function getBaseDeps(
   entry: string
 ): Promise<Array<string>> {
   const visited = new Set();
-  const result = new Set();
+  const result = new Set<string>();
   async function go(file: string) {
     if (visited.has(file)) {
       return;
@@ -218,7 +218,7 @@ export async function deploy(
     updatedState.name = canisterName;
     return updatedState;
   } catch (err) {
-    logger.log(err.message);
+    logger.log((err as any).message);
     throw err;
   }
 }
@@ -248,7 +248,7 @@ async function createCanister(
 }
 
 export async function deleteCanister(info: CanisterInfo) {
-  await backend.removeCode(info);
+  await backend.removeCode(info as any);
 }
 
 async function install(
@@ -280,11 +280,11 @@ async function install(
     page_limit: [],
   };
   const new_info = await backend.installCode(
-    canisterInfo,
-    installArgs,
-    installConfig
+    canisterInfo as any,
+    installArgs as any,
+    installConfig as any
   );
-  canisterInfo = new_info;
+  canisterInfo = new_info as any;
   logger.log(`Code installed at canister id ${canisterInfo.id}`);
   return canisterInfo;
 }

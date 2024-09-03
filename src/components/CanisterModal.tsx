@@ -57,7 +57,7 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
   const [canisterName, setCanisterName] = useState("");
   const [canisterId, setCanisterId] = useState("");
   const [candid, setCandid] = useState("");
-  const [wasm, setWasm] = useState(undefined);
+  const [wasm, setWasm] = useState<Uint8Array | undefined>(undefined);
   const [uploadDid, setUploadDid] = useState(false);
   const [error, setError] = useState("");
   const [genBinding, setGenBinding] = useState(false);
@@ -84,7 +84,7 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
       }
       setCandid(candid);
       setError("");
-    } catch (err) {
+    } catch (err: any) {
       if (/no query method/.test(err)) {
         setCandid("");
         setUploadDid(true);
@@ -155,7 +155,7 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
   function handleWasmUpload(e) {
     const reader = new FileReader();
     reader.addEventListener("load", async () => {
-      const wasm = new Uint8Array(reader.result);
+      const wasm = new Uint8Array(reader.result as any);
       setWasm(wasm);
       try {
         const [serv, init] = await extractCandidFromWasm(wasm);
@@ -169,7 +169,7 @@ export function CanisterModal({ isOpen, close, deploySetter }) {
         } else {
           setCandid(serv);
         }
-      } catch (e) {
+      } catch (e: any) {
         setError(e.toString());
       }
     });

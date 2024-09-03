@@ -165,7 +165,7 @@ export function Editor({
   };
   const formatClick = () => {
     setFormatted(true);
-    editorRef.current?.getAction("editor.action.formatDocument").run();
+    editorRef.current?.getAction("editor.action.formatDocument")!.run();
   };
   const deployClick = async () => {
     const aliases = getActorAliases(state.canisters);

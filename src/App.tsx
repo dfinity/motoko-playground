@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
+import { IDL } from "@dfinity/candid";
 
 // @ts-ignore
 // eslint-disable-next-line import/no-webpack-loader-syntax
-import MocWorker from "comlink-loader!./workers/moc";
+import MocWorker from "comlink-loader-webpack5!./workers/moc.worker";
 
 import { CandidUI } from "./components/CandidUI";
 import { Editor } from "./components/Editor";
@@ -168,9 +169,9 @@ export function App() {
   const [showDeployModal, setShowDeployModal] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [candidCode, setCandidCode] = useState("");
-  const [initTypes, setInitTypes] = useState([]);
+  const [initTypes, setInitTypes] = useState<IDL.Type[]>([]);
   const [mainFile, setMainFile] = useState("");
-  const [wasm, setWasm] = useState(undefined);
+  const [wasm, setWasm] = useState<Uint8Array | undefined>(undefined);
   const deploySetter: DeploySetter = {
     setMainFile,
     setInitTypes,
@@ -191,7 +192,7 @@ export function App() {
   async function shareProject() {
     logger.log("Sharing project code...");
     const project = getShareableProject(workplaceState);
-    const hash = await saved.putProject(project);
+    const hash = await saved.putProject(project as any);
     logger.log(
       `Use this link to access the code:\n${
         window.location.origin
@@ -272,7 +273,7 @@ export function App() {
     const isCandidReady =
       workplaceState.selectedCanister &&
       workplaceState.canisters[workplaceState.selectedCanister];
-    setShowCandidUI(isCandidReady);
+    setShowCandidUI(isCandidReady as any);
     setCandidWidth(isCandidReady ? "30vw" : "0");
   }, [workplaceState.canisters, workplaceState.selectedCanister]);
 
@@ -304,7 +305,7 @@ export function App() {
             candid={candidCode}
             initTypes={initTypes}
             logger={logger}
-            origin={workplaceState.origin}
+            origin={workplaceState.origin as any}
           />
           <AppContainer candidWidth={candidWidth} consoleHeight={consoleHeight}>
             <Explorer
@@ -345,14 +346,14 @@ export function App() {
                       if (!info.timestamp || info.isExternal) {
                         return;
                       }
-                      const subtree = await backend.getSubtree(info);
+                      const subtree = await backend.getSubtree(info as any);
                       subtree.reverse().forEach(([parentId, children]) => {
-                        const parentName = nameMap[parentId];
+                        const parentName = nameMap[parentId as any];
                         // Assume children is sorted by timestamp
-                        children.reverse().forEach((child, i) => {
+                        children.reverse().forEach((child: any, i) => {
                           child.name = `${parentName}_${i}`;
                           child.isExternal = false;
-                          nameMap[child.id] = child.name;
+                          nameMap[child.id as any] = child.name;
                           workplaceDispatch({
                             type: "deployWorkplace",
                             payload: { canister: child, do_not_select: true },
