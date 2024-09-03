@@ -1,4 +1,3 @@
-import * as Comlink from "comlink";
 declare var Motoko: any;
 
 interface ExtraFile {
@@ -157,5 +156,3 @@ async function fetchFromGithub(
     return files;
   });
 }
-
-Comlink.expose({ fetchPackage, fetchGithub, saveWorkplaceToMotoko });

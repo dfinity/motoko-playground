@@ -1,5 +1,7 @@
 import * as Comlink from "comlink";
 import { loadMoc } from "./mocShim.js";
+import { fetchPackage, fetchGithub, saveWorkplaceToMotoko } from "./file";
+import { pow } from "./pow";
 
 let Motoko: any;
 
@@ -58,7 +60,13 @@ loadMoc()
     if (Motoko) {
       globalThis.Motoko = Motoko;
       Motoko.saveFile("Main.mo", "");
-      Comlink.expose({ Moc });
+      Comlink.expose({
+        Moc,
+        fetchPackage,
+        fetchGithub,
+        saveWorkplaceToMotoko,
+        pow,
+      });
     } else {
       console.error("Failed to initialize Motoko");
     }
