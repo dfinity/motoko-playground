@@ -1,3 +1,4 @@
+import { fileURLToPath, URL } from 'url';
 import { resolve } from "node:path";
 import { readFileSync, existsSync } from "node:fs";
 import { defineConfig, loadEnv, Plugin, createFilter, transformWithEsbuild } from "vite";
@@ -6,13 +7,27 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import setupProxy from "./src/setupProxy";
 import wasm from "vite-plugin-wasm";
 import topLevelAwait from "vite-plugin-top-level-await";
+import environment from 'vite-plugin-environment';
+import dotenv from 'dotenv';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   setEnv(mode);
   return {
+	build: {
+		emptyOutDir: true,
+		rollupOptions: {
+			input: {
+			  main: resolve(__dirname, 'index.html'),
+			  moc: resolve(__dirname, 'src/workers/moc.ts'),
+			},
+			external: ["/moc.js"],
+		},		
+	},
     plugins: [
       react(),
+	  environment("all", { prefix: "CANISTER_" }),
+	  environment("all", { prefix: "DFX_" }),
       wasm(),
       topLevelAwait(),	  
       tsconfigPaths(),
@@ -30,9 +45,25 @@ export default defineConfig(({ mode }) => {
 	worker: {
 		format: "es",
 	},
+	publicDir: 'public',
     optimizeDeps: {
-		exclude: ["prettier-plugin-motoko"],
-	},	
+		esbuildOptions: {
+			define: {
+			  global: "globalThis",
+			},
+		},		
+		exclude: ["prettier-plugin-motoko", "src/workers/moc.ts", "src/workers/mocShim.js"],
+	},
+	resolve: {
+		alias: [
+		  {
+			find: "declarations",
+			replacement: fileURLToPath(
+			  new URL("./src/declarations", import.meta.url)
+			),
+		  },
+		],
+	},
   };
 });
 

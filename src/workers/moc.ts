@@ -1,15 +1,17 @@
-// Polyfill for development environment (https://github.com/pmmmwh/react-refresh-webpack-plugin/issues/24)
-(global as any).$RefreshReg$ = () => {};
-(global as any).$RefreshSig$$ = () => () => {};
 import * as Comlink from "comlink";
 
-// @ts-ignore
-importScripts("./moc.js");
+declare global {
+  var Motoko: any;
+}
+const loadMoc = async () => {
+  const MotokoModule = await import("./mocShim.js");
+  return MotokoModule.default;
+};
 
 export * from "./pow";
 export * from "./file";
 
-declare var Motoko: any;
+//declare var Motoko: any;
 
 export type MocAction =
   | { type: "save"; file: string; content: string }
@@ -56,5 +58,7 @@ export function Moc(action: MocAction) {
   }
 }
 
-Motoko.saveFile("Main.mo", "");
-Comlink.expose(Moc);
+loadMoc().then((Motoko) => {
+  Motoko.saveFile("Main.mo", "");
+  Comlink.expose(Moc);
+});

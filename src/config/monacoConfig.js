@@ -1,7 +1,8 @@
 import { configure } from "motoko/contrib/monaco";
 import prettier from "prettier";
 
-const errorCodes = require("motoko/contrib/generated/errorCodes.json");
+import errorCodes from "motoko/contrib/generated/errorCodes.json";
+//const errorCodes = require("motoko/contrib/generated/errorCodes.json");
 
 export const configureMonaco = (monaco) => {
   configure(monaco, {
