@@ -1,3 +1,5 @@
+import * as Comlink from "comlink";
+
 const DOMAIN = "motoko-playground";
 
 export function pow(timestamp: bigint) {
@@ -31,3 +33,5 @@ function motokoHash(message: string): number {
 function hashOk(hash: number): boolean {
   return (hash & 0xc0000000) === 0;
 }
+
+Comlink.expose({ pow });

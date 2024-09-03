@@ -1,17 +1,10 @@
 import * as Comlink from "comlink";
+import { loadMoc } from "./mocShim.js";
 
-declare global {
-  var Motoko: any;
-}
-const loadMoc = async () => {
-  const MotokoModule = await import("./mocShim.js");
-  return MotokoModule.default;
-};
+let Motoko: any;
 
 export * from "./pow";
 export * from "./file";
-
-//declare var Motoko: any;
 
 export type MocAction =
   | { type: "save"; file: string; content: string }
@@ -58,7 +51,18 @@ export function Moc(action: MocAction) {
   }
 }
 
-loadMoc().then((Motoko) => {
-  Motoko.saveFile("Main.mo", "");
-  Comlink.expose(Moc);
-});
+// Initialize Motoko when the worker starts
+loadMoc()
+  .then((loadedMotoko) => {
+    Motoko = loadedMotoko;
+    if (Motoko) {
+      globalThis.Motoko = Motoko;
+      Motoko.saveFile("Main.mo", "");
+      Comlink.expose({ Moc });
+    } else {
+      console.error("Failed to initialize Motoko");
+    }
+  })
+  .catch((error) => {
+    console.error("Error during Motoko initialization:", error);
+  });
