@@ -7,12 +7,14 @@ import {
 import { Principal } from "@dfinity/principal";
 import { IDL } from "@dfinity/candid";
 import { idlFactory, canisterId } from "../declarations/backend";
+import { _SERVICE as BackendService } from "../declarations/backend/backend.did";
 import {
   idlFactory as savedIdlFactory,
   canisterId as savedCanisterId,
 } from "../declarations/saved";
+import { _SERVICE as SavedService } from "../declarations/saved/saved.did";
 
-import { idlFactory as didjs_idl } from "../didjs.did";
+import { idlFactory as didjs_idl } from "./didjs.did";
 
 const LOCAL_PORT = 4943;
 
@@ -26,17 +28,18 @@ export const agent = new HttpAgent({
 if (local) {
   agent.fetchRootKey();
 }
-/**
- * @type {import("@dfinity/agent").ActorSubclass<import("../declarations/backend/backend.did.js")._SERVICE>}
- */
-export const backend = Actor.createActor(idlFactory, { agent, canisterId });
-/**
- * @type {import("@dfinity/agent").ActorSubclass<import("../declarations/saved/saved.did.js")._SERVICE>}
- */
-export const saved = Actor.createActor(savedIdlFactory, {
-  agent,
-  canisterId: savedCanisterId,
-});
+
+export const backend: ActorSubclass<BackendService> = Actor.createActor(
+  idlFactory,
+  { agent, canisterId }
+);
+export const saved: ActorSubclass<SavedService> = Actor.createActor(
+  savedIdlFactory,
+  {
+    agent,
+    canisterId: savedCanisterId,
+  }
+);
 
 const uiCanisterId =
   process.env.__CANDID_UI_CANISTER_ID ||
@@ -44,7 +47,7 @@ const uiCanisterId =
 export const uiCanisterUrl = local
   ? `http://${uiCanisterId}.localhost:${LOCAL_PORT}`
   : `https://${uiCanisterId}.raw.icp0.io`;
-export const didjs = Actor.createActor(didjs_idl, {
+export const didjs: ActorSubclass<any> = Actor.createActor(didjs_idl, {
   agent,
   canisterId: Principal.fromText(uiCanisterId),
 });
@@ -58,7 +61,7 @@ async function getDidFromMetadata(
     paths: ["candid"],
   });
   const did = status.get("candid");
-  return did;
+  return did as any;
 }
 
 async function getDidFromTmpHack(canisterId: Principal) {
@@ -81,9 +84,9 @@ export async function fetchCandidInterface(canisterId: Principal) {
   return await getDidFromTmpHack(canisterId);
 }
 
-export async function didToJs(source) {
-  const js = await didjs.did_to_js(source);
-  if (js === []) {
+export async function didToJs(source: string) {
+  const js = (await didjs.did_to_js(source)) as any;
+  if (Array.isArray(js) && js.length === 0) {
     return undefined;
   }
   const dataUri =

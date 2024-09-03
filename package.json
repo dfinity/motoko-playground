@@ -24,27 +24,32 @@
     "web-vitals": "^1.0.1"
   },
   "devDependencies": {
-    "@craco/craco": "^6.0.0",
+    "@svgr/core": "^8.1.0",
+    "@svgr/plugin-jsx": "^8.1.0",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
     "@types/jest": "^26.0.19",
-    "comlink-loader": "^2.0.0",
+    "@types/node": "^20.14.2",
+    "@vitejs/plugin-react": "^4.3.1",
+    "comlink": "^4.4.1",
     "concurrently": "^7.6.0",
-    "craco-babel-loader": "^1.0.3",
     "http-proxy-middleware": "^2.0.6",
     "husky": "^7.0.1",
     "lint-staged": "^11.1.2",
     "mo-dev": "^0.13.0",
     "prettier": "^2.7.1",
-    "react-scripts": "4.0.3",
+    "vite": "^5.2.13",
+    "vite-plugin-top-level-await": "^1.4.4",
+    "vite-plugin-wasm": "^3.3.0",
+    "vite-tsconfig-paths": "^4.3.2",
     "wasm-loader": "^1.3.0"
   },
   "scripts": {
-    "start": "concurrently -p '|' npm:frontend npm:service",
+    "start": "vite",
     "frontend": "craco start",
     "service": "mo-dev --deploy",
-    "build": "craco build",
+    "build": "vite build",
     "test": "craco test -- --config=config/jest.config.js",
     "eject": "craco eject",
     "deploy": "dfx deploy",
@@ -52,7 +57,8 @@
     "prestart": "dfx start --background; [ -f .dfx/local/canister_ids.json ] || dfx deploy",
     "predeploy": "npm run prestart",
     "prepare": "husky install",
-    "postinstall": "mops install"
+    "postinstall": "mops install",
+    "dev": "vite"
   },
   "eslintConfig": {
     "extends": [
