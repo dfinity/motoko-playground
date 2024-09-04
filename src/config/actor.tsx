@@ -31,14 +31,14 @@ if (local) {
 
 export const backend: ActorSubclass<BackendService> = Actor.createActor(
   idlFactory,
-  { agent, canisterId }
+  { agent, canisterId },
 );
 export const saved: ActorSubclass<SavedService> = Actor.createActor(
   savedIdlFactory,
   {
     agent,
     canisterId: savedCanisterId,
-  }
+  },
 );
 
 const uiCanisterId =
@@ -53,7 +53,7 @@ export const didjs: ActorSubclass<any> = Actor.createActor(didjs_idl, {
 });
 
 async function getDidFromMetadata(
-  canisterId: Principal
+  canisterId: Principal,
 ): Promise<null | string> {
   const status = await CanisterStatus.request({
     agent,
@@ -89,9 +89,15 @@ export async function didToJs(source: string) {
   if (Array.isArray(js) && js.length === 0) {
     return undefined;
   }
-  const dataUri =
-    "data:text/javascript;charset=utf-8," + encodeURIComponent(js[0]);
-  // eslint-disable-next-line no-eval
-  const candid = await eval('import("' + dataUri + '")');
-  return candid;
+  const blob = new Blob([js[0]], { type: "text/javascript" });
+  const url = URL.createObjectURL(blob);
+
+  try {
+    // Dynamically import the module
+    const module = await import(/* @vite-ignore */ url);
+    return module;
+  } finally {
+    // Clean up the URL object
+    URL.revokeObjectURL(url);
+  }
 }

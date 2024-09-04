@@ -7,7 +7,7 @@ const loadMoc = async () => {
     const scriptContent = await response.text();
 
     // Execute the script content
-    (0, eval)(scriptContent);
+    self.eval(scriptContent);
 
     Motoko = self.Motoko;
   }

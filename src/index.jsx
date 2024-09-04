@@ -12,15 +12,16 @@ if (window.location.pathname === "/stats") {
     <React.StrictMode>
       <Stats />
     </React.StrictMode>,
-    document.getElementById("root")
+    document.getElementById("root"),
   );
 } else {
+  // TODO: if I use the new createRoot API, base library will not load properly, and there is no log of `moc` being loaded.
   ReactDOM.render(
     <React.StrictMode>
       <ProvideLogging>
         <App />
       </ProvideLogging>
     </React.StrictMode>,
-    document.getElementById("root")
+    document.getElementById("root"),
   );
 }
