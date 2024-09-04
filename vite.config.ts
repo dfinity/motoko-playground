@@ -3,7 +3,6 @@ import { resolve } from "path";
 import { readFileSync, existsSync } from "node:fs";
 import { defineConfig, loadEnv, Plugin, createFilter, transformWithEsbuild } from "vite";
 import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
 import setupProxy from "./src/setupProxy";
 import wasm from "vite-plugin-wasm";
 import topLevelAwait from "vite-plugin-top-level-await";
@@ -12,29 +11,19 @@ import dotenv from 'dotenv';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  setEnv(mode);
   return {
 	build: {
 		outDir: "build",
 		emptyOutDir: true,
-		rollupOptions: {
-			input: {
-			  main: resolve(__dirname, 'index.html'),
-			  moc: resolve(__dirname, 'src/workers/moc.ts'),
-			},
-			external: ["/moc.js"],
-		},
 	},
     plugins: [
       react(),
 	  environment("all", { prefix: "CANISTER_" }),
 	  environment("all", { prefix: "DFX_" }),
       wasm(),
-      topLevelAwait(),	  
-      tsconfigPaths(),
+      topLevelAwait(),
       devServerPlugin(),
       sourcemapPlugin(),
-      htmlPlugin(mode),
       svgrPlugin(),
       
       setupProxyPlugin(),
@@ -43,14 +32,6 @@ export default defineConfig(({ mode }) => {
 		format: "es",
 	},
 	publicDir: 'public',
-    optimizeDeps: {
-		esbuildOptions: {
-			define: {
-			  global: "globalThis",
-			},
-		},		
-		exclude: ["prettier-plugin-motoko", "src/workers/moc.ts", "src/workers/mocShim.js"],
-	},
 	resolve: {
 		alias: [
 		  {
@@ -63,22 +44,6 @@ export default defineConfig(({ mode }) => {
 	},
   };
 });
-
-function setEnv(mode: string) {
-	Object.assign(
-		process.env,
-		loadEnv(mode, ".", ["REACT_APP_", "NODE_ENV", "PUBLIC_URL"]),
-	);
-	process.env.NODE_ENV ||= mode;
-	const { homepage } = JSON.parse(readFileSync("package.json", "utf-8"));
-	process.env.PUBLIC_URL ||= homepage
-		? `${
-				homepage.startsWith("http") || homepage.startsWith("/")
-					? homepage
-					: `/${homepage}`
-			}`.replace(/\/$/, "")
-		: "";
-}
 
 // Setup HOST, SSL, PORT
 // Migration guide: Follow the guides below
@@ -189,19 +154,3 @@ function setupProxyPlugin(): Plugin {
 	};
 }
 
-// Replace %ENV_VARIABLES% in index.html
-// https://vitejs.dev/guide/api-plugin.html#transformindexhtml
-// Migration guide: Follow the guide below, you may need to rename your environment variable to a name that begins with VITE_ instead of REACT_APP_
-// https://vitejs.dev/guide/env-and-mode.html#html-env-replacement
-function htmlPlugin(mode: string): Plugin {
-	const env = loadEnv(mode, ".", ["REACT_APP_", "NODE_ENV", "PUBLIC_URL"]);
-	return {
-		name: "html-plugin",
-		transformIndexHtml: {
-			order: "pre",
-			handler(html) {
-				return html.replace(/%(.*?)%/g, (match, p1) => env[p1] ?? match);
-			},
-		},
-	};
-}
