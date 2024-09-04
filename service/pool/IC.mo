@@ -22,16 +22,32 @@ module {
       taken_at_timestamp : Nat64;
   };
   public type http_header = { value : Text; name : Text };
+  public type transform_composite_function = shared composite query {
+      context : Blob;
+      response : http_request_result;
+  } -> async http_request_result;
+  public type transform_query_function = shared query {
+      context : Blob;
+      response : http_request_result;
+  } -> async http_request_result;
+  public type http_request_args_original = {
+    url : Text;
+    method : { #get; #head; #post };
+    max_response_bytes : ?Nat64;
+    body : ?Blob;
+    transform : ?{
+      function : transform_query_function;
+      context : Blob;
+    };
+    headers : [http_header];
+  };
   public type http_request_args = {
     url : Text;
     method : { #get; #head; #post };
     max_response_bytes : ?Nat64;
     body : ?Blob;
     transform : ?{
-      function : shared query {
-          context : Blob;
-          response : http_request_result;
-        } -> async http_request_result;
+      function : transform_composite_function;
       context : Blob;
     };
     headers : [http_header];

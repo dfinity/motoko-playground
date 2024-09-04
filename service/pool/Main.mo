@@ -617,20 +617,44 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     public shared func load_canister_snapshot({}) : async () {
         throw Error.reject("Cannot call load_canister_snapshot from canister itself");
     };
-    public shared ({ caller }) func _ttp_request(request : ICType.http_request_args) : async ICType.http_request_result {
+    public shared ({ caller }) func _ttp_request(request : ICType.http_request_args_original) : async ICType.http_request_result {
         if (not pool.findId caller) {
             throw Error.reject "Only a canister managed by the Motoko Playground can call http_request";
         };
         let cycles = 250_000_000_000;
         if (pool.spendCycles(caller, cycles)) {
             Cycles.add<system> cycles;
-            // transform doesn't work at the moment, as it require self query call for transform
-            let res = await IC.http_request(request);
+            let new_request = switch (request.transform) {
+            case null {
+                     { request with transform = null : ?{ context: Blob; function: ICType.transform_composite_function } };
+                 };
+            case (?transform) {
+                     pool.rememberTransform(caller, transform);
+                     let new_transform = ?{ function = __transform; context = Principal.toBlob caller };
+                     { request with transform = new_transform };
+                 };
+            };
+            let res = await IC.http_request(new_request);
             let refunded = -Cycles.refunded();
             assert(pool.spendCycles(caller, refunded) == true);
+            pool.removeTransform(caller);
             res;
         } else {
             throw Error.reject "http_request exceeds cycle spend limit";
+        };
+    };
+    public shared composite query({ caller }) func __transform({context: Blob; response: ICType.http_request_result}) : async ICType.http_request_result {
+        if (caller != Principal.fromText("aaaaa-aa")) {
+            throw Error.reject "Only the management canister can call __transform";
+        };
+        let id = Principal.fromBlob context;
+        switch (pool.getTransform(id)) {
+            case null {
+                throw Error.reject "No transform found";
+                 };
+            case (?transform) {
+                     await transform.function({ context = transform.context; response });
+                 };
         };
     };
 
@@ -672,6 +696,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #delete_canister_snapshot : Any;
             #load_canister_snapshot : Any;
             #_ttp_request : Any;
+            #__transform : Any;
         };
     }) : Bool {
         switch msg {
@@ -688,6 +713,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             case (#delete_canister_snapshot _) false;
             case (#load_canister_snapshot _) false;
             case (#_ttp_request _) false;
+            case (#__transform _) false;
             case _ true;
         };
     };

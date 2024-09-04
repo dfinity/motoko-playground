@@ -10,6 +10,7 @@ import List "mo:base/List";
 import Option "mo:base/Option";
 import Int "mo:base/Int";
 import Timer "mo:base/Timer";
+import ICType "./IC";
 
 module {
     public type InitParams = {
@@ -80,7 +81,9 @@ module {
         let timers = TrieMap.TrieMap<Principal, Timer.TimerId>(Principal.equal, Principal.hash);
         var snapshots = TrieMap.TrieMap<Principal, Blob>(Principal.equal, Principal.hash);
         // Cycles spent by each canister, not persisted for upgrades
-        var cycles = TrieMap.TrieMap<Principal, Int>(Principal.equal, Principal.hash);
+        let cycles = TrieMap.TrieMap<Principal, Int>(Principal.equal, Principal.hash);
+        type TransformType = { context: Blob; function: ICType.transform_query_function };
+        let transforms = TrieMap.TrieMap<Principal, TransformType>(Principal.equal, Principal.hash);
 
         public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
 
@@ -200,6 +203,15 @@ module {
             };
             cycles.put(cid, new);
             true;
+        };
+        public func rememberTransform(cid: Principal, transform: TransformType) {
+            transforms.put(cid, transform);
+        };
+        public func getTransform(cid: Principal) : ?TransformType {
+            transforms.get cid
+        };
+        public func removeTransform(cid: Principal) {
+            transforms.delete cid;
         };
         
         private func notExpired(info: CanisterInfo, now: Int) : Bool = (info.timestamp > now - ttl);
