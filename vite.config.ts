@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => {
         {
           find: "declarations",
           replacement: fileURLToPath(
-            new URL("./src/declarations", import.meta.url)
+            new URL("./src/declarations", import.meta.url),
           ),
         },
       ],
@@ -66,7 +66,7 @@ function devServerPlugin(): Plugin {
       const { HOST, PORT, HTTPS, SSL_CRT_FILE, SSL_KEY_FILE } = loadEnv(
         mode,
         ".",
-        ["HOST", "PORT", "HTTPS", "SSL_CRT_FILE", "SSL_KEY_FILE"]
+        ["HOST", "PORT", "HTTPS", "SSL_CRT_FILE", "SSL_KEY_FILE"],
       );
       const https = HTTPS === "true";
       return {
