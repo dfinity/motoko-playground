@@ -61,9 +61,9 @@ const AppContainer = styled.div<{ candidWidth: string; consoleHeight: string }>`
   --consoleHeight: ${(props) => props.consoleHeight ?? 0};
 `;
 
-const worker = wrap(
-  new Worker(new URL("./workers/moc.ts", import.meta.url), { type: "module" })
-);
+//const worker = wrap(
+//  new Worker(new URL("./workers/moc.ts", import.meta.url), { type: "module" })
+//);
 const urlParams = new URLSearchParams(window.location.search);
 const hasUrlParams = !!(
   urlParams.get("git") ||
@@ -71,7 +71,8 @@ const hasUrlParams = !!(
   urlParams.get("post")
 );
 async function fetchFromUrlParams(
-  dispatch: (action: WorkplaceReducerAction) => void
+  worker,
+  dispatch: (action: WorkplaceReducerAction) => void,
 ): Promise<Record<string, string> | undefined> {
   const git = urlParams.get("git");
   const tag = urlParams.get("tag");
@@ -103,7 +104,7 @@ async function fetchFromUrlParams(
         project.files.map((file) => {
           worker.Moc({ type: "save", file: file.name, content: file.content });
           return [file.name, file.content];
-        })
+        }),
       );
       if (project.packages.length) {
         for (const pack of project.packages[0]) {
@@ -151,10 +152,11 @@ async function fetchFromUrlParams(
 }
 
 export function App() {
+  const [worker, setWorker] = useState(null);
   const [workplaceState, workplaceDispatch] = useReducer(
     workplaceReducer.reduce,
     {},
-    workplaceReducer.init
+    workplaceReducer.init,
   );
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(!hasUrlParams);
   const [isFirstVisit, setIsFirstVisit] = useState(!hasUrlParams);
@@ -195,7 +197,7 @@ export function App() {
     logger.log(
       `Use this link to access the code:\n${
         window.location.origin
-      }/?tag=${hash.toString()}`
+      }/?tag=${hash.toString()}`,
     );
   }
 
@@ -218,11 +220,29 @@ export function App() {
         },
       });
     },
-    [workplaceDispatch]
+    [workplaceDispatch],
   );
 
+  useEffect(() => {
+    const initializeWorker = async () => {
+      const workerInstance = wrap(
+        new Worker(new URL("./workers/moc.ts", import.meta.url), {
+          type: "module",
+        }),
+      );
+
+      // Wait for the worker to be fully initialized
+      await workerInstance.waitForInitialization();
+
+      setWorker(workerInstance);
+      console.log("moc worker initialized");
+    };
+
+    initializeWorker();
+  }, []);
   // Add the Motoko package to allow for compilation / checking
   useEffect(() => {
+    if (!worker) return;
     const baseInfo = {
       name: "base",
       repo: "https://github.com/dfinity/motoko-base.git",
@@ -231,7 +251,9 @@ export function App() {
       homepage: "https://sdk.dfinity.org/docs/base-libraries/stdlib-intro.html",
     };
     (async () => {
+      console.log("fetching base package");
       await worker.fetchPackage(baseInfo);
+      console.log("fetching done from worker");
       await workplaceDispatch({
         type: "loadPackage",
         payload: {
@@ -243,7 +265,7 @@ export function App() {
       logger.log(`base library version ${baseInfo.version}`);
       // fetch code after loading base library
       if (hasUrlParams) {
-        const files = await fetchFromUrlParams(workplaceDispatch);
+        const files = await fetchFromUrlParams(worker, workplaceDispatch);
         if (files) {
           importCode(files);
         } else {
@@ -252,20 +274,22 @@ export function App() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [worker]);
   useEffect(() => {
     (async () => {
-      setTTL((await backend.getInitParams()).canister_time_to_live);
+      await setTTL((await backend.getInitParams()).canister_time_to_live);
+      console.log("ttl", TTL);
     })();
   }, []);
 
   useEffect(() => {
+    if (!worker) return;
     worker.Moc({
       type: "setActorAliases",
       list: getActorAliases(workplaceState.canisters),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workplaceState.canisters]);
+  }, [worker, workplaceState.canisters]);
 
   useEffect(() => {
     // Show Candid UI iframe if there are canisters
@@ -275,6 +299,8 @@ export function App() {
     setShowCandidUI(isCandidReady);
     setCandidWidth(isCandidReady ? "30vw" : "0");
   }, [workplaceState.canisters, workplaceState.selectedCanister]);
+
+  if (!worker) return <div>Loading...</div>;
 
   return (
     <main>
@@ -337,8 +363,8 @@ export function App() {
                   // because message.caller can call other canisters to spawn new children.
                   const nameMap = Object.fromEntries(
                     Object.entries(workplaceState.canisters).map(
-                      ([name, info]) => [info.id, name]
-                    )
+                      ([name, info]) => [info.id, name],
+                    ),
                   );
                   Object.entries(workplaceState.canisters).forEach(
                     async ([_, info]) => {
@@ -359,7 +385,7 @@ export function App() {
                           });
                         });
                       });
-                    }
+                    },
                   );
                 }}
               />

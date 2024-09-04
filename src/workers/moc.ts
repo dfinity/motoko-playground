@@ -52,6 +52,20 @@ export function Moc(action: MocAction) {
       return Motoko.printDeps(action.file);
   }
 }
+export function waitForInitialization() {
+  return new Promise<void>((resolve) => {
+    if (Motoko) {
+      resolve();
+    } else {
+      const checkInterval = setInterval(() => {
+        if (Motoko) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 100);
+    }
+  });
+}
 
 // Initialize Motoko when the worker starts
 loadMoc()
@@ -66,6 +80,7 @@ loadMoc()
         fetchGithub,
         saveWorkplaceToMotoko,
         pow,
+        waitForInitialization,
       });
     } else {
       console.error("Failed to initialize Motoko");

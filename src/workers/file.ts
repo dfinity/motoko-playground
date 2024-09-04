@@ -35,6 +35,7 @@ export async function fetchPackage(info: PackageInfo): Promise<boolean> {
   ) {
     return false;
   }
+  console.log("HERE");
   const repo: RepoInfo = {
     repo: info.repo.slice(0, -4).replace(/^(https:\/\/github.com\/)/, ""),
     branch: info.version,
@@ -49,7 +50,7 @@ export async function fetchPackage(info: PackageInfo): Promise<boolean> {
 
 export async function fetchGithub(
   repo: RepoInfo,
-  target_dir = ""
+  target_dir = "",
 ): Promise<Record<string, string> | undefined> {
   const possiblyCDN = !(
     (repo.branch.length % 2 === 0 && /^[A-F0-9]+$/i.test(repo.branch)) ||
@@ -74,7 +75,7 @@ export function saveWorkplaceToMotoko(files: Record<string, string>) {
 
 async function fetchFromCDN(
   repo: RepoInfo,
-  target_dir = ""
+  target_dir = "",
 ): Promise<Record<string, string> | undefined> {
   const meta_url = `https://data.jsdelivr.com/v1/package/gh/${repo.repo}@${repo.branch}/flat`;
   const base_url = `https://cdn.jsdelivr.net/gh/${repo.repo}@${repo.branch}`;
@@ -115,7 +116,7 @@ async function fetchFromCDN(
 
 async function fetchFromGithub(
   repo: RepoInfo,
-  target_dir = ""
+  target_dir = "",
 ): Promise<Record<string, string> | undefined> {
   const meta_url = `https://api.github.com/repos/${repo.repo}/git/trees/${repo.branch}?recursive=1`;
   const base_url = `https://raw.githubusercontent.com/${repo.repo}/${repo.branch}/`;
