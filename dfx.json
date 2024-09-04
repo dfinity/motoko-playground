@@ -40,5 +40,6 @@
       "output": "build",
       "packtool": "mops sources"
     }
-  }
+  },
+  "output_env_file": ".env"
 }

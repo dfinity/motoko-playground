@@ -1,6 +1,6 @@
-const { createProxyMiddleware } = require("http-proxy-middleware");
+import { createProxyMiddleware } from "http-proxy-middleware";
 
-module.exports = (app) => {
+export default (app) => {
   app.use(
     "/api",
     createProxyMiddleware({

@@ -22,7 +22,10 @@ export default defineConfig(({ mode }) => {
 			  moc: resolve(__dirname, 'src/workers/moc.ts'),
 			},
 			external: ["/moc.js"],
-		},		
+		},
+		commonjsOptions: {
+			transformMixedEsModules: true,
+		},	
 	},
     plugins: [
       react(),
