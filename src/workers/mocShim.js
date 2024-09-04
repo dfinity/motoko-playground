@@ -8,8 +8,6 @@ export const loadMoc = async () => {
 
     // Execute the script content
     self.eval(scriptContent);
-
-    Motoko = self.Motoko;
   }
   return Motoko;
 };
