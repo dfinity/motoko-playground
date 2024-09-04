@@ -1,5 +1,5 @@
 import { fileURLToPath, URL } from 'url';
-import { resolve } from "node:path";
+import { resolve } from "path";
 import { readFileSync, existsSync } from "node:fs";
 import { defineConfig, loadEnv, Plugin, createFilter, transformWithEsbuild } from "vite";
 import react from "@vitejs/plugin-react";
@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => {
   setEnv(mode);
   return {
 	build: {
+		outDir: "build",
 		emptyOutDir: true,
 		rollupOptions: {
 			input: {
@@ -31,12 +32,8 @@ export default defineConfig(({ mode }) => {
       wasm(),
       topLevelAwait(),	  
       tsconfigPaths(),
-      envPlugin(),
       devServerPlugin(),
       sourcemapPlugin(),
-      buildPathPlugin(),
-      basePlugin(),
-      importPrefixPlugin(),
       htmlPlugin(mode),
       svgrPlugin(),
       
@@ -81,26 +78,6 @@ function setEnv(mode: string) {
 					: `/${homepage}`
 			}`.replace(/\/$/, "")
 		: "";
-}
-
-// Expose `process.env` environment variables to your client code
-// Migration guide: Follow the guide below to replace process.env with import.meta.env in your app, you may also need to rename your environment variable to a name that begins with VITE_ instead of REACT_APP_
-// https://vitejs.dev/guide/env-and-mode.html#env-variables
-function envPlugin(): Plugin {
-  return {
-    name: "env-plugin",
-    config(_, { mode }) {
-      const env = loadEnv(mode, ".", ["REACT_APP_", "NODE_ENV", "PUBLIC_URL"]);
-      return {
-        define: Object.fromEntries(
-          Object.entries(env).map(([key, value]) => [
-            `process.env.${key}`,
-            JSON.stringify(value),
-          ]),
-        ),
-      };
-    },
-  };
 }
 
 // Setup HOST, SSL, PORT
@@ -149,55 +126,6 @@ function sourcemapPlugin(): Plugin {
 			return {
 				build: {
 					sourcemap: GENERATE_SOURCEMAP === "true",
-				},
-			};
-		},
-	};
-}
-
-// Migration guide: Follow the guide below
-// https://vitejs.dev/config/build-options.html#build-outdir
-function buildPathPlugin(): Plugin {
-	return {
-		name: "build-path-plugin",
-		config(_, { mode }) {
-			const { BUILD_PATH } = loadEnv(mode, ".", [
-				"BUILD_PATH",
-			]);
-			return {
-				build: {
-					outDir: BUILD_PATH || "build",
-				},
-			};
-		},
-	};
-}
-
-// Migration guide: Follow the guide below and remove homepage field in package.json
-// https://vitejs.dev/config/shared-options.html#base
-function basePlugin(): Plugin {
-	return {
-		name: "base-plugin",
-		config(_, { mode }) {
-			const { PUBLIC_URL } = loadEnv(mode, ".", ["PUBLIC_URL"]);
-			return {
-				base: PUBLIC_URL || "",
-			};
-		},
-	};
-}
-
-// To resolve modules from node_modules, you can prefix paths with ~
-// https://create-react-app.dev/docs/adding-a-sass-stylesheet
-// Migration guide: Follow the guide below
-// https://vitejs.dev/config/shared-options.html#resolve-alias
-function importPrefixPlugin(): Plugin {
-	return {
-		name: "import-prefix-plugin",
-		config() {
-			return {
-				resolve: {
-					alias: [{ find: /^~([^/])/, replacement: "$1" }],
 				},
 			};
 		},
