@@ -2,6 +2,7 @@
   "name": "motoko-playground",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "dependencies": {
     "@dfinity/agent": "^2.0.0",
     "@dfinity/candid": "^2.0.0",
