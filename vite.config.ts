@@ -23,9 +23,6 @@ export default defineConfig(({ mode }) => {
 			},
 			external: ["/moc.js"],
 		},
-		commonjsOptions: {
-			transformMixedEsModules: true,
-		},	
 	},
     plugins: [
       react(),
