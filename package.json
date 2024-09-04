@@ -59,6 +59,12 @@
   "lint-staged": {
     "src/**/*.{js,ts,jsx,tsx,json,css,scss,htm,html,md,mdx}": [
       "prettier --write"
+    ],
+    "vite.config.ts": [
+      "prettier --write"
+    ],
+    "package.json": [
+      "prettier --write"
     ]
   }
 }
