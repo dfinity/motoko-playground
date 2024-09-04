@@ -1,6 +1,6 @@
 let Motoko;
 
-const loadMoc = async () => {
+export const loadMoc = async () => {
   if (!Motoko) {
     const scriptUrl = new URL("/moc.js", self.location.origin);
     const response = await fetch(scriptUrl);
@@ -13,5 +13,3 @@ const loadMoc = async () => {
   }
   return Motoko;
 };
-
-export { loadMoc };

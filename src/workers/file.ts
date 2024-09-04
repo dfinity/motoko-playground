@@ -1,4 +1,4 @@
-declare var Motoko: any;
+import { loadMoc } from "./mocShim";
 
 interface ExtraFile {
   match: RegExp;
@@ -29,6 +29,7 @@ export interface RepoInfo {
 }
 
 export async function fetchPackage(info: PackageInfo): Promise<boolean> {
+  const Motoko = await loadMoc();
   if (
     !info.repo.startsWith("https://github.com/") ||
     !info.repo.endsWith(".git")
@@ -65,7 +66,8 @@ export async function fetchGithub(
   return await fetchFromGithub(repo, target_dir);
 }
 
-export function saveWorkplaceToMotoko(files: Record<string, string>) {
+export async function saveWorkplaceToMotoko(files: Record<string, string>) {
+  const Motoko = await loadMoc();
   for (const [name, code] of Object.entries(files)) {
     if (!name.endsWith("mo")) continue;
     Motoko.saveFile(name, code);
@@ -76,6 +78,7 @@ async function fetchFromCDN(
   repo: RepoInfo,
   target_dir = ""
 ): Promise<Record<string, string> | undefined> {
+  const Motoko = await loadMoc();
   const meta_url = `https://data.jsdelivr.com/v1/package/gh/${repo.repo}@${repo.branch}/flat`;
   const base_url = `https://cdn.jsdelivr.net/gh/${repo.repo}@${repo.branch}`;
   const response = await fetch(meta_url);
@@ -117,6 +120,7 @@ async function fetchFromGithub(
   repo: RepoInfo,
   target_dir = ""
 ): Promise<Record<string, string> | undefined> {
+  const Motoko = await loadMoc();
   const meta_url = `https://api.github.com/repos/${repo.repo}/git/trees/${repo.branch}?recursive=1`;
   const base_url = `https://raw.githubusercontent.com/${repo.repo}/${repo.branch}/`;
   const response = await fetch(meta_url);
