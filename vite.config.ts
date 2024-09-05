@@ -34,6 +34,9 @@ export default defineConfig(({ mode }) => {
 
       setupProxyPlugin(),
     ],
+    define: {
+      global: "globalThis",
+    },
     worker: {
       format: "es",
     },

@@ -1,17 +1,17 @@
-let Motoko;
+let mocPromise;
 
-const loadMoc = async () => {
-  if (!Motoko) {
-    const scriptUrl = new URL("/moc.js", self.location.origin);
-    const response = await fetch(scriptUrl);
-    const scriptContent = await response.text();
+export const loadMoc = async () => {
+  if (!mocPromise) {
+    mocPromise = (async () => {
+      const scriptUrl = new URL("/moc.js", self.location.origin);
+      const response = await fetch(scriptUrl);
+      const scriptContent = await response.text();
 
-    // Execute the script content
-    self.eval(scriptContent);
+      // Execute the script content
+      self.eval(scriptContent);
 
-    Motoko = self.Motoko;
+      return self.Motoko;
+    })();
   }
-  return Motoko;
+  return mocPromise;
 };
-
-export { loadMoc };

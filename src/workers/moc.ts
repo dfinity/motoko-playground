@@ -3,8 +3,6 @@ import { loadMoc } from "./mocShim.js";
 import { fetchPackage, fetchGithub, saveWorkplaceToMotoko } from "./file";
 import { pow } from "./pow";
 
-let Motoko: any;
-
 export * from "./pow";
 export * from "./file";
 
@@ -23,8 +21,8 @@ export type MocAction =
   | { type: "printDeps"; file: string };
 
 // Export as you would in a normal module:
-export function Moc(action: MocAction) {
-  if (typeof Motoko === "undefined") return;
+export async function Moc(action: MocAction) {
+  const Motoko = await loadMoc();
   switch (action.type) {
     case "save":
       return Motoko.saveFile(action.file, action.content);
@@ -55,22 +53,22 @@ export function Moc(action: MocAction) {
 
 // Initialize Motoko when the worker starts
 loadMoc()
-  .then((loadedMotoko) => {
-    Motoko = loadedMotoko;
+  .then((Motoko) => {
     if (Motoko) {
-      globalThis.Motoko = Motoko;
       Motoko.saveFile("Main.mo", "");
-      Comlink.expose({
-        Moc,
-        fetchPackage,
-        fetchGithub,
-        saveWorkplaceToMotoko,
-        pow,
-      });
     } else {
       console.error("Failed to initialize Motoko");
     }
   })
   .catch((error) => {
     console.error("Error during Motoko initialization:", error);
+    throw error;
   });
+
+Comlink.expose({
+  Moc,
+  fetchPackage,
+  fetchGithub,
+  saveWorkplaceToMotoko,
+  pow,
+});
