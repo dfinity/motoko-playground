@@ -18,6 +18,11 @@ let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
 let CID2 = call S.getCanisterId(nonce, origin);
 call S.installCode(CID2, record { arg = blob ""; wasm_module = empty_wasm; mode = variant { install }; canister_id = CID2.id }, record { profiling = false; is_whitelisted = false; origin = origin });
 read_state("canister", CID2.id, "module_hash");
+let c1 = call S.deployCanister(null, opt record { arg = blob ""; wasm_module = empty_wasm; bypass_wasm_transform = opt true });
+let c1 = c1[0];
+call S.transferOwnership(c1, vec {c1.id; S});
+fail call S.deployCanister(opt c1, opt record { arg = blob ""; wasm_module = empty_wasm; bypass_wasm_transform = opt true });
+assert _ ~= "Cannot find canister";
 
 let init = opt record {
   cycles_per_canister = 105_000_000_000;
@@ -32,6 +37,9 @@ let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
 let CID = call S.getCanisterId(nonce, origin);
 call S.installCode(CID, record { arg = blob ""; wasm_module = empty_wasm; mode = variant { install }; canister_id = CID.id }, record { profiling = false; is_whitelisted = false; origin = origin });
 read_state("canister", CID.id, "module_hash");
+let CID3 = call S.deployCanister(null, opt record { arg = blob ""; wasm_module = empty_wasm; bypass_wasm_transform = opt true });
+let CID3 = CID3[0];
+call S.transferOwnership(CID3, vec {CID3.id; S});
 
 // Immediately expire
 let init = opt record {
@@ -98,3 +106,4 @@ call S.getCanisterId(nonce, origin);
 fail read_state("canister", CID.id, "module_hash");
 assert _ ~= "absent";
 read_state("canister", CID2.id, "module_hash");
+read_state("canister", CID3.id, "module_hash");

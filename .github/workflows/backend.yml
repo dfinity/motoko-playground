@@ -14,9 +14,9 @@ jobs:
     strategy:
       fail-fast: false
     env:
-      DFX_VERSION: 0.20.0
-      IC_REPL_VERSION: 0.7.4
-      MOC_VERSION: 0.12.0
+      DFX_VERSION: 0.22.0
+      IC_REPL_VERSION: 0.7.5
+      MOPS_VERSION: 0.2.0
     steps:
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
@@ -48,20 +48,21 @@ jobs:
           npm i -g ic-mops
           dfx cache install
           cd $(dfx cache show)
-          wget https://github.com/dfinity/motoko/releases/download/$MOC_VERSION/motoko-Linux-x86_64-$MOC_VERSION.tar.gz
-          tar zxvf motoko-Linux-x86_64-$MOC_VERSION.tar.gz
+          wget https://github.com/chenyan2002/mops-cli/releases/download/$MOPS_VERSION/mops-cli-linux64
+          cp ./mops-cli-linux64 /usr/local/bin/mops-cli
+          chmod a+x /usr/local/bin/mops-cli
       - name: Start dfx
         run: |
           dfx start --background
-      - name: Checkout base branch
-        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.base_ref }}
-      - name: Deploy main branch
-        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
-        run: |
-          dfx deploy backend
+#      - name: Checkout base branch
+#        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
+#        uses: actions/checkout@v4
+#        with:
+#          ref: ${{ github.base_ref }}
+#      - name: Deploy main branch
+#        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
+#        run: |
+#          dfx deploy backend
       - uses: actions/checkout@v4
       - name: Deploy current branch
         run: dfx deploy backend
@@ -69,13 +70,13 @@ jobs:
         run: |
           (for f in service/pool/tests/*.test.sh; do
             echo "==== Run test $f ===="
-            ic-repl "$f" || exit
+            ic-repl -v "$f" || exit
           done)
       - name: Actor class test
         run: |
           cd ./service/pool/tests/actor_class
           dfx canister create --all
           dfx build
-          ic-repl ./test.sh
+          ic-repl -v ./test.sh
       - name: Stop dfx
         run: dfx stop

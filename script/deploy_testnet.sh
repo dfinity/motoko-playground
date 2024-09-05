@@ -26,10 +26,10 @@ function install(wasm, args, cycles) {
 
 function start_testnet() {
   "creating a new testnet...";
-  let wasm = file("./pool.wasm");
+  let wasm = file("../target/pool/pool.wasm");
   let backend_init = opt record {
     cycles_per_canister = 105_000_000_000;
-    max_num_canisters = 2;
+    max_num_canisters = 9;
     nonce_time_to_live = 300_000_000_000;
     canister_time_to_live = 1200_000_000_000;
     max_family_tree_size = 5;
@@ -37,7 +37,7 @@ function start_testnet() {
   };
   let frontend_init = opt record {
     cycles_per_canister = 105_000_000_000;
-    max_num_canisters = 2;
+    max_num_canisters = 9;
     nonce_time_to_live = 300_000_000_000;
     canister_time_to_live = 1200_000_000_000;
     max_family_tree_size = 5;
@@ -56,19 +56,33 @@ function start_testnet() {
 
 function populate_asset_canister(Frontend, n) {
   let asset = file("./chunked_map.wasm");
+  let deploy_arg = opt record { arg = encode (); wasm_module = asset; bypass_wasm_transform = opt true };
   while gt(n, 0) {
-    let info = call Frontend.deployCanister(null, opt record { arg = encode (); wasm_module = asset; });
-    assert info[1] == variant { install };
-    stringify("deploying asset canister ", n, " with id ", info[0].id);
-    let n = sub(n, 1);
+      if lt(n, 5) {
+          let info = call Frontend.deployCanister(null, deploy_arg);
+          stringify("deploying asset canister ", n, " with id ", stringify(info));
+          let n = sub(n, 1);
+      } else {
+          let info = par_call [Frontend.deployCanister(null, deploy_arg), Frontend.deployCanister(null, deploy_arg), Frontend.deployCanister(null, deploy_arg), Frontend.deployCanister(null, deploy_arg), Frontend.deployCanister(null, deploy_arg)];
+          stringify("deploying asset canister ", n, " with id ", stringify(info));
+          let n = sub(n, 5);
+      };
   };
   call Frontend.releaseAllCanisters();
 };
 function populate_backend(Backend, n) {
+  let nonce = record { timestamp = 0; nonce = 0 };
+  let origin = record { origin = "admin"; tags = vec {} };
   while gt(n, 0) {
-      let info = call Backend.getCanisterId(record { timestamp = 0; nonce = 0 }, record { origin = "admin"; tags = vec {} });
-      stringify("init backend canister ", n, " with id ", info.id);
-      let n = sub(n, 1);
+      if lt(n, 5) {
+          let info = call Backend.getCanisterId(nonce, origin);
+          stringify("init backend canister ", n, " with id ", stringify(info));
+          let n = sub(n, 1);
+      } else {
+          let info = par_call [Backend.getCanisterId(nonce, origin), Backend.getCanisterId(nonce, origin), Backend.getCanisterId(nonce, origin), Backend.getCanisterId(nonce, origin), Backend.getCanisterId(nonce, origin)];
+          stringify("init backend canister ", n, " with id ", stringify(info));
+          let n = sub(n, 5);
+      };
   };
   call Backend.releaseAllCanisters();
 };
