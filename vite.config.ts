@@ -21,6 +21,19 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: "build",
       emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: [
+              "react",
+              "react-dom",
+              "react-markdown",
+              "prettier-plugin-motoko",
+            ],
+            agent: ["@dfinity/agent", "@dfinity/candid", "@dfinity/principal"],
+          },
+        },
+      },
     },
     plugins: [
       react(),
