@@ -10,6 +10,7 @@ import List "mo:base/List";
 import Option "mo:base/Option";
 import Int "mo:base/Int";
 import Timer "mo:base/Timer";
+import ICType "./IC";
 
 module {
     public type InitParams = {
@@ -80,12 +81,14 @@ module {
         let timers = TrieMap.TrieMap<Principal, Timer.TimerId>(Principal.equal, Principal.hash);
         var snapshots = TrieMap.TrieMap<Principal, Blob>(Principal.equal, Principal.hash);
         // Cycles spent by each canister, not persisted for upgrades
-        var cycles = TrieMap.TrieMap<Principal, Int>(Principal.equal, Principal.hash);
+        let cycles = TrieMap.TrieMap<Principal, Int>(Principal.equal, Principal.hash);
 
         public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
 
         public func getExpiredCanisterId() : NewId {
             if (len < size) {
+                // increment len here to prevent race condition
+                len += 1;
                 #newId
             } else {
                 switch (tree.entries().next()) {
@@ -124,10 +127,10 @@ module {
         };
 
         public func add(info: CanisterInfo) {
-            if (len >= size) {
+            if (len > size) {
                 assert false;
             };
-            len += 1;
+            // len already incremented in getExpiredCanisterId
             tree.insert info;
             metadata.put(info.id, (info.timestamp, false));
         };

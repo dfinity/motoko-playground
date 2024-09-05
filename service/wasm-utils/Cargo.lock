@@ -297,9 +297,9 @@ dependencies = [
 
 [[package]]
 name = "ic-wasm"
-version = "0.8.3"
+version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8cd6705c8489fba80aa4bbef0f083d9ead20d7c2471b7e3a60ca2790c91344a"
+checksum = "5574bf249d201ddd2c27c3fdf178ddacb1be1c705c8a5b4c1339c393758f2bf2"
 dependencies = [
  "candid",
  "libflate",

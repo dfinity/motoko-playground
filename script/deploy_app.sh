@@ -44,7 +44,7 @@ function build_frontend(name) {
 function deploy_frontend(dist) {
   let expired = ite(exist(frontend_info), is_expired(frontend_info, frontend_init?.canister_time_to_live), true);
   let info = ite(exist(frontend_info), opt frontend_info, null);
-  if expired {
+  if expired { // TODO: check it is also not transferred
       "Frontend caniter expired, fetching a new one...";
       let new_info = call Frontend.deployCanister(info, null);
   } else {

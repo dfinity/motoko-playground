@@ -157,7 +157,8 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             await IC.update_settings { canister_id = info.id; settings };
             statsByOrigin.addCanister({ origin = "external"; tags = [] });
         } else {
-            throw Error.reject "Cannot find canister";
+            stats := Logs.updateStats(stats, #mismatch);
+            throw Error.reject "transferOwnership: Cannot find canister";
         };
     };
     // Install code after transferOwnership. This call can fail if the user removes the playground from its controllers.
@@ -166,6 +167,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "Only called by controller";
         };
         if (pool.findId(args.canister_id)) {
+            stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Canister is still solely controlled by the playground";
         };
         await IC.install_code args;
@@ -180,10 +182,15 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         let (info, mode) = switch (opt_info) {
         case null { await* getExpiredCanisterInfo(origin) };
         case (?info) {
-                 if (not pool.find info) {
-                     await* getExpiredCanisterInfo(origin)
-                 } else {
+                 if (pool.find info) {
                      (info, #upgrade)
+                 } else {
+                     if (pool.findId(info.id)) {
+                         await* getExpiredCanisterInfo(origin)
+                     } else {
+                         stats := Logs.updateStats(stats, #mismatch);
+                         throw Error.reject "deployCanister: Cannot find canister";
+                     };
                  };
              };
         };
@@ -216,7 +223,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                  updateTimer<system>(newInfo);
                  (newInfo, mode);
              };
-        case null { throw Error.reject "Cannot find canister" };
+        case null { throw Error.reject "pool.refresh: Cannot find canister" };
         };
     };
 
@@ -617,14 +624,37 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         let cycles = 250_000_000_000;
         if (pool.spendCycles(caller, cycles)) {
             Cycles.add<system> cycles;
-            // transform doesn't work at the moment, as it require self query call for transform
-            let res = await IC.http_request(request);
+            let new_request = switch (request.transform) {
+            case null {
+                     { request with transform = null };
+                 };
+            case (?transform) {
+                     let payload = { caller; transform };
+                     let fake_actor: actor { __transform: ICType.transform_function } = actor(Principal.toText(Principal.fromActor this));
+                     let new_transform = ?{ function = fake_actor.__transform; context = to_candid(payload) };
+                     { request with transform = new_transform };
+                 };
+            };
+            let res = await IC.http_request(new_request);
             let refunded = -Cycles.refunded();
             assert(pool.spendCycles(caller, refunded) == true);
             res;
         } else {
             throw Error.reject "http_request exceeds cycle spend limit";
         };
+    };
+    public shared composite query({ caller }) func __transform({context: Blob; response: ICType.http_request_result}) : async ICType.http_request_result {
+        // TODO Remove anonymous identity once https://github.com/dfinity/ic/pull/1337 is released
+        if (caller != Principal.fromText("aaaaa-aa") and caller != Principal.fromText("2vxsx-fae")) {
+            throw Error.reject "Only the management canister can call __transform";
+        };
+        let ?raw : ?{ caller: Principal; transform: {context: Blob; function: ICType.transform_function} } = from_candid context else {
+            throw Error.reject "__transform: Invalid context";
+        };
+        if (not pool.findId(raw.caller)) {
+            throw Error.reject "__transform: Only a canister managed by the Motoko Playground can call __transform";
+        };
+        await raw.transform.function({ context = raw.transform.context; response });
     };
 
     system func inspect({
@@ -665,6 +695,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #delete_canister_snapshot : Any;
             #load_canister_snapshot : Any;
             #_ttp_request : Any;
+            #__transform : Any;
         };
     }) : Bool {
         switch msg {
@@ -681,6 +712,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             case (#delete_canister_snapshot _) false;
             case (#load_canister_snapshot _) false;
             case (#_ttp_request _) false;
+            case (#__transform _) false;
             case _ true;
         };
     };

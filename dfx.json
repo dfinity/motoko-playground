@@ -13,32 +13,27 @@
       ]
     },
     "backend": {
+      "type": "custom",
       "dependencies": ["wasm-utils"],
       "specified_id": "mwrha-maaaa-aaaab-qabqq-cai",
-      "main": "service/pool/Main.mo",
-      "type": "motoko",
+      "build": ["mops-cli build service/pool/Main.mo"],
+      "candid": "target/pool/pool.did",
+      "wasm": "target/pool/pool.wasm",
       "optimize": "cycles"
     },
     "saved": {
+      "type": "custom",
       "specified_id": "vhtho-raaaa-aaaab-qadoq-cai",
-      "main": "service/saved/Saved.mo",
-      "type": "motoko",
+      "build": ["mops-cli build service/saved/Saved.mo"],
+      "candid": "target/Saved/Saved.did",
+      "wasm": "target/Saved/Saved.wasm",
       "optimize": "cycles"
     },
     "react_app": {
       "dependencies": ["backend", "saved"],
       "specified_id": "m7sm4-2iaaa-aaaab-qabra-cai",
-      "frontend": {
-        "entrypoint": "public/index.html"
-      },
       "source": ["build"],
       "type": "assets"
-    }
-  },
-  "defaults": {
-    "build": {
-      "output": "build",
-      "packtool": "mops sources"
     }
   },
   "output_env_file": ".env"

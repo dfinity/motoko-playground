@@ -69,11 +69,16 @@ export const exampleProjects: ExampleProject[] = [
     repo: { dir: "motoko/basic_dao/src", ...example },
     readme: `${readmeURL}/basic_dao/README.md`,
   },
+  {
+    name: "Http Outcall",
+    repo: { dir: "motoko/send_http_get/src/send_http_get_backend", ...example },
+    readme: `${readmeURL}/send_http_get/README.md`,
+  },
 ];
 
 export async function fetchExample(
   worker,
-  proj: ExampleProject
+  proj: ExampleProject,
 ): Promise<Record<string, string> | undefined> {
   let files = await worker.fetchGithub(proj.repo);
   if (files && proj.readme) {

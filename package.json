@@ -53,7 +53,6 @@
     "prestart": "dfx start --background; [ -f .dfx/local/canister_ids.json ] || dfx deploy",
     "predeploy": "npm run prestart",
     "prepare": "husky",
-    "postinstall": "mops install",
     "dev": "vite"
   },
   "lint-staged": {
