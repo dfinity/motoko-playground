@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 
-// @ts-ignore
-// eslint-disable-next-line import/no-webpack-loader-syntax
-import MocWorker from "comlink-loader!./workers/moc";
+import { wrap } from "comlink";
 
 import { CandidUI } from "./components/CandidUI";
 import { Editor } from "./components/Editor";
@@ -63,7 +61,9 @@ const AppContainer = styled.div<{ candidWidth: string; consoleHeight: string }>`
   --consoleHeight: ${(props) => props.consoleHeight ?? 0};
 `;
 
-const worker = new MocWorker();
+const worker = wrap(
+  new Worker(new URL("./workers/moc.ts", import.meta.url), { type: "module" })
+);
 const urlParams = new URLSearchParams(window.location.search);
 const hasUrlParams = !!(
   urlParams.get("git") ||

@@ -78,7 +78,7 @@ export const exampleProjects: ExampleProject[] = [
 
 export async function fetchExample(
   worker,
-  proj: ExampleProject
+  proj: ExampleProject,
 ): Promise<Record<string, string> | undefined> {
   let files = await worker.fetchGithub(proj.repo);
   if (files && proj.readme) {

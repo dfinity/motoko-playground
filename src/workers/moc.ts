@@ -1,14 +1,10 @@
-// Polyfill for development environment (https://github.com/pmmmwh/react-refresh-webpack-plugin/issues/24)
-(global as any).$RefreshReg$ = () => {};
-(global as any).$RefreshSig$$ = () => () => {};
-
-// @ts-ignore
-importScripts("./moc.js");
+import * as Comlink from "comlink";
+import { loadMoc } from "./mocShim.js";
+import { fetchPackage, fetchGithub, saveWorkplaceToMotoko } from "./file";
+import { pow } from "./pow";
 
 export * from "./pow";
 export * from "./file";
-
-declare var Motoko: any;
 
 export type MocAction =
   | { type: "save"; file: string; content: string }
@@ -25,8 +21,8 @@ export type MocAction =
   | { type: "printDeps"; file: string };
 
 // Export as you would in a normal module:
-export function Moc(action: MocAction) {
-  if (typeof Motoko === "undefined") return;
+export async function Moc(action: MocAction) {
+  const Motoko = await loadMoc();
   switch (action.type) {
     case "save":
       return Motoko.saveFile(action.file, action.content);
@@ -55,4 +51,24 @@ export function Moc(action: MocAction) {
   }
 }
 
-Motoko.saveFile("Main.mo", "");
+// Initialize Motoko when the worker starts
+loadMoc()
+  .then((Motoko) => {
+    if (Motoko) {
+      Motoko.saveFile("Main.mo", "");
+    } else {
+      console.error("Failed to initialize Motoko");
+    }
+  })
+  .catch((error) => {
+    console.error("Error during Motoko initialization:", error);
+    throw error;
+  });
+
+Comlink.expose({
+  Moc,
+  fetchPackage,
+  fetchGithub,
+  saveWorkplaceToMotoko,
+  pow,
+});

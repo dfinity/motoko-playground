@@ -1,33 +1,28 @@
 import { configure } from "motoko/contrib/monaco";
 import prettier from "prettier";
-
-const errorCodes = require("motoko/contrib/generated/errorCodes.json");
+import * as motokoPlugin from "prettier-plugin-motoko/src/environments/web";
+import errorCodes from "motoko/contrib/generated/errorCodes.json";
 
 export const configureMonaco = (monaco) => {
   configure(monaco, {
     snippets: true,
   });
 
-  // Asynchronously load WASM
-  import("prettier-plugin-motoko/lib/environments/web")
-    .then((motokoPlugin) => {
-      monaco.languages.registerDocumentFormattingEditProvider("motoko", {
-        provideDocumentFormattingEdits(model, options, token) {
-          const source = model.getValue();
-          const formatted = prettier.format(source, {
-            plugins: [motokoPlugin],
-            filepath: "*.mo",
-          });
-          return [
-            {
-              range: model.getFullModelRange(),
-              text: formatted,
-            },
-          ];
-        },
+  monaco.languages.registerDocumentFormattingEditProvider("motoko", {
+    provideDocumentFormattingEdits(model, options, token) {
+      const source = model.getValue();
+      const formatted = prettier.format(source, {
+        plugins: [motokoPlugin],
+        filepath: "*.mo",
       });
-    })
-    .catch((err) => console.error(err));
+      return [
+        {
+          range: model.getFullModelRange(),
+          text: formatted,
+        },
+      ];
+    },
+  });
 
   monaco.languages.registerHoverProvider("motoko", {
     provideHover(model, position, ...args) {
