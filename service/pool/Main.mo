@@ -651,10 +651,12 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
     };
     public shared composite query({ caller }) func __transform({context: Blob; response: ICType.http_request_result}) : async ICType.http_request_result {
+        // TODO Remove anonymous identity once https://github.com/dfinity/ic/pull/1337 is released
         if (caller != Principal.fromText("aaaaa-aa") and caller != Principal.fromText("2vxsx-fae")) {
             throw Error.reject "Only the management canister can call __transform";
         };
         let id = Principal.fromBlob context;
+        // Query state may be behind the latest commit point, so there is a small chance that id is not in the pool yet.
         switch (pool.getTransform(id)) {
             case null {
                 throw Error.reject "No transform found";
