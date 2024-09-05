@@ -617,7 +617,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     public shared func load_canister_snapshot({}) : async () {
         throw Error.reject("Cannot call load_canister_snapshot from canister itself");
     };
-    public shared ({ caller }) func _ttp_request(request : ICType.http_request_args_original) : async ICType.http_request_result {
+    public shared ({ caller }) func _ttp_request(request : ICType.http_request_args) : async ICType.http_request_result {
         if (not pool.findId caller) {
             throw Error.reject "Only a canister managed by the Motoko Playground can call http_request";
         };
@@ -626,11 +626,12 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             Cycles.add<system> cycles;
             let new_request = switch (request.transform) {
             case null {
-                     { request with transform = null : ?{ context: Blob; function: ICType.transform_composite_function } };
+                     { request with transform = null };
                  };
             case (?transform) {
                      pool.rememberTransform(caller, transform);
-                     let new_transform = ?{ function = __transform; context = Principal.toBlob caller };
+                     let fake_actor: actor { __transform: ICType.transform_function } = actor(Principal.toText(Principal.fromActor this));
+                     let new_transform = ?{ function = fake_actor.__transform; context = Principal.toBlob caller };
                      { request with transform = new_transform };
                  };
             };
@@ -644,7 +645,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
     };
     public shared composite query({ caller }) func __transform({context: Blob; response: ICType.http_request_result}) : async ICType.http_request_result {
-        if (caller != Principal.fromText("aaaaa-aa")) {
+        if (caller != Principal.fromText("aaaaa-aa") and caller != Principal.fromText("2vxsx-fae")) {
             throw Error.reject "Only the management canister can call __transform";
         };
         let id = Principal.fromBlob context;

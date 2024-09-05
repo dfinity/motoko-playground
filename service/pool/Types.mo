@@ -82,7 +82,7 @@ module {
         var snapshots = TrieMap.TrieMap<Principal, Blob>(Principal.equal, Principal.hash);
         // Cycles spent by each canister, not persisted for upgrades
         let cycles = TrieMap.TrieMap<Principal, Int>(Principal.equal, Principal.hash);
-        type TransformType = { context: Blob; function: ICType.transform_query_function };
+        type TransformType = { context: Blob; function: ICType.transform_function };
         let transforms = TrieMap.TrieMap<Principal, TransformType>(Principal.equal, Principal.hash);
 
         public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
