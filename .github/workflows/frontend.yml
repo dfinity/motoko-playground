@@ -21,9 +21,9 @@ jobs:
           - 18
           - 20
     env:
-      DFX_VERSION: 0.20.0
+      DFX_VERSION: 0.22.0
       SKIP_WASM: true
-      MOC_VERSION: 0.12.0
+      MOPS_VERSION: 0.2.0
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js ${{ matrix.node }}
@@ -41,8 +41,9 @@ jobs:
           npm i -g ic-mops
           dfx cache install
           cd $(dfx cache show)
-          wget https://github.com/dfinity/motoko/releases/download/$MOC_VERSION/motoko-Linux-x86_64-$MOC_VERSION.tar.gz
-          tar zxvf motoko-Linux-x86_64-$MOC_VERSION.tar.gz
+          wget https://github.com/chenyan2002/mops-cli/releases/download/$MOPS_VERSION/mops-cli-linux64
+          cp ./mops-cli-linux64 /usr/local/bin/mops-cli
+          chmod a+x /usr/local/bin/mops-cli
       - name: Start dfx
         run: |
           dfx start --background
