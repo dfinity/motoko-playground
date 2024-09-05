@@ -629,23 +629,16 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                      { request with transform = null };
                  };
             case (?transform) {
-                     if (Option.isSome(pool.getTransform(caller))) {
-                         throw Error.reject "No concurrent http_request allowed";
-                     };
-                     pool.rememberTransform(caller, transform);
+                     let payload = { caller; transform };
                      let fake_actor: actor { __transform: ICType.transform_function } = actor(Principal.toText(Principal.fromActor this));
-                     let new_transform = ?{ function = fake_actor.__transform; context = Principal.toBlob caller };
+                     let new_transform = ?{ function = fake_actor.__transform; context = to_candid(payload) };
                      { request with transform = new_transform };
                  };
             };
-            try {
-                let res = await IC.http_request(new_request);
-                let refunded = -Cycles.refunded();
-                assert(pool.spendCycles(caller, refunded) == true);
-                res;
-            } finally {
-                pool.removeTransform(caller);
-            };
+            let res = await IC.http_request(new_request);
+            let refunded = -Cycles.refunded();
+            assert(pool.spendCycles(caller, refunded) == true);
+            res;
         } else {
             throw Error.reject "http_request exceeds cycle spend limit";
         };
@@ -655,16 +648,13 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         if (caller != Principal.fromText("aaaaa-aa") and caller != Principal.fromText("2vxsx-fae")) {
             throw Error.reject "Only the management canister can call __transform";
         };
-        let id = Principal.fromBlob context;
-        // Query state may be behind the latest commit point, so there is a small chance that id is not in the pool yet.
-        switch (pool.getTransform(id)) {
-            case null {
-                throw Error.reject "No transform found";
-                 };
-            case (?transform) {
-                     await transform.function({ context = transform.context; response });
-                 };
+        let ?raw : ?{ caller: Principal; transform: {context: Blob; function: ICType.transform_function} } = from_candid context else {
+            throw Error.reject "__transform: Invalid context";
         };
+        if (not pool.findId(raw.caller)) {
+            throw Error.reject "__transform: Only a canister managed by the Motoko Playground can call __transform";
+        };
+        await raw.transform.function({ context = raw.transform.context; response });
     };
 
     system func inspect({
