@@ -622,7 +622,6 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "Only a canister managed by the Motoko Playground can call http_request";
         };
         let cycles = 250_000_000_000;
-        try {
         if (pool.spendCycles(caller, cycles)) {
             Cycles.add<system> cycles;
             let new_request = switch (request.transform) {
@@ -639,15 +638,16 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                      { request with transform = new_transform };
                  };
             };
-            let res = await IC.http_request(new_request);
-            let refunded = -Cycles.refunded();
-            assert(pool.spendCycles(caller, refunded) == true);
-            res;
+            try {
+                let res = await IC.http_request(new_request);
+                let refunded = -Cycles.refunded();
+                assert(pool.spendCycles(caller, refunded) == true);
+                res;
+            } finally {
+                pool.removeTransform(caller);
+            };
         } else {
             throw Error.reject "http_request exceeds cycle spend limit";
-        };
-        } finally {
-            pool.removeTransform(caller);
         };
     };
     public shared composite query({ caller }) func __transform({context: Blob; response: ICType.http_request_result}) : async ICType.http_request_result {
