@@ -186,6 +186,11 @@ export function App() {
     cursorBlink: true,
     fontSize: 14,
     fontFamily: "monospace",
+    theme: {
+      background: "#ffffff",
+      foreground: "#000000",
+      cursor: "#000000",
+    },
   });
 
   function closeProjectModal() {

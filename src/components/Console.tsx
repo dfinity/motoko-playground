@@ -41,6 +41,7 @@ const Tab = styled.button<{ active: boolean }>`
 const TerminalContainer = styled.div<{ isActive: boolean }>`
   height: calc(var(--consoleHeight) - 2.4rem);
   padding: 0.5rem;
+  margin-left: 1rem;
   display: ${(props) => (props.isActive ? "block" : "none")};
 `;
 
