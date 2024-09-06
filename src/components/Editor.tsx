@@ -92,6 +92,7 @@ type CodeEditor = import("monaco-editor").editor.IStandaloneCodeEditor;
 export function Editor({
   state,
   logger,
+  terminal,
   setConsoleHeight,
   deploySetter,
   isDeploying,
@@ -107,8 +108,8 @@ export function Editor({
   const mainFile = fileName.endsWith(".mo")
     ? fileName
     : state.files["Main.mo"]
-    ? "Main.mo"
-    : "";
+      ? "Main.mo"
+      : "";
 
   const monaco = useMonaco();
   const checkFileAddMarkers = async () => {
@@ -120,7 +121,7 @@ export function Editor({
       // @ts-ignore
       monaco?.editor.getModel(`file:///${fileName}`),
       monaco,
-      fileName
+      fileName,
     );
   };
   const saveChanges = async () => {
@@ -253,7 +254,7 @@ export function Editor({
           }}
         />
       </EditorContainer>
-      <Console setConsoleHeight={setConsoleHeight} />
+      <Console setConsoleHeight={setConsoleHeight} terminal={terminal} />
     </EditorColumn>
   );
 }

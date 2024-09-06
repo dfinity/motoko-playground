@@ -4,6 +4,8 @@ import { PanelHeader } from "./shared/PanelHeader";
 import { RightContainer } from "./shared/RightContainer";
 import { useLogging } from "./Logger";
 import iconCaretDown from "../assets/images/icon-caret-down.svg";
+import { Terminal } from "@xterm/xterm";
+import "@xterm/xterm/css/xterm.css";
 
 const LogHeader = styled(PanelHeader)`
   padding: 0 1rem;
@@ -24,11 +26,40 @@ const Button = styled.button`
 const CollapseIcon = styled.img<{ isExpanded: boolean }>`
   ${(props) => (!props.isExpanded ? "transform: rotate(180deg);" : "")}
 `;
+const TabContainer = styled.div`
+  display: flex;
+  border-bottom: 1px solid var(--grey300);
+`;
 
-export function Console({ setConsoleHeight }) {
+const Tab = styled.button<{ active: boolean }>`
+  padding: 0.5rem 1rem;
+  background: ${(props) => (props.active ? "var(--grey200)" : "transparent")};
+  border: none;
+  cursor: pointer;
+`;
+
+const TerminalContainer = styled.div<{ isActive: boolean }>`
+  height: calc(var(--consoleHeight) - 2.4rem);
+  padding: 0.5rem;
+  display: ${(props) => (props.isActive ? "block" : "none")};
+`;
+
+export function Console({ setConsoleHeight, terminal }) {
+  const [activeTab, setActiveTab] = useState("terminal");
+  const terminalRef = useRef<HTMLDivElement>(null);
+
   const [isExpanded, setIsExpanded] = useState(true);
   const lastRef = useRef<HTMLInputElement>(null);
   const logger = useLogging();
+  useEffect(() => {
+    if (
+      terminalRef.current &&
+      terminal &&
+      !terminalRef.current.querySelector(".xterm")
+    ) {
+      terminal.open(terminalRef.current);
+    }
+  }, [terminal]);
   useEffect(() => {
     if (lastRef && lastRef.current) {
       lastRef.current.scrollIntoView({ behavior: "smooth" });
@@ -54,7 +85,18 @@ export function Console({ setConsoleHeight }) {
           </Button>
         </RightContainer>
       </LogHeader>
-      <LogContent>
+      <TabContainer>
+        <Tab active={activeTab === "log"} onClick={() => setActiveTab("log")}>
+          Log
+        </Tab>
+        <Tab
+          active={activeTab === "terminal"}
+          onClick={() => setActiveTab("terminal")}
+        >
+          Terminal
+        </Tab>
+      </TabContainer>
+      <LogContent style={{ display: activeTab === "log" ? "block" : "none" }}>
         {logger.logLines.map((line, index) => (
           <div
             key={index}
@@ -70,6 +112,10 @@ export function Console({ setConsoleHeight }) {
           </div>
         ))}
       </LogContent>
+      <TerminalContainer
+        ref={terminalRef}
+        isActive={activeTab === "terminal"}
+      />
     </>
   );
 }

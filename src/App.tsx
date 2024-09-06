@@ -22,7 +22,8 @@ import { ProjectModal } from "./components/ProjectModal";
 import { DeployModal, DeploySetter } from "./components/DeployModal";
 import { backend, saved } from "./config/actor";
 import { setupEditorIntegration } from "./integrations/editorIntegration";
-import { npmRun, loadContainer } from "./webcontainer";
+import { npmRun } from "./webcontainer";
+import { Terminal } from "@xterm/xterm";
 
 const MOC_VERSION = "0.12.1";
 
@@ -181,6 +182,11 @@ export function App() {
   };
 
   const logger = useLogging();
+  const terminal = new Terminal({
+    cursorBlink: true,
+    fontSize: 14,
+    fontFamily: "monospace",
+  });
 
   function closeProjectModal() {
     setIsProjectModalOpen(false);
@@ -242,7 +248,7 @@ export function App() {
       });
       logger.log(`moc version ${MOC_VERSION}`);
       logger.log(`base library version ${baseInfo.version}`);
-      await npmRun(logger.log);
+      await npmRun(terminal);
       // fetch code after loading base library
       if (hasUrlParams) {
         const files = await fetchFromUrlParams(workplaceDispatch);
@@ -318,6 +324,7 @@ export function App() {
             <Editor
               state={workplaceState}
               logger={logger}
+              terminal={terminal}
               deploySetter={deploySetter}
               isDeploying={isDeploying}
               setConsoleHeight={setConsoleHeight}
