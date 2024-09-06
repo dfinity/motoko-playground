@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 
-import { wrap } from "comlink";
+import * as Comlink from "comlink";
 
 import { CandidUI } from "./components/CandidUI";
 import { Editor } from "./components/Editor";
@@ -22,6 +22,7 @@ import { ProjectModal } from "./components/ProjectModal";
 import { DeployModal, DeploySetter } from "./components/DeployModal";
 import { backend, saved } from "./config/actor";
 import { setupEditorIntegration } from "./integrations/editorIntegration";
+import { npmRun, loadContainer } from "./webcontainer";
 
 const MOC_VERSION = "0.12.1";
 
@@ -61,8 +62,8 @@ const AppContainer = styled.div<{ candidWidth: string; consoleHeight: string }>`
   --consoleHeight: ${(props) => props.consoleHeight ?? 0};
 `;
 
-const worker = wrap(
-  new Worker(new URL("./workers/moc.ts", import.meta.url), { type: "module" })
+const worker = Comlink.wrap(
+  new Worker(new URL("./workers/moc.ts", import.meta.url), { type: "module" }),
 );
 const urlParams = new URLSearchParams(window.location.search);
 const hasUrlParams = !!(
@@ -71,7 +72,7 @@ const hasUrlParams = !!(
   urlParams.get("post")
 );
 async function fetchFromUrlParams(
-  dispatch: (action: WorkplaceReducerAction) => void
+  dispatch: (action: WorkplaceReducerAction) => void,
 ): Promise<Record<string, string> | undefined> {
   const git = urlParams.get("git");
   const tag = urlParams.get("tag");
@@ -103,7 +104,7 @@ async function fetchFromUrlParams(
         project.files.map((file) => {
           worker.Moc({ type: "save", file: file.name, content: file.content });
           return [file.name, file.content];
-        })
+        }),
       );
       if (project.packages.length) {
         for (const pack of project.packages[0]) {
@@ -154,7 +155,7 @@ export function App() {
   const [workplaceState, workplaceDispatch] = useReducer(
     workplaceReducer.reduce,
     {},
-    workplaceReducer.init
+    workplaceReducer.init,
   );
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(!hasUrlParams);
   const [isFirstVisit, setIsFirstVisit] = useState(!hasUrlParams);
@@ -195,7 +196,7 @@ export function App() {
     logger.log(
       `Use this link to access the code:\n${
         window.location.origin
-      }/?tag=${hash.toString()}`
+      }/?tag=${hash.toString()}`,
     );
   }
 
@@ -218,7 +219,7 @@ export function App() {
         },
       });
     },
-    [workplaceDispatch]
+    [workplaceDispatch],
   );
 
   // Add the Motoko package to allow for compilation / checking
@@ -241,6 +242,7 @@ export function App() {
       });
       logger.log(`moc version ${MOC_VERSION}`);
       logger.log(`base library version ${baseInfo.version}`);
+      await npmRun(logger.log);
       // fetch code after loading base library
       if (hasUrlParams) {
         const files = await fetchFromUrlParams(workplaceDispatch);
@@ -337,8 +339,8 @@ export function App() {
                   // because message.caller can call other canisters to spawn new children.
                   const nameMap = Object.fromEntries(
                     Object.entries(workplaceState.canisters).map(
-                      ([name, info]) => [info.id, name]
-                    )
+                      ([name, info]) => [info.id, name],
+                    ),
                   );
                   Object.entries(workplaceState.canisters).forEach(
                     async ([_, info]) => {
@@ -359,7 +361,7 @@ export function App() {
                           });
                         });
                       });
-                    }
+                    },
                   );
                 }}
               />
