@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, isValidElement } from "react";
 import { PanelHeader } from "./shared/PanelHeader";
 import { RightContainer } from "./shared/RightContainer";
 import { useLogging } from "./Logger";
@@ -56,9 +56,18 @@ export function Console({ setConsoleHeight }) {
       </LogHeader>
       <LogContent>
         {logger.logLines.map((line, index) => (
-          <pre key={index} ref={lastRef} style={{ whiteSpace: "normal" }}>
-            {line}
-          </pre>
+          <div
+            key={index}
+            ref={index === logger.logLines.length - 1 ? lastRef : null}
+          >
+            {isValidElement(line) ? (
+              line
+            ) : (
+              <pre style={{ whiteSpace: "normal", margin: 0 }}>
+                {String(line)}
+              </pre>
+            )}
+          </div>
         ))}
       </LogContent>
     </>

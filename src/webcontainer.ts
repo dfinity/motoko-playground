@@ -1,6 +1,9 @@
 import { WebContainer } from "@webcontainer/api";
+import Convert from "ansi-to-html";
+import React from "react";
 
-let containerPromise;
+let containerPromise: Promise<WebContainer> | null = null;
+const convert = new Convert();
 
 export const loadContainer = async () => {
   if (!containerPromise) {
@@ -25,21 +28,27 @@ export const loadContainer = async () => {
   return containerPromise;
 };
 
-export async function npmRun(logCallback: (line: string) => void) {
+export async function npmRun(
+  logCallback: (line: string | React.ReactNode) => void,
+) {
   let container = await loadContainer();
   const installProcess = await container.spawn("npm", ["install"]);
   installProcess.output.pipeTo(
     new WritableStream({
-      write(data) {
-        logCallback(data);
-        //console.log(data);
+      write(text) {
+        text.split("\n").forEach((line) => {
+          if (line.trim() !== "") {
+            // Convert ANSI to HTML
+            const htmlLine = convert.toHtml(line);
+            const htmlElement = React.createElement("pre", {
+              dangerouslySetInnerHTML: { __html: htmlLine },
+            });
+            logCallback(htmlElement);
+          }
+        });
       },
     }),
   );
-  return new Promise<void>((resolve) => {
-    installProcess.exit.then((exitCode) => {
-      logCallback(`npm install exited with code ${exitCode}`);
-      resolve();
-    });
-  });
+  const exitCode = await installProcess.exit;
+  logCallback(`npm install exited with code ${exitCode}`);
 }
