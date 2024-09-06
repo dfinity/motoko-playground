@@ -1,5 +1,12 @@
 [
   {
+    "match": "**/*",
+    "headers": {
+      "Cross-Origin-Embedder-Policy": "require-corp",
+      "Cross-Origin-Opener-Policy": "same-origin",
+    },
+  },
+  {
     "match": ".well-known",
     "ignore": false
   }
