@@ -4,7 +4,6 @@ import { PanelHeader } from "./shared/PanelHeader";
 import { RightContainer } from "./shared/RightContainer";
 import { useLogging } from "./Logger";
 import iconCaretDown from "../assets/images/icon-caret-down.svg";
-import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 
 const LogHeader = styled(PanelHeader)`
@@ -42,6 +41,7 @@ const TerminalContainer = styled.div<{ isActive: boolean }>`
   height: calc(var(--consoleHeight) - 2.4rem);
   padding: 0.5rem;
   margin-left: 1rem;
+  overflow-x: auto;
   display: ${(props) => (props.isActive ? "block" : "none")};
 `;
 

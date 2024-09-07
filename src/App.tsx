@@ -22,7 +22,7 @@ import { ProjectModal } from "./components/ProjectModal";
 import { DeployModal, DeploySetter } from "./components/DeployModal";
 import { backend, saved } from "./config/actor";
 import { setupEditorIntegration } from "./integrations/editorIntegration";
-import { npmRun } from "./webcontainer";
+import { run_cmd } from "./webcontainer";
 import { Terminal } from "@xterm/xterm";
 
 const MOC_VERSION = "0.12.1";
@@ -253,7 +253,8 @@ export function App() {
       });
       logger.log(`moc version ${MOC_VERSION}`);
       logger.log(`base library version ${baseInfo.version}`);
-      await npmRun(terminal);
+      await run_cmd(terminal, "npm", ["install"]);
+      await run_cmd(terminal, "npm", ["run", "build"]);
       // fetch code after loading base library
       if (hasUrlParams) {
         const files = await fetchFromUrlParams(workplaceDispatch);

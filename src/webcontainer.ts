@@ -14,7 +14,16 @@ export const loadContainer = async () => {
               dependencies: {
                 vite: "^4.0.4",
               },
+              scripts: {
+                build: "vite build",
+                dev: "vite",
+              },
             }),
+          },
+        },
+        "index.html": {
+          file: {
+            contents: "<p>Hello Vite!</p>",
           },
         },
       };
@@ -25,16 +34,18 @@ export const loadContainer = async () => {
   return containerPromise;
 };
 
-export async function npmRun(terminal) {
+export async function run_cmd(terminal, cmd: string, args: string[]) {
   let container = await loadContainer();
-  const installProcess = await container.spawn("npm", ["install"]);
+  terminal.writeln(`$ ${cmd} ${args}`);
+  const installProcess = await container.spawn(cmd, args);
   installProcess.output.pipeTo(
     new WritableStream({
       write(data) {
         terminal.write(data);
+        terminal.scrollToBottom();
       },
     }),
   );
   const exitCode = await installProcess.exit;
-  terminal.writeln(`\r\nnpm install exited with code ${exitCode}`);
+  terminal.writeln(`\r\nexited with code ${exitCode}`);
 }
