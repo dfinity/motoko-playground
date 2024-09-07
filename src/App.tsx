@@ -22,7 +22,7 @@ import { ProjectModal } from "./components/ProjectModal";
 import { DeployModal, DeploySetter } from "./components/DeployModal";
 import { backend, saved } from "./config/actor";
 import { setupEditorIntegration } from "./integrations/editorIntegration";
-import { run_cmd } from "./webcontainer";
+import * as Container from "./webcontainer";
 import { Terminal } from "@xterm/xterm";
 
 const MOC_VERSION = "0.12.1";
@@ -253,8 +253,9 @@ export function App() {
       });
       logger.log(`moc version ${MOC_VERSION}`);
       logger.log(`base library version ${baseInfo.version}`);
-      await run_cmd(terminal, "npm", ["install"]);
-      await run_cmd(terminal, "npm", ["run", "build"]);
+      await Container.run_cmd(terminal, "npm", ["install"]);
+      await Container.run_cmd(terminal, "npm", ["run", "build"]);
+      await Container.run_cmd(terminal, "node", ["uploadAsset.js", "dist"]);
       // fetch code after loading base library
       if (hasUrlParams) {
         const files = await fetchFromUrlParams(workplaceDispatch);

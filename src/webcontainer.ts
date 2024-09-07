@@ -1,5 +1,8 @@
 import { WebContainer } from "@webcontainer/api";
 
+import packageJson from "./node/package.json?raw";
+import uploadAsset from "./node/uploadAsset.js?raw";
+
 let containerPromise: Promise<WebContainer> | null = null;
 
 export const loadContainer = async () => {
@@ -9,21 +12,17 @@ export const loadContainer = async () => {
       let files = {
         "package.json": {
           file: {
-            contents: JSON.stringify({
-              name: "test",
-              dependencies: {
-                vite: "^4.0.4",
-              },
-              scripts: {
-                build: "vite build",
-                dev: "vite",
-              },
-            }),
+            contents: packageJson,
           },
         },
         "index.html": {
           file: {
-            contents: "<p>Hello Vite!</p>",
+            contents: "<p>Hello World</p>",
+          },
+        },
+        "uploadAsset.js": {
+          file: {
+            contents: uploadAsset,
           },
         },
       };
@@ -35,7 +34,7 @@ export const loadContainer = async () => {
 };
 
 export async function run_cmd(terminal, cmd: string, args: string[]) {
-  let container = await loadContainer();
+  const container = await loadContainer();
   terminal.writeln(`$ ${cmd} ${args}`);
   const installProcess = await container.spawn(cmd, args);
   installProcess.output.pipeTo(

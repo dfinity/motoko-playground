@@ -1,0 +1,18 @@
+{
+  "name": "node-utils",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@dfinity/agent": "^2.0.0",
+    "@dfinity/candid": "^2.0.0",
+    "@dfinity/principal": "^2.0.0",
+    "vite": "^5.2.11",
+    "@dfinity/assets": "^2.0.0",
+    "@dfinity/identity": "^2.0.0",
+    "glob": "^8.1.0"
+  },
+  "scripts": {
+    "build": "vite build",
+    "serve": "vite serve"
+  }
+}
