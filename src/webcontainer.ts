@@ -35,7 +35,6 @@ export class Container {
       },
       {},
     );
-    console.log(files);
     files["etc"] = {
       directory: {
         hosts: {

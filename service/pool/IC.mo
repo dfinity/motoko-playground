@@ -42,6 +42,14 @@ module {
     body : Blob;
     headers : [http_header];
   };
+  public type install_chunked_code_args = {
+    arg : Blob;
+    wasm_module_hash : Blob;
+    mode : { #reinstall; #upgrade; #install };
+    chunk_hashes_list : [{hash : Blob}];
+    target_canister : canister_id;
+    store_canister : ?canister_id;
+  };
   public type user_id = Principal;
   public type wasm_module = Blob;
   public type Self = actor {
@@ -57,6 +65,7 @@ module {
       };
     delete_canister : shared { canister_id : canister_id } -> async ();
     deposit_cycles : shared { canister_id : canister_id } -> async ();
+    install_chunked_code : shared install_chunked_code_args -> async ();
     install_code : shared {
         arg : Blob;
         wasm_module : wasm_module;

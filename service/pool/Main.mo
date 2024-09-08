@@ -243,10 +243,38 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         nonceCache.add nonce;
         (await* getExpiredCanisterInfo(origin)).0;
     };
+    public func installStoredWasm(info : Types.CanisterInfo, args: Types.InstallArgs) : async Types.CanisterInfo {
+        if (pool.find info) {
+            stats := Logs.updateStats(stats, #mismatch);
+            throw Error.reject "Cannot find canister";
+        };
+        assert(info.id == args.canister_id);
+        if (info.timestamp == 0) {
+            stats := Logs.updateStats(stats, #mismatch);
+            throw Error.reject "Cannot install removed canister";
+        };
+        let module_hash = args.wasm_module;
+        await IC.install_chunked_code {
+            arg = args.arg;
+            target_canister = args.canister_id;
+            store_canister = ?(Principal.fromActor this);
+            chunk_hashes_list = [{ hash = module_hash }];
+            wasm_module_hash = module_hash;
+            mode = args.mode;
+        };
+        switch (pool.refresh(info, false)) {
+        case (?newInfo) {
+                 updateTimer<system>(newInfo);
+                 newInfo;
+             };
+        case null { throw Error.reject "Cannot find canister" };
+        };
+    };
     public shared ({ caller }) func installCode(info : Types.CanisterInfo, args : Types.InstallArgs, install_config : Types.InstallConfig) : async Types.CanisterInfo {
         if (not validateOrigin(install_config.origin)) {
             throw Error.reject "Please specify a valid origin";
         };
+        assert(info.id == args.canister_id);
         if (info.timestamp == 0) {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot install removed canister";
@@ -423,7 +451,8 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                         pool.getChildren(id),
                         func(child : Principal) : Types.CanisterInfo {
                             queue := Deque.pushBack(queue, child);
-                            Option.unwrap(pool.info(child));
+                            let ?info = pool.info(child) else { Debug.trap "unwrap pool.info" };
+                            info;
                         },
                     );
                     result := List.push((id, List.toArray children), result);
@@ -668,6 +697,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #getInitParams : Any;
             #getStats : Any;
             #http_request : Any;
+            #installStoredWasm : Any;
             #installCode : Any;
             #deployCanister : Any;
             #releaseAllCanisters : Any;
