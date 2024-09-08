@@ -11,7 +11,9 @@ const CandidPanel = styled.div<{ isExpanded: boolean }>`
   width: var(--candidWidth);
 `;
 
-const CandidFrame = styled.iframe`
+const CandidFrame = styled.iframe.attrs({
+  sandbox: "allow-scripts allow-same-origin allow-forms allow-popups",
+})`
   height: calc(var(--appHeight) - var(--sectionHeaderHeight));
   border: none;
   width: var(--candidWidth);
@@ -78,12 +80,12 @@ export function CandidUI({
               console.warn(
                 "Received Candid UI message from unexpected origin:",
                 origin,
-                `(Expected: ${CANDID_UI_CANISTER_URL})`
+                `(Expected: ${CANDID_UI_CANISTER_URL})`,
               );
               return;
             }
             const message = JSON.parse(
-              data.substring(CANDID_UI_MESSAGE_PREFIX.length)
+              data.substring(CANDID_UI_MESSAGE_PREFIX.length),
             );
             onMessage?.({ origin, source, message });
           }
@@ -93,7 +95,7 @@ export function CandidUI({
         }
       }
     },
-    [onMessage]
+    [onMessage],
   );
 
   useEffect(() => {
@@ -158,7 +160,7 @@ export function CandidUI({
     };
     newWindow.postMessage(
       `${CANDID_UI_MESSAGE_PREFIX}${JSON.stringify(message)}`,
-      CANDID_UI_CANISTER_URL
+      CANDID_UI_CANISTER_URL,
     );
   };
 

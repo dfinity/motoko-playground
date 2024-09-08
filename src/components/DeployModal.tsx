@@ -189,7 +189,7 @@ export function DeployModal({
         inputs.forEach((arg) => arg.render(node));
       }
     },
-    [inputs]
+    [inputs],
   );
 
   const parse = () => {
@@ -246,7 +246,7 @@ export function DeployModal({
       if (result.hasOwnProperty("Err")) {
         const err = result.Err.replaceAll(
           "expected type",
-          "pre-upgrade interface"
+          "pre-upgrade interface",
         );
         await setCandidWarning(err);
         if (err) {
@@ -321,10 +321,11 @@ export function DeployModal({
         args,
         mode,
         compileResult.wasm,
+        false,
         profiling,
         hasStartPage,
         logger,
-        origin
+        origin,
       );
       await isDeploy(false);
       if (info) {

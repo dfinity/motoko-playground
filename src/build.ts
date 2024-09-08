@@ -61,7 +61,7 @@ function logDiags(diagnostics: Diagnostics[], logger: ILoggingStore) {
 
 function get_wasm_metadata(
   wasm: WebAssembly.Module,
-  name: string
+  name: string,
 ): string | undefined {
   let section = WebAssembly.Module.customSections(wasm, `icp:public ${name}`);
   if (section.length === 0) {
@@ -77,7 +77,7 @@ function get_wasm_metadata(
 }
 
 export async function extractCandidFromWasm(
-  wasm: Uint8Array
+  wasm: Uint8Array,
 ): Promise<[string, undefined | string]> {
   const mod = await WebAssembly.compile(wasm);
   const serv = get_wasm_metadata(mod, "candid:service");
@@ -89,7 +89,7 @@ export async function extractCandidFromWasm(
 }
 export async function getBaseDeps(
   worker,
-  entry: string
+  entry: string,
 ): Promise<Array<string>> {
   const visited = new Set();
   const result = new Set();
@@ -122,7 +122,7 @@ export async function getBaseDeps(
 export async function compileCandid(
   worker,
   file: string,
-  logger: ILoggingStore
+  logger: ILoggingStore,
 ): Promise<string | undefined> {
   const candid_result = await worker.Moc({ type: "candid", file });
   if (candid_result.diagnostics) logDiags(candid_result.diagnostics, logger);
@@ -141,7 +141,7 @@ export async function compileCandid(
 export async function compileWasm(
   worker,
   file: string,
-  logger: ILoggingStore
+  logger: ILoggingStore,
 ): Promise<[CompileResult, string[]] | undefined> {
   logger.log("Compiling code...");
   const out = await worker.Moc({ type: "compile", file });
@@ -159,7 +159,7 @@ export async function compileWasm(
     return;
   }
   logger.log(
-    `Compiled Wasm size: ${Math.floor(out.code.wasm.length / 1024)}KB`
+    `Compiled Wasm size: ${Math.floor(out.code.wasm.length / 1024)}KB`,
   );
   let warn_code = [];
   if (out.diagnostics) {
@@ -175,10 +175,11 @@ export async function deploy(
   args: Uint8Array,
   mode: string,
   wasm: Uint8Array,
+  is_asset: boolean,
   profiling: boolean,
   hasStartPage: boolean,
   logger: ILoggingStore,
-  origin: Origin
+  origin: Origin,
 ): Promise<CanisterInfo | undefined> {
   try {
     logger.log(`Deploying code...`);
@@ -189,20 +190,21 @@ export async function deploy(
       }
       logger.log(`Requesting a new canister id...`);
       canisterInfo = await createCanister(worker, logger, origin);
-      updatedState = await install(
-        canisterInfo,
-        wasm,
-        args,
-        "install",
-        profiling,
-        hasStartPage,
-        logger,
-        origin
-      );
     } else {
       if (mode !== "reinstall" && mode !== "upgrade") {
         throw new Error(`Unknown mode ${mode}`);
       }
+    }
+    if (is_asset) {
+      updatedState = await install_asset_canister(
+        canisterInfo,
+        wasm,
+        args,
+        mode,
+        logger,
+        origin,
+      );
+    } else {
       updatedState = await install(
         canisterInfo,
         wasm,
@@ -211,7 +213,7 @@ export async function deploy(
         profiling,
         hasStartPage,
         logger,
-        origin
+        origin,
       );
     }
     //updatedState.candid = candid_source;
@@ -234,7 +236,7 @@ function mkOrigin(origin: Origin, is_install: boolean) {
 async function createCanister(
   worker,
   logger: ILoggingStore,
-  origin: Origin
+  origin: Origin,
 ): Promise<CanisterInfo> {
   const timestamp = BigInt(Date.now()) * BigInt(1_000_000);
   const nonce = await worker.pow(timestamp);
@@ -251,6 +253,32 @@ export async function deleteCanister(info: CanisterInfo) {
   await backend.removeCode(info);
 }
 
+async function install_asset_canister(
+  canisterInfo: CanisterInfo,
+  module_hash: Uint8Array,
+  args: Uint8Array,
+  mode: string,
+  logger: ILoggingStore,
+  origin: Origin,
+): Promise<CanisterInfo> {
+  if (!canisterInfo) {
+    throw new Error("no canister id");
+  }
+  const installArgs = {
+    arg: [...args],
+    wasm_module: [...module_hash],
+    mode: { [mode]: null },
+    canister_id: canisterInfo.id,
+  };
+  const new_info = await backend.installStoredWasm(
+    canisterInfo,
+    installArgs,
+    mkOrigin(origin, true),
+  );
+  logger.log(`Asset canister installed at canister id ${new_info.id}`);
+  return new_info;
+}
+
 async function install(
   canisterInfo: CanisterInfo,
   module: Uint8Array,
@@ -259,7 +287,7 @@ async function install(
   profiling: boolean,
   hasStartPage: boolean,
   logger: ILoggingStore,
-  origin: Origin
+  origin: Origin,
 ): Promise<CanisterInfo> {
   if (!canisterInfo) {
     throw new Error("no canister id");
@@ -282,7 +310,7 @@ async function install(
   const new_info = await backend.installCode(
     canisterInfo,
     installArgs,
-    installConfig
+    installConfig,
   );
   canisterInfo = new_info;
   logger.log(`Code installed at canister id ${canisterInfo.id}`);
