@@ -10,6 +10,15 @@ export const loadContainer = async () => {
     containerPromise = (async () => {
       let container = await WebContainer.boot();
       let files = {
+        etc: {
+          directory: {
+            hosts: {
+              file: {
+                contents: "127.0.0.1 mylocalhost.com",
+              },
+            },
+          },
+        },
         "package.json": {
           file: {
             contents: packageJson,
