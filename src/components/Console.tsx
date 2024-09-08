@@ -5,6 +5,7 @@ import { RightContainer } from "./shared/RightContainer";
 import { useLogging } from "./Logger";
 import iconCaretDown from "../assets/images/icon-caret-down.svg";
 import "@xterm/xterm/css/xterm.css";
+import { FitAddon } from "@xterm/addon-fit";
 
 const LogHeader = styled(PanelHeader)`
   padding: 0 1rem;
@@ -41,26 +42,40 @@ const TerminalContainer = styled.div<{ isActive: boolean }>`
   height: calc(var(--consoleHeight) - 2.4rem);
   padding: 0.5rem;
   margin-left: 1rem;
-  overflow-x: auto;
+  overflow: hidden;
   display: ${(props) => (props.isActive ? "block" : "none")};
 `;
+const fitAddon = new FitAddon();
 
 export function Console({ setConsoleHeight, terminal }) {
   const [activeTab, setActiveTab] = useState("terminal");
   const terminalRef = useRef<HTMLDivElement>(null);
-
   const [isExpanded, setIsExpanded] = useState(true);
   const lastRef = useRef<HTMLInputElement>(null);
   const logger = useLogging();
+
   useEffect(() => {
     if (
       terminalRef.current &&
       terminal &&
       !terminalRef.current.querySelector(".xterm")
     ) {
+      terminal.loadAddon(fitAddon);
       terminal.open(terminalRef.current);
+      fitAddon.fit();
     }
   }, [terminal]);
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver(() => {
+      if (activeTab === "terminal") {
+        fitAddon.fit();
+      }
+    });
+    if (terminalRef.current) {
+      resizeObserver.observe(terminalRef.current);
+    }
+    return () => resizeObserver.disconnect();
+  }, [activeTab]);
   useEffect(() => {
     if (lastRef && lastRef.current) {
       lastRef.current.scrollIntoView({ behavior: "smooth" });

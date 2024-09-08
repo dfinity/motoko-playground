@@ -50,7 +50,6 @@ export async function run_cmd(terminal, cmd: string, args: string[]) {
     new WritableStream({
       write(data) {
         terminal.write(data);
-        terminal.scrollToBottom();
       },
     }),
   );

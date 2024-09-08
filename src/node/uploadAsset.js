@@ -9,7 +9,7 @@ const util = require("util");
 const globPromise = util.promisify(glob);
 //const identity = Ed25519KeyIdentity.fromJSON(fs.readFileSync('./identity.json', 'utf-8'));
 const agent = HttpAgent.createSync({
-  host: "https://icp-api.io", //"http://localhost:4943", //"https://icp-api.io",
+  host: "https://icp-api.io", //"http://mylocalhost.com:4943",
   //identity,
 });
 //agent.fetchRootKey();
