@@ -207,7 +207,7 @@ export const idlFactory = ({ IDL }) => {
     ),
     installExternalCanister: IDL.Func([InstallArgs], [], []),
     installStoredWasm: IDL.Func(
-      [CanisterInfo, InstallArgs],
+      [CanisterInfo, InstallArgs, Origin],
       [CanisterInfo],
       [],
     ),

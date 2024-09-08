@@ -243,7 +243,10 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         nonceCache.add nonce;
         (await* getExpiredCanisterInfo(origin)).0;
     };
-    public func installStoredWasm(info : Types.CanisterInfo, args: Types.InstallArgs) : async Types.CanisterInfo {
+    public func installStoredWasm(info : Types.CanisterInfo, args: Types.InstallArgs, origin: Logs.Origin) : async Types.CanisterInfo {
+        if (not validateOrigin(origin)) {
+            throw Error.reject "Please specify a valid origin";
+        };
         if (pool.find info) {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot find canister";
@@ -262,6 +265,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             wasm_module_hash = module_hash;
             mode = args.mode;
         };
+        statsByOrigin.addInstall({ origin = origin.origin; tags = ["wasm:asset"] });
         switch (pool.refresh(info, false)) {
         case (?newInfo) {
                  updateTimer<system>(newInfo);

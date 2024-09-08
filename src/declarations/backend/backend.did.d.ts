@@ -105,7 +105,10 @@ export interface Self {
     CanisterInfo
   >;
   installExternalCanister: ActorMethod<[InstallArgs], undefined>;
-  installStoredWasm: ActorMethod<[CanisterInfo, InstallArgs], CanisterInfo>;
+  installStoredWasm: ActorMethod<
+    [CanisterInfo, InstallArgs, Origin],
+    CanisterInfo
+  >;
   install_code: ActorMethod<
     [
       {

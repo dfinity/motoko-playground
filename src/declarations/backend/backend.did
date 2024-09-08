@@ -119,7 +119,7 @@ type Self =
    http_request: (HttpRequest) -> (HttpResponse) query;
    installCode: (CanisterInfo, InstallArgs, InstallConfig) -> (CanisterInfo);
    installExternalCanister: (InstallArgs) -> ();
-   installStoredWasm: (CanisterInfo, InstallArgs) -> (CanisterInfo);
+   installStoredWasm: (CanisterInfo, InstallArgs, Origin) -> (CanisterInfo);
    install_code:
     (record {
        arg: blob;
