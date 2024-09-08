@@ -1,58 +1,70 @@
-import { WebContainer } from "@webcontainer/api";
+import { WebContainer, FileSystemTree } from "@webcontainer/api";
+import { Terminal } from "@xterm/xterm";
 
-import packageJson from "./node/package.json?raw";
-import uploadAsset from "./node/uploadAsset.js?raw";
+export class Container {
+  private container: WebContainer | null = null;
+  private terminal: Terminal;
 
-let containerPromise: Promise<WebContainer> | null = null;
-
-export const loadContainer = async () => {
-  if (!containerPromise) {
-    containerPromise = (async () => {
-      let container = await WebContainer.boot();
-      let files = {
-        etc: {
-          directory: {
-            hosts: {
-              file: {
-                contents: "127.0.0.1 mylocalhost.com",
-              },
-            },
-          },
-        },
-        "package.json": {
-          file: {
-            contents: packageJson,
-          },
-        },
-        "index.html": {
-          file: {
-            contents: "<p>Hello World</p>",
-          },
-        },
-        "uploadAsset.js": {
-          file: {
-            contents: uploadAsset,
-          },
-        },
-      };
-      await container.mount(files);
-      return container;
-    })();
+  constructor(terminal: Terminal) {
+    this.terminal = terminal;
   }
-  return containerPromise;
-};
 
-export async function run_cmd(terminal, cmd: string, args: string[]) {
-  const container = await loadContainer();
-  terminal.writeln(`$ ${cmd} ${args}`);
-  const installProcess = await container.spawn(cmd, args);
-  installProcess.output.pipeTo(
-    new WritableStream({
-      write(data) {
-        terminal.write(data);
+  async init() {
+    if (!this.container) {
+      this.container = await WebContainer.boot();
+    }
+    return this.container;
+  }
+
+  async initFiles() {
+    await this.init();
+    const nodeFiles = import.meta.glob("./node/*", {
+      query: "?raw",
+      import: "default",
+      eager: true,
+    });
+    const files: FileSystemTree = Object.entries(nodeFiles).reduce(
+      (acc, [key, value]) => {
+        const fileName = key.replace("./node/", "");
+        acc[fileName] = {
+          file: {
+            contents: value,
+          },
+        };
+        return acc;
       },
-    }),
-  );
-  const exitCode = await installProcess.exit;
-  terminal.writeln(`\r\nexited with code ${exitCode}`);
+      {},
+    );
+    console.log(files);
+    files["etc"] = {
+      directory: {
+        hosts: {
+          file: {
+            contents: "127.0.0.1 mylocalhost.com",
+          },
+        },
+      },
+    };
+    files["index.html"] = {
+      file: {
+        contents: "<p>Hello World</p>",
+      },
+    };
+    await this.container!.mount(files);
+  }
+
+  async run_cmd(cmd: string, args: string[]) {
+    await this.init();
+    this.terminal.writeln(`$ ${cmd} ${args.join(" ")}`);
+    const installProcess = await this.container!.spawn(cmd, args);
+    installProcess.output.pipeTo(
+      new WritableStream({
+        write: (data) => {
+          this.terminal.write(data);
+        },
+      }),
+    );
+    const exitCode = await installProcess.exit;
+    this.terminal.writeln(`\r\nexited with code ${exitCode}`);
+  }
 }

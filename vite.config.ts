@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => {
               "react-markdown",
               "prettier-plugin-motoko",
             ],
+            xterm: ["@xterm/xterm", "@xterm/addon-fit"],
             agent: ["@dfinity/agent", "@dfinity/candid", "@dfinity/principal"],
           },
         },
