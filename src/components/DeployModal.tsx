@@ -16,11 +16,15 @@ import {
   WorkerContext,
   WorkplaceDispatchContext,
   WorkplaceState,
+  Origin,
 } from "../contexts/WorkplaceState";
 import { didjs } from "../config/actor";
 import { Field } from "./shared/Field";
 import { Confirm } from "./shared/Confirm";
 import "../assets/styles/candid.css";
+
+const assetWasmHash =
+  "3a533f511b3960b4186e76cf9abfbd8222a2c507456a66ec55671204ee70cae3";
 
 const ModalContainer = styled.div`
   display: flex;
@@ -118,7 +122,7 @@ interface DeployModalProps {
   candid: string;
   initTypes: Array<IDL.Type>;
   logger: ILoggingStore;
-  origin: string | undefined;
+  origin: Origin;
 }
 
 const MAX_CANISTERS = 3;
@@ -306,6 +310,37 @@ export function DeployModal({
         });
       }
     } catch (err) {}
+  }
+
+  async function deployFrontend() {
+    try {
+      await close();
+      await isDeploy(true);
+      const module_hash = assetWasmHash
+        .match(/.{2}/g)!
+        .map((byte) => parseInt(byte, 16));
+      const info = await deploy(
+        worker,
+        canisterName,
+        canisters[canisterName],
+        new Uint8Array(IDL.encode([], [])),
+        "install",
+        new Uint8Array(module_hash),
+        true,
+        false,
+        false,
+        logger,
+        origin,
+      );
+      await isDeploy(false);
+      setCompileResult({ wasm: undefined });
+      if (info) {
+        onDeploy(info);
+      }
+    } catch (err) {
+      await isDeploy(false);
+      throw err;
+    }
   }
 
   async function handleDeploy(mode: string) {
@@ -576,6 +611,7 @@ actor {
                   Install
                 </MyButton>
               )}
+              <MyButton onClick={deployFrontend}>Frontend</MyButton>
               <MyButton onClick={close}>Cancel</MyButton>
             </ButtonContainer>
           ) : null}

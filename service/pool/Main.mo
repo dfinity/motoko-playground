@@ -247,7 +247,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         if (not validateOrigin(origin)) {
             throw Error.reject "Please specify a valid origin";
         };
-        if (pool.find info) {
+        if (not pool.find info) {
             stats := Logs.updateStats(stats, #mismatch);
             throw Error.reject "Cannot find canister";
         };
