@@ -15,19 +15,18 @@ const agent = HttpAgent.createSync({
   identity,
 });
 //agent.fetchRootKey();
-const assetManager = new AssetManager({
-  canisterId: "m7sm4-2iaaa-aaaab-qabra-cai",
-  agent,
-});
 
-async function upload(asset_dir) {
+async function upload(canisterId, asset_dir) {
+  const assetManager = new AssetManager({
+    canisterId,
+    agent,
+  });
   const old = await assetManager.list();
   console.log(old);
   const batch = assetManager.batch();
   const files = await globPromise(`${asset_dir}/**/*`);
   for (const file of files) {
-    const relativePath = path.relative(asset_dir, file);
-    const fileName = `/${relativePath}`;
+    const fileName = path.relative(asset_dir, file);
     const contents = fs.readFileSync(file);
     console.log(fileName);
     await batch.store(contents, { fileName });
@@ -35,11 +34,11 @@ async function upload(asset_dir) {
   await batch.commit();
 }
 
-if (process.argv.length < 3) {
-  console.error("Usage: node uploadAsset.js <asset_dir>");
+if (process.argv.length !== 4) {
+  console.error("Usage: node uploadAsset.js <canister_id> <asset_dir>");
   process.exit(1);
 }
 (async () => {
-  const [, , asset_dir] = process.argv;
-  await upload(asset_dir);
+  const [, , canister_id, asset_dir] = process.argv;
+  await upload(canister_id, asset_dir);
 })();

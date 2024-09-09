@@ -344,7 +344,11 @@ export function DeployModal({
         JSON.stringify(identity.toJSON()),
       );
       logger.log(`Authorized asset canister with ${principal}`);
-      await container.run_cmd("node", ["uploadAsset.js", "dist"]);
+      await container.run_cmd("node", [
+        "uploadAsset.js",
+        info!.id.toText(),
+        "dist",
+      ]);
       await isDeploy(false);
       setCompileResult({ wasm: undefined });
       if (info) {

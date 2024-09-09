@@ -64,6 +64,9 @@ export class Container {
       }),
     );
     const exitCode = await installProcess.exit;
-    this.terminal.writeln(`\r\nexited with code ${exitCode}`);
+    if (exitCode !== 0) {
+      this.terminal.writeln(`\r\nexited with code ${exitCode}`);
+      throw new Error(`Command failed with code ${exitCode}`);
+    }
   }
 }
