@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useContext } from "react";
 import styled from "styled-components";
 import { IDL, renderInput, InputBox } from "@dfinity/candid";
+import { Ed25519KeyIdentity } from "@dfinity/identity";
 
 import { Modal } from "./shared/Modal";
 import {
@@ -16,9 +17,10 @@ import {
   WorkerContext,
   WorkplaceDispatchContext,
   WorkplaceState,
+  ContainerContext,
   Origin,
 } from "../contexts/WorkplaceState";
-import { didjs } from "../config/actor";
+import { didjs, backend } from "../config/actor";
 import { Field } from "./shared/Field";
 import { Confirm } from "./shared/Confirm";
 import "../assets/styles/candid.css";
@@ -155,6 +157,7 @@ export function DeployModal({
   const [deployMode, setDeployMode] = useState("");
   const [startDeploy, setStartDeploy] = useState(false);
   const worker = useContext(WorkerContext);
+  const container = useContext(ContainerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
 
   const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
@@ -332,6 +335,16 @@ export function DeployModal({
         logger,
         origin,
       );
+      const identity = Ed25519KeyIdentity.generate();
+      const principal = identity.getPrincipal();
+      const args = IDL.encode([IDL.Principal], [principal]);
+      await backend.callForward(info!, "authorize", args);
+      await container.container!.fs.writeFile(
+        "identity.json",
+        JSON.stringify(identity.toJSON()),
+      );
+      logger.log(`Authorized asset canister with ${principal}`);
+      await container.run_cmd("node", ["uploadAsset.js", "dist"]);
       await isDeploy(false);
       setCompileResult({ wasm: undefined });
       if (info) {

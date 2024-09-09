@@ -1,6 +1,7 @@
 import * as React from "react";
 import { CanisterInfo } from "../build";
 import { PackageInfo } from "../workers/file";
+import { Container } from "../webcontainer";
 
 export interface Origin {
   origin: string;
@@ -17,7 +18,7 @@ export interface WorkplaceState {
   origin: Origin;
 }
 export function getActorAliases(
-  canisters: Record<string, CanisterInfo>
+  canisters: Record<string, CanisterInfo>,
 ): Array<[string, string]> {
   return Object.entries(canisters).map(([name, info]) => [
     name,
@@ -25,17 +26,17 @@ export function getActorAliases(
   ]);
 }
 export function getExternalCanisters(
-  canisters: Record<string, CanisterInfo>
+  canisters: Record<string, CanisterInfo>,
 ): Record<string, CanisterInfo> {
   return Object.fromEntries(
-    Object.entries(canisters).filter(([_, info]) => info.isExternal)
+    Object.entries(canisters).filter(([_, info]) => info.isExternal),
   );
 }
 export function getDeployedCanisters(
-  canisters: Record<string, CanisterInfo>
+  canisters: Record<string, CanisterInfo>,
 ): Record<string, CanisterInfo> {
   return Object.fromEntries(
-    Object.entries(canisters).filter(([_, info]) => !info.isExternal)
+    Object.entries(canisters).filter(([_, info]) => !info.isExternal),
   );
 }
 export function getShareableProject(state: WorkplaceState) {
@@ -181,7 +182,7 @@ export const workplaceReducer = {
   /** Return updated state based on an action */
   reduce(
     state: WorkplaceState,
-    action: WorkplaceReducerAction
+    action: WorkplaceReducerAction,
   ): WorkplaceState {
     switch (action.type) {
       case "loadProject":
@@ -288,9 +289,12 @@ export const WorkplaceDispatchContext = React.createContext<
   React.Dispatch<WorkplaceReducerAction>
 >(() => {
   console.warn(
-    "using default WorkplaceDispathcContext. Make sure to Provide one in your component tree"
+    "using default WorkplaceDispathcContext. Make sure to Provide one in your component tree",
   );
 });
 export const WorkerContext = React.createContext<any>(() => {
   console.warn("provide a value for worker");
+});
+export const ContainerContext = React.createContext<Container>(() => {
+  console.warn("provide a value for web container");
 });

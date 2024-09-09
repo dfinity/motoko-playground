@@ -6,6 +6,7 @@
   "dependencies": {
     "@dfinity/agent": "^2.0.0",
     "@dfinity/candid": "^2.0.0",
+    "@dfinity/identity": "^2.0.0",
     "@dfinity/principal": "^2.0.0",
     "@monaco-editor/react": "4.6.0",
     "@types/react": "^18.3.5",

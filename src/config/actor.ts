@@ -63,7 +63,6 @@ async function getDidFromMetadata(
   const did = status.get("candid");
   return did as any;
 }
-
 async function getDidFromTmpHack(canisterId: Principal) {
   const common_interface: IDL.InterfaceFactory = ({ IDL }) =>
     IDL.Service({

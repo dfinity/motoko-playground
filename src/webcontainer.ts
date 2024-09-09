@@ -2,7 +2,7 @@ import { WebContainer, FileSystemTree } from "@webcontainer/api";
 import { Terminal } from "@xterm/xterm";
 
 export class Container {
-  private container: WebContainer | null = null;
+  public container: WebContainer | null = null;
   private terminal: Terminal;
 
   constructor(terminal: Terminal) {

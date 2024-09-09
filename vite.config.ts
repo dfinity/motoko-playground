@@ -31,7 +31,12 @@ export default defineConfig(({ mode }) => {
               "prettier-plugin-motoko",
             ],
             xterm: ["@xterm/xterm", "@xterm/addon-fit"],
-            agent: ["@dfinity/agent", "@dfinity/candid", "@dfinity/principal"],
+            agent: [
+              "@dfinity/agent",
+              "@dfinity/candid",
+              "@dfinity/principal",
+              "@dfinity/identity",
+            ],
           },
         },
       },
