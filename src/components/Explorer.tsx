@@ -12,7 +12,7 @@ import {
 import { PackageModal } from "./PackageModal";
 import { FileModal } from "./FileModal";
 import { CanisterModal } from "./CanisterModal";
-import { DeploySetter } from "./DeplayModal";
+import { DeploySetter } from "./DeployModal";
 import { PackageInfo } from "../workers/file";
 import { ILoggingStore } from "./Logger";
 import { deleteCanister } from "../build";
@@ -99,7 +99,7 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
           if (action === "delete") {
             const canisterInfo = state.canisters[selectedCanister];
             logger.log(
-              `Deleting canister ${selectedCanister} with id ${canisterInfo.id.toText()}...`
+              `Deleting canister ${selectedCanister} with id ${canisterInfo.id.toText()}...`,
             );
             await deleteCanister(canisterInfo);
             logger.log("Canister deleted");
@@ -132,7 +132,7 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
     }
     const timer = setTimeout(() => {
       const times: Array<[string, number | undefined]> = Object.values(
-        state.canisters
+        state.canisters,
       ).map((info) => {
         return [info.name!, calcTimeLeft(info.timestamp)];
       });
@@ -162,7 +162,7 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
           } else {
             return { status: "Expired" };
           }
-        })
+        }),
       );
     }, 1000);
     // Clear timeout if the component is unmounted

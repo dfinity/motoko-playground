@@ -149,6 +149,9 @@ function selectFirstFile(files: Record<string, string>): string | null {
   if ("README" in files) {
     return "README";
   }
+  if ("README.md" in files) {
+    return "README.md";
+  }
   if ("Main.mo" in files) {
     return "Main.mo";
   }

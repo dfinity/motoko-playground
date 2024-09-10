@@ -230,15 +230,15 @@ export function Editor({
           </Button>
         </RightContainer>
       </PanelHeader>
-      <MarkdownContainer isHidden={fileName !== "README"}>
+      <MarkdownContainer isHidden={!fileName.endsWith(".md")}>
         <ReactMarkdown linkTarget="_blank">
-          {fileName === "README" ? fileCode : ""}
+          {fileName.endsWith(".md") ? fileCode : ""}
         </ReactMarkdown>
       </MarkdownContainer>
-      <EditorContainer isHidden={fileName === "README"}>
+      <EditorContainer isHidden={fileName.endsWith(".md")}>
         <MonacoEditor
           defaultLanguage={"motoko"}
-          value={fileName === "README" ? "" : fileCode}
+          value={fileName.endsWith(".md") ? "" : fileCode}
           path={fileName}
           beforeMount={configureMonaco}
           onMount={onEditorMount}

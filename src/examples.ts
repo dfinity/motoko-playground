@@ -21,8 +21,7 @@ export const exampleProjects: ExampleProject[] = [
   },
   {
     name: "Counter",
-    repo: { dir: "motoko/counter/src", ...example },
-    readme: `${readmeURL}/counter/README.md`,
+    repo: { dir: "motoko/minimal-counter-dapp", ...example },
   },
   {
     name: "Calculator",
@@ -46,8 +45,7 @@ export const exampleProjects: ExampleProject[] = [
   },
   {
     name: "Random Maze",
-    repo: { dir: "motoko/random_maze/src/random_maze", ...example },
-    readme: `${readmeURL}/random_maze/README.md`,
+    repo: { dir: "motoko/random_maze", ...example },
   },
   {
     name: "Game of Life",
