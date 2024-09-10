@@ -43,6 +43,7 @@ interface PropTypes {
   canisterId: string;
   candid?: string | null | undefined;
   setCandidWidth?: (width: string) => void;
+  isFrontend: boolean;
   forceUpdate?: any;
   onMessage?: (event: { origin: string; source: Window; message: any }) => void;
 }
@@ -52,6 +53,7 @@ export function CandidUI({
   candid,
   setCandidWidth,
   forceUpdate,
+  isFrontend,
   onMessage,
 }: PropTypes) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -61,8 +63,10 @@ export function CandidUI({
       ? `&did=${encodeURIComponent(btoa(candid))}`
       : "&external-config";
 
-  const url =
-    `${CANDID_UI_CANISTER_URL}/?id=${canisterId}&tag=${forceUpdate}` + didParam;
+  const url = isFrontend
+    ? `https://${canisterId}.raw.icp0.io`
+    : `${CANDID_UI_CANISTER_URL}/?id=${canisterId}&tag=${forceUpdate}` +
+      didParam;
 
   // Handle incoming messages from iframe
   const handleMessage = useCallback(
@@ -177,7 +181,7 @@ export function CandidUI({
             src={iconCollapse}
             alt="Collapse icon"
           />
-          {isExpanded ? "CANDID UI" : null}
+          {isExpanded ? (isFrontend ? "FRONTEND" : "CANDID UI") : null}
         </Button>
         {isExpanded ? (
           <Button onClick={handleOpenTab}>

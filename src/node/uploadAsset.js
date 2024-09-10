@@ -29,6 +29,7 @@ async function upload(canisterId, asset_dir) {
     const fileName = path.relative(asset_dir, file);
     const contents = fs.readFileSync(file);
     console.log(fileName);
+    // TODO: pass in headers when supported
     await batch.store(contents, { fileName });
   }
   await batch.commit();

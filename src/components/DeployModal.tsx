@@ -352,6 +352,7 @@ export function DeployModal({
       await isDeploy(false);
       setCompileResult({ wasm: undefined });
       if (info) {
+        info.isFrontend = true;
         onDeploy(info);
       }
     } catch (err) {

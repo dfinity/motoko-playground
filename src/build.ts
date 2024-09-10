@@ -10,6 +10,7 @@ export interface CanisterInfo {
   name?: string;
   candid?: string | null;
   stableSig?: string | null;
+  isFrontend?: boolean;
 }
 /*
 export function interpret(file: string, logger: ILoggingStore): void {

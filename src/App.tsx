@@ -353,6 +353,10 @@ export function App() {
                     workplaceState.canisters[workplaceState.selectedCanister!]
                       ?.candid
                   }
+                  isFrontend={
+                    workplaceState.canisters[workplaceState.selectedCanister!]
+                      ?.isFrontend ?? false
+                  }
                   forceUpdate={forceUpdate}
                   onMessage={({ origin, source, message }) => {
                     if (!message.caller) return;
