@@ -67,6 +67,27 @@ export function getShareableProject(state: WorkplaceState) {
   ];
   return { files, packages, canisters };
 }
+export function convertNonMotokoFilesToWebContainer(state: WorkplaceState) {
+  const files = Object.entries(state.files)
+    .filter(([path]) => !path.endsWith(".mo"))
+    .reduce((acc, [path, content]) => {
+      const parts = path.split("/");
+      let current = acc;
+      for (let i = 0; i < parts.length - 1; i++) {
+        if (!current[parts[i]]) {
+          current[parts[i]] = { directory: {} };
+        }
+        current = current[parts[i]].directory;
+      }
+      current[parts[parts.length - 1]] = {
+        file: {
+          contents: content,
+        },
+      };
+      return acc;
+    }, {});
+  return files;
+}
 
 export type WorkplaceReducerAction =
   /**

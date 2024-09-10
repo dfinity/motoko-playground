@@ -1,4 +1,4 @@
-import { WebContainer, FileSystemTree } from "@webcontainer/api";
+import { WebContainer, FileSystemTree, SpawnOptions } from "@webcontainer/api";
 import { Terminal } from "@xterm/xterm";
 
 export class Container {
@@ -52,10 +52,10 @@ export class Container {
     await this.container!.mount(files);
   }
 
-  async run_cmd(cmd: string, args: string[]) {
+  async run_cmd(cmd: string, args: string[], options?: SpawnOptions) {
     await this.init();
     this.terminal.writeln(`$ ${cmd} ${args.join(" ")}`);
-    const installProcess = await this.container!.spawn(cmd, args);
+    const installProcess = await this.container!.spawn(cmd, args, options);
     installProcess.output.pipeTo(
       new WritableStream({
         write: (data) => {

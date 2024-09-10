@@ -16,6 +16,8 @@ import {
   getActorAliases,
   WorkerContext,
   WorkplaceDispatchContext,
+  ContainerContext,
+  convertNonMotokoFilesToWebContainer,
 } from "../contexts/WorkplaceState";
 import { compileCandid } from "../build";
 import { didToJs } from "../config/actor";
@@ -99,21 +101,23 @@ export function Editor({
 }) {
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
+  const container = useContext(ContainerContext);
 
   const [formatted, setFormatted] = useState(false);
 
   const fileName = state.selectedFile;
+  const fileExtension = fileName?.split(".").pop() ?? "";
   const fileCode = fileName ? state.files[fileName] : "";
-  // TODO
-  const mainFile = fileName.endsWith(".mo")
-    ? fileName
-    : state.files["Main.mo"]
-      ? "Main.mo"
-      : "";
+  const mainFile =
+    fileExtension === "mo" ? fileName : state.files["Main.mo"] ? "Main.mo" : "";
+  const selectFrontend =
+    "package.json" in state.files &&
+    fileExtension !== "mo" &&
+    fileExtension !== "md";
 
   const monaco = useMonaco();
   const checkFileAddMarkers = async () => {
-    if (!fileName || !fileName.endsWith("mo")) return;
+    if (!fileName || fileExtension !== "mo") return;
     const check = await worker.Moc({ type: "check", file: fileName });
     const diags = check.diagnostics;
     setMarkers(
@@ -137,7 +141,7 @@ export function Editor({
         contents: newValue,
       },
     });
-    if (!fileName.endsWith("mo")) return;
+    if (fileExtension !== "mo") return;
     await worker.Moc({ type: "save", file: fileName, content: newValue });
     await checkFileAddMarkers();
   };
@@ -169,11 +173,23 @@ export function Editor({
     editorRef.current?.getAction("editor.action.formatDocument").run();
   };
   const deployClick = async () => {
+    if (selectFrontend) {
+      const files = convertNonMotokoFilesToWebContainer(state);
+      console.log(files);
+      await container.container!.fs.mkdir("user", { recursive: true });
+      await container.container!.mount(files, { mountPoint: "user" });
+      await container.run_cmd("npm", ["install"], { cwd: "user" });
+      await container.run_cmd("npm", ["run", "build"], { cwd: "user" });
+      const read = await container.container!.fs.readdir("/");
+      console.log(read);
+      return;
+    }
     const aliases = getActorAliases(state.canisters);
     await worker.saveWorkplaceToMotoko(state.files);
     await worker.Moc({ type: "setActorAliases", list: aliases });
     if (!mainFile) {
       logger.log("Select a main entry file to deploy");
+      return;
     }
     const candid = await compileCandid(worker, mainFile, logger);
     if (candid) {
@@ -200,7 +216,7 @@ export function Editor({
       <PanelHeader>
         Editor
         <RightContainer>
-          {!!fileName.endsWith(".mo") && (
+          {fileExtension === "mo" && (
             <>
               {!!formatted && (
                 <FormatMessage>
@@ -226,19 +242,25 @@ export function Editor({
             small
           >
             <img src={isDeploying ? iconSpin : iconRabbit} alt="Rabbit icon" />
-            <p>{isDeploying ? "Deploying..." : "Deploy"}</p>
+            <p>
+              {isDeploying
+                ? "Deploying..."
+                : selectFrontend
+                  ? "Deploy Frontend"
+                  : "Deploy Backend"}
+            </p>
           </Button>
         </RightContainer>
       </PanelHeader>
-      <MarkdownContainer isHidden={!fileName.endsWith(".md")}>
+      <MarkdownContainer isHidden={fileExtension !== "md"}>
         <ReactMarkdown linkTarget="_blank">
-          {fileName.endsWith(".md") ? fileCode : ""}
+          {fileExtension === "md" ? fileCode : ""}
         </ReactMarkdown>
       </MarkdownContainer>
-      <EditorContainer isHidden={fileName.endsWith(".md")}>
+      <EditorContainer isHidden={fileExtension === "md"}>
         <MonacoEditor
           defaultLanguage={"motoko"}
-          value={fileName.endsWith(".md") ? "" : fileCode}
+          value={fileExtension === "md" ? "" : fileCode}
           path={fileName}
           beforeMount={configureMonaco}
           onMount={onEditorMount}
