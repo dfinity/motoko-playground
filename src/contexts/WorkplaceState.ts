@@ -10,7 +10,7 @@ export interface Origin {
   session_tags?: Array<string>;
 }
 export interface WorkplaceState {
-  files: Record<string, string>;
+  files: Record<string, string | Uint8Array>;
   selectedFile: string | null;
   canisters: Record<string, CanisterInfo>;
   selectedCanister: string | null;
@@ -124,7 +124,7 @@ export type WorkplaceReducerAction =
   | {
       type: "loadProject";
       payload: {
-        files: Record<string, string>;
+        files: Record<string, string | Uint8Array>;
       };
     }
   | {

@@ -196,7 +196,9 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
         </MyButton>
       </CategoryTitle>
       <FolderStructure
-        filePaths={Object.keys(state.files).sort()}
+        filePaths={Object.keys(state.files)
+          .filter((key) => typeof state.files[key] === "string")
+          .sort()}
         onSelectFile={onSelectFile}
         activeFile={state.selectedFile}
       />
