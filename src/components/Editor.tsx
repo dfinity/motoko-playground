@@ -17,7 +17,7 @@ import {
   WorkerContext,
   WorkplaceDispatchContext,
   ContainerContext,
-  convertNonMotokoFilesToWebContainer,
+  generateNonMotokoFilesToWebContainer,
 } from "../contexts/WorkplaceState";
 import { compileCandid } from "../build";
 import { didToJs } from "../config/actor";
@@ -174,14 +174,18 @@ export function Editor({
   };
   const deployClick = async () => {
     if (selectFrontend) {
-      const files = convertNonMotokoFilesToWebContainer(state);
-      console.log(files);
-      await container.container!.fs.mkdir("user", { recursive: true });
-      await container.container!.mount(files, { mountPoint: "user" });
-      await container.run_cmd("npm", ["install"], { cwd: "user" });
-      await container.run_cmd("npm", ["run", "build"], { cwd: "user" });
-      const read = await container.container!.fs.readdir("/");
-      console.log(read);
+      try {
+        const { files, env } = generateNonMotokoFilesToWebContainer(state);
+        console.log(files);
+        await container.container!.fs.mkdir("user", { recursive: true });
+        await container.container!.mount(files, { mountPoint: "user" });
+        await container.run_cmd("npm", ["install"], { cwd: "user" });
+        await container.run_cmd("npm", ["run", "build"], { cwd: "user", env });
+        const read = await container.container!.fs.readdir("/");
+        console.log(read);
+      } catch (e) {
+        logger.log(e.message);
+      }
       return;
     }
     const aliases = getActorAliases(state.canisters);

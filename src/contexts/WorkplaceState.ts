@@ -67,7 +67,8 @@ export function getShareableProject(state: WorkplaceState) {
   ];
   return { files, packages, canisters };
 }
-export function convertNonMotokoFilesToWebContainer(state: WorkplaceState) {
+export function generateNonMotokoFilesToWebContainer(state: WorkplaceState) {
+  const { env, canister_ids } = generateEnv(state);
   const files = Object.entries(state.files)
     .filter(([path]) => !path.endsWith(".mo"))
     .reduce((acc, [path, content]) => {
@@ -86,7 +87,33 @@ export function convertNonMotokoFilesToWebContainer(state: WorkplaceState) {
       };
       return acc;
     }, {});
-  return files;
+  files["canister_ids.json"] = {
+    file: { contents: JSON.stringify(canister_ids, null, 2) },
+  };
+  files[".env"] = {
+    file: {
+      contents: Object.entries(env)
+        .map(([key, value]) => `${key}=${value}`)
+        .join("\n"),
+    },
+  };
+  return { files, env };
+}
+function generateEnv(state: WorkplaceState) {
+  const env: Record<string, string> = {
+    DFX_NETWORK: "ic",
+  };
+  const canister_ids = {};
+  Object.entries(state.canisters).forEach(([name, info]) => {
+    if (info.name && info.candid && !info.isFrontend) {
+      env[`CANISTER_ID_${name.toUpperCase()}`] = info.id.toString();
+      canister_ids[name] = { ic: info.id.toString() };
+    }
+  });
+  if (Object.keys(canister_ids).length === 0) {
+    throw new Error("Please deploy at least one backend canister first.");
+  }
+  return { env, canister_ids };
 }
 
 export type WorkplaceReducerAction =

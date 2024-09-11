@@ -65,7 +65,7 @@ export async function saveWorkplaceToMotoko(files: Record<string, string>) {
 const isValidFile = (path: string) => {
   const validFiles =
     /\.(mo|md|js|ts|json|txt|png|jpg|jpeg|gif|svg|ico|css|html|tsx|jsx)$/;
-  return validFiles.test(path) && !path.includes("/declarations/");
+  return validFiles.test(path); // && !path.includes("/declarations/");
 };
 
 async function fetchFromCDN(
