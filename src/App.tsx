@@ -256,8 +256,10 @@ export function App() {
       logger.log(`moc version ${MOC_VERSION}`);
       logger.log(`base library version ${baseInfo.version}`);
       await container.initFiles();
-      await container.run_cmd("npm", ["install"]);
-      await container.run_cmd("npm", ["run", "build"]);
+      await container.run_cmd("npm", ["install"], {
+        cwd: "utils",
+        output: false,
+      });
       //await container.run_cmd("node", ["uploadAsset.js", "dist"]);
       // fetch code after loading base library
       if (hasUrlParams) {

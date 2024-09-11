@@ -23,7 +23,7 @@ export class Container {
       import: "default",
       eager: true,
     });
-    const files: FileSystemTree = Object.entries(nodeFiles).reduce(
+    const utilsFiles: FileSystemTree = Object.entries(nodeFiles).reduce(
       (acc, [key, value]) => {
         const fileName = key.replace("./node/", "");
         acc[fileName] = {
@@ -35,18 +35,21 @@ export class Container {
       },
       {},
     );
-    files["etc"] = {
-      directory: {
-        hosts: {
-          file: {
-            contents: "127.0.0.1 mylocalhost.com",
+    const files: FileSystemTree = {
+      utils: {
+        directory: utilsFiles,
+      },
+      user: {
+        directory: {},
+      },
+      etc: {
+        directory: {
+          hosts: {
+            file: {
+              contents: "127.0.0.1 mylocalhost.com",
+            },
           },
         },
-      },
-    };
-    files["index.html"] = {
-      file: {
-        contents: "<p>Hello World</p>",
       },
     };
     await this.container!.mount(files);
@@ -54,7 +57,7 @@ export class Container {
 
   async run_cmd(cmd: string, args: string[], options?: SpawnOptions) {
     await this.init();
-    this.terminal.writeln(`$ ${cmd} ${args.join(" ")}`);
+    this.terminal.writeln(`/${options?.cwd ?? ""}$ ${cmd} ${args.join(" ")}`);
     const installProcess = await this.container!.spawn(cmd, args, options);
     installProcess.output.pipeTo(
       new WritableStream({
