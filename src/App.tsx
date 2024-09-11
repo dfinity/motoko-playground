@@ -21,6 +21,7 @@ import {
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
 import { DeployModal, DeploySetter } from "./components/DeployModal";
+import { FrontendDeployModal } from "./components/FrontendDeployModal";
 import { backend, saved } from "./config/actor";
 import { setupEditorIntegration } from "./integrations/editorIntegration";
 import { Container } from "./webcontainer";
@@ -180,6 +181,7 @@ export function App() {
 
   // States for deploy modal
   const [showDeployModal, setShowDeployModal] = useState(false);
+  const [showFrontendDeployModal, setShowFrontendDeployModal] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [candidCode, setCandidCode] = useState("");
   const [initTypes, setInitTypes] = useState([]);
@@ -190,6 +192,7 @@ export function App() {
     setInitTypes,
     setCandidCode,
     setShowDeployModal,
+    setShowFrontendDeployModal,
     setWasm,
   };
 
@@ -258,9 +261,7 @@ export function App() {
       await container.initFiles();
       await container.run_cmd("npm", ["install"], {
         cwd: "utils",
-        output: false,
       });
-      //await container.run_cmd("node", ["uploadAsset.js", "dist"]);
       // fetch code after loading base library
       if (hasUrlParams) {
         const files = await fetchFromUrlParams(workplaceDispatch);
@@ -324,6 +325,16 @@ export function App() {
               wasm={wasm}
               candid={candidCode}
               initTypes={initTypes}
+              logger={logger}
+              origin={workplaceState.origin}
+            />
+            <FrontendDeployModal
+              state={workplaceState}
+              isOpen={showFrontendDeployModal}
+              close={() => setShowFrontendDeployModal(false)}
+              onDeploy={deployWorkplace}
+              isDeploy={setIsDeploying}
+              canisters={getDeployedCanisters(workplaceState.canisters)}
               logger={logger}
               origin={workplaceState.origin}
             />

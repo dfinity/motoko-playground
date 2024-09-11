@@ -107,7 +107,8 @@ export interface DeploySetter {
   setMainFile: (name: string) => void;
   setCandidCode: (code: string) => void;
   setInitTypes: (args: Array<IDL.Type>) => void;
-  setShowDeployModal: (boolean) => void;
+  setShowDeployModal: (arg: boolean) => void;
+  setShowFrontendDeployModal: (arg: boolean) => void;
   setWasm: (file: Uint8Array | undefined) => void;
 }
 
@@ -157,7 +158,6 @@ export function DeployModal({
   const [deployMode, setDeployMode] = useState("");
   const [startDeploy, setStartDeploy] = useState(false);
   const worker = useContext(WorkerContext);
-  const container = useContext(ContainerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
 
   const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
@@ -313,52 +313,6 @@ export function DeployModal({
         });
       }
     } catch (err) {}
-  }
-
-  async function deployFrontend() {
-    try {
-      await close();
-      await isDeploy(true);
-      const module_hash = assetWasmHash
-        .match(/.{2}/g)!
-        .map((byte) => parseInt(byte, 16));
-      const info = await deploy(
-        worker,
-        canisterName,
-        canisters[canisterName],
-        new Uint8Array(IDL.encode([], [])),
-        "install",
-        new Uint8Array(module_hash),
-        true,
-        false,
-        false,
-        logger,
-        origin,
-      );
-      const identity = Ed25519KeyIdentity.generate();
-      const principal = identity.getPrincipal();
-      const args = IDL.encode([IDL.Principal], [principal]);
-      await backend.callForward(info!, "authorize", args);
-      await container.container!.fs.writeFile(
-        "identity.json",
-        JSON.stringify(identity.toJSON()),
-      );
-      logger.log(`Authorized asset canister with ${principal}`);
-      await container.run_cmd("node", [
-        "uploadAsset.js",
-        info!.id.toText(),
-        "dist",
-      ]);
-      await isDeploy(false);
-      setCompileResult({ wasm: undefined });
-      if (info) {
-        info.isFrontend = true;
-        onDeploy(info);
-      }
-    } catch (err) {
-      await isDeploy(false);
-      throw err;
-    }
   }
 
   async function handleDeploy(mode: string) {
@@ -629,7 +583,6 @@ actor {
                   Install
                 </MyButton>
               )}
-              <MyButton onClick={deployFrontend}>Frontend</MyButton>
               <MyButton onClick={close}>Cancel</MyButton>
             </ButtonContainer>
           ) : null}

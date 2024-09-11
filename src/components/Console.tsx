@@ -48,7 +48,7 @@ const TerminalContainer = styled.div<{ isActive: boolean }>`
 const fitAddon = new FitAddon();
 
 export function Console({ setConsoleHeight, terminal }) {
-  const [activeTab, setActiveTab] = useState("terminal");
+  const [activeTab, setActiveTab] = useState("log");
   const terminalRef = useRef<HTMLDivElement>(null);
   const [isExpanded, setIsExpanded] = useState(true);
   const lastRef = useRef<HTMLInputElement>(null);

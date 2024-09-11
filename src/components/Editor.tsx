@@ -175,11 +175,13 @@ export function Editor({
   const deployClick = async () => {
     if (selectFrontend) {
       try {
+        logger.log("Building frontend... (see logs in the terminal tab)");
         const { files, env } = generateNonMotokoFilesToWebContainer(state);
         console.log(files);
         await container.container!.mount(files, { mountPoint: "user" });
         await container.run_cmd("npm", ["install"], { cwd: "user" });
         await container.run_cmd("npm", ["run", "build"], { cwd: "user", env });
+        deploySetter.setShowFrontendDeployModal(true);
       } catch (e) {
         logger.log(e.message);
       }

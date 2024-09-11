@@ -102,6 +102,7 @@ export function generateNonMotokoFilesToWebContainer(state: WorkplaceState) {
 function generateEnv(state: WorkplaceState) {
   const env: Record<string, string> = {
     DFX_NETWORK: "ic",
+    NODE_ENV: "production",
   };
   const canister_ids = {};
   Object.entries(state.canisters).forEach(([name, info]) => {
