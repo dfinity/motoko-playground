@@ -43,7 +43,6 @@ const ButtonContainer = styled.div`
 const MyButton = styled(Button)`
   width: 12rem;
 `;
-
 interface FrontendDeployModalProps {
   state: WorkplaceState;
   isOpen: boolean;
@@ -54,9 +53,19 @@ interface FrontendDeployModalProps {
   logger: ILoggingStore;
   origin: Origin;
 }
-
 const MAX_CANISTERS = 3;
 
+function guessBuildDir(src: string | undefined): string[] {
+  try {
+    const dfx = JSON.parse(src!);
+    const asset: any = Object.values(dfx["canisters"]).find(
+      (desc: any) => desc["type"] === "assets",
+    );
+    return asset["source"];
+  } catch (e) {
+    return ["dist"];
+  }
+}
 export function FrontendDeployModal({
   state,
   isOpen,
@@ -68,9 +77,13 @@ export function FrontendDeployModal({
   origin,
 }: FrontendDeployModalProps) {
   const [canisterName, setCanisterName] = useState("frontend");
-  const [buildDir, setBuildDir] = useState("dist");
+  const [buildDir, setBuildDir] = useState<string[]>(["dist"]);
   const worker = useContext(WorkerContext);
   const container = useContext(ContainerContext);
+
+  useEffect(() => {
+    setBuildDir(guessBuildDir(state.files["dfx.json"] as string));
+  }, [state.files["dfx.json"]]);
 
   const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
 
@@ -80,6 +93,7 @@ export function FrontendDeployModal({
       await isDeploy(true);
       logger.log("Building frontend... (see logs in the terminal tab)");
       const { files, env } = generateNonMotokoFilesToWebContainer(state);
+      // strange that console.log(env) is needed to correctly pass in env to run_cmd
       console.log(env);
       await container.container!.mount(files, { mountPoint: "user" });
       await container.run_cmd("npm", ["install"], { cwd: "user" });
@@ -113,9 +127,10 @@ export function FrontendDeployModal({
         logger.log(`Authorized asset canister with ${principal}`);
       }
       logger.log(`Uploading frontend...`);
+      const dirs = buildDir.map((dir) => `../user/${dir}`).join(",");
       await container.run_cmd(
         "node",
-        ["uploadAsset.js", info!.id.toText(), `../user/${buildDir}`],
+        ["uploadAsset.js", info!.id.toText(), dirs],
         { cwd: "utils" },
       );
       logger.log(`Frontend uploaded`);
