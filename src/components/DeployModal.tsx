@@ -343,6 +343,20 @@ export function DeployModal({
           file: `idl/${info.id}.did`,
           content: compileResult.candid,
         });
+        if ("package.json" in state.files && compileResult.candid) {
+          const js = (await didjs.did_to_js(compileResult.candid))[0];
+          const ts = (await didjs.binding(compileResult.candid, "ts"))[0];
+          const name = `src/declarations/${info.name!}/${info.name!}.did`;
+          await dispatch({
+            type: "saveFile",
+            payload: { path: `${name}.js`, contents: js },
+          });
+          await dispatch({
+            type: "saveFile",
+            payload: { path: `${name}.d.ts`, contents: ts },
+          });
+          logger.log(`Generated frontend bindings at ${name}.js`);
+        }
         onDeploy(info);
       }
       setCompileResult({ wasm: undefined });
