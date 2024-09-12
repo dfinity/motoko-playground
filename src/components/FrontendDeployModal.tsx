@@ -97,7 +97,10 @@ export function FrontendDeployModal({
       console.log(env);
       await container.container!.mount(files, { mountPoint: "user" });
       await container.run_cmd("npm", ["install"], { cwd: "user" });
-      await container.run_cmd("npm", ["run", "build"], { cwd: "user", env });
+      await container.run_cmd("npm", ["run", "build"], {
+        cwd: "user",
+        env: env,
+      });
       var info: CanisterInfo | undefined = canisters[canisterName];
       if (mode !== "upgrade") {
         const module_hash = assetWasmHash

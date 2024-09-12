@@ -45,6 +45,18 @@ const CloseButton = styled(MyButton)`
   margin-right: -1.1rem;
   margin-left: -0.3rem;
 `;
+const CanisterName = styled.span`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: calc(100% - 4rem);
+  display: inline-block;
+`;
+const TimeDisplay = styled.div`
+  margin-left: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
+`;
 
 interface ExplorerProps {
   state: WorkplaceState;
@@ -237,22 +249,25 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
           disabled={state.selectedCanister === canister}
           onClick={() => onCanister(canister, "select")}
           aria-label="Select canister"
+          title={canister}
         >
           <img style={{ width: "2rem" }} src={iconCanister} alt="" />
-          canister:{canister}
-          {timeLeft[i]?.status === "Active" ? (
-            <div style={{ marginLeft: "auto" }}>
-              <span style={{ fontVariantNumeric: "tabular-nums" }}>
-                {timeLeft[i]?.minutes}
-              </span>
-              :
-              <span style={{ fontVariantNumeric: "tabular-nums" }}>
-                {timeLeft[i]?.seconds}
-              </span>
-            </div>
-          ) : (
-            <div style={{ marginLeft: "auto" }}></div>
-          )}
+          <CanisterName>{canister}</CanisterName>
+          <TimeDisplay>
+            {timeLeft[i]?.status === "Active" ? (
+              <div style={{ marginLeft: "auto" }}>
+                <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                  {timeLeft[i]?.minutes}
+                </span>
+                :
+                <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                  {timeLeft[i]?.seconds}
+                </span>
+              </div>
+            ) : (
+              <div style={{ marginLeft: "auto" }}></div>
+            )}
+          </TimeDisplay>
           <CloseButton
             onClick={() => onCanister(canister, "delete")}
             aria-label={`Delete canister ${canister}`}

@@ -28,7 +28,7 @@ export function structureFolders(filePaths: Array<string>) {
 
       return result;
     },
-    { files: [], folders: {} } as FoldersJson
+    { files: [], folders: {} } as FoldersJson,
   );
 }
 
@@ -60,6 +60,15 @@ const FileButton = styled(ListButton)<DepthProp>`
   border-bottom: none;
   height: 3rem;
   user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+`;
+const FileName = styled.span`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: calc(100% - 2.4rem);
+  display: inline-block;
 `;
 
 const Icon = styled.img`
@@ -91,7 +100,7 @@ function renderFolderStructure(options: RenderOptions) {
           nestDepth: nestDepth + 1,
         })}
       </FolderContainer>
-    )
+    ),
   );
 
   folderStructure.files.forEach((filePath) => {
@@ -106,10 +115,11 @@ function renderFolderStructure(options: RenderOptions) {
         isActive={isActive}
         disabled={isActive}
         aria-label="File"
+        title={fileName}
       >
         <Icon src={fileIcon} alt="" />
-        {fileName}
-      </FileButton>
+        <FileName>{fileName}</FileName>
+      </FileButton>,
     );
   });
 
