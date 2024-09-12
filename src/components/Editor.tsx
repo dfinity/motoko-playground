@@ -16,8 +16,6 @@ import {
   getActorAliases,
   WorkerContext,
   WorkplaceDispatchContext,
-  ContainerContext,
-  generateNonMotokoFilesToWebContainer,
 } from "../contexts/WorkplaceState";
 import { compileCandid } from "../build";
 import { didToJs } from "../config/actor";
@@ -101,7 +99,6 @@ export function Editor({
 }) {
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
-  const container = useContext(ContainerContext);
 
   const [formatted, setFormatted] = useState(false);
 
@@ -174,17 +171,7 @@ export function Editor({
   };
   const deployClick = async () => {
     if (selectFrontend) {
-      try {
-        logger.log("Building frontend... (see logs in the terminal tab)");
-        const { files, env } = generateNonMotokoFilesToWebContainer(state);
-        console.log(files);
-        await container.container!.mount(files, { mountPoint: "user" });
-        await container.run_cmd("npm", ["install"], { cwd: "user" });
-        await container.run_cmd("npm", ["run", "build"], { cwd: "user", env });
-        deploySetter.setShowFrontendDeployModal(true);
-      } catch (e) {
-        logger.log(e.message);
-      }
+      deploySetter.setShowFrontendDeployModal(true);
       return;
     }
     const aliases = getActorAliases(state.canisters);

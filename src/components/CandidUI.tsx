@@ -110,6 +110,9 @@ export function CandidUI({
     setIsExpanded(true);
   }, [canisterId, candid, forceUpdate]);
   useEffect(() => {
+    if (isFrontend) {
+      return;
+    }
     window.addEventListener("message", handleMessage, false);
     return () => window.removeEventListener("message", handleMessage);
   }, [handleMessage, onMessage, url]);
@@ -122,6 +125,9 @@ export function CandidUI({
     const newWindow = window.open(url, "_blank");
     if (!newWindow) {
       console.warn("Unable to open new tab for Candid UI");
+      return;
+    }
+    if (isFrontend) {
       return;
     }
 
@@ -151,6 +157,9 @@ export function CandidUI({
   };
 
   const sendConfigMessage = (newWindow: Window, acknowledge: any) => {
+    if (isFrontend) {
+      return;
+    }
     console.log("Sending config message to Candid UI");
 
     // Configure candid using iframe message

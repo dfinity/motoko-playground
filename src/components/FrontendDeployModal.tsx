@@ -12,6 +12,7 @@ import {
   WorkplaceState,
   ContainerContext,
   Origin,
+  generateNonMotokoFilesToWebContainer,
 } from "../contexts/WorkplaceState";
 import { didjs, backend } from "../config/actor";
 import { Field } from "./shared/Field";
@@ -47,7 +48,7 @@ interface FrontendDeployModalProps {
   state: WorkplaceState;
   isOpen: boolean;
   close: () => void;
-  onDeploy: (string) => void;
+  onDeploy: (info: CanisterInfo) => void;
   isDeploy: (tag: boolean) => void;
   canisters: Record<string, CanisterInfo>;
   logger: ILoggingStore;
@@ -77,6 +78,12 @@ export function FrontendDeployModal({
     try {
       await close();
       await isDeploy(true);
+      logger.log("Building frontend... (see logs in the terminal tab)");
+      const { files, env } = generateNonMotokoFilesToWebContainer(state);
+      console.log(env);
+      await container.container!.mount(files, { mountPoint: "user" });
+      await container.run_cmd("npm", ["install"], { cwd: "user" });
+      await container.run_cmd("npm", ["run", "build"], { cwd: "user", env });
       var info: CanisterInfo | undefined = canisters[canisterName];
       if (mode !== "upgrade") {
         const module_hash = assetWasmHash
@@ -104,10 +111,6 @@ export function FrontendDeployModal({
           JSON.stringify(identity.toJSON()),
         );
         logger.log(`Authorized asset canister with ${principal}`);
-        if (info) {
-          info.isFrontend = true;
-          onDeploy(info);
-        }
       }
       logger.log(`Uploading frontend...`);
       await container.run_cmd(
@@ -116,8 +119,11 @@ export function FrontendDeployModal({
         { cwd: "utils" },
       );
       logger.log(`Frontend uploaded`);
+      info!.isFrontend = true;
+      onDeploy(info!);
       await isDeploy(false);
     } catch (err) {
+      logger.log(err.message);
       await isDeploy(false);
       throw err;
     }
@@ -184,7 +190,7 @@ export function FrontendDeployModal({
                     variant="primary"
                     onClick={() => deployClick("upgrade")}
                   >
-                    Upgrade
+                    Update
                   </MyButton>
                   <MyButton onClick={() => deployClick("reinstall")}>
                     Reinstall

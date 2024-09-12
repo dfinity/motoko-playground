@@ -5,6 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
 const util = require("util");
+const crypto = require("crypto");
 
 const globPromise = util.promisify(glob);
 const identity = Ed25519KeyIdentity.fromJSON(
@@ -24,11 +25,27 @@ async function upload(canisterId, asset_dir) {
   const old = await assetManager.list();
   console.log(old);
   const batch = assetManager.batch();
-  const files = await globPromise(`${asset_dir}/**/*`);
+  const files = await globPromise(`${asset_dir}/**/*`, { nodir: true });
   for (const file of files) {
     const fileName = path.relative(asset_dir, file);
     const contents = fs.readFileSync(file);
-    console.log(fileName);
+    const key = `/${fileName}`;
+    const item = old.find((f) => f.key === key);
+    if (item) {
+      const hash = crypto.createHash("sha256").update(contents).digest();
+      const encoding = item.encodings.find(
+        (e) => e.content_encoding === "identity",
+      );
+      if (encoding && Buffer.from(encoding.sha256[0]).equals(hash)) {
+        console.log(`Skip ${fileName}`);
+        continue;
+      } else {
+        console.log(`Replace ${fileName}`);
+        batch.delete(key);
+      }
+    } else {
+      console.log(`Add ${fileName}`);
+    }
     // TODO: pass in headers when supported
     await batch.store(contents, { fileName });
   }
