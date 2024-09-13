@@ -64,7 +64,7 @@ export function CandidUI({
       : "&external-config";
 
   const url = isFrontend
-    ? `https://${canisterId}.raw.icp0.io`
+    ? `https://${canisterId}.icp0.io`
     : `${CANDID_UI_CANISTER_URL}/?id=${canisterId}&tag=${forceUpdate}` +
       didParam;
 

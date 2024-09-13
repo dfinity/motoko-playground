@@ -83,5 +83,22 @@ export async function fetchExample(
     const content = await (await fetch(proj.readme)).text();
     files = { README: content, ...files };
   }
+  files = rewritePackageJson(files);
+  return files;
+}
+
+function rewritePackageJson(files: Record<string, string>) {
+  const packageJson = files["package.json"];
+  if (packageJson) {
+    const json = JSON.parse(packageJson);
+    if (json.scripts) {
+      Object.entries(json.scripts).forEach(([key, value]) => {
+        if (typeof value === "string" && value.startsWith("dfx")) {
+          json.scripts[key] = "";
+        }
+      });
+      files["package.json"] = JSON.stringify(json, null, 2);
+    }
+  }
   return files;
 }

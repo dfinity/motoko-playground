@@ -27,7 +27,8 @@ async function upload(canisterId, asset_dirs) {
     ["Cross-Origin-Resource-Policy", "cross-origin"],
   ];
   const old = await assetManager.list();
-  console.log(old);
+  const oldKeys = new Set(old.map((f) => f.key));
+  console.log(oldKeys);
   const batch = assetManager.batch();
   for (const asset_dir of asset_dirs.split(",")) {
     const files = await globPromise(`${asset_dir}/**/*`, { nodir: true });
@@ -37,6 +38,7 @@ async function upload(canisterId, asset_dirs) {
       const key = `/${fileName}`;
       const item = old.find((f) => f.key === key);
       if (item) {
+        oldKeys.delete(key);
         const hash = crypto.createHash("sha256").update(contents).digest();
         const encoding = item.encodings.find(
           (e) => e.content_encoding === "identity",
@@ -51,9 +53,12 @@ async function upload(canisterId, asset_dirs) {
       } else {
         console.log(`Add ${fileName}`);
       }
-      // TODO: pass in headers when supported
       await batch.store(contents, { fileName, headers });
     }
+  }
+  for (const key of oldKeys) {
+    console.log(`Delete ${key}`);
+    batch.delete(key);
   }
   await batch.commit();
 }
