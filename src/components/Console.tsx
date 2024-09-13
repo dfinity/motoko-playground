@@ -8,9 +8,11 @@ import "@xterm/xterm/css/xterm.css";
 import { FitAddon } from "@xterm/addon-fit";
 
 const LogHeader = styled(PanelHeader)`
-  padding: 0 1rem;
+  padding: 0 0;
   height: 2.4rem;
   border-top: 1px solid var(--grey300);
+  display: flex;
+  align-items: stretch;
 `;
 const LogContent = styled.div`
   flex: 1;
@@ -26,16 +28,12 @@ const Button = styled.button`
 const CollapseIcon = styled.img<{ isExpanded: boolean }>`
   ${(props) => (!props.isExpanded ? "transform: rotate(180deg);" : "")}
 `;
-const TabContainer = styled.div`
-  display: flex;
-  border-bottom: 1px solid var(--grey300);
-`;
-
 const Tab = styled.button<{ active: boolean }>`
-  padding: 0.5rem 1rem;
+  padding: 0 1rem;
   background: ${(props) => (props.active ? "var(--grey200)" : "transparent")};
   border: none;
   cursor: pointer;
+  border-right: 1px solid var(--grey300);
 `;
 
 const TerminalContainer = styled.div<{ isActive: boolean }>`
@@ -90,7 +88,15 @@ export function Console({ setConsoleHeight, terminal }) {
   return (
     <>
       <LogHeader>
-        Log
+        <Tab active={activeTab === "log"} onClick={() => setActiveTab("log")}>
+          Log
+        </Tab>
+        <Tab
+          active={activeTab === "terminal"}
+          onClick={() => setActiveTab("terminal")}
+        >
+          Terminal
+        </Tab>
         <RightContainer>
           <Button onClick={() => setIsExpanded(!isExpanded)}>
             <CollapseIcon
@@ -101,17 +107,6 @@ export function Console({ setConsoleHeight, terminal }) {
           </Button>
         </RightContainer>
       </LogHeader>
-      <TabContainer>
-        <Tab active={activeTab === "log"} onClick={() => setActiveTab("log")}>
-          Log
-        </Tab>
-        <Tab
-          active={activeTab === "terminal"}
-          onClick={() => setActiveTab("terminal")}
-        >
-          Terminal
-        </Tab>
-      </TabContainer>
       <LogContent style={{ display: activeTab === "log" ? "block" : "none" }}>
         {logger.logLines.map((line, index) => (
           <div

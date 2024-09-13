@@ -103,7 +103,10 @@ export function Editor({
   const [formatted, setFormatted] = useState(false);
 
   const fileName = state.selectedFile;
-  const fileExtension = fileName?.split(".").pop() ?? "";
+  var fileExtension = fileName?.split(".").pop() ?? "";
+  if (fileName === "README") {
+    fileExtension = "md";
+  }
   const fileCode = fileName ? state.files[fileName] : "";
   const mainFile =
     fileExtension === "mo" ? fileName : state.files["Main.mo"] ? "Main.mo" : "";
