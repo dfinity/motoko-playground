@@ -22,6 +22,10 @@ async function upload(canisterId, asset_dirs) {
     canisterId,
     agent,
   });
+  const headers = [
+    ["Cross-Origin-Embedder-Policy", "require-corp"],
+    ["Cross-Origin-Resource-Policy", "cross-origin"],
+  ];
   const old = await assetManager.list();
   console.log(old);
   const batch = assetManager.batch();
@@ -48,7 +52,7 @@ async function upload(canisterId, asset_dirs) {
         console.log(`Add ${fileName}`);
       }
       // TODO: pass in headers when supported
-      await batch.store(contents, { fileName });
+      await batch.store(contents, { fileName, headers });
     }
   }
   await batch.commit();

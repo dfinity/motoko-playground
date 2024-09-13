@@ -93,13 +93,11 @@ export function FrontendDeployModal({
       await isDeploy(true);
       logger.log("Building frontend... (see logs in the terminal tab)");
       const { files, env } = generateNonMotokoFilesToWebContainer(state);
-      // strange that console.log(env) is needed to correctly pass in env to run_cmd
-      console.log(env);
       await container.container!.mount(files, { mountPoint: "user" });
       await container.run_cmd("npm", ["install"], { cwd: "user" });
       await container.run_cmd("npm", ["run", "build"], {
         cwd: "user",
-        env: env,
+        env,
       });
       var info: CanisterInfo | undefined = canisters[canisterName];
       if (mode !== "upgrade") {
