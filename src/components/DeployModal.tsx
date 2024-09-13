@@ -157,11 +157,13 @@ export function DeployModal({
   const [compileResult, setCompileResult] = useState({ wasm: undefined });
   const [deployMode, setDeployMode] = useState("");
   const [startDeploy, setStartDeploy] = useState(false);
+  const [bindingDir, setBindingDir] = useState("src/declarations");
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
 
   const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
   const isMotoko = wasm ? false : true;
+  const hasFrontend = "package.json" in state.files;
 
   useEffect(() => {
     if (!exceedsLimit) {
@@ -169,6 +171,12 @@ export function DeployModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileName]);
+
+  useEffect(() => {
+    if (hasFrontend) {
+      setBindingDir(`src/declarations/${canisterName}`);
+    }
+  }, [hasFrontend, canisterName]);
 
   useEffect(() => {
     // This code is very tricky...compileResult takes time to set, so we need useEffect.
@@ -343,10 +351,10 @@ export function DeployModal({
           file: `idl/${info.id}.did`,
           content: compileResult.candid,
         });
-        if ("package.json" in state.files && compileResult.candid) {
+        if (hasFrontend && compileResult.candid) {
           const js = (await didjs.did_to_js(compileResult.candid))[0];
           const ts = (await didjs.binding(compileResult.candid, "ts"))[0];
-          const name = `src/declarations/${info.name!}/${info.name!}.did`;
+          const name = `${bindingDir}/${info.name!}.did`;
           await dispatch({
             type: "saveFile",
             payload: { path: `${name}.js`, contents: js },
@@ -531,6 +539,14 @@ actor {
                   <p>({initTypes.map((arg) => arg.name).join(", ")})</p>
                   <div className="InitArgs" ref={initArgs} />
                 </InitContainer>
+              )}
+              {hasFrontend && (
+                <Field
+                  type="text"
+                  labelText="Output JS Binding directory"
+                  value={bindingDir}
+                  onChange={(e) => setBindingDir(e.target.value)}
+                />
               )}
               <Field
                 type="checkbox"
