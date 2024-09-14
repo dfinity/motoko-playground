@@ -173,6 +173,7 @@ export function DeployModal({
   }, [fileName]);
 
   useEffect(() => {
+    setCanisterName(canisterName.replaceAll(/[-\s]/g, "_"));
     if (hasFrontend) {
       setBindingDir(`src/declarations/${canisterName}`);
     }

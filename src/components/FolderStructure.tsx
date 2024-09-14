@@ -82,13 +82,16 @@ interface RenderOptions {
   activeFile: string | null;
   nestDepth?: number;
 }
+function isExpandFolder(folderName: string) {
+  return folderName !== "declarations" && folderName !== "assets";
+}
 
 function renderFolderStructure(options: RenderOptions) {
   const { folderStructure, onSelectFile, activeFile, nestDepth = 0 } = options;
 
   const finalStructure = Object.entries(folderStructure.folders).map(
     ([folderName, contents]) => (
-      <FolderContainer key={folderName} open>
+      <FolderContainer key={folderName} open={isExpandFolder(folderName)}>
         <StyledFolder nestDepth={nestDepth}>
           <Icon src={folderIcon} alt="" />
           {folderName}

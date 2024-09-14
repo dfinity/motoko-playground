@@ -76,6 +76,7 @@ const terminal = new Terminal({
     background: "#ffffff",
     foreground: "#000000",
     cursor: "#000000",
+    selectionBackground: "#aaaaaa",
   },
 });
 const container = new Container(terminal);

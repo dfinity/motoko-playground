@@ -40,8 +40,7 @@ export const exampleProjects: ExampleProject[] = [
   },
   {
     name: "Super Heroes",
-    repo: { dir: "motoko/superheroes/src/superheroes", ...example },
-    readme: `${readmeURL}/superheroes/README.md`,
+    repo: { dir: "motoko/superheroes", ...example },
   },
   {
     name: "Random Maze",
@@ -50,7 +49,6 @@ export const exampleProjects: ExampleProject[] = [
   {
     name: "Game of Life",
     repo: { dir: "motoko/life", ...example },
-    readme: `${readmeURL}/life/README.md`,
   },
   {
     name: "Publisher and Subscriber",

@@ -35,6 +35,9 @@ async function upload(canisterId, asset_dirs) {
     for (const file of files) {
       const fileName = path.relative(asset_dir, file);
       const contents = fs.readFileSync(file);
+      if (contents.length === 0) {
+        continue;
+      }
       const key = `/${fileName}`;
       const item = old.find((f) => f.key === key);
       if (item) {
