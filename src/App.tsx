@@ -69,6 +69,7 @@ const worker = Comlink.wrap(
   new Worker(new URL("./workers/moc.ts", import.meta.url), { type: "module" }),
 );
 const terminal = new Terminal({
+  convertEol: true,
   cursorBlink: true,
   fontSize: 14,
   fontFamily: "monospace",

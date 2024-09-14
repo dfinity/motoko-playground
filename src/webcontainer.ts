@@ -62,7 +62,14 @@ export class Container {
     args: string[],
     options?: SpawnOptions,
   ) {
-    const process = await this.container!.spawn(cmd, args, options);
+    const new_options = {
+      ...options,
+      terminal: {
+        cols: this.terminal.cols,
+        rows: this.terminal.rows,
+      },
+    };
+    const process = await this.container!.spawn(cmd, args, new_options);
     process.output.pipeTo(
       new WritableStream({
         write: (data) => {
