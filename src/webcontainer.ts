@@ -11,7 +11,10 @@ export class Container {
 
   async init() {
     if (!this.container) {
-      this.container = await WebContainer.boot({ coep: "credentialless" });
+      this.container = await WebContainer.boot({
+        coep: "credentialless",
+        workdirName: "playground",
+      });
     }
     return this.container;
   }
@@ -54,21 +57,37 @@ export class Container {
     };
     await this.container!.mount(files);
   }
-
-  async run_cmd(cmd: string, args: string[], options?: SpawnOptions) {
-    await this.init();
-    if (options?.output ?? true) {
-      this.terminal.writeln(`/${options?.cwd ?? ""}$ ${cmd} ${args.join(" ")}`);
-    }
-    const installProcess = await this.container!.spawn(cmd, args, options);
-    installProcess.output.pipeTo(
+  private async run_cmd_inner(
+    cmd: string,
+    args: string[],
+    options?: SpawnOptions,
+  ) {
+    const process = await this.container!.spawn(cmd, args, options);
+    process.output.pipeTo(
       new WritableStream({
         write: (data) => {
           this.terminal.write(data);
         },
       }),
     );
-    const exitCode = await installProcess.exit;
+    return process;
+  }
+  async start_shell() {
+    await this.init();
+    const process = await this.run_cmd_inner("jsh", []);
+    const input = process.input.getWriter();
+    this.terminal.onData((data) => {
+      input.write(data);
+    });
+    return process;
+  }
+  async run_cmd(cmd: string, args: string[], options?: SpawnOptions) {
+    await this.init();
+    if (options?.output ?? true) {
+      this.terminal.writeln(`/${options?.cwd ?? ""}$ ${cmd} ${args.join(" ")}`);
+    }
+    const process = await this.run_cmd_inner(cmd, args, options);
+    const exitCode = await process.exit;
     if (exitCode !== 0) {
       this.terminal.writeln(`\r\nexited with code ${exitCode}`);
       throw new Error(`Command failed with code ${exitCode}`);

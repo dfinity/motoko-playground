@@ -263,6 +263,7 @@ export function App() {
       await container.run_cmd("npm", ["install"], {
         cwd: "utils",
       });
+      container.start_shell();
       // fetch code after loading base library
       if (hasUrlParams) {
         const files = await fetchFromUrlParams(workplaceDispatch);
