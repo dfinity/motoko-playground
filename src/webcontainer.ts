@@ -11,7 +11,7 @@ export class Container {
 
   async init() {
     if (!this.container) {
-      this.container = await WebContainer.boot();
+      this.container = await WebContainer.boot({ coep: "credentialless" });
     }
     return this.container;
   }
