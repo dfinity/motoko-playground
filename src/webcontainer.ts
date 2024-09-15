@@ -3,6 +3,7 @@ import { Terminal } from "@xterm/xterm";
 
 export class Container {
   public container: WebContainer | null = null;
+  public isDummy = false;
   private terminal: Terminal;
 
   constructor(terminal: Terminal) {
@@ -10,17 +11,28 @@ export class Container {
   }
 
   async init() {
+    if (this.isDummy) {
+      return;
+    }
     if (!this.container) {
-      this.container = await WebContainer.boot({
-        coep: "credentialless",
-        workdirName: "playground",
-      });
+      try {
+        this.container = await WebContainer.boot({
+          coep: "credentialless",
+          workdirName: "playground",
+        });
+      } catch (err) {
+        this.isDummy = true;
+        console.error(err);
+      }
     }
     return this.container;
   }
 
   async initFiles() {
     await this.init();
+    if (this.isDummy) {
+      return;
+    }
     const nodeFiles = import.meta.glob("./node/*", {
       query: "?raw",
       import: "default",
@@ -67,6 +79,9 @@ export class Container {
         },
   ) {
     await this.init();
+    if (this.isDummy) {
+      return;
+    }
     await this.container!.fs.writeFile(path, contents, options);
   }
   async mkdir(
@@ -76,6 +91,9 @@ export class Container {
     },
   ) {
     await this.init();
+    if (this.isDummy) {
+      return;
+    }
     await this.container!.fs.mkdir(path, options);
   }
   private async spawn(cmd: string, args: string[], options?: SpawnOptions) {
@@ -91,6 +109,10 @@ export class Container {
   }
   async start_shell() {
     await this.init();
+    if (this.isDummy) {
+      this.terminal.writeln("WebContainer fails to initialize.");
+      return;
+    }
     const process = await this.spawn("jsh", []);
     process.output.pipeTo(
       new WritableStream({
@@ -111,6 +133,9 @@ export class Container {
   }
   async run_cmd(cmd: string, args: string[], options?: SpawnOptions) {
     await this.init();
+    if (this.isDummy) {
+      return;
+    }
     if (options?.output ?? true) {
       this.terminal.writeln(`/${options?.cwd ?? ""}$ ${cmd} ${args.join(" ")}`);
     }

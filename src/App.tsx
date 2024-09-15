@@ -279,7 +279,13 @@ export function App() {
         output: false,
       });
       container.start_shell();
-      logger.log("Shell started in the terminal tab");
+      if (container.isDummy) {
+        logger.log(
+          "WebContainer is not supported in this browser. Frontend build is disabled.",
+        );
+      } else {
+        logger.log("Shell started in the terminal tab");
+      }
       // fetch code after loading base library
       if (hasUrlParams) {
         const files = await fetchFromUrlParams(workplaceDispatch);
