@@ -111,9 +111,6 @@ function generateEnv(state: WorkplaceState) {
       canister_ids[name] = { ic: info.id.toString() };
     }
   });
-  if (Object.keys(canister_ids).length === 0) {
-    throw new Error("Please deploy at least one backend canister first.");
-  }
   return { env, canister_ids };
 }
 

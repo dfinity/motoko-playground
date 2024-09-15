@@ -90,10 +90,16 @@ export function FrontendDeployModal({
   async function deployClick(mode: string) {
     try {
       await close();
-      await isDeploy(true);
-      logger.log("Building frontend... (see logs in the terminal tab)");
       const { files, env } = generateNonMotokoFilesToWebContainer(state);
       await container.container!.mount(files, { mountPoint: "user" });
+      if (Object.keys(canisters).length === 0) {
+        logger.log(
+          "No backend canisters found. Please deploy at least one backend canister first.",
+        );
+        return;
+      }
+      await isDeploy(true);
+      logger.log("Building frontend... (see logs in the terminal tab)");
       await container.run_cmd("npm", ["install"], { cwd: "user" });
       await container.run_cmd("npm", ["run", "build"], {
         cwd: "user",
