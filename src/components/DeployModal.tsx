@@ -160,6 +160,7 @@ export function DeployModal({
   const [bindingDir, setBindingDir] = useState("src/declarations");
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
+  const container = useContext(ContainerContext);
 
   const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
   const isMotoko = wasm ? false : true;
@@ -364,6 +365,11 @@ export function DeployModal({
             type: "saveFile",
             payload: { path: `${name}.d.ts`, contents: ts },
           });
+          await container.container!.fs.mkdir(`user/${bindingDir}`, {
+            recursive: true,
+          });
+          await container.container!.fs.writeFile(`user/${name}.js`, js);
+          await container.container!.fs.writeFile(`user/${name}.d.ts`, ts);
           logger.log(`Generated frontend bindings at ${name}.js`);
         }
         onDeploy(info);

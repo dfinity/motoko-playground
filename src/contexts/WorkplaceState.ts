@@ -67,9 +67,11 @@ export function getShareableProject(state: WorkplaceState) {
   ];
   return { files, packages, canisters };
 }
-export function generateNonMotokoFilesToWebContainer(state: WorkplaceState) {
-  const { env, canister_ids } = generateEnv(state);
-  const files = Object.entries(state.files)
+export function generateNonMotokoFilesToWebContainer(
+  state_files: Record<string, string | Uint8Array>,
+  canisters?: Record<string, CanisterInfo>,
+) {
+  const files = Object.entries(state_files)
     .filter(([path]) => !path.endsWith(".mo"))
     .reduce((acc, [path, content]) => {
       const parts = path.split("/");
@@ -87,31 +89,39 @@ export function generateNonMotokoFilesToWebContainer(state: WorkplaceState) {
       };
       return acc;
     }, {});
-  files["canister_ids.json"] = {
-    file: { contents: JSON.stringify(canister_ids, null, 2) },
-  };
-  files[".env"] = {
-    file: {
-      contents: Object.entries(env)
-        .map(([key, value]) => `${key}=${value}`)
-        .join("\n"),
-    },
-  };
+  const { env, env_files } = generateEnv(canisters ?? {});
+  Object.entries(env_files).forEach(([path, content]) => {
+    files[path] = content;
+  });
   return { files, env };
 }
-function generateEnv(state: WorkplaceState) {
+export function generateEnv(canisters: Record<string, CanisterInfo>) {
   const env: Record<string, string> = {
     DFX_NETWORK: "ic",
     NODE_ENV: "production",
   };
   const canister_ids = {};
-  Object.entries(state.canisters).forEach(([name, info]) => {
+  Object.entries(canisters).forEach(([name, info]) => {
     if (info.name && info.candid && !info.isFrontend) {
       env[`CANISTER_ID_${name.toUpperCase()}`] = info.id.toString();
       canister_ids[name] = { ic: info.id.toString() };
     }
   });
-  return { env, canister_ids };
+  const env_files = {
+    "canister_ids.json": {
+      file: {
+        contents: JSON.stringify(canister_ids, null, 2),
+      },
+    },
+    ".env": {
+      file: {
+        contents: Object.entries(env)
+          .map(([key, value]) => `${key}=${value}`)
+          .join("\n"),
+      },
+    },
+  };
+  return { env, env_files };
 }
 
 export type WorkplaceReducerAction =
@@ -173,10 +183,8 @@ export type WorkplaceReducerAction =
   | {
       type: "deployWorkplace";
       payload: {
-        /** path of file that should be updated. Should correspond to a property in state.files */
         canister: CanisterInfo;
         do_not_select?: boolean;
-        /** new contents of file */
       };
     }
   | {

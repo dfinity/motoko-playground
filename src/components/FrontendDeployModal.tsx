@@ -90,7 +90,10 @@ export function FrontendDeployModal({
   async function deployClick(mode: string) {
     try {
       await close();
-      const { files, env } = generateNonMotokoFilesToWebContainer(state);
+      const { files, env } = generateNonMotokoFilesToWebContainer(
+        state.files,
+        canisters,
+      );
       await container.container!.mount(files, { mountPoint: "user" });
       if (Object.keys(canisters).length === 0) {
         logger.log(

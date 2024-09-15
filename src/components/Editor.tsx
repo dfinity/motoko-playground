@@ -16,6 +16,7 @@ import {
   getActorAliases,
   WorkerContext,
   WorkplaceDispatchContext,
+  ContainerContext,
 } from "../contexts/WorkplaceState";
 import { compileCandid } from "../build";
 import { didToJs } from "../config/actor";
@@ -86,6 +87,14 @@ function setMarkers(diags, codeModel, monaco, fileName) {
 
   monaco.editor.setModelMarkers(codeModel, "moc", markers);
 }
+function guessMainFile(files: Record<string, string>): string {
+  if ("main.mo" in files) return "main.mo";
+  if ("Main.mo" in files) return "Main.mo";
+  // Check if there's only one .mo file
+  const moFiles = Object.keys(files).filter((file) => file.endsWith(".mo"));
+  if (moFiles.length === 1) return moFiles[0];
+  return "";
+}
 
 type CodeEditor = import("monaco-editor").editor.IStandaloneCodeEditor;
 
@@ -99,6 +108,7 @@ export function Editor({
 }) {
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
+  const container = useContext(ContainerContext);
 
   const [formatted, setFormatted] = useState(false);
 
@@ -109,7 +119,7 @@ export function Editor({
   }
   const fileCode = fileName ? state.files[fileName] : "";
   const mainFile =
-    fileExtension === "mo" ? fileName : state.files["Main.mo"] ? "Main.mo" : "";
+    fileExtension === "mo" ? fileName : guessMainFile(state.files);
   const selectFrontend =
     "package.json" in state.files &&
     fileExtension !== "mo" &&
@@ -141,9 +151,13 @@ export function Editor({
         contents: newValue,
       },
     });
-    if (fileExtension !== "mo") return;
-    await worker.Moc({ type: "save", file: fileName, content: newValue });
-    await checkFileAddMarkers();
+    if (fileExtension !== "mo") {
+      // TODO: will trap if path doesn't exist
+      await container.container!.fs.writeFile(`user/${fileName}`, newValue);
+    } else {
+      await worker.Moc({ type: "save", file: fileName, content: newValue });
+      await checkFileAddMarkers();
+    }
   };
 
   const debouncedSaveChanges = debounce(saveChanges, 1000, { leading: false });

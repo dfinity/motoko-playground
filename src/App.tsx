@@ -18,6 +18,8 @@ import {
   getDeployedCanisters,
   getShareableProject,
   WorkplaceReducerAction,
+  generateNonMotokoFilesToWebContainer,
+  generateEnv,
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
 import { DeployModal, DeploySetter } from "./components/DeployModal";
@@ -226,16 +228,30 @@ export function App() {
         canister: info,
       },
     });
+    if (info.name) {
+      const { env_files } = generateEnv({ [info.name]: info });
+      Object.entries(env_files).forEach(([path, content]) => {
+        container.container!.fs.writeFile(
+          `user/${path}`,
+          content.file.contents,
+        );
+      });
+    }
   };
 
   const importCode = useCallback(
-    (files: Record<string, string>) => {
+    async (files: Record<string, string>) => {
       workplaceDispatch({
         type: "loadProject",
         payload: {
           files,
         },
       });
+      const { files: bundle } = generateNonMotokoFilesToWebContainer(
+        files,
+        workplaceState.canisters,
+      );
+      await container.container!.mount(bundle, { mountPoint: "user" });
     },
     [workplaceDispatch],
   );
@@ -263,8 +279,10 @@ export function App() {
       await container.initFiles();
       await container.run_cmd("npm", ["install"], {
         cwd: "utils",
+        output: false,
       });
       container.start_shell();
+      logger.log("Shell started in the terminal tab");
       // fetch code after loading base library
       if (hasUrlParams) {
         const files = await fetchFromUrlParams(workplaceDispatch);
