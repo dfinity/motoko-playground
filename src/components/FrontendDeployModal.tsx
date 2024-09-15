@@ -130,7 +130,7 @@ export function FrontendDeployModal({
         const principal = identity.getPrincipal();
         const args = IDL.encode([IDL.Principal], [principal]);
         await backend.callForward(info!, "authorize", args);
-        await container.container!.fs.writeFile(
+        await container.writeFile(
           "utils/identity.json",
           JSON.stringify(identity.toJSON()),
         );

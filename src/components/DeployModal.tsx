@@ -365,11 +365,11 @@ export function DeployModal({
             type: "saveFile",
             payload: { path: `${name}.d.ts`, contents: ts },
           });
-          await container.container!.fs.mkdir(`user/${bindingDir}`, {
+          await container.mkdir(`user/${bindingDir}`, {
             recursive: true,
           });
-          await container.container!.fs.writeFile(`user/${name}.js`, js);
-          await container.container!.fs.writeFile(`user/${name}.d.ts`, ts);
+          await container.writeFile(`user/${name}.js`, js);
+          await container.writeFile(`user/${name}.d.ts`, ts);
           logger.log(`Generated frontend bindings at ${name}.js`);
         }
         onDeploy(info);

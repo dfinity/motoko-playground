@@ -153,7 +153,7 @@ export function Editor({
     });
     if (fileExtension !== "mo") {
       // TODO: will trap if path doesn't exist
-      await container.container!.fs.writeFile(`user/${fileName}`, newValue);
+      await container.writeFile(`user/${fileName}`, newValue);
     } else {
       await worker.Moc({ type: "save", file: fileName, content: newValue });
       await checkFileAddMarkers();

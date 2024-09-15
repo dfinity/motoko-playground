@@ -57,6 +57,27 @@ export class Container {
     };
     await this.container!.mount(files);
   }
+  async writeFile(
+    path: string,
+    contents: string | Uint8Array,
+    options?:
+      | string
+      | {
+          encoding?: string;
+        },
+  ) {
+    await this.init();
+    await this.container!.fs.writeFile(path, contents, options);
+  }
+  async mkdir(
+    path: string,
+    options?: {
+      recursive?: boolean;
+    },
+  ) {
+    await this.init();
+    await this.container!.fs.mkdir(path, options);
+  }
   private async spawn(cmd: string, args: string[], options?: SpawnOptions) {
     const new_options = {
       ...options,

@@ -231,10 +231,7 @@ export function App() {
     if (info.name) {
       const { env_files } = generateEnv({ [info.name]: info });
       Object.entries(env_files).forEach(([path, content]) => {
-        container.container!.fs.writeFile(
-          `user/${path}`,
-          content.file.contents,
-        );
+        container.writeFile(`user/${path}`, content.file.contents);
       });
     }
   };
