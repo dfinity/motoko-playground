@@ -57,11 +57,7 @@ export class Container {
     };
     await this.container!.mount(files);
   }
-  private async run_cmd_inner(
-    cmd: string,
-    args: string[],
-    options?: SpawnOptions,
-  ) {
+  private async spawn(cmd: string, args: string[], options?: SpawnOptions) {
     const new_options = {
       ...options,
       terminal: {
@@ -70,18 +66,22 @@ export class Container {
       },
     };
     const process = await this.container!.spawn(cmd, args, new_options);
-    process.output.pipeTo(
-      new WritableStream({
-        write: (data) => {
-          this.terminal.write(data);
-        },
-      }),
-    );
     return process;
   }
   async start_shell() {
     await this.init();
-    const process = await this.run_cmd_inner("jsh", []);
+    const process = await this.spawn("jsh", []);
+    process.output.pipeTo(
+      new WritableStream({
+        write: (data) => {
+          if (data.includes("command not found: moc")) {
+            this.terminal.writeln("haha, you called moc!");
+          } else {
+            this.terminal.write(data);
+          }
+        },
+      }),
+    );
     const input = process.input.getWriter();
     this.terminal.onData((data) => {
       input.write(data);
@@ -93,7 +93,14 @@ export class Container {
     if (options?.output ?? true) {
       this.terminal.writeln(`/${options?.cwd ?? ""}$ ${cmd} ${args.join(" ")}`);
     }
-    const process = await this.run_cmd_inner(cmd, args, options);
+    const process = await this.spawn(cmd, args, options);
+    process.output.pipeTo(
+      new WritableStream({
+        write: (data) => {
+          this.terminal.write(data);
+        },
+      }),
+    );
     const exitCode = await process.exit;
     if (exitCode !== 0) {
       this.terminal.writeln(`\r\nexited with code ${exitCode}`);
