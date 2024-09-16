@@ -94,7 +94,8 @@ export function FrontendDeployModal({
         state.files,
         canisters,
       );
-      await container.container!.mount(files, { mountPoint: "user" });
+      // mount doesn't remove old files, but this is fine for now
+      await container.mount(files, { mountPoint: "user" });
       if (Object.keys(canisters).length === 0) {
         logger.log(
           "No backend canisters found. Please deploy at least one backend canister first.",

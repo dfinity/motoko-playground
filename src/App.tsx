@@ -248,7 +248,9 @@ export function App() {
         files,
         workplaceState.canisters,
       );
-      await container.container!.mount(bundle, { mountPoint: "user" });
+      await container.rm("user", { recursive: true, force: true });
+      await container.mkdir("user");
+      await container.mount(bundle, { mountPoint: "user" });
     },
     [workplaceDispatch],
   );

@@ -69,6 +69,20 @@ export class Container {
     };
     await this.container!.mount(files);
   }
+  async mount(files: FileSystemTree, options?: { mountPoint?: string }) {
+    await this.init();
+    if (this.isDummy) {
+      return;
+    }
+    await this.container!.mount(files, options);
+  }
+  async rm(path: string, options?: { recursive?: boolean; force?: boolean }) {
+    await this.init();
+    if (this.isDummy) {
+      return;
+    }
+    await this.container!.fs.rm(path, options);
+  }
   async writeFile(
     path: string,
     contents: string | Uint8Array,
