@@ -90,6 +90,10 @@ export function FrontendDeployModal({
   async function deployClick(mode: string) {
     try {
       await close();
+      if (container.isDummy) {
+        logger.log("Frontend build is disabled.");
+        return;
+      }
       const { files, env } = generateNonMotokoFilesToWebContainer(
         state.files,
         canisters,

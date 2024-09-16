@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useContext } from "react";
 import styled from "styled-components";
 import { IDL, renderInput, InputBox } from "@dfinity/candid";
-import { Ed25519KeyIdentity } from "@dfinity/identity";
 
 import { Modal } from "./shared/Modal";
 import {
@@ -20,13 +19,10 @@ import {
   ContainerContext,
   Origin,
 } from "../contexts/WorkplaceState";
-import { didjs, backend } from "../config/actor";
+import { didjs } from "../config/actor";
 import { Field } from "./shared/Field";
 import { Confirm } from "./shared/Confirm";
 import "../assets/styles/candid.css";
-
-const assetWasmHash =
-  "3a533f511b3960b4186e76cf9abfbd8222a2c507456a66ec55671204ee70cae3";
 
 const ModalContainer = styled.div`
   display: flex;
