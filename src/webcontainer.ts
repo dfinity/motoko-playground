@@ -110,8 +110,30 @@ export class Container {
   async start_shell() {
     await this.init();
     if (this.isDummy) {
-      this.terminal.writeln("WebContainer fails to initialize.");
+      this.terminal.writeln(
+        "WebContainer fails to initialize. Frontend build is disabled.",
+      );
       return;
+    }
+    const userAgent = navigator.userAgent.toLowerCase();
+    // TODO: double check the browsers listed here indeed works
+    const isChromiumBased = [
+      "chrome",
+      "edge",
+      "brave",
+      "opera",
+      "duckduckgo",
+      "vivaldi",
+    ].some((browser) => userAgent.indexOf(browser) > -1);
+    const isMobile =
+      /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+        userAgent,
+      );
+    if (!isChromiumBased || isMobile) {
+      this.terminal.writeln(
+        `You are using ${isMobile ? "a mobile browser" : userAgent}.
+Some terminal commands may not work. Please consider using a desktop Chromium-based browser like Chrome, Edge, or Brave.`,
+      );
     }
     const process = await this.spawn("jsh", []);
     process.output.pipeTo(
