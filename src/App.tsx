@@ -229,7 +229,8 @@ export function App() {
       },
     });
     if (info.name) {
-      const { env_files } = generateEnv({ [info.name]: info });
+      const canisters = { ...workplaceState.canisters, [info.name]: info };
+      const { env_files } = generateEnv(canisters);
       Object.entries(env_files).forEach(([path, content]) => {
         container.writeFile(`user/${path}`, content.file.contents);
       });
