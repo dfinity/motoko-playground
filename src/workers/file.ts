@@ -68,7 +68,7 @@ const isValidFile = (path: string) => {
   return validFiles.test(path); // && !path.includes("/declarations/");
 };
 const isBinaryFile = (path: string) => {
-  const binaryFiles = /\.(png|jpg|jpeg|gif|ico)$/;
+  const binaryFiles = /\.(png|jpg|jpeg|gif|ico|wasm)$/;
   return binaryFiles.test(path);
 };
 
