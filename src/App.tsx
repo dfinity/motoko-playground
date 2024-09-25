@@ -407,8 +407,8 @@ export function App() {
                         ([name, info]) => [info.id, name],
                       ),
                     );
-                    Object.entries(workplaceState.canisters).forEach(
-                      async ([_, info]) => {
+                    Object.values(workplaceState.canisters).forEach(
+                      async (info) => {
                         if (!info.timestamp || info.isExternal) {
                           return;
                         }
