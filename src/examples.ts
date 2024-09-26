@@ -12,12 +12,14 @@ const example = {
 };
 const readmeURL =
   "https://raw.githubusercontent.com/dfinity/examples/master/motoko";
+const readmeArchiveURL =
+  "https://raw.githubusercontent.com/dfinity/examples/master/archive/motoko";
 
 export const exampleProjects: ExampleProject[] = [
   {
     name: "Hello, world",
-    repo: { dir: "motoko/echo/src", ...example },
-    readme: `${readmeURL}/echo/README.md`,
+    repo: { dir: "archive/motoko/echo/src", ...example },
+    readme: `${readmeArchiveURL}/echo/README.md`,
   },
   {
     name: "Counter",
@@ -25,8 +27,8 @@ export const exampleProjects: ExampleProject[] = [
   },
   {
     name: "Calculator",
-    repo: { dir: "motoko/calc/src", ...example },
-    readme: `${readmeURL}/calc/README.md`,
+    repo: { dir: "archive/motoko/calc/src", ...example },
+    readme: `${readmeArchiveURL}/calc/README.md`,
   },
   {
     name: "Who am I?",
@@ -35,8 +37,8 @@ export const exampleProjects: ExampleProject[] = [
   },
   {
     name: "Phone Book",
-    repo: { dir: "motoko/phone-book/src/phone-book", ...example },
-    readme: `${readmeURL}/phone-book/README.md`,
+    repo: { dir: "archive/motoko/phone-book/src/phone-book", ...example },
+    readme: `${readmeArchiveURL}/phone-book/README.md`,
   },
   {
     name: "Super Heroes",
