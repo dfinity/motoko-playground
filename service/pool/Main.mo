@@ -89,7 +89,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 Cycles.add<system>(params.cycles_per_canister);
                 let settings = ?{
                     controllers = null;
-                    log_visibility = ?(#public_);
+                    log_visibility = ?#public_;
                     freezing_threshold = null;
                     memory_allocation = null;
                     compute_allocation = null;
@@ -157,7 +157,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             pool.removeCanister(info);
             let settings = {
                 controllers = ?controllers;
-                log_visibility = ?(#controllers);
+                log_visibility = ?#controllers;
                 freezing_threshold = null;
                 memory_allocation = null;
                 compute_allocation = null;
