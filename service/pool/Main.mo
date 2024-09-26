@@ -87,7 +87,15 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         switch (pool.getExpiredCanisterId()) {
             case (#newId) {
                 Cycles.add<system>(params.cycles_per_canister);
-                let cid = await IC.create_canister { settings = null };
+                let settings = ?{
+                    controllers = null;
+                    log_visibility = ?(#public_);
+                    freezing_threshold = null;
+                    memory_allocation = null;
+                    compute_allocation = null;
+                    wasm_memory_limit = null;
+                };
+                let cid = await IC.create_canister { settings };
                 let now = Time.now();
                 let info = { id = cid.canister_id; timestamp = now };
                 pool.add info;
@@ -149,6 +157,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             pool.removeCanister(info);
             let settings = {
                 controllers = ?controllers;
+                log_visibility = ?(#controllers);
                 freezing_threshold = null;
                 memory_allocation = null;
                 compute_allocation = null;
@@ -513,9 +522,13 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         { canister_id = info.id };
     };
 
-    // Disabled to prevent the user from updating the controller list (amongst other settings)
-    public shared func update_settings({}) : async () {
-        throw Error.reject "Cannot call update_settings from within Motoko Playground";
+    public shared ({ caller }) func update_settings({canister_id:Principal; settings: ICType.canister_settings}) : async () {
+        if (Principal.isController(caller)) {
+            await IC.update_settings { canister_id; settings };
+        } else {
+            // Disabled to prevent the user from updating the controller list (amongst other settings)
+            throw Error.reject "Cannot call update_settings from within Motoko Playground";
+        }
     };
 
     public shared ({ caller }) func install_code({
@@ -658,6 +671,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     system func inspect({
+        caller : Principal;
         msg : {
             #GCCanisters : Any;
             #balance : Any;
@@ -700,7 +714,6 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     }) : Bool {
         switch msg {
             case (#create_canister _) false;
-            case (#update_settings _) false;
             case (#install_code _) false;
             case (#uninstall_code _) false;
             case (#canister_status _) false;
@@ -713,6 +726,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             case (#load_canister_snapshot _) false;
             case (#_ttp_request _) false;
             case (#__transform _) false;
+            case (#update_settings _) Principal.isController(caller);
             case _ true;
         };
     };

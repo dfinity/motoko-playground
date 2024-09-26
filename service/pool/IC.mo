@@ -2,12 +2,14 @@
 module {
   public type canister_id = Principal;
   public type snapshot_id = Blob;
+  public type log_visibility = { #controllers; #public_ };
   public type canister_settings = {
     controllers : ?[Principal];
     freezing_threshold : ?Nat;
     memory_allocation : ?Nat;
     compute_allocation : ?Nat;
     wasm_memory_limit : ?Nat;
+    log_visibility : ?log_visibility;
   };
   public type definite_canister_settings = {
     controllers : [Principal];
@@ -15,6 +17,7 @@ module {
     memory_allocation : Nat;
     compute_allocation : Nat;
     wasm_memory_limit : Nat;
+    log_visibility : log_visibility;
   };
   public type snapshot = {
       id : snapshot_id;
