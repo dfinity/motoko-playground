@@ -524,6 +524,8 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
 
     public shared ({ caller }) func update_settings({canister_id:Principal; settings: ICType.canister_settings}) : async () {
         if (Principal.isController(caller)) {
+            assert(pool.findId canister_id);
+            assert(settings.controllers == null);
             await IC.update_settings { canister_id; settings };
         } else {
             // Disabled to prevent the user from updating the controller list (amongst other settings)
