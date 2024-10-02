@@ -10,6 +10,7 @@ import List "mo:base/List";
 import Option "mo:base/Option";
 import Int "mo:base/Int";
 import Timer "mo:base/Timer";
+import Debug "mo:base/Debug";
 import ICType "./IC";
 
 module {
@@ -286,7 +287,10 @@ module {
                 case null List.nil();
                 case (?children) {
                     let now = Time.now();
-                    List.filter(children, func(p: Principal) : Bool = notExpired(Option.unwrap(info p), now));
+                    List.filter(children, func(p: Principal) : Bool {
+                        let ?cinfo = info p else { Debug.trap "unwrap info(p)" };
+                        notExpired(cinfo, now);
+                    });
                 }
             }
         };

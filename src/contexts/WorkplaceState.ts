@@ -1,6 +1,7 @@
 import * as React from "react";
 import { CanisterInfo } from "../build";
 import { PackageInfo } from "../workers/file";
+import { Container } from "../webcontainer";
 
 export interface Origin {
   origin: string;
@@ -9,7 +10,7 @@ export interface Origin {
   session_tags?: Array<string>;
 }
 export interface WorkplaceState {
-  files: Record<string, string>;
+  files: Record<string, string | Uint8Array>;
   selectedFile: string | null;
   canisters: Record<string, CanisterInfo>;
   selectedCanister: string | null;
@@ -17,7 +18,7 @@ export interface WorkplaceState {
   origin: Origin;
 }
 export function getActorAliases(
-  canisters: Record<string, CanisterInfo>
+  canisters: Record<string, CanisterInfo>,
 ): Array<[string, string]> {
   return Object.entries(canisters).map(([name, info]) => [
     name,
@@ -25,17 +26,17 @@ export function getActorAliases(
   ]);
 }
 export function getExternalCanisters(
-  canisters: Record<string, CanisterInfo>
+  canisters: Record<string, CanisterInfo>,
 ): Record<string, CanisterInfo> {
   return Object.fromEntries(
-    Object.entries(canisters).filter(([_, info]) => info.isExternal)
+    Object.entries(canisters).filter(([_, info]) => info.isExternal),
   );
 }
 export function getDeployedCanisters(
-  canisters: Record<string, CanisterInfo>
+  canisters: Record<string, CanisterInfo>,
 ): Record<string, CanisterInfo> {
   return Object.fromEntries(
-    Object.entries(canisters).filter(([_, info]) => !info.isExternal)
+    Object.entries(canisters).filter(([_, info]) => !info.isExternal),
   );
 }
 export function getShareableProject(state: WorkplaceState) {
@@ -66,6 +67,62 @@ export function getShareableProject(state: WorkplaceState) {
   ];
   return { files, packages, canisters };
 }
+export function generateNonMotokoFilesToWebContainer(
+  state_files: Record<string, string | Uint8Array>,
+  canisters?: Record<string, CanisterInfo>,
+) {
+  const files = Object.entries(state_files)
+    .filter(([path]) => !path.endsWith(".mo"))
+    .reduce((acc, [path, content]) => {
+      const parts = path.split("/");
+      let current = acc;
+      for (let i = 0; i < parts.length - 1; i++) {
+        if (!current[parts[i]]) {
+          current[parts[i]] = { directory: {} };
+        }
+        current = current[parts[i]].directory;
+      }
+      current[parts[parts.length - 1]] = {
+        file: {
+          contents: content,
+        },
+      };
+      return acc;
+    }, {});
+  const { env, env_files } = generateEnv(canisters ?? {});
+  Object.entries(env_files).forEach(([path, content]) => {
+    files[path] = content;
+  });
+  return { files, env };
+}
+export function generateEnv(canisters: Record<string, CanisterInfo>) {
+  const env: Record<string, string> = {
+    DFX_NETWORK: "ic",
+    NODE_ENV: "production",
+  };
+  const canister_ids = {};
+  Object.entries(canisters).forEach(([name, info]) => {
+    if (info.name && info.candid && !info.isFrontend) {
+      env[`CANISTER_ID_${name.toUpperCase()}`] = info.id.toString();
+      canister_ids[name] = { ic: info.id.toString() };
+    }
+  });
+  const env_files = {
+    "canister_ids.json": {
+      file: {
+        contents: JSON.stringify(canister_ids, null, 2),
+      },
+    },
+    ".env": {
+      file: {
+        contents: Object.entries(env)
+          .map(([key, value]) => `${key}=${value}`)
+          .join("\n"),
+      },
+    },
+  };
+  return { env, env_files };
+}
 
 export type WorkplaceReducerAction =
   /**
@@ -74,7 +131,7 @@ export type WorkplaceReducerAction =
   | {
       type: "loadProject";
       payload: {
-        files: Record<string, string>;
+        files: Record<string, string | Uint8Array>;
       };
     }
   | {
@@ -126,10 +183,8 @@ export type WorkplaceReducerAction =
   | {
       type: "deployWorkplace";
       payload: {
-        /** path of file that should be updated. Should correspond to a property in state.files */
         canister: CanisterInfo;
         do_not_select?: boolean;
-        /** new contents of file */
       };
     }
   | {
@@ -147,6 +202,9 @@ export type WorkplaceReducerAction =
 function selectFirstFile(files: Record<string, string>): string | null {
   if ("README" in files) {
     return "README";
+  }
+  if ("README.md" in files) {
+    return "README.md";
   }
   if ("Main.mo" in files) {
     return "Main.mo";
@@ -181,7 +239,7 @@ export const workplaceReducer = {
   /** Return updated state based on an action */
   reduce(
     state: WorkplaceState,
-    action: WorkplaceReducerAction
+    action: WorkplaceReducerAction,
   ): WorkplaceState {
     switch (action.type) {
       case "loadProject":
@@ -288,9 +346,12 @@ export const WorkplaceDispatchContext = React.createContext<
   React.Dispatch<WorkplaceReducerAction>
 >(() => {
   console.warn(
-    "using default WorkplaceDispathcContext. Make sure to Provide one in your component tree"
+    "using default WorkplaceDispathcContext. Make sure to Provide one in your component tree",
   );
 });
 export const WorkerContext = React.createContext<any>(() => {
   console.warn("provide a value for worker");
+});
+export const ContainerContext = React.createContext<Container>(() => {
+  console.warn("provide a value for web container");
 });

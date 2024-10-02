@@ -1,0 +1,13 @@
+{
+  "name": "node-utils",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@dfinity/agent": "^2.1.1",
+    "@dfinity/candid": "^2.1.1",
+    "@dfinity/principal": "^2.1.1",
+    "@dfinity/assets": "^2.1.1",
+    "@dfinity/identity": "^2.1.1",
+    "glob": "^8.1.0"
+  }
+}
