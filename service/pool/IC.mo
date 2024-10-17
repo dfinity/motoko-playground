@@ -53,16 +53,25 @@ module {
     target_canister : canister_id;
     store_canister : ?canister_id;
   };
+  public type canister_status_result = {
+    status : { #stopped; #stopping; #running };
+    memory_size : Nat;
+    cycles : Nat;
+    settings : definite_canister_settings;
+    query_stats : {
+      response_payload_bytes_total : Nat;
+      num_instructions_total : Nat;
+      num_calls_total : Nat;
+      request_payload_bytes_total : Nat;
+    };
+    idle_cycles_burned_per_day : Nat;
+    module_hash : ?Blob;
+    reserved_cycles : Nat;
+  };
   public type user_id = Principal;
   public type wasm_module = Blob;
   public type Self = actor {
-    canister_status : shared { canister_id : canister_id } -> async {
-        status : { #stopped; #stopping; #running };
-        memory_size : Nat;
-        cycles : Nat;
-        settings : definite_canister_settings;
-        module_hash : ?Blob;
-      };
+    canister_status : shared { canister_id : canister_id } -> async canister_status_result;
     create_canister : shared { settings : ?canister_settings } -> async {
         canister_id : canister_id;
       };

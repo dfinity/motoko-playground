@@ -86,6 +86,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     private func getExpiredCanisterInfo(origin : Logs.Origin) : async* (Types.CanisterInfo, {#install; #reinstall}) {
         switch (pool.getExpiredCanisterId()) {
             case (#newId) {
+              try {
                 Cycles.add<system>(params.cycles_per_canister);
                 let settings = ?{
                     controllers = null;
@@ -102,6 +103,10 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 stats := Logs.updateStats(stats, #getId(params.cycles_per_canister));
                 statsByOrigin.addCanister(origin);
                 (info, #install);
+              } catch(e) {
+                  pool.rollbackLen();
+                  throw e;
+              };
             };
             case (#reuse info) {
                 let no_uninstall = Option.get(params.no_uninstall, false);
@@ -594,13 +599,11 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
 
     public shared ({ caller }) func canister_status({
         canister_id : ICType.canister_id;
-    }) : async {
-        status : { #stopped; #stopping; #running };
-        memory_size : Nat;
-        cycles : Nat;
-        settings : ICType.definite_canister_settings;
-        module_hash : ?Blob;
-    } {
+    }) : async ICType.canister_status_result {
+        if (Principal.isController(caller)) {
+            assert(pool.findId canister_id);
+            return await IC.canister_status { canister_id };
+        };
         switch (sanitizeInputs(caller, canister_id)) {
             case (#ok _) await IC.canister_status { canister_id };
             case (#err makeMsg) {
@@ -752,7 +755,6 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             case (#create_canister _) false;
             case (#install_code _) false;
             case (#uninstall_code _) false;
-            case (#canister_status _) false;
             case (#start_canister _) false;
             case (#stop_canister _) false;
             case (#delete_canister _) false;
@@ -762,6 +764,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             case (#load_canister_snapshot _) false;
             case (#_ttp_request _) false;
             case (#__transform _) false;
+            case (#canister_status _) Principal.isController(caller);
             case (#update_settings _) Principal.isController(caller);
             case _ true;
         };

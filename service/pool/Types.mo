@@ -86,6 +86,9 @@ module {
 
         public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
 
+        public func rollbackLen() {
+            len -= 1;
+        };
         public func getExpiredCanisterId() : NewId {
             if (len < size) {
                 // increment len here to prevent race condition
