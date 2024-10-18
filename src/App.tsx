@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 
-import { wrap } from "comlink";
+import * as Comlink from "comlink";
 
 import { CandidUI } from "./components/CandidUI";
 import { Editor } from "./components/Editor";
@@ -13,15 +13,21 @@ import {
   workplaceReducer,
   WorkplaceDispatchContext,
   WorkerContext,
+  ContainerContext,
   getActorAliases,
   getDeployedCanisters,
   getShareableProject,
   WorkplaceReducerAction,
+  generateNonMotokoFilesToWebContainer,
+  generateEnv,
 } from "./contexts/WorkplaceState";
 import { ProjectModal } from "./components/ProjectModal";
 import { DeployModal, DeploySetter } from "./components/DeployModal";
+import { FrontendDeployModal } from "./components/FrontendDeployModal";
 import { backend, saved } from "./config/actor";
 import { setupEditorIntegration } from "./integrations/editorIntegration";
+import { Container } from "./webcontainer";
+import { Terminal } from "@xterm/xterm";
 
 const MOC_VERSION = "0.12.1";
 
@@ -61,9 +67,22 @@ const AppContainer = styled.div<{ candidWidth: string; consoleHeight: string }>`
   --consoleHeight: ${(props) => props.consoleHeight ?? 0};
 `;
 
-const worker = wrap(
-  new Worker(new URL("./workers/moc.ts", import.meta.url), { type: "module" })
+const worker = Comlink.wrap(
+  new Worker(new URL("./workers/moc.ts", import.meta.url), { type: "module" }),
 );
+const terminal = new Terminal({
+  convertEol: true,
+  cursorBlink: true,
+  fontSize: 14,
+  fontFamily: "monospace",
+  theme: {
+    background: "#ffffff",
+    foreground: "#000000",
+    cursor: "#000000",
+    selectionBackground: "#aaaaaa",
+  },
+});
+const container = new Container(terminal);
 const urlParams = new URLSearchParams(window.location.search);
 const hasUrlParams = !!(
   urlParams.get("git") ||
@@ -71,7 +90,7 @@ const hasUrlParams = !!(
   urlParams.get("post")
 );
 async function fetchFromUrlParams(
-  dispatch: (action: WorkplaceReducerAction) => void
+  dispatch: (action: WorkplaceReducerAction) => void,
 ): Promise<Record<string, string> | undefined> {
   const git = urlParams.get("git");
   const tag = urlParams.get("tag");
@@ -103,7 +122,7 @@ async function fetchFromUrlParams(
         project.files.map((file) => {
           worker.Moc({ type: "save", file: file.name, content: file.content });
           return [file.name, file.content];
-        })
+        }),
       );
       if (project.packages.length) {
         for (const pack of project.packages[0]) {
@@ -154,7 +173,7 @@ export function App() {
   const [workplaceState, workplaceDispatch] = useReducer(
     workplaceReducer.reduce,
     {},
-    workplaceReducer.init
+    workplaceReducer.init,
   );
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(!hasUrlParams);
   const [isFirstVisit, setIsFirstVisit] = useState(!hasUrlParams);
@@ -166,6 +185,7 @@ export function App() {
 
   // States for deploy modal
   const [showDeployModal, setShowDeployModal] = useState(false);
+  const [showFrontendDeployModal, setShowFrontendDeployModal] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [candidCode, setCandidCode] = useState("");
   const [initTypes, setInitTypes] = useState([]);
@@ -176,6 +196,7 @@ export function App() {
     setInitTypes,
     setCandidCode,
     setShowDeployModal,
+    setShowFrontendDeployModal,
     setWasm,
   };
 
@@ -195,7 +216,7 @@ export function App() {
     logger.log(
       `Use this link to access the code:\n${
         window.location.origin
-      }/?tag=${hash.toString()}`
+      }/?tag=${hash.toString()}`,
     );
   }
 
@@ -207,18 +228,32 @@ export function App() {
         canister: info,
       },
     });
+    if (info.name) {
+      const canisters = { ...workplaceState.canisters, [info.name]: info };
+      const { env_files } = generateEnv(canisters);
+      Object.entries(env_files).forEach(([path, content]) => {
+        container.writeFile(`user/${path}`, content.file.contents);
+      });
+    }
   };
 
   const importCode = useCallback(
-    (files: Record<string, string>) => {
+    async (files: Record<string, string>) => {
       workplaceDispatch({
         type: "loadProject",
         payload: {
           files,
         },
       });
+      const { files: bundle } = generateNonMotokoFilesToWebContainer(
+        files,
+        workplaceState.canisters,
+      );
+      await container.rm("user", { recursive: true, force: true });
+      await container.mkdir("user");
+      await container.mount(bundle, { mountPoint: "user" });
     },
-    [workplaceDispatch]
+    [workplaceDispatch],
   );
 
   // Add the Motoko package to allow for compilation / checking
@@ -241,6 +276,19 @@ export function App() {
       });
       logger.log(`moc version ${MOC_VERSION}`);
       logger.log(`base library version ${baseInfo.version}`);
+      await container.initFiles();
+      await container.run_cmd("npm", ["install"], {
+        cwd: "utils",
+        output: false,
+      });
+      container.start_shell();
+      if (container.isDummy) {
+        logger.log(
+          "WebContainer is not supported in this browser. Frontend build is disabled.",
+        );
+      } else {
+        logger.log("Shell started in the terminal tab");
+      }
       // fetch code after loading base library
       if (hasUrlParams) {
         const files = await fetchFromUrlParams(workplaceDispatch);
@@ -285,86 +333,106 @@ export function App() {
       />
       <WorkplaceDispatchContext.Provider value={workplaceDispatch}>
         <WorkerContext.Provider value={worker}>
-          <ProjectModal
-            isOpen={isProjectModalOpen}
-            importCode={importCode}
-            close={closeProjectModal}
-            isFirstOpen={isFirstVisit}
-          />
-          <DeployModal
-            state={workplaceState}
-            isOpen={showDeployModal}
-            close={() => setShowDeployModal(false)}
-            onDeploy={deployWorkplace}
-            isDeploy={setIsDeploying}
-            canisters={getDeployedCanisters(workplaceState.canisters)}
-            ttl={TTL}
-            fileName={mainFile}
-            wasm={wasm}
-            candid={candidCode}
-            initTypes={initTypes}
-            logger={logger}
-            origin={workplaceState.origin}
-          />
-          <AppContainer candidWidth={candidWidth} consoleHeight={consoleHeight}>
-            <Explorer
+          <ContainerContext.Provider value={container}>
+            <ProjectModal
+              isOpen={isProjectModalOpen}
+              importCode={importCode}
+              close={closeProjectModal}
+              isFirstOpen={isFirstVisit}
+            />
+            <DeployModal
               state={workplaceState}
+              isOpen={showDeployModal}
+              close={() => setShowDeployModal(false)}
+              onDeploy={deployWorkplace}
+              isDeploy={setIsDeploying}
+              canisters={getDeployedCanisters(workplaceState.canisters)}
               ttl={TTL}
+              fileName={mainFile}
+              wasm={wasm}
+              candid={candidCode}
+              initTypes={initTypes}
               logger={logger}
-              deploySetter={deploySetter}
+              origin={workplaceState.origin}
             />
-            <Editor
+            <FrontendDeployModal
               state={workplaceState}
+              isOpen={showFrontendDeployModal}
+              close={() => setShowFrontendDeployModal(false)}
+              onDeploy={deployWorkplace}
+              isDeploy={setIsDeploying}
+              canisters={getDeployedCanisters(workplaceState.canisters)}
               logger={logger}
-              deploySetter={deploySetter}
-              isDeploying={isDeploying}
-              setConsoleHeight={setConsoleHeight}
+              origin={workplaceState.origin}
             />
-            {showCandidUI ? (
-              <CandidUI
-                setCandidWidth={setCandidWidth}
-                canisterId={workplaceState.canisters[
-                  workplaceState.selectedCanister!
-                ]?.id.toString()}
-                candid={
-                  workplaceState.canisters[workplaceState.selectedCanister!]
-                    ?.candid
-                }
-                forceUpdate={forceUpdate}
-                onMessage={({ origin, source, message }) => {
-                  if (!message.caller) return;
-                  // We have to check children for all canisters in workplaceState,
-                  // because message.caller can call other canisters to spawn new children.
-                  const nameMap = Object.fromEntries(
-                    Object.entries(workplaceState.canisters).map(
-                      ([name, info]) => [info.id, name]
-                    )
-                  );
-                  Object.entries(workplaceState.canisters).forEach(
-                    async ([_, info]) => {
-                      if (!info.timestamp || info.isExternal) {
-                        return;
-                      }
-                      const subtree = await backend.getSubtree(info);
-                      subtree.reverse().forEach(([parentId, children]) => {
-                        const parentName = nameMap[parentId];
-                        // Assume children is sorted by timestamp
-                        children.reverse().forEach((child, i) => {
-                          child.name = `${parentName}_${i}`;
-                          child.isExternal = false;
-                          nameMap[child.id] = child.name;
-                          workplaceDispatch({
-                            type: "deployWorkplace",
-                            payload: { canister: child, do_not_select: true },
+            <AppContainer
+              candidWidth={candidWidth}
+              consoleHeight={consoleHeight}
+            >
+              <Explorer
+                state={workplaceState}
+                ttl={TTL}
+                logger={logger}
+                deploySetter={deploySetter}
+              />
+              <Editor
+                state={workplaceState}
+                logger={logger}
+                terminal={terminal}
+                deploySetter={deploySetter}
+                isDeploying={isDeploying}
+                setConsoleHeight={setConsoleHeight}
+              />
+              {showCandidUI ? (
+                <CandidUI
+                  setCandidWidth={setCandidWidth}
+                  canisterId={workplaceState.canisters[
+                    workplaceState.selectedCanister!
+                  ]?.id.toString()}
+                  candid={
+                    workplaceState.canisters[workplaceState.selectedCanister!]
+                      ?.candid
+                  }
+                  isFrontend={
+                    workplaceState.canisters[workplaceState.selectedCanister!]
+                      ?.isFrontend ?? false
+                  }
+                  forceUpdate={forceUpdate}
+                  onMessage={({ origin, source, message }) => {
+                    if (!message.caller) return;
+                    // We have to check children for all canisters in workplaceState,
+                    // because message.caller can call other canisters to spawn new children.
+                    const nameMap = Object.fromEntries(
+                      Object.entries(workplaceState.canisters).map(
+                        ([name, info]) => [info.id, name],
+                      ),
+                    );
+                    Object.values(workplaceState.canisters).forEach(
+                      async (info) => {
+                        if (!info.timestamp || info.isExternal) {
+                          return;
+                        }
+                        const subtree = await backend.getSubtree(info);
+                        subtree.reverse().forEach(([parentId, children]) => {
+                          const parentName = nameMap[parentId];
+                          // Assume children is sorted by timestamp
+                          children.reverse().forEach((child, i) => {
+                            child.name = `${parentName}_${i}`;
+                            child.isExternal = false;
+                            nameMap[child.id] = child.name;
+                            workplaceDispatch({
+                              type: "deployWorkplace",
+                              payload: { canister: child, do_not_select: true },
+                            });
                           });
                         });
-                      });
-                    }
-                  );
-                }}
-              />
-            ) : null}
-          </AppContainer>
+                      },
+                    );
+                  }}
+                />
+              ) : null}
+            </AppContainer>
+          </ContainerContext.Provider>
         </WorkerContext.Provider>
       </WorkplaceDispatchContext.Provider>
     </main>

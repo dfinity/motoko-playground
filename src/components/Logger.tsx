@@ -1,17 +1,24 @@
-import { useState, createContext, useContext } from "react";
+import { useState, createContext, useContext, Fragment } from "react";
 
 export interface ILoggingStore {
   clearLogs(): void;
-  log(line: string): void;
-  logLines: string[];
+  log(line: string | React.ReactNode): void;
+  logLines: Array<string | React.ReactNode>;
 }
 
 const useLoggingStore = (): ILoggingStore => {
-  const [logLines, setLogLines] = useState<string[]>([]);
+  const [logLines, setLogLines] = useState<Array<string | React.ReactNode>>([]);
   const clearLogs = () => setLogLines([]);
-  const log = (line: string) => {
+  const log = (line: string | React.ReactNode) => {
     const time = new Date(Date.now()).toLocaleTimeString();
-    setLogLines((prevLines) => [...prevLines, `[${time}] ${line}`]);
+    setLogLines((prevLines) => [
+      ...prevLines,
+      typeof line === "string" ? (
+        `[${time}] ${line}`
+      ) : (
+        <Fragment>{line}</Fragment>
+      ),
+    ]);
   };
   return {
     clearLogs,

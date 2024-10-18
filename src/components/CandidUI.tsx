@@ -11,7 +11,9 @@ const CandidPanel = styled.div<{ isExpanded: boolean }>`
   width: var(--candidWidth);
 `;
 
-const CandidFrame = styled.iframe`
+const CandidFrame = styled.iframe.attrs({
+  sandbox: "allow-scripts allow-same-origin allow-forms allow-popups",
+})`
   height: calc(var(--appHeight) - var(--sectionHeaderHeight));
   border: none;
   width: var(--candidWidth);
@@ -41,6 +43,7 @@ interface PropTypes {
   canisterId: string;
   candid?: string | null | undefined;
   setCandidWidth?: (width: string) => void;
+  isFrontend: boolean;
   forceUpdate?: any;
   onMessage?: (event: { origin: string; source: Window; message: any }) => void;
 }
@@ -50,6 +53,7 @@ export function CandidUI({
   candid,
   setCandidWidth,
   forceUpdate,
+  isFrontend,
   onMessage,
 }: PropTypes) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -59,8 +63,10 @@ export function CandidUI({
       ? `&did=${encodeURIComponent(btoa(candid))}`
       : "&external-config";
 
-  const url =
-    `${CANDID_UI_CANISTER_URL}/?id=${canisterId}&tag=${forceUpdate}` + didParam;
+  const url = isFrontend
+    ? `https://${canisterId}.icp0.io`
+    : `${CANDID_UI_CANISTER_URL}/?id=${canisterId}&tag=${forceUpdate}` +
+      didParam;
 
   // Handle incoming messages from iframe
   const handleMessage = useCallback(
@@ -78,12 +84,12 @@ export function CandidUI({
               console.warn(
                 "Received Candid UI message from unexpected origin:",
                 origin,
-                `(Expected: ${CANDID_UI_CANISTER_URL})`
+                `(Expected: ${CANDID_UI_CANISTER_URL})`,
               );
               return;
             }
             const message = JSON.parse(
-              data.substring(CANDID_UI_MESSAGE_PREFIX.length)
+              data.substring(CANDID_UI_MESSAGE_PREFIX.length),
             );
             onMessage?.({ origin, source, message });
           }
@@ -93,7 +99,7 @@ export function CandidUI({
         }
       }
     },
-    [onMessage]
+    [onMessage],
   );
 
   useEffect(() => {
@@ -104,6 +110,9 @@ export function CandidUI({
     setIsExpanded(true);
   }, [canisterId, candid, forceUpdate]);
   useEffect(() => {
+    if (isFrontend) {
+      return;
+    }
     window.addEventListener("message", handleMessage, false);
     return () => window.removeEventListener("message", handleMessage);
   }, [handleMessage, onMessage, url]);
@@ -116,6 +125,9 @@ export function CandidUI({
     const newWindow = window.open(url, "_blank");
     if (!newWindow) {
       console.warn("Unable to open new tab for Candid UI");
+      return;
+    }
+    if (isFrontend) {
       return;
     }
 
@@ -145,6 +157,9 @@ export function CandidUI({
   };
 
   const sendConfigMessage = (newWindow: Window, acknowledge: any) => {
+    if (isFrontend) {
+      return;
+    }
     console.log("Sending config message to Candid UI");
 
     // Configure candid using iframe message
@@ -158,7 +173,7 @@ export function CandidUI({
     };
     newWindow.postMessage(
       `${CANDID_UI_MESSAGE_PREFIX}${JSON.stringify(message)}`,
-      CANDID_UI_CANISTER_URL
+      CANDID_UI_CANISTER_URL,
     );
   };
 
@@ -175,7 +190,7 @@ export function CandidUI({
             src={iconCollapse}
             alt="Collapse icon"
           />
-          {isExpanded ? "CANDID UI" : null}
+          {isExpanded ? (isFrontend ? "FRONTEND" : "CANDID UI") : null}
         </Button>
         {isExpanded ? (
           <Button onClick={handleOpenTab}>

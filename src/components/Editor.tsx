@@ -16,6 +16,7 @@ import {
   getActorAliases,
   WorkerContext,
   WorkplaceDispatchContext,
+  ContainerContext,
 } from "../contexts/WorkplaceState";
 import { compileCandid } from "../build";
 import { didToJs } from "../config/actor";
@@ -86,33 +87,47 @@ function setMarkers(diags, codeModel, monaco, fileName) {
 
   monaco.editor.setModelMarkers(codeModel, "moc", markers);
 }
+function guessMainFile(files: Record<string, string>): string {
+  if ("main.mo" in files) return "main.mo";
+  if ("Main.mo" in files) return "Main.mo";
+  // Check if there's only one .mo file
+  const moFiles = Object.keys(files).filter((file) => file.endsWith(".mo"));
+  if (moFiles.length === 1) return moFiles[0];
+  return "";
+}
 
 type CodeEditor = import("monaco-editor").editor.IStandaloneCodeEditor;
 
 export function Editor({
   state,
   logger,
+  terminal,
   setConsoleHeight,
   deploySetter,
   isDeploying,
 }) {
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
+  const container = useContext(ContainerContext);
 
   const [formatted, setFormatted] = useState(false);
 
   const fileName = state.selectedFile;
+  var fileExtension = fileName?.split(".").pop() ?? "";
+  if (fileName === "README") {
+    fileExtension = "md";
+  }
   const fileCode = fileName ? state.files[fileName] : "";
-  // TODO
-  const mainFile = fileName.endsWith(".mo")
-    ? fileName
-    : state.files["Main.mo"]
-    ? "Main.mo"
-    : "";
+  const mainFile =
+    fileExtension === "mo" ? fileName : guessMainFile(state.files);
+  const selectFrontend =
+    "package.json" in state.files &&
+    fileExtension !== "mo" &&
+    fileExtension !== "md";
 
   const monaco = useMonaco();
   const checkFileAddMarkers = async () => {
-    if (!fileName || !fileName.endsWith("mo")) return;
+    if (!fileName || fileExtension !== "mo") return;
     const check = await worker.Moc({ type: "check", file: fileName });
     const diags = check.diagnostics;
     setMarkers(
@@ -120,7 +135,7 @@ export function Editor({
       // @ts-ignore
       monaco?.editor.getModel(`file:///${fileName}`),
       monaco,
-      fileName
+      fileName,
     );
   };
   const saveChanges = async () => {
@@ -136,9 +151,13 @@ export function Editor({
         contents: newValue,
       },
     });
-    if (!fileName.endsWith("mo")) return;
-    await worker.Moc({ type: "save", file: fileName, content: newValue });
-    await checkFileAddMarkers();
+    if (fileExtension !== "mo") {
+      // TODO: will trap if path doesn't exist
+      await container.writeFile(`user/${fileName}`, newValue);
+    } else {
+      await worker.Moc({ type: "save", file: fileName, content: newValue });
+      await checkFileAddMarkers();
+    }
   };
 
   const debouncedSaveChanges = debounce(saveChanges, 1000, { leading: false });
@@ -168,11 +187,16 @@ export function Editor({
     editorRef.current?.getAction("editor.action.formatDocument").run();
   };
   const deployClick = async () => {
+    if (selectFrontend) {
+      deploySetter.setShowFrontendDeployModal(true);
+      return;
+    }
     const aliases = getActorAliases(state.canisters);
     await worker.saveWorkplaceToMotoko(state.files);
     await worker.Moc({ type: "setActorAliases", list: aliases });
     if (!mainFile) {
       logger.log("Select a main entry file to deploy");
+      return;
     }
     const candid = await compileCandid(worker, mainFile, logger);
     if (candid) {
@@ -199,7 +223,7 @@ export function Editor({
       <PanelHeader>
         Editor
         <RightContainer>
-          {!!fileName.endsWith(".mo") && (
+          {fileExtension === "mo" && (
             <>
               {!!formatted && (
                 <FormatMessage>
@@ -225,19 +249,25 @@ export function Editor({
             small
           >
             <img src={isDeploying ? iconSpin : iconRabbit} alt="Rabbit icon" />
-            <p>{isDeploying ? "Deploying..." : "Deploy"}</p>
+            <p>
+              {isDeploying
+                ? "Deploying..."
+                : selectFrontend
+                  ? "Deploy Frontend"
+                  : "Deploy Backend"}
+            </p>
           </Button>
         </RightContainer>
       </PanelHeader>
-      <MarkdownContainer isHidden={fileName !== "README"}>
+      <MarkdownContainer isHidden={fileExtension !== "md"}>
         <ReactMarkdown linkTarget="_blank">
-          {fileName === "README" ? fileCode : ""}
+          {fileExtension === "md" ? fileCode : ""}
         </ReactMarkdown>
       </MarkdownContainer>
-      <EditorContainer isHidden={fileName === "README"}>
+      <EditorContainer isHidden={fileExtension === "md"}>
         <MonacoEditor
           defaultLanguage={"motoko"}
-          value={fileName === "README" ? "" : fileCode}
+          value={fileExtension === "md" ? "" : fileCode}
           path={fileName}
           beforeMount={configureMonaco}
           onMount={onEditorMount}
@@ -253,7 +283,7 @@ export function Editor({
           }}
         />
       </EditorContainer>
-      <Console setConsoleHeight={setConsoleHeight} />
+      <Console setConsoleHeight={setConsoleHeight} terminal={terminal} />
     </EditorColumn>
   );
 }

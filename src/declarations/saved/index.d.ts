@@ -40,7 +40,7 @@ export declare interface CreateActorOptions {
  */
 export declare const createActor: (
   canisterId: string | Principal,
-  options?: CreateActorOptions
+  options?: CreateActorOptions,
 ) => ActorSubclass<_SERVICE>;
 
 /**
