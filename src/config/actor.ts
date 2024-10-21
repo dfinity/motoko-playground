@@ -19,8 +19,9 @@ import { idlFactory as didjs_idl } from "./didjs.did";
 const LOCAL_PORT = 4943;
 
 const hostname = window.location.hostname;
-//const local = hostname === "127.0.0.1" || hostname.endsWith("localhost");
-const local = false;
+const local = hostname === "127.0.0.1" || hostname.endsWith("localhost");
+// only enable when testing webcontainer upload
+//const local = false;
 
 export const agent = HttpAgent.createSync({
   // Prefer calling local replica directly instead of CRA proxy
