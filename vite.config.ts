@@ -30,7 +30,13 @@ export default defineConfig(({ mode }) => {
               "react-markdown",
               "prettier-plugin-motoko",
             ],
-            agent: ["@dfinity/agent", "@dfinity/candid", "@dfinity/principal"],
+            xterm: ["@xterm/xterm", "@xterm/addon-fit"],
+            agent: [
+              "@dfinity/agent",
+              "@dfinity/candid",
+              "@dfinity/principal",
+              "@dfinity/identity",
+            ],
           },
         },
       },
@@ -42,7 +48,6 @@ export default defineConfig(({ mode }) => {
       wasm(),
       topLevelAwait(),
       devServerPlugin(),
-      sourcemapPlugin(),
       svgrPlugin(),
 
       setupProxyPlugin(),
@@ -95,22 +100,6 @@ function devServerPlugin(): Plugin {
                 key: readFileSync(resolve(SSL_KEY_FILE)),
               },
             }),
-        },
-      };
-    },
-  };
-}
-
-// Migration guide: Follow the guide below
-// https://vitejs.dev/config/build-options.html#build-sourcemap
-function sourcemapPlugin(): Plugin {
-  return {
-    name: "sourcemap-plugin",
-    config(_, { mode }) {
-      const { GENERATE_SOURCEMAP } = loadEnv(mode, ".", ["GENERATE_SOURCEMAP"]);
-      return {
-        build: {
-          sourcemap: GENERATE_SOURCEMAP === "true",
         },
       };
     },

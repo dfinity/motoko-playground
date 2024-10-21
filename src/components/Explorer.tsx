@@ -12,7 +12,7 @@ import {
 import { PackageModal } from "./PackageModal";
 import { FileModal } from "./FileModal";
 import { CanisterModal } from "./CanisterModal";
-import { DeploySetter } from "./DeplayModal";
+import { DeploySetter } from "./DeployModal";
 import { PackageInfo } from "../workers/file";
 import { ILoggingStore } from "./Logger";
 import { deleteCanister } from "../build";
@@ -44,6 +44,18 @@ const CloseButton = styled(MyButton)`
   padding: 0;
   margin-right: -1.1rem;
   margin-left: -0.3rem;
+`;
+const CanisterName = styled.span`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: calc(100% - 4rem);
+  display: inline-block;
+`;
+const TimeDisplay = styled.div`
+  margin-left: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
 `;
 
 interface ExplorerProps {
@@ -99,7 +111,7 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
           if (action === "delete") {
             const canisterInfo = state.canisters[selectedCanister];
             logger.log(
-              `Deleting canister ${selectedCanister} with id ${canisterInfo.id.toText()}...`
+              `Deleting canister ${selectedCanister} with id ${canisterInfo.id.toText()}...`,
             );
             await deleteCanister(canisterInfo);
             logger.log("Canister deleted");
@@ -132,7 +144,7 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
     }
     const timer = setTimeout(() => {
       const times: Array<[string, number | undefined]> = Object.values(
-        state.canisters
+        state.canisters,
       ).map((info) => {
         return [info.name!, calcTimeLeft(info.timestamp)];
       });
@@ -162,7 +174,7 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
           } else {
             return { status: "Expired" };
           }
-        })
+        }),
       );
     }, 1000);
     // Clear timeout if the component is unmounted
@@ -196,7 +208,9 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
         </MyButton>
       </CategoryTitle>
       <FolderStructure
-        filePaths={Object.keys(state.files).sort()}
+        filePaths={Object.keys(state.files)
+          .filter((key) => typeof state.files[key] === "string")
+          .sort()}
         onSelectFile={onSelectFile}
         activeFile={state.selectedFile}
       />
@@ -235,22 +249,25 @@ export function Explorer({ state, ttl, logger, deploySetter }: ExplorerProps) {
           disabled={state.selectedCanister === canister}
           onClick={() => onCanister(canister, "select")}
           aria-label="Select canister"
+          title={canister}
         >
           <img style={{ width: "2rem" }} src={iconCanister} alt="" />
-          canister:{canister}
-          {timeLeft[i]?.status === "Active" ? (
-            <div style={{ marginLeft: "auto" }}>
-              <span style={{ fontVariantNumeric: "tabular-nums" }}>
-                {timeLeft[i]?.minutes}
-              </span>
-              :
-              <span style={{ fontVariantNumeric: "tabular-nums" }}>
-                {timeLeft[i]?.seconds}
-              </span>
-            </div>
-          ) : (
-            <div style={{ marginLeft: "auto" }}></div>
-          )}
+          <CanisterName>{canister}</CanisterName>
+          <TimeDisplay>
+            {timeLeft[i]?.status === "Active" ? (
+              <div style={{ marginLeft: "auto" }}>
+                <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                  {timeLeft[i]?.minutes}
+                </span>
+                :
+                <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                  {timeLeft[i]?.seconds}
+                </span>
+              </div>
+            ) : (
+              <div style={{ marginLeft: "auto" }}></div>
+            )}
+          </TimeDisplay>
           <CloseButton
             onClick={() => onCanister(canister, "delete")}
             aria-label={`Delete canister ${canister}`}

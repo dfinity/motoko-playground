@@ -8,7 +8,7 @@ export interface ExampleProject {
 
 const example = {
   repo: "dfinity/examples",
-  branch: "master",
+  branch: "bump-agent-js",
 };
 const readmeURL =
   "https://raw.githubusercontent.com/dfinity/examples/master/motoko";
@@ -23,8 +23,7 @@ export const exampleProjects: ExampleProject[] = [
   },
   {
     name: "Counter",
-    repo: { dir: "motoko/counter/src", ...example },
-    readme: `${readmeURL}/counter/README.md`,
+    repo: { dir: "motoko/minimal-counter-dapp", ...example },
   },
   {
     name: "Calculator",
@@ -43,18 +42,15 @@ export const exampleProjects: ExampleProject[] = [
   },
   {
     name: "Super Heroes",
-    repo: { dir: "motoko/superheroes/src/superheroes", ...example },
-    readme: `${readmeURL}/superheroes/README.md`,
+    repo: { dir: "motoko/superheroes", ...example },
   },
   {
     name: "Random Maze",
-    repo: { dir: "motoko/random_maze/src/random_maze", ...example },
-    readme: `${readmeURL}/random_maze/README.md`,
+    repo: { dir: "motoko/random_maze", ...example },
   },
   {
     name: "Game of Life",
     repo: { dir: "motoko/life", ...example },
-    readme: `${readmeURL}/life/README.md`,
   },
   {
     name: "Publisher and Subscriber",
@@ -86,6 +82,23 @@ export async function fetchExample(
   if (files && proj.readme) {
     const content = await (await fetch(proj.readme)).text();
     files = { README: content, ...files };
+  }
+  files = rewritePackageJson(files);
+  return files;
+}
+
+function rewritePackageJson(files: Record<string, string>) {
+  const packageJson = files["package.json"];
+  if (packageJson) {
+    const json = JSON.parse(packageJson);
+    if (json.scripts) {
+      Object.entries(json.scripts).forEach(([key, value]) => {
+        if (typeof value === "string" && value.startsWith("dfx")) {
+          json.scripts[key] = "";
+        }
+      });
+      files["package.json"] = JSON.stringify(json, null, 2);
+    }
   }
   return files;
 }
