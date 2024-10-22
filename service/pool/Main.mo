@@ -125,6 +125,19 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 };
                 if (need_uninstall) {
                     await* pool_uninstall_code(cid.canister_id);
+                    switch (params.stored_module_hash) {
+                    case null {};
+                    case (?stored) {
+                             await IC.install_chunked_code {
+                                 arg = "DIDL\00\00";
+                                 target_canister = cid.canister_id;
+                                 store_canister = ?(Principal.fromActor this);
+                                 chunk_hashes_list = [{ hash = stored }];
+                                 wasm_module_hash = stored;
+                                 mode = #install;
+                             }
+                         };
+                    };
                 };
                 switch (status.status) {
                     case (#stopped or #stopping) {
@@ -134,7 +147,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 };
                 stats := Logs.updateStats(stats, #getId topUpCycles);
                 statsByOrigin.addCanister(origin);
-                let mode = if (need_uninstall) { #install } else { #reinstall };
+                let mode = if (need_uninstall and Option.isNull(params.stored_module_hash)) { #install } else { #reinstall };
                 (info, mode);
             };
             case (#outOfCapacity time) {
@@ -249,6 +262,9 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     public shared ({ caller }) func getCanisterId(nonce : PoW.Nonce, origin : Logs.Origin) : async Types.CanisterInfo {
+        if (Option.get(params.admin_only, false)) {
+            throw Error.reject "Cannot call this endpoint when admin_only is true";
+        };
         if (not validateOrigin(origin)) {
             throw Error.reject "Please specify a valid origin";
         };
