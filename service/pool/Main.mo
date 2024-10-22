@@ -118,10 +118,10 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     Cycles.add<system> topUpCycles;
                     await IC.deposit_cycles cid;
                 };
-                let need_uninstall = switch ((params.stored_module_hash, status.module_hash)) {
+                let need_uninstall = switch ((params.stored_module, status.module_hash)) {
                 case ((null, ?_)) { true };
                 case ((_, null)) { false };
-                case (?stored, ?current) { stored != current };
+                case (?stored, ?current) { stored.hash != current };
                 };
                 if (need_uninstall) {
                     await* pool_uninstall_code(cid.canister_id);
@@ -134,7 +134,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 };
                 stats := Logs.updateStats(stats, #getId topUpCycles);
                 statsByOrigin.addCanister(origin);
-                let mode = if (need_uninstall and Option.isNull(params.stored_module_hash)) { #install } else { #reinstall };
+                let mode = if (need_uninstall and Option.isNull(params.stored_module)) { #install } else { #reinstall };
                 (info, mode);
             };
             case (#outOfCapacity time) {
@@ -143,15 +143,15 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 throw Error.reject("No available canister id, wait for " # debug_show (second) # " seconds.");
             };
         };
-        switch (params.stored_module_hash) {
+        switch (params.stored_module) {
         case null {};
         case (?stored) {
                  await IC.install_chunked_code {
-                     arg = "DIDL\00\00";
+                     arg = stored.arg;
                      target_canister = res.0.id;
                      store_canister = ?(Principal.fromActor this);
-                     chunk_hashes_list = [{ hash = stored }];
-                     wasm_module_hash = stored;
+                     chunk_hashes_list = [{ hash = stored.hash }];
+                     wasm_module_hash = stored.hash;
                      mode = #install;
                  }
              };
@@ -210,8 +210,8 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         if (not Principal.isController(caller)) {
             throw Error.reject "Only called by controller";
         };
-        if (Option.isSome(params.stored_module_hash) and Option.isSome(args)) {
-            throw Error.reject "args should be null when stored_module_hash is set";
+        if (Option.isSome(params.stored_module) and Option.isSome(args)) {
+            throw Error.reject "args should be null when stored_module is set";
         };
         let origin = { origin = "admin"; tags = [] };
         let (info, mode) = switch (opt_info) {
@@ -382,7 +382,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     func updateTimer<system>(info: Types.CanisterInfo) {
-        if (Option.isSome(params.stored_module_hash)) {
+        if (Option.isSome(params.stored_module)) {
             return;
         };
         func job() : async () {
@@ -460,7 +460,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "only called by controllers";
         };
         for (info in pool.getAllCanisters()) {
-            if (Option.isNull(params.stored_module_hash)) {
+            if (Option.isNull(params.stored_module)) {
                 await* pool_uninstall_code(info.id);
             };
             ignore pool.retire info;

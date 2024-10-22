@@ -21,7 +21,7 @@ module {
         nonce_time_to_live: Nat;
         max_family_tree_size: Nat;
         // Used for installing asset canister. If set, will not use timer to kill expired canisters, and will not uninstall code when fetching an expired canister (unless the module hash changed).
-        stored_module_hash: ?Blob;
+        stored_module: ?{hash: Blob; arg: Blob};
         admin_only: ?Bool;
         wasm_utils_principal: ?Text;
     };
@@ -31,7 +31,7 @@ module {
         canister_time_to_live = 1200_000_000_000;
         nonce_time_to_live = 300_000_000_000;
         max_family_tree_size = 5;
-        stored_module_hash = null;
+        stored_module = null;
         admin_only = null;
         wasm_utils_principal = ?"ozk6r-tyaaa-aaaab-qab4a-cai";
     };
