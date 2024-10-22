@@ -84,7 +84,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         await* f2;
     };
     private func getExpiredCanisterInfo(origin : Logs.Origin) : async* (Types.CanisterInfo, {#install; #reinstall}) {
-        switch (pool.getExpiredCanisterId()) {
+        let res = switch (pool.getExpiredCanisterId()) {
             case (#newId) {
               try {
                 Cycles.add<system>(params.cycles_per_canister);
@@ -125,19 +125,6 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 };
                 if (need_uninstall) {
                     await* pool_uninstall_code(cid.canister_id);
-                    switch (params.stored_module_hash) {
-                    case null {};
-                    case (?stored) {
-                             await IC.install_chunked_code {
-                                 arg = "DIDL\00\00";
-                                 target_canister = cid.canister_id;
-                                 store_canister = ?(Principal.fromActor this);
-                                 chunk_hashes_list = [{ hash = stored }];
-                                 wasm_module_hash = stored;
-                                 mode = #install;
-                             }
-                         };
-                    };
                 };
                 switch (status.status) {
                     case (#stopped or #stopping) {
@@ -156,6 +143,20 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 throw Error.reject("No available canister id, wait for " # debug_show (second) # " seconds.");
             };
         };
+        switch (params.stored_module_hash) {
+        case null {};
+        case (?stored) {
+                 await IC.install_chunked_code {
+                     arg = "DIDL\00\00";
+                     target_canister = res.0.id;
+                     store_canister = ?(Principal.fromActor this);
+                     chunk_hashes_list = [{ hash = stored }];
+                     wasm_module_hash = stored;
+                     mode = #install;
+                 }
+             };
+        };
+        res;
     };
     func validateOrigin(origin: Logs.Origin) : Bool {
         if (origin.origin == "") {
