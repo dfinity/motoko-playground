@@ -8,4 +8,5 @@
     "32e92f1190d8321e97f8d8f3e793019e4fd2812bfc595345d46d2c23f74c1ab5", // dfx 0.18.0 -- 0.20.1 frontend canister
     "2cc4ec4381dee231379270a08403c984986c9fc0c2eaadb64488b704a3104cc0", // dfx 0.21.0 frontend canister
     "3a533f511b3960b4186e76cf9abfbd8222a2c507456a66ec55671204ee70cae3", // dfx 0.23.0 frontend canister
+    "2c9e30df9be951a6884c702a97bbb8c0b438f33d4208fa612b1de6fb1752db76", // dfx 0.24.1 frontend canister
 ]
