@@ -11,7 +11,7 @@ let init = opt record {
   nonce_time_to_live = 1;
   canister_time_to_live = 5_000_000_000;
   max_family_tree_size = 5;
-  no_uninstall = opt true;
+  store_module = opt record { hash = blob ""; arg = blob "" };
 };
 let S = install(wasm, init, null);
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
@@ -30,7 +30,7 @@ let init = opt record {
   nonce_time_to_live = 1;
   canister_time_to_live = 5_000_000_000;
   max_family_tree_size = 5;
-  no_uninstall = opt false;
+  stored_module = null;
 };
 let S = install(wasm, init, null);
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
@@ -51,17 +51,11 @@ let init = opt record {
 };
 let S = install(wasm, init, null);
 
-let c1 = call S.getCanisterId(nonce, origin);
-c1;
-let c2 = call S.getCanisterId(nonce, origin);
-c2;
-let c3 = call S.getCanisterId(nonce, origin);
-c3;
-let c4 = call S.getCanisterId(nonce, origin);
-c4;
-assert c1.id != c2.id;
-assert c1.id == c3.id;
-assert c2.id == c4.id;
+let s1 = par_call [S.getCanisterId(nonce, origin), S.getCanisterId(nonce, origin)];
+assert s1[0].id != s1[1].id;
+let s2 = par_call [S.getCanisterId(nonce, origin), S.getCanisterId(nonce, origin)];
+assert or(eq(s1[0].id, s2[0].id), eq(s1[0].id, s2[1].id)) == true;
+assert or(eq(s1[1].id, s2[1].id), eq(s1[1].id, s2[0].id)) == true;
 
 // Out of capacity
 let init = opt record {
