@@ -176,6 +176,8 @@ module {
             tree.insert { timestamp = 0; id };
             metadata.put(id, (0, false));
             deleteFamilyNode id;
+            cycles.delete id;
+            // snapshots already removed with pool_uninstall_code
             return true;
         };
 
