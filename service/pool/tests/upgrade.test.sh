@@ -15,16 +15,12 @@ let S = install(wasm, init, null);
 
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
 let c1 = call S.getCanisterId(nonce, origin);
-c1;
 let c2 = call S.getCanisterId(nonce, origin);
-c2;
 
 upgrade(S, wasm, init);
 let c3 = call S.getCanisterId(nonce, origin);
-c3;
 let c4 = call S.getCanisterId(nonce, origin);
-c4;
-assert c1.id != c2.id;
+assert c1.id == c2.id;
 assert c1.id == c3.id;
 assert c2.id == c4.id;
 
@@ -41,10 +37,11 @@ upgrade(S, wasm, init);
 // stats are preserved after upgrade
 call S.getStats();
 assert _ == stats;
-let c5 = call S.getCanisterId(nonce, origin);
-c5;
-assert c5.id != c1.id;
-assert c5.id != c2.id;
+// TTL increased, c4 suddenly get more time.
+let c6 = call S.getCanisterId(nonce, origin);
+let c7 = call S.getCanisterId(nonce, origin);
+assert c6.id != c4.id;
+assert c7.id != c6.id;
 fail call S.getCanisterId(nonce, origin);
 assert _ ~= "No available canister id";
 
