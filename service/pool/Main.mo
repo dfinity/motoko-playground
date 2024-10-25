@@ -152,7 +152,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                      store_canister = ?(Principal.fromActor this);
                      chunk_hashes_list = [{ hash = stored.hash }];
                      wasm_module_hash = stored.hash;
-                     mode = #install;
+                     mode = res.1;
                  }
              };
         };
