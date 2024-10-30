@@ -11,26 +11,7 @@ let init = opt record {
   nonce_time_to_live = 1;
   canister_time_to_live = 5_000_000_000;
   max_family_tree_size = 5;
-  no_uninstall = opt true;
-};
-let S = install(wasm, init, null);
-let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
-let CID2 = call S.getCanisterId(nonce, origin);
-call S.installCode(CID2, record { arg = blob ""; wasm_module = empty_wasm; mode = variant { install }; canister_id = CID2.id }, record { profiling = false; is_whitelisted = false; origin = origin });
-read_state("canister", CID2.id, "module_hash");
-let c1 = call S.deployCanister(null, opt record { arg = blob ""; wasm_module = empty_wasm; bypass_wasm_transform = opt true });
-let c1 = c1[0];
-call S.transferOwnership(c1, vec {c1.id; S});
-fail call S.deployCanister(opt c1, opt record { arg = blob ""; wasm_module = empty_wasm; bypass_wasm_transform = opt true });
-assert _ ~= "Cannot find canister";
-
-let init = opt record {
-  cycles_per_canister = 105_000_000_000;
-  max_num_canisters = 2;
-  nonce_time_to_live = 1;
-  canister_time_to_live = 5_000_000_000;
-  max_family_tree_size = 5;
-  no_uninstall = opt false;
+  stored_module = null;
 };
 let S = install(wasm, init, null);
 let nonce = record { timestamp = 1 : int; nonce = 1 : nat };
@@ -51,17 +32,11 @@ let init = opt record {
 };
 let S = install(wasm, init, null);
 
-let c1 = call S.getCanisterId(nonce, origin);
-c1;
-let c2 = call S.getCanisterId(nonce, origin);
-c2;
-let c3 = call S.getCanisterId(nonce, origin);
-c3;
-let c4 = call S.getCanisterId(nonce, origin);
-c4;
-assert c1.id != c2.id;
-assert c1.id == c3.id;
-assert c2.id == c4.id;
+let s1 = par_call [S.getCanisterId(nonce, origin), S.getCanisterId(nonce, origin)];
+assert s1[0].id != s1[1].id;
+let s2 = par_call [S.getCanisterId(nonce, origin), S.getCanisterId(nonce, origin)];
+assert or(eq(s1[0].id, s2[0].id), eq(s1[0].id, s2[1].id)) == true;
+assert or(eq(s1[1].id, s2[1].id), eq(s1[1].id, s2[0].id)) == true;
 
 // Out of capacity
 let init = opt record {
@@ -105,5 +80,4 @@ call S.getCanisterId(nonce, origin);
 // Enough time has passed that the timer has removed the canister code
 fail read_state("canister", CID.id, "module_hash");
 assert _ ~= "absent";
-read_state("canister", CID2.id, "module_hash");
 read_state("canister", CID3.id, "module_hash");

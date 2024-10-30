@@ -84,7 +84,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         await* f2;
     };
     private func getExpiredCanisterInfo(origin : Logs.Origin) : async* (Types.CanisterInfo, {#install; #reinstall}) {
-        switch (pool.getExpiredCanisterId()) {
+        let res = switch (pool.getExpiredCanisterId()) {
             case (#newId) {
               try {
                 Cycles.add<system>(params.cycles_per_canister);
@@ -109,7 +109,6 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
               };
             };
             case (#reuse info) {
-                let no_uninstall = Option.get(params.no_uninstall, false);
                 let cid = { canister_id = info.id };
                 let status = await IC.canister_status cid;
                 let topUpCycles : Nat = if (status.cycles < params.cycles_per_canister) {
@@ -119,7 +118,12 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                     Cycles.add<system> topUpCycles;
                     await IC.deposit_cycles cid;
                 };
-                if (not no_uninstall and Option.isSome(status.module_hash)) {
+                let need_uninstall = switch ((params.stored_module, status.module_hash)) {
+                case ((null, ?_)) { true };
+                case ((_, null)) { false };
+                case (?stored, ?current) { stored.hash != current };
+                };
+                if (need_uninstall) {
                     await* pool_uninstall_code(cid.canister_id);
                 };
                 switch (status.status) {
@@ -130,7 +134,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 };
                 stats := Logs.updateStats(stats, #getId topUpCycles);
                 statsByOrigin.addCanister(origin);
-                let mode = if (no_uninstall) { #reinstall } else { #install };
+                let mode = if (need_uninstall and Option.isNull(params.stored_module)) { #install } else { #reinstall };
                 (info, mode);
             };
             case (#outOfCapacity time) {
@@ -139,6 +143,20 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                 throw Error.reject("No available canister id, wait for " # debug_show (second) # " seconds.");
             };
         };
+        switch (params.stored_module) {
+        case null {};
+        case (?stored) {
+                 await IC.install_chunked_code {
+                     arg = stored.arg;
+                     target_canister = res.0.id;
+                     store_canister = ?(Principal.fromActor this);
+                     chunk_hashes_list = [{ hash = stored.hash }];
+                     wasm_module_hash = stored.hash;
+                     mode = res.1;
+                 }
+             };
+        };
+        res;
     };
     func validateOrigin(origin: Logs.Origin) : Bool {
         if (origin.origin == "") {
@@ -192,6 +210,9 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         if (not Principal.isController(caller)) {
             throw Error.reject "Only called by controller";
         };
+        if (Option.isSome(params.stored_module) and Option.isSome(args)) {
+            throw Error.reject "args should be null when stored_module is set";
+        };
         let origin = { origin = "admin"; tags = [] };
         let (info, mode) = switch (opt_info) {
         case null { await* getExpiredCanisterInfo(origin) };
@@ -242,6 +263,9 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     public shared ({ caller }) func getCanisterId(nonce : PoW.Nonce, origin : Logs.Origin) : async Types.CanisterInfo {
+        if (Option.get(params.admin_only, false)) {
+            throw Error.reject "Cannot call this endpoint when admin_only is true";
+        };
         if (not validateOrigin(origin)) {
             throw Error.reject "Please specify a valid origin";
         };
@@ -358,7 +382,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
 
     func updateTimer<system>(info: Types.CanisterInfo) {
-        if (Option.get(params.no_uninstall, false)) {
+        if (Option.isSome(params.stored_module)) {
             return;
         };
         func job() : async () {
@@ -436,7 +460,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "only called by controllers";
         };
         for (info in pool.getAllCanisters()) {
-            if (not Option.get(params.no_uninstall, false)) {
+            if (Option.isNull(params.stored_module)) {
                 await* pool_uninstall_code(info.id);
             };
             ignore pool.retire info;
