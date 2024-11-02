@@ -88,17 +88,24 @@ export async function fetchExample(
 }
 
 function rewritePackageJson(files: Record<string, string>) {
-  const packageJson = files["package.json"];
-  if (packageJson) {
-    const json = JSON.parse(packageJson);
-    if (json.scripts) {
-      Object.entries(json.scripts).forEach(([key, value]) => {
-        if (typeof value === "string" && value.startsWith("dfx")) {
-          json.scripts[key] = "";
+  // Find all package.json files in any directory
+  Object.entries(files).forEach(([path, content]) => {
+    if (path.endsWith("package.json")) {
+      try {
+        const json = JSON.parse(content);
+        if (json.scripts) {
+          // Remove dfx commands from scripts
+          Object.entries(json.scripts).forEach(([key, value]) => {
+            if (typeof value === "string" && value.startsWith("dfx")) {
+              json.scripts[key] = "";
+            }
+          });
+          files[path] = JSON.stringify(json, null, 2);
         }
-      });
-      files["package.json"] = JSON.stringify(json, null, 2);
+      } catch (e) {
+        console.warn(`Failed to parse package.json at ${path}:`, e);
+      }
     }
-  }
+  });
   return files;
 }

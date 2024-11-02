@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import styled from "styled-components";
 import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { IDL } from "@dfinity/candid";
@@ -14,11 +14,11 @@ import {
   Origin,
   generateNonMotokoFilesToWebContainer,
 } from "../contexts/WorkplaceState";
-import { didjs, backend } from "../config/actor";
+import { backend } from "../config/actor";
 import { Field } from "./shared/Field";
 
 const assetWasmHash =
-  "3a533f511b3960b4186e76cf9abfbd8222a2c507456a66ec55671204ee70cae3";
+  "2c24b5e1584890a7965011d5d1d827aca68c489c9a6308475730420fa53372e8";
 
 const ModalContainer = styled.div`
   display: flex;

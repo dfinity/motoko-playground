@@ -26,10 +26,7 @@ We plan on adding many more features to make playground a full-featured web IDE 
 
 - [Install Internet Computer SDK](https://sdk.dfinity.org/docs/quickstart/local-quickstart.html)
 - [Install npm](https://nodejs.org/en/download/)
-- [Install mops](https://mops.one/docs/install)
-  ```
-  npm i -g ic-mops
-  ```
+- [Install mops-cli](https://github.com/chenyan2002/mops-cli/releases)
 - [Install Rust](https://www.rust-lang.org/tools/install)
 - Add wasm32 target to Rust
   ```
@@ -48,6 +45,8 @@ npm start # Run the local development server
 ```sh
 dfx deploy
 ```
+
+If you want to deploy frontend, remember to upload `assetstorage.wasm.gz` to the backend canister and update the module hash in `FrontendDeployModal`.
 
 ### npm audit warnings
 
