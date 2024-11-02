@@ -8,7 +8,7 @@ export interface ExampleProject {
 
 const example = {
   repo: "dfinity/examples",
-  branch: "bump-agent-js",
+  branch: "master",
 };
 const readmeURL =
   "https://raw.githubusercontent.com/dfinity/examples/master/motoko";
