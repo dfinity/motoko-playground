@@ -12,7 +12,7 @@ let init = opt record {
   cycles_per_canister = 105_000_000_000;
   max_num_canisters = 2;
   nonce_time_to_live = 1;
-  canister_time_to_live = 3_000_000_000;
+  canister_time_to_live = 5_000_000_000;
   max_family_tree_size = 5;
   stored_module = opt record { hash = module_hash; arg = encode () };
 };
@@ -36,7 +36,7 @@ let init = opt record {
   cycles_per_canister = 105_000_000_000;
   max_num_canisters = 2;
   nonce_time_to_live = 1;
-  canister_time_to_live = 3_000_000_000;
+  canister_time_to_live = 5_000_000_000;
   max_family_tree_size = 5;
   stored_module = opt record { hash = hash; arg = encode () };
 };
