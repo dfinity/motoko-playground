@@ -9,9 +9,9 @@ export const configureMonaco = (monaco) => {
   });
 
   monaco.languages.registerDocumentFormattingEditProvider("motoko", {
-    provideDocumentFormattingEdits(model, options, token) {
+    async provideDocumentFormattingEdits(model, options, token) {
       const source = model.getValue();
-      const formatted = prettier.format(source, {
+      const formatted = await prettier.format(source, {
         plugins: [motokoPlugin],
         filepath: "*.mo",
       });
@@ -31,7 +31,7 @@ export const configureMonaco = (monaco) => {
           diag.startLineNumber,
           diag.startColumn,
           diag.endLineNumber,
-          diag.endColumn
+          diag.endColumn,
         );
         const explanation = errorCodes[diag.code];
         if (explanation && range.containsPosition(position)) {
