@@ -23,11 +23,14 @@ export interface HttpResponse {
   status_code: number;
 }
 export interface InitParams {
-  no_uninstall: [] | [boolean];
   max_num_canisters: bigint;
   canister_time_to_live: bigint;
+  stored_module:
+    | []
+    | [{ arg: Uint8Array | number[]; hash: Uint8Array | number[] }];
   wasm_utils_principal: [] | [string];
   cycles_per_canister: bigint;
+  admin_only: [] | [boolean];
   nonce_time_to_live: bigint;
   max_family_tree_size: bigint;
 }
@@ -66,13 +69,7 @@ export interface Self {
   >;
   canister_status: ActorMethod<
     [{ canister_id: canister_id }],
-    {
-      status: { stopped: null } | { stopping: null } | { running: null };
-      memory_size: bigint;
-      cycles: bigint;
-      settings: definite_canister_settings;
-      module_hash: [] | [Uint8Array | number[]];
-    }
+    canister_status_result
   >;
   create_canister: ActorMethod<
     [{ settings: [] | [canister_settings] }],
@@ -145,7 +142,10 @@ export interface Self {
   >;
   transferOwnership: ActorMethod<[CanisterInfo, Array<Principal>], undefined>;
   uninstall_code: ActorMethod<[{ canister_id: canister_id }], undefined>;
-  update_settings: ActorMethod<[{}], undefined>;
+  update_settings: ActorMethod<
+    [{ canister_id: Principal; settings: canister_settings }],
+    undefined
+  >;
   wallet_receive: ActorMethod<[], undefined>;
 }
 export interface Stats {
@@ -160,13 +160,30 @@ export type canister_id = Principal;
 export interface canister_settings {
   freezing_threshold: [] | [bigint];
   controllers: [] | [Array<Principal>];
+  log_visibility: [] | [log_visibility];
   wasm_memory_limit: [] | [bigint];
   memory_allocation: [] | [bigint];
   compute_allocation: [] | [bigint];
 }
+export interface canister_status_result {
+  status: { stopped: null } | { stopping: null } | { running: null };
+  memory_size: bigint;
+  cycles: bigint;
+  settings: definite_canister_settings;
+  query_stats: {
+    response_payload_bytes_total: bigint;
+    num_instructions_total: bigint;
+    num_calls_total: bigint;
+    request_payload_bytes_total: bigint;
+  };
+  idle_cycles_burned_per_day: bigint;
+  module_hash: [] | [Uint8Array | number[]];
+  reserved_cycles: bigint;
+}
 export interface definite_canister_settings {
   freezing_threshold: bigint;
   controllers: Array<Principal>;
+  log_visibility: log_visibility;
   wasm_memory_limit: bigint;
   memory_allocation: bigint;
   compute_allocation: bigint;
@@ -190,6 +207,7 @@ export interface http_request_result {
   body: Uint8Array | number[];
   headers: Array<http_header>;
 }
+export type log_visibility = { controllers: null } | { public: null };
 export interface snapshot {
   id: snapshot_id;
   total_size: bigint;

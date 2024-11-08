@@ -146,6 +146,10 @@ export interface _SERVICE {
     [{ content: Uint8Array | number[]; batch_id: BatchId }],
     { chunk_id: ChunkId }
   >;
+  create_chunks: ActorMethod<
+    [{ content: Array<Uint8Array | number[]>; batch_id: BatchId }],
+    { chunk_ids: Array<ChunkId> }
+  >;
   deauthorize: ActorMethod<[Principal], undefined>;
   delete_asset: ActorMethod<[DeleteAssetArguments], undefined>;
   delete_batch: ActorMethod<[DeleteBatchArguments], undefined>;

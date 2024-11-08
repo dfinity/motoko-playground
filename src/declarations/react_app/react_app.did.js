@@ -156,6 +156,16 @@ export const idlFactory = ({ IDL }) => {
       [IDL.Record({ chunk_id: ChunkId })],
       [],
     ),
+    create_chunks: IDL.Func(
+      [
+        IDL.Record({
+          content: IDL.Vec(IDL.Vec(IDL.Nat8)),
+          batch_id: BatchId,
+        }),
+      ],
+      [IDL.Record({ chunk_ids: IDL.Vec(ChunkId) })],
+      [],
+    ),
     deauthorize: IDL.Func([IDL.Principal], [], []),
     delete_asset: IDL.Func([DeleteAssetArguments], [], []),
     delete_batch: IDL.Func([DeleteBatchArguments], [], []),

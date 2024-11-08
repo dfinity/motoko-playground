@@ -11,6 +11,11 @@ type snapshot =
    taken_at_timestamp: nat64;
    total_size: nat64;
  };
+type log_visibility = 
+ variant {
+   controllers;
+   public;
+ };
 type http_request_result = 
  record {
    body: blob;
@@ -43,14 +48,37 @@ type definite_canister_settings =
    compute_allocation: nat;
    controllers: vec principal;
    freezing_threshold: nat;
+   log_visibility: log_visibility;
    memory_allocation: nat;
    wasm_memory_limit: nat;
+ };
+type canister_status_result = 
+ record {
+   cycles: nat;
+   idle_cycles_burned_per_day: nat;
+   memory_size: nat;
+   module_hash: opt blob;
+   query_stats:
+    record {
+      num_calls_total: nat;
+      num_instructions_total: nat;
+      request_payload_bytes_total: nat;
+      response_payload_bytes_total: nat;
+    };
+   reserved_cycles: nat;
+   settings: definite_canister_settings;
+   status: variant {
+             running;
+             stopped;
+             stopping;
+           };
  };
 type canister_settings = 
  record {
    compute_allocation: opt nat;
    controllers: opt vec principal;
    freezing_threshold: opt nat;
+   log_visibility: opt log_visibility;
    memory_allocation: opt nat;
    wasm_memory_limit: opt nat;
  };
@@ -75,17 +103,7 @@ type Self =
    balance: () -> (nat) query;
    callForward: (CanisterInfo, text, blob) -> (blob);
    canister_status: (record {canister_id: canister_id;}) ->
-    (record {
-       cycles: nat;
-       memory_size: nat;
-       module_hash: opt blob;
-       settings: definite_canister_settings;
-       status: variant {
-                 running;
-                 stopped;
-                 stopping;
-               };
-     });
+    (canister_status_result);
    create_canister: (record {settings: opt canister_settings;}) ->
     (record {canister_id: canister_id;});
    deleteSnapshot: (CanisterInfo) -> ();
@@ -150,7 +168,11 @@ type Self =
      }) -> (snapshot);
    transferOwnership: (CanisterInfo, vec principal) -> ();
    uninstall_code: (record {canister_id: canister_id;}) -> ();
-   update_settings: (record {}) -> ();
+   update_settings:
+    (record {
+       canister_id: principal;
+       settings: canister_settings;
+     }) -> ();
    wallet_receive: () -> ();
  };
 type Origin = 
@@ -187,12 +209,16 @@ type InstallArgs =
  };
 type InitParams = 
  record {
+   admin_only: opt bool;
    canister_time_to_live: nat;
    cycles_per_canister: nat;
    max_family_tree_size: nat;
    max_num_canisters: nat;
-   no_uninstall: opt bool;
    nonce_time_to_live: nat;
+   stored_module: opt record {
+                        arg: blob;
+                        hash: blob;
+                      };
    wasm_utils_principal: opt text;
  };
 type HttpResponse = 

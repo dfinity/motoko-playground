@@ -1,10 +1,13 @@
 export const idlFactory = ({ IDL }) => {
   const InitParams = IDL.Record({
-    no_uninstall: IDL.Opt(IDL.Bool),
     max_num_canisters: IDL.Nat,
     canister_time_to_live: IDL.Nat,
+    stored_module: IDL.Opt(
+      IDL.Record({ arg: IDL.Vec(IDL.Nat8), hash: IDL.Vec(IDL.Nat8) }),
+    ),
     wasm_utils_principal: IDL.Opt(IDL.Text),
     cycles_per_canister: IDL.Nat,
+    admin_only: IDL.Opt(IDL.Bool),
     nonce_time_to_live: IDL.Nat,
     max_family_tree_size: IDL.Nat,
   });
@@ -46,16 +49,41 @@ export const idlFactory = ({ IDL }) => {
     timestamp: IDL.Int,
   });
   const canister_id = IDL.Principal;
+  const log_visibility = IDL.Variant({
+    controllers: IDL.Null,
+    public: IDL.Null,
+  });
   const definite_canister_settings = IDL.Record({
     freezing_threshold: IDL.Nat,
     controllers: IDL.Vec(IDL.Principal),
+    log_visibility: log_visibility,
     wasm_memory_limit: IDL.Nat,
     memory_allocation: IDL.Nat,
     compute_allocation: IDL.Nat,
   });
+  const canister_status_result = IDL.Record({
+    status: IDL.Variant({
+      stopped: IDL.Null,
+      stopping: IDL.Null,
+      running: IDL.Null,
+    }),
+    memory_size: IDL.Nat,
+    cycles: IDL.Nat,
+    settings: definite_canister_settings,
+    query_stats: IDL.Record({
+      response_payload_bytes_total: IDL.Nat,
+      num_instructions_total: IDL.Nat,
+      num_calls_total: IDL.Nat,
+      request_payload_bytes_total: IDL.Nat,
+    }),
+    idle_cycles_burned_per_day: IDL.Nat,
+    module_hash: IDL.Opt(IDL.Vec(IDL.Nat8)),
+    reserved_cycles: IDL.Nat,
+  });
   const canister_settings = IDL.Record({
     freezing_threshold: IDL.Opt(IDL.Nat),
     controllers: IDL.Opt(IDL.Vec(IDL.Principal)),
+    log_visibility: IDL.Opt(log_visibility),
     wasm_memory_limit: IDL.Opt(IDL.Nat),
     memory_allocation: IDL.Opt(IDL.Nat),
     compute_allocation: IDL.Opt(IDL.Nat),
@@ -134,19 +162,7 @@ export const idlFactory = ({ IDL }) => {
     ),
     canister_status: IDL.Func(
       [IDL.Record({ canister_id: canister_id })],
-      [
-        IDL.Record({
-          status: IDL.Variant({
-            stopped: IDL.Null,
-            stopping: IDL.Null,
-            running: IDL.Null,
-          }),
-          memory_size: IDL.Nat,
-          cycles: IDL.Nat,
-          settings: definite_canister_settings,
-          module_hash: IDL.Opt(IDL.Vec(IDL.Nat8)),
-        }),
-      ],
+      [canister_status_result],
       [],
     ),
     create_canister: IDL.Func(
@@ -262,18 +278,30 @@ export const idlFactory = ({ IDL }) => {
       [],
       [],
     ),
-    update_settings: IDL.Func([IDL.Record({})], [], []),
+    update_settings: IDL.Func(
+      [
+        IDL.Record({
+          canister_id: IDL.Principal,
+          settings: canister_settings,
+        }),
+      ],
+      [],
+      [],
+    ),
     wallet_receive: IDL.Func([], [], []),
   });
   return Self;
 };
 export const init = ({ IDL }) => {
   const InitParams = IDL.Record({
-    no_uninstall: IDL.Opt(IDL.Bool),
     max_num_canisters: IDL.Nat,
     canister_time_to_live: IDL.Nat,
+    stored_module: IDL.Opt(
+      IDL.Record({ arg: IDL.Vec(IDL.Nat8), hash: IDL.Vec(IDL.Nat8) }),
+    ),
     wasm_utils_principal: IDL.Opt(IDL.Text),
     cycles_per_canister: IDL.Nat,
+    admin_only: IDL.Opt(IDL.Bool),
     nonce_time_to_live: IDL.Nat,
     max_family_tree_size: IDL.Nat,
   });

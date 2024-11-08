@@ -2,8 +2,8 @@
 load "prelude.sh";
 
 let wasm = file("../../../.dfx/local/canisters/backend/backend.wasm");
-let asset = file("assetstorage.wasm.gz");
-let module_hash = blob "\29\6d\1a\d1\a7\f8\b1\5f\90\ff\8b\72\86\58\64\6b\64\9c\ab\d1\59\f3\60\f1\b4\27\29\7f\4c\76\76\3e";
+let asset = file("../../script/assetstorage.wasm.gz");
+let module_hash = blob "\2c\24\b5\e1\58\48\90\a7\96\50\11\d5\d1\d8\27\ac\a6\8c\48\9c\9a\63\08\47\57\30\42\0f\a5\33\72\e8";
 let empty_wasm = blob "\00asm\01\00\00\00";
 
 let origin = record { origin = "test"; tags = vec {"tag"} };

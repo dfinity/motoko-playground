@@ -281,6 +281,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         nonceCache.add nonce;
         (await* getExpiredCanisterInfo(origin)).0;
     };
+    // Only used by webcontainer frontend. Once we have a dedicated frontend pool, this endpoint should be deprecated.
     public func installStoredWasm(info : Types.CanisterInfo, args: Types.InstallArgs, origin: Logs.Origin) : async Types.CanisterInfo {
         if (not validateOrigin(origin)) {
             throw Error.reject "Please specify a valid origin";
