@@ -22,7 +22,7 @@ export const exampleProjects: ExampleProject[] = [
     readme: `${readmeArchiveURL}/echo/README.md`,
   },
   {
-    name: "Counter",
+    name: "Counter (full stack)",
     repo: { dir: "motoko/minimal-counter-dapp", ...example },
   },
   {
@@ -45,7 +45,7 @@ export const exampleProjects: ExampleProject[] = [
     repo: { dir: "motoko/superheroes", ...example },
   },
   {
-    name: "Random Maze",
+    name: "Random Maze (full stack)",
     repo: { dir: "motoko/random_maze", ...example },
   },
   {
