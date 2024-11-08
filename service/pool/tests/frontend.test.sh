@@ -2,7 +2,7 @@
 load "prelude.sh";
 
 let wasm = file("../../../.dfx/local/canisters/backend/backend.wasm");
-let asset = file("../../script/assetstorage.wasm.gz");
+let asset = file("../../../script/assetstorage.wasm.gz");
 let module_hash = blob "\2c\24\b5\e1\58\48\90\a7\96\50\11\d5\d1\d8\27\ac\a6\8c\48\9c\9a\63\08\47\57\30\42\0f\a5\33\72\e8";
 let empty_wasm = blob "\00asm\01\00\00\00";
 
