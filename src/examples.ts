@@ -22,9 +22,8 @@ export const exampleProjects: ExampleProject[] = [
     readme: `${readmeArchiveURL}/echo/README.md`,
   },
   {
-    name: "Counter",
-    repo: { dir: "motoko/counter/src", ...example },
-    readme: `${readmeURL}/counter/README.md`,
+    name: "Counter (full stack)",
+    repo: { dir: "motoko/minimal-counter-dapp", ...example },
   },
   {
     name: "Calculator",
@@ -43,18 +42,15 @@ export const exampleProjects: ExampleProject[] = [
   },
   {
     name: "Super Heroes",
-    repo: { dir: "motoko/superheroes/src/superheroes", ...example },
-    readme: `${readmeURL}/superheroes/README.md`,
+    repo: { dir: "motoko/superheroes", ...example },
   },
   {
-    name: "Random Maze",
-    repo: { dir: "motoko/random_maze/src/random_maze", ...example },
-    readme: `${readmeURL}/random_maze/README.md`,
+    name: "Random Maze (full stack)",
+    repo: { dir: "motoko/random_maze", ...example },
   },
   {
     name: "Game of Life",
     repo: { dir: "motoko/life", ...example },
-    readme: `${readmeURL}/life/README.md`,
   },
   {
     name: "Publisher and Subscriber",
@@ -87,5 +83,29 @@ export async function fetchExample(
     const content = await (await fetch(proj.readme)).text();
     files = { README: content, ...files };
   }
+  files = rewritePackageJson(files);
+  return files;
+}
+
+function rewritePackageJson(files: Record<string, string>) {
+  // Find all package.json files in any directory
+  Object.entries(files).forEach(([path, content]) => {
+    if (path.endsWith("package.json")) {
+      try {
+        const json = JSON.parse(content);
+        if (json.scripts) {
+          // Remove dfx commands from scripts
+          Object.entries(json.scripts).forEach(([key, value]) => {
+            if (typeof value === "string" && value.startsWith("dfx")) {
+              json.scripts[key] = "";
+            }
+          });
+          files[path] = JSON.stringify(json, null, 2);
+        }
+      } catch (e) {
+        console.warn(`Failed to parse package.json at ${path}:`, e);
+      }
+    }
+  });
   return files;
 }

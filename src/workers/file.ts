@@ -1,17 +1,5 @@
 import { loadMoc } from "./mocShim";
 
-interface ExtraFile {
-  match: RegExp;
-  resolveName(results: RegExpExecArray): string;
-}
-
-const extraFiles: ExtraFile[] = [
-  {
-    match: /^readme\.md$/i,
-    resolveName: () => "README",
-  },
-];
-
 export interface PackageInfo {
   name: string;
   repo: string;
@@ -50,8 +38,8 @@ export async function fetchPackage(info: PackageInfo): Promise<boolean> {
 
 export async function fetchGithub(
   repo: RepoInfo,
-  target_dir = ""
-): Promise<Record<string, string> | undefined> {
+  target_dir = "",
+): Promise<Record<string, string | Uint8Array> | undefined> {
   const possiblyCDN = !(
     (repo.branch.length % 2 === 0 && /^[A-F0-9]+$/i.test(repo.branch)) ||
     repo.branch === "master" ||
@@ -74,10 +62,20 @@ export async function saveWorkplaceToMotoko(files: Record<string, string>) {
   }
 }
 
+const isValidFile = (path: string) => {
+  const validFiles =
+    /\.(mo|md|js|ts|json|txt|png|jpg|jpeg|gif|svg|ico|css|scss|html|tsx|jsx)$/;
+  return validFiles.test(path); // && !path.includes("/declarations/");
+};
+const isBinaryFile = (path: string) => {
+  const binaryFiles = /\.(png|jpg|jpeg|gif|ico|wasm)$/;
+  return binaryFiles.test(path);
+};
+
 async function fetchFromCDN(
   repo: RepoInfo,
-  target_dir = ""
-): Promise<Record<string, string> | undefined> {
+  target_dir = "",
+): Promise<Record<string, string | Uint8Array> | undefined> {
   const Motoko = await loadMoc();
   const meta_url = `https://data.jsdelivr.com/v1/package/gh/${repo.repo}@${repo.branch}/flat`;
   const base_url = `https://cdn.jsdelivr.net/gh/${repo.repo}@${repo.branch}`;
@@ -89,20 +87,20 @@ async function fetchFromCDN(
   const promises: any[] = [];
   const files = {};
   for (const f of json.files) {
-    const extraFileName = extraFiles.flatMap(({ match, resolveName }) => {
-      const results = match.exec(f.path);
-      return results ? [resolveName(results)] : [];
-    })[0];
-    if (
-      f.name.startsWith(`/${repo.dir}/`) &&
-      (extraFileName || /\.mo$/i.test(f.name))
-    ) {
+    if (f.name.startsWith(`/${repo.dir}/`) && isValidFile(f.name)) {
       const promise = (async () => {
-        const content = await (await fetch(base_url + f.name)).text();
+        const response = await fetch(base_url + f.name);
         const stripped =
-          extraFileName ||
           target_dir + f.name.slice(repo.dir ? repo.dir.length + 1 : 0);
-        Motoko.saveFile(stripped, content);
+        let content: string | Uint8Array;
+        if (isBinaryFile(f.name)) {
+          content = new Uint8Array(await response.arrayBuffer());
+        } else {
+          content = await response.text();
+          if (f.name.endsWith(".mo")) {
+            Motoko.saveFile(stripped, content);
+          }
+        }
         files[stripped] = content;
       })();
       promises.push(promise);
@@ -118,8 +116,8 @@ async function fetchFromCDN(
 
 async function fetchFromGithub(
   repo: RepoInfo,
-  target_dir = ""
-): Promise<Record<string, string> | undefined> {
+  target_dir = "",
+): Promise<Record<string, string | Uint8Array> | undefined> {
   const Motoko = await loadMoc();
   const meta_url = `https://api.github.com/repos/${repo.repo}/git/trees/${repo.branch}?recursive=1`;
   const base_url = `https://raw.githubusercontent.com/${repo.repo}/${repo.branch}/`;
@@ -131,23 +129,26 @@ async function fetchFromGithub(
   const promises: any[] = [];
   const files = {};
   for (const f of json.tree) {
-    const extraFileName = extraFiles.flatMap(({ match, resolveName }) => {
-      const results = match.exec(f.path);
-      return results ? [resolveName(results)] : [];
-    })[0];
     if (
       f.path.startsWith(repo.dir ? `${repo.dir}/` : "") &&
       f.type === "blob" &&
-      (extraFileName || /\.mo$/i.test(f.path))
+      isValidFile(f.path)
     ) {
       const promise = (async () => {
-        const content = await (await fetch(base_url + f.path)).text();
+        const response = await fetch(base_url + f.path);
         const stripped =
-          extraFileName ||
           target_dir +
-            (target_dir ? "/" : "") +
-            f.path.slice(repo.dir ? repo.dir.length + 1 : 0);
-        Motoko.saveFile(stripped, content);
+          (target_dir ? "/" : "") +
+          f.path.slice(repo.dir ? repo.dir.length + 1 : 0);
+        let content: string | Uint8Array;
+        if (isBinaryFile(f.path)) {
+          content = new Uint8Array(await response.arrayBuffer());
+        } else {
+          content = await response.text();
+          if (f.path.endsWith(".mo")) {
+            Motoko.saveFile(stripped, content);
+          }
+        }
         files[stripped] = content;
       })();
       promises.push(promise);

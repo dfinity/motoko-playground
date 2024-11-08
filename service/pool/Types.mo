@@ -10,6 +10,7 @@ import List "mo:base/List";
 import Option "mo:base/Option";
 import Int "mo:base/Int";
 import Timer "mo:base/Timer";
+import Debug "mo:base/Debug";
 import ICType "./IC";
 
 module {
@@ -19,8 +20,9 @@ module {
         canister_time_to_live: Nat;
         nonce_time_to_live: Nat;
         max_family_tree_size: Nat;
-        // Used for asset canister. If set to true, will not use timer to kill expired canisters, and will not uninstall code when fetching an expired canister.
-        no_uninstall: ?Bool;
+        // Used for installing asset canister. If set, will not use timer to kill expired canisters, and will not uninstall code when fetching an expired canister (unless the module hash changed).
+        stored_module: ?{hash: Blob; arg: Blob};
+        admin_only: ?Bool;
         wasm_utils_principal: ?Text;
     };
     public let defaultParams : InitParams = {
@@ -29,7 +31,8 @@ module {
         canister_time_to_live = 1200_000_000_000;
         nonce_time_to_live = 300_000_000_000;
         max_family_tree_size = 5;
-        no_uninstall = null;
+        stored_module = null;
+        admin_only = null;
         wasm_utils_principal = ?"ozk6r-tyaaa-aaaab-qab4a-cai";
     };
     public type InstallArgs = {
@@ -85,30 +88,39 @@ module {
 
         public type NewId = { #newId; #reuse:CanisterInfo; #outOfCapacity:Nat };
 
+        public func rollbackLen() {
+            len -= 1;
+        };
         public func getExpiredCanisterId() : NewId {
-            if (len < size) {
-                // increment len here to prevent race condition
-                len += 1;
-                #newId
-            } else {
-                switch (tree.entries().next()) {
-                    case null { assert false; loop(); };
-                    case (?info) {
-                        let now = Time.now();
-                        let elapsed : Nat = Int.abs(now) - Int.abs(info.timestamp);
-                        if (elapsed >= ttl) {
-                            // Lazily cleanup pool state before reusing canister
-                            tree.remove info;
-                            let newInfo = { timestamp = now; id = info.id; };
-                            tree.insert newInfo;
-                            metadata.put(newInfo.id, (newInfo.timestamp, false));
-                            deleteFamilyNode(newInfo.id);
-                            #reuse newInfo
-                        } else {
-                            #outOfCapacity(ttl - elapsed)
-                        }
+            switch (tree.entries().next()) {
+            case null {
+                     if (len < size) {
+                         len += 1;
+                         #newId
+                     } else {
+                         Debug.trap "No canister in the pool"
                      };
-                };
+                 };
+            case (?info) {
+                     let now = Time.now();
+                     let elapsed : Nat = Int.abs(now) - Int.abs(info.timestamp);
+                     if (elapsed >= ttl) {
+                         // Lazily cleanup pool state before reusing canister
+                         tree.remove info;
+                         let newInfo = { timestamp = now; id = info.id; };
+                         tree.insert newInfo;
+                         metadata.put(newInfo.id, (newInfo.timestamp, false));
+                         deleteFamilyNode(newInfo.id);
+                         #reuse newInfo
+                     } else {
+                         if (len < size) {
+                             len += 1;
+                             #newId
+                         } else {
+                             #outOfCapacity(ttl - elapsed)
+                         }
+                     }
+                 };
             };
         };
         public func removeCanister(info: CanisterInfo) {
@@ -288,7 +300,10 @@ module {
                 case null List.nil();
                 case (?children) {
                     let now = Time.now();
-                    List.filter(children, func(p: Principal) : Bool = notExpired(Option.unwrap(info p), now));
+                    List.filter(children, func(p: Principal) : Bool {
+                        let ?cinfo = info p else { Debug.trap "unwrap info(p)" };
+                        notExpired(cinfo, now);
+                    });
                 }
             }
         };

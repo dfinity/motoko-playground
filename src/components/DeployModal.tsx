@@ -16,6 +16,8 @@ import {
   WorkerContext,
   WorkplaceDispatchContext,
   WorkplaceState,
+  ContainerContext,
+  Origin,
 } from "../contexts/WorkplaceState";
 import { didjs } from "../config/actor";
 import { Field } from "./shared/Field";
@@ -101,7 +103,8 @@ export interface DeploySetter {
   setMainFile: (name: string) => void;
   setCandidCode: (code: string) => void;
   setInitTypes: (args: Array<IDL.Type>) => void;
-  setShowDeployModal: (boolean) => void;
+  setShowDeployModal: (arg: boolean) => void;
+  setShowFrontendDeployModal: (arg: boolean) => void;
   setWasm: (file: Uint8Array | undefined) => void;
 }
 
@@ -118,7 +121,7 @@ interface DeployModalProps {
   candid: string;
   initTypes: Array<IDL.Type>;
   logger: ILoggingStore;
-  origin: string | undefined;
+  origin: Origin;
 }
 
 const MAX_CANISTERS = 3;
@@ -150,11 +153,14 @@ export function DeployModal({
   const [compileResult, setCompileResult] = useState({ wasm: undefined });
   const [deployMode, setDeployMode] = useState("");
   const [startDeploy, setStartDeploy] = useState(false);
+  const [bindingDir, setBindingDir] = useState("src/declarations");
   const worker = useContext(WorkerContext);
   const dispatch = useContext(WorkplaceDispatchContext);
+  const container = useContext(ContainerContext);
 
   const exceedsLimit = Object.keys(canisters).length >= MAX_CANISTERS;
   const isMotoko = wasm ? false : true;
+  const hasFrontend = "package.json" in state.files;
 
   useEffect(() => {
     if (!exceedsLimit) {
@@ -162,6 +168,13 @@ export function DeployModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileName]);
+
+  useEffect(() => {
+    setCanisterName(canisterName.replaceAll(/[-\s]/g, "_"));
+    if (hasFrontend) {
+      setBindingDir(`src/declarations/${canisterName}`);
+    }
+  }, [hasFrontend, canisterName]);
 
   useEffect(() => {
     // This code is very tricky...compileResult takes time to set, so we need useEffect.
@@ -189,7 +202,7 @@ export function DeployModal({
         inputs.forEach((arg) => arg.render(node));
       }
     },
-    [inputs]
+    [inputs],
   );
 
   const parse = () => {
@@ -246,7 +259,7 @@ export function DeployModal({
       if (result.hasOwnProperty("Err")) {
         const err = result.Err.replaceAll(
           "expected type",
-          "pre-upgrade interface"
+          "pre-upgrade interface",
         );
         await setCandidWarning(err);
         if (err) {
@@ -321,10 +334,11 @@ export function DeployModal({
         args,
         mode,
         compileResult.wasm,
+        false,
         profiling,
         hasStartPage,
         logger,
-        origin
+        origin,
       );
       await isDeploy(false);
       if (info) {
@@ -335,6 +349,25 @@ export function DeployModal({
           file: `idl/${info.id}.did`,
           content: compileResult.candid,
         });
+        if (hasFrontend && compileResult.candid) {
+          const js = (await didjs.did_to_js(compileResult.candid))[0];
+          const ts = (await didjs.binding(compileResult.candid, "ts"))[0];
+          const name = `${bindingDir}/${info.name!}.did`;
+          await dispatch({
+            type: "saveFile",
+            payload: { path: `${name}.js`, contents: js },
+          });
+          await dispatch({
+            type: "saveFile",
+            payload: { path: `${name}.d.ts`, contents: ts },
+          });
+          await container.mkdir(`user/${bindingDir}`, {
+            recursive: true,
+          });
+          await container.writeFile(`user/${name}.js`, js);
+          await container.writeFile(`user/${name}.d.ts`, ts);
+          logger.log(`Generated frontend bindings at ${name}.js`);
+        }
         onDeploy(info);
       }
       setCompileResult({ wasm: undefined });
@@ -509,6 +542,14 @@ actor {
                   <p>({initTypes.map((arg) => arg.name).join(", ")})</p>
                   <div className="InitArgs" ref={initArgs} />
                 </InitContainer>
+              )}
+              {hasFrontend && (
+                <Field
+                  type="text"
+                  labelText="Output JS Binding directory"
+                  value={bindingDir}
+                  onChange={(e) => setBindingDir(e.target.value)}
+                />
               )}
               <Field
                 type="checkbox"

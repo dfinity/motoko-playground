@@ -20,8 +20,10 @@ const LOCAL_PORT = 4943;
 
 const hostname = window.location.hostname;
 const local = hostname === "127.0.0.1" || hostname.endsWith("localhost");
+// only enable when testing webcontainer upload
+//const local = false;
 
-export const agent = new HttpAgent({
+export const agent = HttpAgent.createSync({
   // Prefer calling local replica directly instead of CRA proxy
   host: local ? `http://localhost:${LOCAL_PORT}` : "https://icp-api.io",
 });
@@ -63,7 +65,6 @@ async function getDidFromMetadata(
   const did = status.get("candid");
   return did as any;
 }
-
 async function getDidFromTmpHack(canisterId: Principal) {
   const common_interface: IDL.InterfaceFactory = ({ IDL }) =>
     IDL.Service({
