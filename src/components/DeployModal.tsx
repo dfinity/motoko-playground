@@ -395,6 +395,7 @@ export function DeployModal({
         } else {
           await worker.Moc({ type: "gcFlags", option: "scheduling" });
         }
+        await worker.Moc({ type: "gcFlags", option: "classicOP" });
         await worker.Moc({ type: "gcFlags", option: gcMethod });
         await worker.Moc({
           type: "setPublicMetadata",
