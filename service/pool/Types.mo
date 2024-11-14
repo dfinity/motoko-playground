@@ -11,9 +11,15 @@ import Option "mo:base/Option";
 import Int "mo:base/Int";
 import Timer "mo:base/Timer";
 import Debug "mo:base/Debug";
+import Error "mo:base/Error";
+import Cycles "mo:base/ExperimentalCycles";
 import ICType "./IC";
 
 module {
+    type CyclesSettings = {
+        max_cycles_per_call: Nat;
+        max_cycles_total: Nat;
+    };
     public type InitParams = {
         cycles_per_canister: Nat;
         max_num_canisters: Nat;
@@ -22,7 +28,10 @@ module {
         max_family_tree_size: Nat;
         // Used for installing asset canister. If set, will not use timer to kill expired canisters, and will not uninstall code when fetching an expired canister (unless the module hash changed).
         stored_module: ?{hash: Blob; arg: Blob};
+        // Disable getCanisterId endpoint
         admin_only: ?Bool;
+        // Cycle add limit for whitelisted methods
+        cycles_settings: ?CyclesSettings;
         wasm_utils_principal: ?Text;
     };
     public let defaultParams : InitParams = {
@@ -33,6 +42,7 @@ module {
         max_family_tree_size = 5;
         stored_module = null;
         admin_only = null;
+        cycles_settings = null;
         wasm_utils_principal = ?"ozk6r-tyaaa-aaaab-qab4a-cai";
     };
     public type InstallArgs = {
@@ -67,6 +77,9 @@ module {
         else if (x.timestamp == y.timestamp and x.id == y.id) { #equal }
         else { #greater }
     };
+    public func getCyclesSettings(params: InitParams) : CyclesSettings {
+        Option.get(params.cycles_settings, { max_cycles_per_call = 250_000_000_000; max_cycles_total = 550_000_000_000 })
+    };
 
     /*
     * Main data structure of the playground. The splay tree is the source of truth for
@@ -74,7 +87,10 @@ module {
     * to allow Map-style lookups on the canister data. Childrens and parents define the
     * controller relationships for dynmically spawned canisters by actor classes.
     */
-    public class CanisterPool(size: Nat, ttl: Nat, max_family_tree_size: Nat) {
+    public class CanisterPool(params: InitParams) {
+        let size = params.max_num_canisters;
+        let ttl = params.canister_time_to_live;
+        let max_family_tree_size = params.max_family_tree_size;
         var len = 0;
         var tree = Splay.Splay<CanisterInfo>(canisterInfoCompare);
         // Metadata is a replicate of splay tree, which allows lookup without timestamp. Internal use only.
@@ -207,16 +223,28 @@ module {
         public func removeSnapshot(cid: Principal) {
             snapshots.delete cid;
         };
-        public func spendCycles(cid: Principal, n: Int) : Bool {
-            let old = Option.get(cycles.get(cid), 0);
-            let new = old + n;
-            if (new > defaultParams.cycles_per_canister or new < 0) {
-                return false;
+        public func addCycles<system>(cid: Principal, refund: ?Int) : async* () {
+            switch (refund) {
+            case null {
+                     let curr = Option.get(cycles.get(cid), 0);
+                     let settings = getCyclesSettings(params);
+                     let new = curr + settings.max_cycles_per_call;
+                     if (new > settings.max_cycles_total) {
+                         throw Error.reject("Cycles limit exceeded");
+                     };
+                     cycles.put(cid, new);
+                     Cycles.add<system>(Int.abs(new));
+                 };
+            case (?refund) {
+                     let curr = Option.get(cycles.get(cid), 0);
+                     let new = curr - refund;
+                     if (new < 0) {
+                         throw Error.reject("Cycles refund exceeds the balance");
+                     };
+                     cycles.put(cid, new);
+                 };
             };
-            cycles.put(cid, new);
-            true;
         };
-        
         private func notExpired(info: CanisterInfo, now: Int) : Bool = (info.timestamp > now - ttl);
 
         // Return a list of canister IDs from which to uninstall code

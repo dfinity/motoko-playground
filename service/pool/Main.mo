@@ -22,7 +22,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     let IC : ICType.Self = actor "aaaaa-aa";
     let params = Option.get(opt_params, Types.defaultParams);
     let Wasm : WasmUtilsType.Self = actor(Option.get(params.wasm_utils_principal, "ozk6r-tyaaa-aaaab-qab4a-cai"));
-    var pool = Types.CanisterPool(params.max_num_canisters, params.canister_time_to_live, params.max_family_tree_size);
+    var pool = Types.CanisterPool(params);
     let nonceCache = PoW.NonceCache(params.nonce_time_to_live);
     var statsByOrigin = Logs.StatsByOrigin();
 
@@ -693,31 +693,34 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     public shared func load_canister_snapshot({}) : async () {
         throw Error.reject("Cannot call load_canister_snapshot from canister itself");
     };
+    public shared ({ caller }) func sign_with_ecdsa(arg: ICType.sign_with_ecdsa_args) : async ICType.sign_with_ecdsa_result {
+        if (not pool.findId caller) {
+            throw Error.reject "Only a canister managed by the Motoko Playground can call http_request";
+        };
+        await* pool.addCycles(caller, null);
+        let res = await IC.sign_with_ecdsa(arg);
+        await* pool.addCycles(caller, ?Cycles.refunded());
+        res
+    };
     public shared ({ caller }) func _ttp_request(request : ICType.http_request_args) : async ICType.http_request_result {
         if (not pool.findId caller) {
             throw Error.reject "Only a canister managed by the Motoko Playground can call http_request";
         };
-        let cycles = 250_000_000_000;
-        if (pool.spendCycles(caller, cycles)) {
-            Cycles.add<system> cycles;
-            let new_request = switch (request.transform) {
-            case null {
-                     { request with transform = null };
-                 };
-            case (?transform) {
-                     let payload = { caller; transform };
-                     let fake_actor: actor { __transform: ICType.transform_function } = actor(Principal.toText(Principal.fromActor this));
-                     let new_transform = ?{ function = fake_actor.__transform; context = to_candid(payload) };
-                     { request with transform = new_transform };
-                 };
-            };
-            let res = await IC.http_request(new_request);
-            let refunded = -Cycles.refunded();
-            assert(pool.spendCycles(caller, refunded) == true);
-            res;
-        } else {
-            throw Error.reject "http_request exceeds cycle spend limit";
+        await* pool.addCycles(caller, null);
+        let new_request = switch (request.transform) {
+        case null {
+                 { request with transform = null };
+             };
+        case (?transform) {
+                 let payload = { caller; transform };
+                 let fake_actor: actor { __transform: ICType.transform_function } = actor(Principal.toText(Principal.fromActor this));
+                 let new_transform = ?{ function = fake_actor.__transform; context = to_candid(payload) };
+                 { request with transform = new_transform };
+             };
         };
+        let res = await IC.http_request(new_request);
+        await* pool.addCycles(caller, ?Cycles.refunded());
+        res;
     };
     public shared composite query({ caller }) func __transform({context: Blob; response: ICType.http_request_result}) : async ICType.http_request_result {
         // TODO Remove anonymous identity once https://github.com/dfinity/ic/pull/1337 is released
@@ -774,6 +777,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #load_canister_snapshot : Any;
             #_ttp_request : Any;
             #__transform : Any;
+            #sign_with_ecdsa: Any;
         };
     }) : Bool {
         switch msg {
@@ -789,6 +793,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             case (#load_canister_snapshot _) false;
             case (#_ttp_request _) false;
             case (#__transform _) false;
+            case (#sign_with_ecdsa _) false;
             case (#canister_status _) Principal.isController(caller);
             case (#update_settings _) Principal.isController(caller);
             case _ true;

@@ -68,6 +68,13 @@ module {
     module_hash : ?Blob;
     reserved_cycles : Nat;
   };
+  public type ecdsa_curve = { #secp256k1 };
+  public type sign_with_ecdsa_args = {
+    key_id : { name : Text; curve : ecdsa_curve };
+    derivation_path : [Blob];
+    message_hash : Blob;
+  };
+  public type sign_with_ecdsa_result = { signature : Blob };
   public type user_id = Principal;
   public type wasm_module = Blob;
   public type Self = actor {
@@ -98,6 +105,7 @@ module {
         amount : Nat;
       } -> async ();
     raw_rand : shared () -> async Blob;
+    sign_with_ecdsa : shared sign_with_ecdsa_args -> async sign_with_ecdsa_result;
     start_canister : shared { canister_id : canister_id } -> async ();
     stop_canister : shared { canister_id : canister_id } -> async ();
     uninstall_code : shared { canister_id : canister_id } -> async ();
