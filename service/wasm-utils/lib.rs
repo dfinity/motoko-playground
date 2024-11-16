@@ -38,7 +38,7 @@ fn transform(wasm: ByteBuf, config: Config) -> ByteBuf {
         }
         let instr_config = instrumentation::Config {
             trace_only_funcs: vec![],
-            start_address: config.start_page.map(|page| page as i32 * 65536),
+            start_address: config.start_page.map(|page| page as i64 * 65536),
             page_limit: config.page_limit.map(|x| x as i32),
         };
         instrumentation::instrument(&mut m, instr_config).unwrap();
