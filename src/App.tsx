@@ -29,7 +29,7 @@ import { setupEditorIntegration } from "./integrations/editorIntegration";
 import { Container } from "./webcontainer";
 import { Terminal } from "@xterm/xterm";
 
-const MOC_VERSION = "0.12.1";
+const MOC_VERSION = "0.13.3";
 
 const GlobalStyles = createGlobalStyle`
   :root {
