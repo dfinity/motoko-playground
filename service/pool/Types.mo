@@ -236,7 +236,7 @@ module {
                          throw Error.reject("Canister pool: Cycles limit exceeded when calling " # method # ". Already used " # Int.toText(curr) # " cycles. Deploy with your own wallet to avoid cycle limit.");
                      };
                      cycles.put(cid, new);
-                     Cycles.add<system>(Int.abs(new));
+                     Cycles.add<system>(settings.max_cycles_per_call);
                  };
             case (#refund) {
                      let refund = Cycles.refunded();
