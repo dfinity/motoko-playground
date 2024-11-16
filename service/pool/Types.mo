@@ -230,7 +230,7 @@ module {
                      let settings = getCyclesSettings(params);
                      let new = curr + settings.max_cycles_per_call;
                      if (new > settings.max_cycles_total) {
-                         throw Error.reject("Cycles limit exceeded");
+                         throw Error.reject("Canister pool: Cycles limit exceeded, " # Int.toText(curr) # " cycles used");
                      };
                      cycles.put(cid, new);
                      Cycles.add<system>(Int.abs(new));
@@ -239,7 +239,7 @@ module {
                      let curr = Option.get(cycles.get(cid), 0);
                      let new = curr - refund;
                      if (new < 0) {
-                         throw Error.reject("Cycles refund exceeds the balance");
+                         throw Error.reject("Canister pool: Cycles refund exceeds the balance. This should not happen.");
                      };
                      cycles.put(cid, new);
                  };

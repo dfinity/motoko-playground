@@ -13,6 +13,7 @@ import Principal "mo:base/Principal";
 import Debug "mo:base/Debug";
 import Types "./Types";
 import ICType "./IC";
+import EVM "./EVM";
 import PoW "./PoW";
 import Logs "./Logs";
 import Metrics "./Metrics";
@@ -20,6 +21,7 @@ import WasmUtilsType "./Wasm-utils";
 
 shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     let IC : ICType.Self = actor "aaaaa-aa";
+    let evm : EVM.Self = actor "7hfb6-caaaa-aaaar-qadga-cai";
     let params = Option.get(opt_params, Types.defaultParams);
     let Wasm : WasmUtilsType.Self = actor(Option.get(params.wasm_utils_principal, "ozk6r-tyaaa-aaaab-qab4a-cai"));
     var pool = Types.CanisterPool(params);
@@ -735,6 +737,79 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
         await raw.transform.function({ context = raw.transform.context; response });
     };
+    // Endpoints for EVM RPC canister
+    public shared ({ caller }) func eth_call(service: EVM.RpcServices, config: ?EVM.RpcConfig, arg: EVM.CallArgs) : async EVM.MultiCallResult {
+        if (not pool.findId caller) {
+            throw Error.reject "Only a canister managed by the Motoko Playground can call eth_call";
+        };
+        await* pool.addCycles(caller, null);
+        let res = await evm.eth_call(service, config, arg);
+        await* pool.addCycles(caller, ?Cycles.refunded());
+        res
+    };
+    public shared ({ caller }) func eth_feeHistory(service: EVM.RpcServices, config: ?EVM.RpcConfig, arg: EVM.FeeHistoryArgs) : async EVM.MultiFeeHistoryResult {
+        if (not pool.findId caller) {
+            throw Error.reject "Only a canister managed by the Motoko Playground can call eth_feeHistory";
+        };
+        await* pool.addCycles(caller, null);
+        let res = await evm.eth_feeHistory(service, config, arg);
+        await* pool.addCycles(caller, ?Cycles.refunded());
+        res
+    };
+    public shared ({ caller }) func eth_getBlockByNumber(service: EVM.RpcServices, config: ?EVM.RpcConfig, arg: EVM.BlockTag) : async EVM.MultiGetBlockByNumberResult {
+        if (not pool.findId caller) {
+            throw Error.reject "Only a canister managed by the Motoko Playground can call eth_getBlockByNumber";
+        };
+        await* pool.addCycles(caller, null);
+        let res = await evm.eth_getBlockByNumber(service, config, arg);
+        await* pool.addCycles(caller, ?Cycles.refunded());
+        res
+    };
+    public shared ({ caller }) func eth_getLogs(service: EVM.RpcServices, config: ?EVM.RpcConfig, arg: EVM.GetLogsArgs) : async EVM.MultiGetLogsResult {
+        if (not pool.findId caller) {
+            throw Error.reject "Only a canister managed by the Motoko Playground can call eth_getLogs";
+        };
+        await* pool.addCycles(caller, null);
+        let res = await evm.eth_getLogs(service, config, arg);
+        await* pool.addCycles(caller, ?Cycles.refunded());
+        res
+    };
+    public shared ({ caller }) func eth_getTransactionCount(service: EVM.RpcServices, config: ?EVM.RpcConfig, arg: EVM.GetTransactionCountArgs) : async EVM.MultiGetTransactionCountResult {
+        if (not pool.findId caller) {
+            throw Error.reject "Only a canister managed by the Motoko Playground can call eth_getTransactionCount";
+        };
+        await* pool.addCycles(caller, null);
+        let res = await evm.eth_getTransactionCount(service, config, arg);
+        await* pool.addCycles(caller, ?Cycles.refunded());
+        res
+    };
+    public shared ({ caller }) func eth_getTransactionReceipt(service: EVM.RpcServices, config: ?EVM.RpcConfig, arg: Text) : async EVM.MultiGetTransactionReceiptResult {
+        if (not pool.findId caller) {
+            throw Error.reject "Only a canister managed by the Motoko Playground can call eth_getTransactionReceipt";
+        };
+        await* pool.addCycles(caller, null);
+        let res = await evm.eth_getTransactionReceipt(service, config, arg);
+        await* pool.addCycles(caller, ?Cycles.refunded());
+        res
+    };
+    public shared ({ caller }) func eth_sendRawTransaction(service: EVM.RpcServices, config: ?EVM.RpcConfig, arg: Text) : async EVM.MultiSendRawTransactionResult {
+        if (not pool.findId caller) {
+            throw Error.reject "Only a canister managed by the Motoko Playground can call eth_sendRawTransaction";
+        };
+        await* pool.addCycles(caller, null);
+        let res = await evm.eth_sendRawTransaction(service, config, arg);
+        await* pool.addCycles(caller, ?Cycles.refunded());
+        res
+    };
+    public shared ({ caller }) func request(service: EVM.RpcService, arg: Text, id: Nat64) : async EVM.RequestResult {
+        if (not pool.findId caller) {
+            throw Error.reject "Only a canister managed by the Motoko Playground can call request";
+        };
+        await* pool.addCycles(caller, null);
+        let res = await evm.request(service, arg, id);
+        await* pool.addCycles(caller, ?Cycles.refunded());
+        res
+    };
 
     system func inspect({
         caller : Principal;
@@ -778,6 +853,14 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #_ttp_request : Any;
             #__transform : Any;
             #sign_with_ecdsa: Any;
+            #eth_call: Any;
+            #eth_feeHistory: Any;
+            #eth_getBlockByNumber: Any;
+            #eth_getLogs: Any;
+            #eth_getTransactionCount: Any;
+            #eth_getTransactionReceipt: Any;
+            #eth_sendRawTransaction: Any;
+            #request: Any;
         };
     }) : Bool {
         switch msg {
@@ -794,6 +877,14 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             case (#_ttp_request _) false;
             case (#__transform _) false;
             case (#sign_with_ecdsa _) false;
+            case (#eth_call _) false;
+            case (#eth_feeHistory _) false;
+            case (#eth_getBlockByNumber _) false;
+            case (#eth_getLogs _) false;
+            case (#eth_getTransactionCount _) false;
+            case (#eth_getTransactionReceipt _) false;
+            case (#eth_sendRawTransaction _) false;
+            case (#request _) false;
             case (#canister_status _) Principal.isController(caller);
             case (#update_settings _) Principal.isController(caller);
             case _ true;
