@@ -696,19 +696,13 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         throw Error.reject("Cannot call load_canister_snapshot from canister itself");
     };
     public shared ({ caller }) func sign_with_ecdsa(arg: ICType.sign_with_ecdsa_args) : async ICType.sign_with_ecdsa_result {
-        if (not pool.findId caller) {
-            throw Error.reject "Only a canister managed by the Motoko Playground can call http_request";
-        };
-        await* pool.addCycles(caller, null);
+        await* pool.addCycles(caller, #method "sign_with_ecdsa");
         let res = await IC.sign_with_ecdsa(arg);
-        await* pool.addCycles(caller, ?Cycles.refunded());
+        await* pool.addCycles(caller, #refund);
         res
     };
     public shared ({ caller }) func _ttp_request(request : ICType.http_request_args) : async ICType.http_request_result {
-        if (not pool.findId caller) {
-            throw Error.reject "Only a canister managed by the Motoko Playground can call http_request";
-        };
-        await* pool.addCycles(caller, null);
+        await* pool.addCycles(caller, #method "http_request");
         let new_request = switch (request.transform) {
         case null {
                  { request with transform = null };
@@ -721,7 +715,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
              };
         };
         let res = await IC.http_request(new_request);
-        await* pool.addCycles(caller, ?Cycles.refunded());
+        await* pool.addCycles(caller, #refund);
         res;
     };
     public shared composite query({ caller }) func __transform({context: Blob; response: ICType.http_request_result}) : async ICType.http_request_result {
@@ -739,75 +733,51 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     };
     // Endpoints for EVM RPC canister
     public shared ({ caller }) func eth_call(service: EVM.RpcServices, config: ?EVM.RpcConfig, arg: EVM.CallArgs) : async EVM.MultiCallResult {
-        if (not pool.findId caller) {
-            throw Error.reject "Only a canister managed by the Motoko Playground can call eth_call";
-        };
-        await* pool.addCycles(caller, null);
+        await* pool.addCycles(caller, #method "eth_call");
         let res = await evm.eth_call(service, config, arg);
-        await* pool.addCycles(caller, ?Cycles.refunded());
+        await* pool.addCycles(caller, #refund);
         res
     };
     public shared ({ caller }) func eth_feeHistory(service: EVM.RpcServices, config: ?EVM.RpcConfig, arg: EVM.FeeHistoryArgs) : async EVM.MultiFeeHistoryResult {
-        if (not pool.findId caller) {
-            throw Error.reject "Only a canister managed by the Motoko Playground can call eth_feeHistory";
-        };
-        await* pool.addCycles(caller, null);
+        await* pool.addCycles(caller, #method "eth_feeHistory");
         let res = await evm.eth_feeHistory(service, config, arg);
-        await* pool.addCycles(caller, ?Cycles.refunded());
+        await* pool.addCycles(caller, #refund);
         res
     };
     public shared ({ caller }) func eth_getBlockByNumber(service: EVM.RpcServices, config: ?EVM.RpcConfig, arg: EVM.BlockTag) : async EVM.MultiGetBlockByNumberResult {
-        if (not pool.findId caller) {
-            throw Error.reject "Only a canister managed by the Motoko Playground can call eth_getBlockByNumber";
-        };
-        await* pool.addCycles(caller, null);
+        await* pool.addCycles(caller, #method "eth_getBlockByNumber");
         let res = await evm.eth_getBlockByNumber(service, config, arg);
-        await* pool.addCycles(caller, ?Cycles.refunded());
+        await* pool.addCycles(caller, #refund);
         res
     };
     public shared ({ caller }) func eth_getLogs(service: EVM.RpcServices, config: ?EVM.RpcConfig, arg: EVM.GetLogsArgs) : async EVM.MultiGetLogsResult {
-        if (not pool.findId caller) {
-            throw Error.reject "Only a canister managed by the Motoko Playground can call eth_getLogs";
-        };
-        await* pool.addCycles(caller, null);
+        await* pool.addCycles(caller, #method "eth_getLogs");
         let res = await evm.eth_getLogs(service, config, arg);
-        await* pool.addCycles(caller, ?Cycles.refunded());
+        await* pool.addCycles(caller, #refund);
         res
     };
     public shared ({ caller }) func eth_getTransactionCount(service: EVM.RpcServices, config: ?EVM.RpcConfig, arg: EVM.GetTransactionCountArgs) : async EVM.MultiGetTransactionCountResult {
-        if (not pool.findId caller) {
-            throw Error.reject "Only a canister managed by the Motoko Playground can call eth_getTransactionCount";
-        };
-        await* pool.addCycles(caller, null);
+        await* pool.addCycles(caller, #method "eth_getTransactionCount");
         let res = await evm.eth_getTransactionCount(service, config, arg);
-        await* pool.addCycles(caller, ?Cycles.refunded());
+        await* pool.addCycles(caller, #refund);
         res
     };
     public shared ({ caller }) func eth_getTransactionReceipt(service: EVM.RpcServices, config: ?EVM.RpcConfig, arg: Text) : async EVM.MultiGetTransactionReceiptResult {
-        if (not pool.findId caller) {
-            throw Error.reject "Only a canister managed by the Motoko Playground can call eth_getTransactionReceipt";
-        };
-        await* pool.addCycles(caller, null);
+        await* pool.addCycles(caller, #method "eth_getTransactionReceipt");
         let res = await evm.eth_getTransactionReceipt(service, config, arg);
-        await* pool.addCycles(caller, ?Cycles.refunded());
+        await* pool.addCycles(caller, #refund);
         res
     };
     public shared ({ caller }) func eth_sendRawTransaction(service: EVM.RpcServices, config: ?EVM.RpcConfig, arg: Text) : async EVM.MultiSendRawTransactionResult {
-        if (not pool.findId caller) {
-            throw Error.reject "Only a canister managed by the Motoko Playground can call eth_sendRawTransaction";
-        };
-        await* pool.addCycles(caller, null);
+        await* pool.addCycles(caller, #method "eth_sendRawTransaction");
         let res = await evm.eth_sendRawTransaction(service, config, arg);
-        await* pool.addCycles(caller, ?Cycles.refunded());
+        await* pool.addCycles(caller, #refund);
         res
     };
     public shared ({ caller }) func request(service: EVM.RpcService, arg: Text, id: Nat64) : async EVM.RequestResult {
-        if (not pool.findId caller) {
-            throw Error.reject "Only a canister managed by the Motoko Playground can call request";
-        };
-        await* pool.addCycles(caller, null);
+        await* pool.addCycles(caller, #method "request");
         let res = await evm.request(service, arg, id);
-        await* pool.addCycles(caller, ?Cycles.refunded());
+        await* pool.addCycles(caller, #refund);
         res
     };
 

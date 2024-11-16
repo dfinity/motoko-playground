@@ -223,19 +223,23 @@ module {
         public func removeSnapshot(cid: Principal) {
             snapshots.delete cid;
         };
-        public func addCycles<system>(cid: Principal, refund: ?Int) : async* () {
-            switch (refund) {
-            case null {
+        public func addCycles<system>(cid: Principal, config: { #method: Text; #refund }) : async* () {
+            switch (config) {
+            case (#method(method)) {
+                     if (not findId cid) {
+                         throw Error.reject("Canister pool: Only a canister managed by the pool can call " # method);
+                     };
                      let curr = Option.get(cycles.get(cid), 0);
                      let settings = getCyclesSettings(params);
                      let new = curr + settings.max_cycles_per_call;
                      if (new > settings.max_cycles_total) {
-                         throw Error.reject("Canister pool: Cycles limit exceeded, " # Int.toText(curr) # " cycles used");
+                         throw Error.reject("Canister pool: Cycles limit exceeded when calling " # method # ". Already used " # Int.toText(curr) # " cycles. Deploy with your own wallet to avoid cycle limit.");
                      };
                      cycles.put(cid, new);
                      Cycles.add<system>(Int.abs(new));
                  };
-            case (?refund) {
+            case (#refund) {
+                     let refund = Cycles.refunded();
                      let curr = Option.get(cycles.get(cid), 0);
                      let new = curr - refund;
                      if (new < 0) {
