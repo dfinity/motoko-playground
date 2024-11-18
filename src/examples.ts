@@ -26,22 +26,12 @@ export const exampleProjects: ExampleProject[] = [
     repo: { dir: "motoko/minimal-counter-dapp", ...example },
   },
   {
-    name: "Calculator",
-    repo: { dir: "archive/motoko/calc/src", ...example },
-    readme: `${readmeArchiveURL}/calc/README.md`,
-  },
-  {
     name: "Who am I?",
     repo: { dir: "motoko/whoami/src", ...example },
     readme: `${readmeURL}/whoami/README.md`,
   },
   {
-    name: "Phone Book",
-    repo: { dir: "archive/motoko/phone-book/src/phone-book", ...example },
-    readme: `${readmeArchiveURL}/phone-book/README.md`,
-  },
-  {
-    name: "Super Heroes",
+    name: "Super Heroes (full stack)",
     repo: { dir: "motoko/superheroes", ...example },
   },
   {
@@ -49,7 +39,7 @@ export const exampleProjects: ExampleProject[] = [
     repo: { dir: "motoko/random_maze", ...example },
   },
   {
-    name: "Game of Life",
+    name: "Game of Life (full stack)",
     repo: { dir: "motoko/life", ...example },
   },
   {
@@ -71,6 +61,14 @@ export const exampleProjects: ExampleProject[] = [
     name: "Http Outcall",
     repo: { dir: "motoko/send_http_get/src/send_http_get_backend", ...example },
     readme: `${readmeURL}/send_http_get/README.md`,
+  },
+  {
+    name: "Threshold ECDSA",
+    repo: {
+      dir: "motoko/threshold-ecdsa/src/ecdsa_example_motoko",
+      ...example,
+    },
+    readme: `${readmeURL}/threshold-ecdsa/README.md`,
   },
 ];
 
