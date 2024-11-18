@@ -139,4 +139,7 @@ service ic : {
   "ryjl3-tyaaa-aaaaa-aaaba-cai": {
     name: "ledger",
   },
+  "7hfb6-caaaa-aaaar-qadga-cai": {
+    name: "EVM RPC",
+  },
 };
