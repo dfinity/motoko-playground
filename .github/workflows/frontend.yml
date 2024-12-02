@@ -21,7 +21,7 @@ jobs:
           - 18
           - 20
     env:
-      DFX_VERSION: 0.22.0
+      DFX_VERSION: 0.24.2
       SKIP_WASM: true
       MOPS_VERSION: 0.2.0
     steps:
