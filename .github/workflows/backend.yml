@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
     env:
-      DFX_VERSION: 0.22.0
+      DFX_VERSION: 0.24.2
       IC_REPL_VERSION: 0.7.5
       MOPS_VERSION: 0.2.0
     steps:
