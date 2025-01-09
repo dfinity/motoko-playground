@@ -1,8 +1,13 @@
 {
   "canisters": {
-    "Parent": {
+    "Parent32": {
       "main": "Parent.mo",
       "type": "motoko"
+    },
+    "Parent64": {
+      "main": "Parent.mo",
+      "type": "motoko",
+      "args": "--enhanced-orthogonal-persistence"
     },
     "Deleter": {
       "main": "Deleter.mo",
