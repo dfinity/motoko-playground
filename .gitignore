@@ -28,6 +28,7 @@ yarn-error.log*
 
 .eslintcache
 .mops
+mops.lock
 
 /service/wasm-utils/*.old.did
 

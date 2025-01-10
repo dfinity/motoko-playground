@@ -11,8 +11,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
     env:
       DFX_VERSION: 0.24.2
       IC_REPL_VERSION: 0.7.5
@@ -77,6 +75,9 @@ jobs:
           cd ./service/pool/tests/actor_class
           dfx canister create --all
           dfx build
-          ic-repl -v ./test.sh
+          echo "==== Run Actor Class test (32) ===="
+          ic-repl -v test32.sh
+          echo "==== Run Actor Class test (64) ===="
+          ic-repl -v test64.sh
       - name: Stop dfx
         run: dfx stop
