@@ -216,7 +216,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             throw Error.reject "args should be null when stored_module is set";
         };
         let origin = { origin = "admin"; tags = [] };
-        let (info, mode) = switch (opt_info) {
+        let (info, default_mode) = switch (opt_info) {
         case null { await* getExpiredCanisterInfo(origin) };
         case (?info) {
                  if (pool.find info) {
@@ -233,6 +233,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         };
         switch (args) {
         case (?args) {
+                 let mode = Option.get(args.mode, default_mode);
                  let wasm = if (Option.get(args.bypass_wasm_transform, false)) {
                      args.wasm_module
                  } else {
