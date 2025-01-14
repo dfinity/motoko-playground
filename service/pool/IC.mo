@@ -23,8 +23,8 @@ module {
     #reinstall;
     #upgrade : ?{
       wasm_memory_persistence : ?{
-          #keep;
-          #replace;
+          #Keep;
+          #Replace;
       };
     };
     #install;
