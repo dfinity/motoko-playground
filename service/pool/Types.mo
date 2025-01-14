@@ -45,27 +45,17 @@ module {
         cycles_settings = null;
         wasm_utils_principal = ?"ozk6r-tyaaa-aaaab-qab4a-cai";
     };
-    public type CanisterInstallMode = {
-        #reinstall;
-        #install;
-        #upgrade : ?{
-            wasm_memory_persistence : ?{
-                #keep;
-                #replace;
-            };
-        };
-    };
     public type InstallArgs = {
         arg : Blob;
         wasm_module : Blob;
-        mode : CanisterInstallMode;
+        mode : ICType.canister_install_mode;
         canister_id : Principal;
     };
     public type DeployArgs = {
         arg : Blob;
         wasm_module : Blob;
         bypass_wasm_transform : ?Bool;
-        mode : ?CanisterInstallMode;
+        mode : ?ICType.canister_install_mode;
     };
     public type InstallConfig = {
         profiling: Bool;

@@ -85,7 +85,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         await f1;
         await* f2;
     };
-    private func getExpiredCanisterInfo(origin : Logs.Origin) : async* (Types.CanisterInfo, {#install; #reinstall}) {
+    private func getExpiredCanisterInfo(origin : Logs.Origin) : async* (Types.CanisterInfo, ICType.canister_install_mode) {
         let res = switch (pool.getExpiredCanisterId()) {
             case (#newId) {
               try {
@@ -208,7 +208,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         statsByOrigin.addInstall({ origin = "external"; tags = [] });
     };
     // Combine create_canister and install_code into a single update call. Returns the current available canister id.
-    public shared ({ caller }) func deployCanister(opt_info: ?Types.CanisterInfo, args: ?Types.DeployArgs) : async (Types.CanisterInfo, {#install; #upgrade; #reinstall}) {
+    public shared ({ caller }) func deployCanister(opt_info: ?Types.CanisterInfo, args: ?Types.DeployArgs) : async (Types.CanisterInfo, ICType.canister_install_mode) {
         if (not Principal.isController(caller)) {
             throw Error.reject "Only called by controller";
         };
@@ -220,7 +220,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         case null { await* getExpiredCanisterInfo(origin) };
         case (?info) {
                  if (pool.find info) {
-                     (info, #upgrade)
+                     (info, #upgrade(null))
                  } else {
                      if (pool.findId(info.id)) {
                          await* getExpiredCanisterInfo(origin)
@@ -259,7 +259,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         switch (pool.refresh(info, false)) {
         case (?newInfo) {
                  updateTimer<system>(newInfo);
-                 (newInfo, mode);
+                 (newInfo, default_mode);
              };
         case null { throw Error.reject "pool.refresh: Cannot find canister" };
         };
@@ -370,7 +370,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             };
             switch (args.mode) {
             case (#install) { tags.add("mode:install") };
-            case (#upgrade) { tags.add("mode:upgrade") };
+            case (#upgrade(_)) { tags.add("mode:upgrade") };
             case (#reinstall) { tags.add("mode:reinstall") };
             };
             let origin = { origin = install_config.origin.origin; tags = Buffer.toArray(tags) };
@@ -602,7 +602,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
     public shared ({ caller }) func install_code({
         arg : Blob;
         wasm_module : ICType.wasm_module;
-        mode : { #reinstall; #upgrade; #install };
+        mode : ICType.canister_install_mode;
         canister_id : ICType.canister_id;
     }) : async () {
         switch (sanitizeInputs(caller, canister_id)) {
