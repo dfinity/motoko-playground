@@ -231,9 +231,9 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                  };
              };
         };
+        let mode = Option.get(args.mode, default_mode);
         switch (args) {
         case (?args) {
-                 let mode = Option.get(args.mode, default_mode);
                  let wasm = if (Option.get(args.bypass_wasm_transform, false)) {
                      args.wasm_module
                  } else {
@@ -259,7 +259,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         switch (pool.refresh(info, false)) {
         case (?newInfo) {
                  updateTimer<system>(newInfo);
-                 (newInfo, default_mode);
+                 (newInfo, mode);
              };
         case null { throw Error.reject "pool.refresh: Cannot find canister" };
         };
