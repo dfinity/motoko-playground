@@ -19,6 +19,16 @@ module {
     wasm_memory_limit : Nat;
     log_visibility : log_visibility;
   };
+  public type canister_install_mode = {
+    #reinstall;
+    #upgrade : ?{
+      wasm_memory_persistence : ?{
+          #Keep;
+          #Replace;
+      };
+    };
+    #install;
+  };
   public type snapshot = {
       id : snapshot_id;
       total_size : Nat64;
@@ -48,7 +58,7 @@ module {
   public type install_chunked_code_args = {
     arg : Blob;
     wasm_module_hash : Blob;
-    mode : { #reinstall; #upgrade; #install };
+    mode : canister_install_mode;
     chunk_hashes_list : [{hash : Blob}];
     target_canister : canister_id;
     store_canister : ?canister_id;
@@ -88,7 +98,7 @@ module {
     install_code : shared {
         arg : Blob;
         wasm_module : wasm_module;
-        mode : { #reinstall; #upgrade; #install };
+        mode : canister_install_mode;
         canister_id : canister_id;
     } -> async ();
     list_canister_snapshots : shared { canister_id : canister_id } -> async [snapshot];

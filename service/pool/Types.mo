@@ -48,13 +48,14 @@ module {
     public type InstallArgs = {
         arg : Blob;
         wasm_module : Blob;
-        mode : { #reinstall; #upgrade; #install };
+        mode : ICType.canister_install_mode;
         canister_id : Principal;
     };
     public type DeployArgs = {
         arg : Blob;
         wasm_module : Blob;
         bypass_wasm_transform : ?Bool;
+        mode : ?ICType.canister_install_mode;
     };
     public type InstallConfig = {
         profiling: Bool;
