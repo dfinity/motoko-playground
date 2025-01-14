@@ -231,7 +231,14 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                  };
              };
         };
-        let mode = Option.get(args.mode, default_mode);
+        let mode = switch (args) {
+            case (?args) {
+                Option.get(args.mode, default_mode);
+            };
+            case (null) {
+                default_mode;
+            };
+        };
         switch (args) {
         case (?args) {
                  let wasm = if (Option.get(args.bypass_wasm_transform, false)) {
