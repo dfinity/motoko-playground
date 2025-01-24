@@ -709,7 +709,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         await* pool.addCycles(caller, #refund);
         res
     };
-    public shared ({ caller }) func sign_with_schnorr(arg: ICType.sign_with_schnorr_args) : async ICType.sign_with_schorr_result {
+    public shared ({ caller }) func sign_with_schnorr(arg: ICType.sign_with_schnorr_args) : async ICType.sign_with_schnorr_result {
         await* pool.addCycles(caller, #method "sign_with_schnorr");
         let res = await IC.sign_with_schnorr(arg);
         await* pool.addCycles(caller, #refund);
