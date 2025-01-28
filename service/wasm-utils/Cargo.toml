@@ -12,7 +12,7 @@ ic-cdk = "0.17"
 serde = "1.0"
 serde_bytes = "0.11"
 candid = "0.10"
-ic-wasm = { version = "0.9.4", default-features = false }
+ic-wasm = { version = "0.9.5", default-features = false }
 sha2 = "0.10.6"
 
 [profile.release]
