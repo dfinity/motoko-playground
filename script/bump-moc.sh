@@ -20,7 +20,7 @@ git add src/App.tsx public/moc.js
 git switch -c bump/moc-$MOC_VERSION
 git status -uno
 git diff --staged src/App.tsx
-git commit -m 'chore: bump moc to v'$MOC_VERSION
+git commit -m 'chore: bump `moc` to v'$MOC_VERSION
 git push -u origin bump/moc-$MOC_VERSION
 echo Create PR by
 echo 'open https://github.com/dfinity/motoko-playground/pull/new/bump/moc-'$MOC_VERSION
