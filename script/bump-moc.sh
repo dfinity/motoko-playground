@@ -12,4 +12,4 @@ curl -L https://github.com/dfinity/motoko/releases/download/${MOC_VERSION}/moc-$
 
 git add src/App.tsx public/moc.js
 git status -uno
-git diff --staged
+git diff --staged src/App.tsx
