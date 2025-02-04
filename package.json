@@ -17,7 +17,7 @@
     "@xterm/xterm": "^5.5.0",
     "lodash.debounce": "^4.0.8",
     "motoko": "^3.10.1",
-    "prettier-plugin-motoko": "^0.9.4",
+    "prettier-plugin-motoko": "^0.10.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-google-charts": "^4.0.1",
