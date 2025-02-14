@@ -38,12 +38,10 @@ jobs:
           dfx-version: ${{ env.DFX_VERSION }}
       - name: Install dfx dependencies
         run: |
-          npm i -g ic-mops
           dfx cache install
           cd $(dfx cache show)
       - name: Start dfx
-        run: |
-          dfx start --background
+        run: dfx start --background
       - name: Build frontend
         run: |
           dfx canister create --all

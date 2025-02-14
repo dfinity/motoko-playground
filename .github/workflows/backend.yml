@@ -39,7 +39,6 @@ jobs:
           dfx-version: ${{ env.DFX_VERSION }}
       - name: Install dfx dependencies
         run: |
-          npm i -g ic-mops
           dfx cache install
           cd $(dfx cache show)
       - name: Start dfx
@@ -53,10 +52,13 @@ jobs:
 #      - name: Deploy main branch
 #        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
 #        run: |
+#          npm install
 #          dfx deploy backend
       - uses: actions/checkout@v4
       - name: Deploy current branch
-        run: dfx deploy backend
+        run: |
+          npm install
+          dfx deploy backend
       - name: CanisterPool test
         run: |
           (for f in service/pool/tests/*.test.sh; do
