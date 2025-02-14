@@ -16,7 +16,7 @@
       "type": "custom",
       "dependencies": ["wasm-utils"],
       "specified_id": "mwrha-maaaa-aaaab-qabqq-cai",
-      "build": ["mops-cli build service/pool/Main.mo"],
+      "build": ["npx mops-cli build service/pool/Main.mo"],
       "candid": "target/pool/pool.did",
       "wasm": "target/pool/pool.wasm",
       "optimize": "cycles"
@@ -24,7 +24,7 @@
     "saved": {
       "type": "custom",
       "specified_id": "vhtho-raaaa-aaaab-qadoq-cai",
-      "build": ["mops-cli build service/saved/Saved.mo"],
+      "build": ["npx mops-cli build service/saved/Saved.mo"],
       "candid": "target/Saved/Saved.did",
       "wasm": "target/Saved/Saved.wasm",
       "optimize": "cycles"

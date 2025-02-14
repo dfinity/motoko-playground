@@ -44,7 +44,6 @@ jobs:
           cd $(dfx cache show)
           wget https://github.com/chenyan2002/mops-cli/releases/download/$MOPS_VERSION/mops-cli-linux64
           cp ./mops-cli-linux64 /usr/local/bin/mops-cli
-          chmod a+x /usr/local/bin/mops-cli
       - name: Start dfx
         run: |
           dfx start --background
