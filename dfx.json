@@ -16,7 +16,7 @@
       "type": "custom",
       "dependencies": ["wasm-utils"],
       "specified_id": "mwrha-maaaa-aaaab-qabqq-cai",
-        "build": ["$(dfx cache show)/moc $(npx mops sources) service/pool/Main.mo --release --idl --stable-types --public-metadata candid:service"],
+        "build": ["mkdir -p target/pool && $(dfx cache show)/moc $(npx mops sources) service/pool/Main.mo -o target/pool/pool.wasm --release --idl --stable-types --public-metadata candid:service"],
       "candid": "target/pool/pool.did",
       "wasm": "target/pool/pool.wasm",
       "optimize": "cycles"
@@ -24,9 +24,9 @@
     "saved": {
       "type": "custom",
       "specified_id": "vhtho-raaaa-aaaab-qadoq-cai",
-      "build": ["$(dfx cache show)/moc $(npx mops sources) service/saved/Saved.mo --release --idl --stable-types --public-metadata candid:service"],
-      "candid": "target/Saved/Saved.did",
-      "wasm": "target/Saved/Saved.wasm",
+      "build": ["mkdir -p target/saved && $(dfx cache show)/moc $(npx mops sources) service/saved/Saved.mo -o target/saved/saved.wasm --release --idl --stable-types --public-metadata candid:service"],
+      "candid": "target/saved/saved.did",
+      "wasm": "target/saved/saved.wasm",
       "optimize": "cycles"
     },
     "react_app": {
