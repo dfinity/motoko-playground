@@ -20,6 +20,7 @@ jobs:
         node:
           - 18
           - 20
+          - 22
     env:
       DFX_VERSION: 0.24.3
       SKIP_WASM: true
