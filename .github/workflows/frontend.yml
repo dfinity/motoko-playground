@@ -24,7 +24,6 @@ jobs:
     env:
       DFX_VERSION: 0.24.3
       SKIP_WASM: true
-      MOPS_VERSION: 0.2.0
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js ${{ matrix.node }}
@@ -42,8 +41,6 @@ jobs:
           npm i -g ic-mops
           dfx cache install
           cd $(dfx cache show)
-          wget https://github.com/chenyan2002/mops-cli/releases/download/$MOPS_VERSION/mops-cli-linux64
-          cp ./mops-cli-linux64 /usr/local/bin/mops-cli
       - name: Start dfx
         run: |
           dfx start --background
