@@ -39,6 +39,9 @@ jobs:
           dfx-version: ${{ env.DFX_VERSION }}
       - name: Install dfx dependencies
         run: |
+          wget https://github.com/chenyan2002/ic-repl/releases/download/$IC_REPL_VERSION/ic-repl-linux64
+          chmod a+x ./ic-repl-linux64
+          ln ./ic-repl-linux64 /usr/local/bin/ic-repl
           dfx cache install
           cd $(dfx cache show)
       - name: Start dfx
