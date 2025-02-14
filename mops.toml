@@ -1,5 +1,5 @@
 [dependencies]
-base = "0.14.1"
+base = "0.13.4"
 splay = "0.1.0"
 
 [[canister]]
