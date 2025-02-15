@@ -56,12 +56,12 @@ jobs:
 #        if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking_changes')
 #        run: |
 #          npm install
-#          dfx deploy backend
+#          env GITHUB_ENV=/dev/null dfx deploy backend
       - uses: actions/checkout@v4
       - name: Deploy current branch
         run: |
           npm install
-          dfx deploy backend
+          env GITHUB_ENV=/dev/null dfx deploy backend
       - name: CanisterPool test
         run: |
           (for f in service/pool/tests/*.test.sh; do
