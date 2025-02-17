@@ -60,7 +60,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Deploy current branch
         run: |
-          npm install
+          npm ci
           env GITHUB_ENV=/dev/null dfx deploy backend
       - name: CanisterPool test
         run: |
