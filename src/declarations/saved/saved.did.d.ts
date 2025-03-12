@@ -36,7 +36,6 @@ export type Time = bigint;
 export interface _SERVICE {
   getProject: ActorMethod<[HashId], [] | [SavedProject]>;
   getStats: ActorMethod<[], StatResult>;
-  putProject: ActorMethod<[Project], HashId>;
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

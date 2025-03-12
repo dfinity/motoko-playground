@@ -1,6 +1,9 @@
 :root {
   --headerHeight: 9.6rem;
-  --appHeight: calc(100vh - var(--headerHeight));
+  --deprecationBannerHeight: 7.4rem;
+  --appHeight: calc(
+    100vh - var(--headerHeight) - var(--deprecationBannerHeight)
+  );
   --sectionHeaderHeight: 4.8rem;
   --editorHeight: calc(var(--appHeight) - var(--sectionHeaderHeight));
   --explorerWidth: max(200px, 15%);

@@ -1,42 +1,35 @@
 type Time = int;
-type StatResult = 
- record {
-   byte_size: nat;
-   num_projects: nat;
- };
-type SavedProject = 
- record {
-   project: Project;
-   timestamp: Time;
- };
-type Project = 
- record {
-   canisters: opt vec CanisterInfo;
-   files: vec NamedFile;
-   packages: opt vec PackageInfo;
- };
-type PackageInfo = 
- record {
-   dir: opt text;
-   homepage: opt text;
-   name: text;
-   repo: text;
-   version: text;
- };
-type NamedFile = 
- record {
-   content: text;
-   name: text;
- };
+type StatResult = record {
+  byte_size : nat;
+  num_projects : nat;
+};
+type SavedProject = record {
+  project : Project;
+  timestamp : Time;
+};
+type Project = record {
+  canisters : opt vec CanisterInfo;
+  files : vec NamedFile;
+  packages : opt vec PackageInfo;
+};
+type PackageInfo = record {
+  dir : opt text;
+  homepage : opt text;
+  name : text;
+  repo : text;
+  version : text;
+};
+type NamedFile = record {
+  content : text;
+  name : text;
+};
 type HashId = nat;
-type CanisterInfo = 
- record {
-   candid: text;
-   id: principal;
-   name: text;
- };
+type CanisterInfo = record {
+  candid : text;
+  id : principal;
+  name : text;
+};
 service : {
-  getProject: (HashId) -> (opt SavedProject) query;
-  getStats: () -> (StatResult) query;
-  putProject: (Project) -> (HashId);
-}
+  getProject : (HashId) -> (opt SavedProject) query;
+  getStats : () -> (StatResult) query;
+};

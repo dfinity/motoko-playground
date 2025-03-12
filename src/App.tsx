@@ -16,7 +16,6 @@ import {
   ContainerContext,
   getActorAliases,
   getDeployedCanisters,
-  getShareableProject,
   WorkplaceReducerAction,
   generateNonMotokoFilesToWebContainer,
   generateEnv,
@@ -209,16 +208,6 @@ export function App() {
       setTimeout(() => setIsFirstVisit(false), 750);
     }
   }
-  async function shareProject() {
-    logger.log("Sharing project code...");
-    const project = getShareableProject(workplaceState);
-    const hash = await saved.putProject(project);
-    logger.log(
-      `Use this link to access the code:\n${
-        window.location.origin
-      }/?tag=${hash.toString()}`,
-    );
-  }
 
   const deployWorkplace = (info: CanisterInfo) => {
     setForceUpdate();
@@ -327,10 +316,7 @@ export function App() {
   return (
     <main>
       <GlobalStyles />
-      <Header
-        shareProject={shareProject}
-        openTutorial={() => setIsProjectModalOpen(true)}
-      />
+      <Header openTutorial={() => setIsProjectModalOpen(true)} />
       <WorkplaceDispatchContext.Provider value={workplaceDispatch}>
         <WorkerContext.Provider value={worker}>
           <ContainerContext.Provider value={container}>

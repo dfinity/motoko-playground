@@ -19,13 +19,11 @@ actor {
 
   // Represents a set of saved projects, using their hashes.
   // (But rather than store this type directly, we use ProjectTable instead.)
-  public type Projects =
-    Trie.Trie<SavedProject, ()>;
+  public type Projects = Trie.Trie<SavedProject, ()>;
 
   /// Indexes a set of Projects; permits lookup by hash,
   /// without knowing the "full project" as a key.
-  public type ProjectTable =
-    Trie.Trie<HashId, SavedProject>;
+  public type ProjectTable = Trie.Trie<HashId, SavedProject>;
 
   func hashProject(p : Project) : (Nat32, Nat) {
     // TODO input validation, e.g. duplicate filenames
@@ -37,7 +35,7 @@ actor {
         let c : Nat32 = Prim.charToNat32(char);
         x := ((x << 5) +% x) +% c;
       };
-      x
+      x;
     };
     // Hash is only computed based on files. Packages and canisters
     // are considered as configs which can be updated with the same code.
@@ -46,43 +44,25 @@ actor {
       x := hashCont(x, file.content);
       size += file.content.size() + file.name.size();
     };
-    (x, size)
+    (x, size);
   };
 
   stable var stableProjects : ProjectTable = Trie.empty();
   stable var byteSize : Nat = 0;
 
-  public func putProject(p : Project) : async HashId {
-    let (hashId, size)  = hashProject(p);
-    let key = { key = Nat32.toNat(hashId); hash = hashId };
-    let saved = {
-      timestamp = Time.now();
-      project = p;
-    };
-    let (ps, existing) = Trie.replace<Nat, SavedProject>(stableProjects, key, Nat.equal, ?saved);
-    switch existing {
-    case (?_) {};
-    case null {
-             byteSize += size;
-         };
-    };
-    stableProjects := ps;
-    key.key
-  };
-
   public query func getProject(hashId : HashId) : async ?SavedProject {
     let key = { hash = Nat32.fromNat(hashId); key = hashId };
-    Trie.find<Nat, SavedProject>(stableProjects, key, Nat.equal)
+    Trie.find<Nat, SavedProject>(stableProjects, key, Nat.equal);
   };
 
   type StatResult = {
-      num_projects: Nat;
-      byte_size: Nat;
+    num_projects : Nat;
+    byte_size : Nat;
   };
   public query func getStats() : async StatResult {
-      {
-          num_projects = Trie.size(stableProjects);
-          byte_size = byteSize;
-      }
-  }
-}
+    {
+      num_projects = Trie.size(stableProjects);
+      byte_size = byteSize;
+    };
+  };
+};

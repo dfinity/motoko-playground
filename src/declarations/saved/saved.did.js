@@ -27,7 +27,6 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     getProject: IDL.Func([HashId], [IDL.Opt(SavedProject)], ["query"]),
     getStats: IDL.Func([], [StatResult], ["query"]),
-    putProject: IDL.Func([Project], [HashId], []),
   });
 };
 export const init = ({ IDL }) => {
