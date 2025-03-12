@@ -26,10 +26,16 @@ type NamedFile = record {
 type HashId = nat;
 type CanisterInfo = record {
   candid : text;
-  id : principal;
+  å id : principal;
   name : text;
 };
 service : {
   getProject : (HashId) -> (opt SavedProject) query;
+  getProjectsPage : (nat, nat) -> (
+    vec record {
+      HashId;
+      SavedProject;
+    }
+  ) query;
   getStats : () -> (StatResult) query;
 };

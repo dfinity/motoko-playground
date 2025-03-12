@@ -2,11 +2,13 @@ import Time "mo:base/Time";
 import Trie "mo:base/Trie";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
+import Buffer "mo:base/Buffer";
+import Iter "mo:base/Iter";
 import Prim "mo:⛔";
 
 import Types "Types";
 
-actor {
+shared ({ caller = owner }) actor class Saved() {
 
   public type Project = Types.MotokoProject;
 
@@ -64,5 +66,30 @@ actor {
       num_projects = Trie.size(stableProjects);
       byte_size = byteSize;
     };
+  };
+
+  public query ({ caller }) func getProjectsPage(start : Nat, size : Nat) : async [(HashId, SavedProject)] {
+    assert (owner == caller);
+    let iter = Trie.iter(stableProjects);
+
+    for (i in Iter.range(0, start - 1)) {
+      let _ = iter.next();
+    };
+
+    let result = Buffer.Buffer<(HashId, SavedProject)>(size);
+
+    label l for (i in Iter.range(start, start + size - 1)) {
+      let item = iter.next();
+      switch item {
+        case (?some) {
+          result.add(some);
+        };
+        case null {
+          break l;
+        };
+      };
+    };
+
+    return Buffer.toArray(result);
   };
 };

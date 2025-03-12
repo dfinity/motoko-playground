@@ -24,6 +24,11 @@ export interface Project {
   packages: [] | [Array<PackageInfo>];
   canisters: [] | [Array<CanisterInfo>];
 }
+export interface Saved {
+  getProject: ActorMethod<[HashId], [] | [SavedProject]>;
+  getProjectsPage: ActorMethod<[bigint, bigint], Array<[HashId, SavedProject]>>;
+  getStats: ActorMethod<[], StatResult>;
+}
 export interface SavedProject {
   timestamp: Time;
   project: Project;
@@ -33,9 +38,6 @@ export interface StatResult {
   num_projects: bigint;
 }
 export type Time = bigint;
-export interface _SERVICE {
-  getProject: ActorMethod<[HashId], [] | [SavedProject]>;
-  getStats: ActorMethod<[], StatResult>;
-}
+export interface _SERVICE extends Saved {}
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];
