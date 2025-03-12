@@ -7,17 +7,6 @@ type SavedProject = record {
   project : Project;
   timestamp : Time;
 };
-type Saved = service {
-  getProject : (HashId) -> (opt SavedProject) query;
-  getProjectsPage : (nat, nat) -> (
-    vec record {
-      HashId;
-      SavedProject;
-    }
-  ) query;
-  getStats : () -> (StatResult) query;
-  putProject : (Project) -> (HashId);
-};
 type Project = record {
   canisters : opt vec CanisterInfo;
   files : vec NamedFile;
@@ -40,4 +29,14 @@ type CanisterInfo = record {
   id : principal;
   name : text;
 };
-service : () -> Saved;
+service : {
+  getProject : (HashId) -> (opt SavedProject) query;
+  getProjectsPage : (nat, nat) -> (
+    vec record {
+      HashId;
+      SavedProject;
+    }
+  ) query;
+  getStats : () -> (StatResult) query;
+  putProject : (Project) -> (HashId);
+};;
