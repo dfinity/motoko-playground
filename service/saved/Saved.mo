@@ -16,7 +16,7 @@ shared ({ caller = owner }) actor class Saved() {
 
   public type SavedProject = {
     timestamp : Time.Time;
-    project : Project;
+    project : Project
   };
 
   // Represents a set of saved projects, using their hashes.
@@ -35,18 +35,18 @@ shared ({ caller = owner }) actor class Saved() {
       var x = x_;
       for (char in text.chars()) {
         let c : Nat32 = Prim.charToNat32(char);
-        x := ((x << 5) +% x) +% c;
+        x := ((x << 5) +% x) +% c
       };
-      x;
+      x
     };
     // Hash is only computed based on files. Packages and canisters
     // are considered as configs which can be updated with the same code.
     for (file in p.files.vals()) {
       x := hashCont(x, file.name);
       x := hashCont(x, file.content);
-      size += file.content.size() + file.name.size();
+      size += file.content.size() + file.name.size()
     };
-    (x, size);
+    (x, size)
   };
 
   stable var stableProjects : ProjectTable = Trie.empty();
@@ -57,33 +57,33 @@ shared ({ caller = owner }) actor class Saved() {
     let key = { key = Nat32.toNat(hashId); hash = hashId };
     let saved = {
       timestamp = Time.now();
-      project = p;
+      project = p
     };
     let (ps, existing) = Trie.replace<Nat, SavedProject>(stableProjects, key, Nat.equal, ?saved);
     switch existing {
       case (?_) {};
       case null {
-        byteSize += size;
-      };
+        byteSize += size
+      }
     };
     stableProjects := ps;
-    key.key;
+    key.key
   };
 
   public query func getProject(hashId : HashId) : async ?SavedProject {
     let key = { hash = Nat32.fromNat(hashId); key = hashId };
-    Trie.find<Nat, SavedProject>(stableProjects, key, Nat.equal);
+    Trie.find<Nat, SavedProject>(stableProjects, key, Nat.equal)
   };
 
   type StatResult = {
     num_projects : Nat;
-    byte_size : Nat;
+    byte_size : Nat
   };
   public query func getStats() : async StatResult {
     {
       num_projects = Trie.size(stableProjects);
-      byte_size = byteSize;
-    };
+      byte_size = byteSize
+    }
   };
 
   public query ({ caller }) func getProjectsPage(start : Nat, size : Nat) : async [(HashId, SavedProject)] {
@@ -91,16 +91,16 @@ shared ({ caller = owner }) actor class Saved() {
     let iter = Trie.iter(stableProjects);
 
     for (i in Iter.range(0, start - 1)) {
-      ignore iter.next();
+      ignore iter.next()
     };
 
     let result = Buffer.Buffer<(HashId, SavedProject)>(size);
 
     label l for (i in Iter.range(start, start + size - 1)) {
       let ?item = iter.next() else break l;
-      result.add(item);
+      result.add(item)
     };
 
-    Buffer.toArray(result);
-  };
-};
+    Buffer.toArray(result)
+  }
+}
