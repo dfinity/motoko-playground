@@ -26,7 +26,7 @@ const DeprecationBanner = () => {
     >
       The Motoko Playground is deprecated, please{" "}
       <span style={{ textDecoration: "underline" }}>use ICP Ninja instead</span>
-      . This site will stop being accessible from April 3rd, 2025 onwards.
+      . This site will stop being accessible after April 2nd, 2025.
     </a>
   );
 };
