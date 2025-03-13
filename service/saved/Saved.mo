@@ -87,27 +87,20 @@ shared ({ caller = owner }) actor class Saved() {
   };
 
   public query ({ caller }) func getProjectsPage(start : Nat, size : Nat) : async [(HashId, SavedProject)] {
-    assert (owner == caller);
+    assert owner == caller;
     let iter = Trie.iter(stableProjects);
 
     for (i in Iter.range(0, start - 1)) {
-      let _ = iter.next();
+      ignore iter.next();
     };
 
     let result = Buffer.Buffer<(HashId, SavedProject)>(size);
 
     label l for (i in Iter.range(start, start + size - 1)) {
-      let item = iter.next();
-      switch item {
-        case (?some) {
-          result.add(some);
-        };
-        case null {
-          break l;
-        };
-      };
+      let ?item = iter.next() else break l;
+      result.add(item);
     };
 
-    return Buffer.toArray(result);
+    Buffer.toArray(result);
   };
 };
