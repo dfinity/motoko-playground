@@ -24,11 +24,17 @@ export const idlFactory = ({ IDL }) => {
     byte_size: IDL.Nat,
     num_projects: IDL.Nat,
   });
-  return IDL.Service({
+  const Saved = IDL.Service({
     getProject: IDL.Func([HashId], [IDL.Opt(SavedProject)], ["query"]),
+    getProjectsPage: IDL.Func(
+      [IDL.Nat, IDL.Nat],
+      [IDL.Vec(IDL.Tuple(HashId, SavedProject))],
+      ["query"],
+    ),
     getStats: IDL.Func([], [StatResult], ["query"]),
     putProject: IDL.Func([Project], [HashId], []),
   });
+  return Saved;
 };
 export const init = ({ IDL }) => {
   return [];
