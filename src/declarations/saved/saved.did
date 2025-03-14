@@ -38,5 +38,4 @@ service : {
     }
   ) query;
   getStats : () -> (StatResult) query;
-  putProject : (Project) -> (HashId);
-};;
+};

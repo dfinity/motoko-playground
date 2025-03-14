@@ -32,7 +32,6 @@ export const idlFactory = ({ IDL }) => {
       ["query"],
     ),
     getStats: IDL.Func([], [StatResult], ["query"]),
-    putProject: IDL.Func([Project], [HashId], []),
   });
   return Saved;
 };

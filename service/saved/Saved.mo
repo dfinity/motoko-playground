@@ -52,24 +52,6 @@ shared ({ caller = owner }) actor class Saved() {
   stable var stableProjects : ProjectTable = Trie.empty();
   stable var byteSize : Nat = 0;
 
-  public func putProject(p : Project) : async HashId {
-    let (hashId, size) = hashProject(p);
-    let key = { key = Nat32.toNat(hashId); hash = hashId };
-    let saved = {
-      timestamp = Time.now();
-      project = p
-    };
-    let (ps, existing) = Trie.replace<Nat, SavedProject>(stableProjects, key, Nat.equal, ?saved);
-    switch existing {
-      case (?_) {};
-      case null {
-        byteSize += size
-      }
-    };
-    stableProjects := ps;
-    key.key
-  };
-
   public query func getProject(hashId : HashId) : async ?SavedProject {
     let key = { hash = Nat32.fromNat(hashId); key = hashId };
     Trie.find<Nat, SavedProject>(stableProjects, key, Nat.equal)

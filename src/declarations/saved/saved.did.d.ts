@@ -28,7 +28,6 @@ export interface Saved {
   getProject: ActorMethod<[HashId], [] | [SavedProject]>;
   getProjectsPage: ActorMethod<[bigint, bigint], Array<[HashId, SavedProject]>>;
   getStats: ActorMethod<[], StatResult>;
-  putProject: ActorMethod<[Project], HashId>;
 }
 export interface SavedProject {
   timestamp: Time;
