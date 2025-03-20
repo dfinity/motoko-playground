@@ -1,5 +1,6 @@
 import Cycles "mo:base/ExperimentalCycles";
 import InternetComputer "mo:base/ExperimentalInternetComputer";
+import Iter "mo:base/Iter";
 import Time "mo:base/Time";
 import Error "mo:base/Error";
 import Option "mo:base/Option";
@@ -269,6 +270,17 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
                  (newInfo, mode);
              };
         case null { throw Error.reject "pool.refresh: Cannot find canister" };
+        };
+    };
+
+    public shared func update_empty() : async () {};
+    public query func go() : async () {
+        for (j in Iter.range(0, 10000)) {
+            let nonce = { 
+                timestamp = Time.now();
+                nonce = 0;
+            };
+            let _ = nonceCache.checkProofOfWork(nonce);
         };
     };
 
@@ -806,6 +818,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #getSubtree : Any;
             #getInitParams : Any;
             #getStats : Any;
+            #go : Any;
             #http_request : Any;
             #installStoredWasm : Any;
             #installCode : Any;
@@ -824,6 +837,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
 
             #create_canister : Any;
             #update_settings : Any;
+            #update_empty : Any;
             #install_code : Any;
             #uninstall_code : Any;
             #canister_status : Any;

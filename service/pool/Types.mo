@@ -1,5 +1,5 @@
 import Principal "mo:base/Principal";
-import Splay "mo:splay";
+import Splay "./Splay";
 import Time "mo:base/Time";
 import Buffer "mo:base/Buffer";
 import TrieMap "mo:base/TrieMap";

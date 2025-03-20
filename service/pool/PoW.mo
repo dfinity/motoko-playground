@@ -1,4 +1,4 @@
-import Splay "mo:splay";
+import Splay "./Splay";
 import Time "mo:base/Time";
 import Text "mo:base/Text";
 import Int "mo:base/Int";
