@@ -1,3 +1,11 @@
+This branch contains a modification of the pool service which can be used for benchmarking replica changes.
+
+The benchmarked canister can be build via
+
+```
+$(dfx cache show)/moc service/pool/Main.mo --package base $(dfx cache show)/base -o target/pool/pool.wasm --release --idl --stable-types --public-metadata candid:service
+```
+
 # Motoko Playground
 
 A playground for the Internet Computer's native Motoko language.
