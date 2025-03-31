@@ -1,9 +1,9 @@
 import { useEffect } from "react";
-import share_id_to_ninja_token from "./config/share_id_to_ninja_token.json";
+import share_id_to_ninja_token from "./config/prod_share_id_to_ninja_token.json";
 
 export function App() {
   useEffect(() => {
-    const base = "https://next-icp.ninja";
+    const base = "https://icp.ninja";
     const tag = new URLSearchParams(window.location.search).get("tag");
     if (tag) {
       const ninja_token = share_id_to_ninja_token[tag];
