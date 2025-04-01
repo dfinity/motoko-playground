@@ -1,3 +1,24 @@
+import { useEffect } from "react";
+import share_id_to_ninja_token from "./config/prod_share_id_to_ninja_token.json";
+
+export function App() {
+  useEffect(() => {
+    const base = "https://icp.ninja";
+    const tag = new URLSearchParams(window.location.search).get("tag");
+    if (tag) {
+      const ninja_token = share_id_to_ninja_token[tag];
+      if (ninja_token) {
+        const share_url = `${base}/s/${ninja_token}`;
+        window.open(share_url, "_self");
+        return;
+      }
+    }
+    window.open(base, "_self");
+  }, []);
+  return <div>Redirecting...</div>;
+}
+
+/*
 import { useCallback, useEffect, useReducer, useState } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 
@@ -424,3 +445,4 @@ export function App() {
     </main>
   );
 }
+*/
