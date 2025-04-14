@@ -11,6 +11,33 @@ type snapshot =
    taken_at_timestamp: nat64;
    total_size: nat64;
  };
+type sign_with_schnorr_result = record {signature: blob;};
+type sign_with_schnorr_args = 
+ record {
+   aux: opt schnorr_aux;
+   derivation_path: vec blob;
+   key_id: record {
+             algorithm: schnorr_algorithm;
+             name: text;
+           };
+   message: blob;
+ };
+type sign_with_ecdsa_result = record {signature: blob;};
+type sign_with_ecdsa_args = 
+ record {
+   derivation_path: vec blob;
+   key_id: record {
+             curve: ecdsa_curve;
+             name: text;
+           };
+   message_hash: blob;
+ };
+type schnorr_aux = variant {bip341: record {merkle_root_hash: blob;};};
+type schnorr_algorithm = 
+ variant {
+   bip340secp256k1;
+   ed25519;
+ };
 type log_visibility = 
  variant {
    controllers;
@@ -43,6 +70,7 @@ type http_header =
    name: text;
    value: text;
  };
+type ecdsa_curve = variant {secp256k1;};
 type definite_canister_settings = 
  record {
    compute_allocation: nat;
@@ -82,7 +110,57 @@ type canister_settings =
    memory_allocation: opt nat;
    wasm_memory_limit: opt nat;
  };
+type canister_install_mode = 
+ variant {
+   install;
+   reinstall;
+   upgrade:
+    opt record {wasm_memory_persistence: opt variant {
+                                               keep;
+                                               replace;
+                                             };};
+ };
 type canister_id = principal;
+type ValidationError = 
+ variant {
+   Custom: text;
+   InvalidHex: text;
+ };
+type TransactionRequest = 
+ record {
+   accessList: opt vec AccessListEntry;
+   blobVersionedHashes: opt vec text;
+   blobs: opt vec text;
+   chainId: opt nat;
+   from: opt text;
+   gas: opt nat;
+   gasPrice: opt nat;
+   input: opt text;
+   maxFeePerBlobGas: opt nat;
+   maxFeePerGas: opt nat;
+   maxPriorityFeePerGas: opt nat;
+   nonce: opt nat;
+   to: opt text;
+   "type": opt text;
+   value: opt nat;
+ };
+type TransactionReceipt = 
+ record {
+   blockHash: text;
+   blockNumber: nat;
+   contractAddress: opt text;
+   effectiveGasPrice: nat;
+   from: text;
+   gasUsed: nat;
+   logs: vec LogEntry;
+   logsBloom: text;
+   status: opt nat;
+   to: opt text;
+   transactionHash: text;
+   transactionIndex: nat;
+   "type": text;
+ };
+type Topic = vec text;
 type Stats = 
  record {
    cycles_used: nat;
@@ -92,13 +170,21 @@ type Stats =
    num_of_canisters: nat;
    num_of_installs: nat;
  };
+type SendRawTransactionStatus = 
+ variant {
+   InsufficientFunds;
+   NonceTooHigh;
+   NonceTooLow;
+   Ok: opt text;
+ };
+type SendRawTransactionResult = 
+ variant {
+   Err: RpcError;
+   Ok: SendRawTransactionStatus;
+ };
 type Self = 
  service {
    GCCanisters: () -> () oneway;
-   __transform: (record {
-                   context: blob;
-                   response: http_request_result;
-                 }) -> (http_request_result) composite_query;
    _ttp_request: (http_request_args) -> (http_request_result);
    balance: () -> (nat) query;
    callForward: (CanisterInfo, text, blob) -> (blob);
@@ -114,12 +200,21 @@ type Self =
        snapshot_id: blob;
      }) -> ();
    deployCanister: (opt CanisterInfo, opt DeployArgs) -> (CanisterInfo,
-    variant {
-      install;
-      reinstall;
-      upgrade;
-    });
+    canister_install_mode);
    dump: () -> (vec CanisterInfo) query;
+   eth_call: (RpcServices, opt RpcConfig, CallArgs) -> (MultiCallResult);
+   eth_feeHistory: (RpcServices, opt RpcConfig, FeeHistoryArgs) ->
+    (MultiFeeHistoryResult);
+   eth_getBlockByNumber: (RpcServices, opt RpcConfig, BlockTag) ->
+    (MultiGetBlockByNumberResult);
+   eth_getLogs: (RpcServices, opt RpcConfig, GetLogsArgs) ->
+    (MultiGetLogsResult);
+   eth_getTransactionCount: (RpcServices, opt RpcConfig,
+    GetTransactionCountArgs) -> (MultiGetTransactionCountResult);
+   eth_getTransactionReceipt: (RpcServices, opt RpcConfig, text) ->
+    (MultiGetTransactionReceiptResult);
+   eth_sendRawTransaction: (RpcServices, opt RpcConfig, text) ->
+    (MultiSendRawTransactionResult);
    getCanisterId: (Nonce, Origin) -> (CanisterInfo);
    getInitParams: () -> (InitParams) query;
    getStats: () -> (Stats, vec record {
@@ -142,11 +237,7 @@ type Self =
     (record {
        arg: blob;
        canister_id: canister_id;
-       mode: variant {
-               install;
-               reinstall;
-               upgrade;
-             };
+       mode: canister_install_mode;
        wasm_module: wasm_module;
      }) -> ();
    listSnapshots: (CanisterInfo) -> (vec snapshot);
@@ -157,7 +248,10 @@ type Self =
    mergeTags: (text, opt text) -> ();
    releaseAllCanisters: () -> ();
    removeCode: (CanisterInfo) -> ();
+   request: (RpcService, text, nat64) -> (RequestResult);
    resetStats: () -> ();
+   sign_with_ecdsa: (sign_with_ecdsa_args) -> (sign_with_ecdsa_result);
+   sign_with_schnorr: (sign_with_schnorr_args) -> (sign_with_schnorr_result);
    start_canister: (record {canister_id: canister_id;}) -> ();
    stop_canister: (record {canister_id: canister_id;}) -> ();
    takeSnapshot: (CanisterInfo) -> (opt blob);
@@ -175,6 +269,72 @@ type Self =
      }) -> ();
    wallet_receive: () -> ();
  };
+type RpcServices = 
+ variant {
+   ArbitrumOne: opt vec L2MainnetService;
+   BaseMainnet: opt vec L2MainnetService;
+   Custom: record {
+             chainId: ChainId;
+             services: vec RpcApi;
+           };
+   EthMainnet: opt vec EthMainnetService;
+   EthSepolia: opt vec EthSepoliaService;
+   OptimismMainnet: opt vec L2MainnetService;
+ };
+type RpcService = 
+ variant {
+   ArbitrumOne: L2MainnetService;
+   BaseMainnet: L2MainnetService;
+   Custom: RpcApi;
+   EthMainnet: EthMainnetService;
+   EthSepolia: EthSepoliaService;
+   OptimismMainnet: L2MainnetService;
+   Provider: ProviderId;
+ };
+type RpcError = 
+ variant {
+   HttpOutcallError: HttpOutcallError;
+   JsonRpcError: JsonRpcError;
+   ProviderError: ProviderError;
+   ValidationError: ValidationError;
+ };
+type RpcConfig = 
+ record {
+   responseConsensus: opt ConsensusStrategy;
+   responseSizeEstimate: opt nat64;
+ };
+type RpcApi = 
+ record {
+   headers: opt vec HttpHeader;
+   url: text;
+ };
+type RequestResult = 
+ variant {
+   Err: RpcError;
+   Ok: text;
+ };
+type RejectionCode = 
+ variant {
+   CanisterError;
+   CanisterReject;
+   DestinationInvalid;
+   NoError;
+   SysFatal;
+   SysTransient;
+   Unknown;
+ };
+type ProviderId = nat64;
+type ProviderError = 
+ variant {
+   InvalidRpcConfig: text;
+   MissingRequiredProvider;
+   NoPermission;
+   ProviderNotFound;
+   TooFewCycles: record {
+                   expected: nat;
+                   received: nat;
+                 };
+ };
 type Origin = 
  record {
    origin: text;
@@ -184,6 +344,87 @@ type Nonce =
  record {
    nonce: nat;
    timestamp: int;
+ };
+type MultiSendRawTransactionResult = 
+ variant {
+   Consistent: SendRawTransactionResult;
+   Inconsistent: vec record {
+                       RpcService;
+                       SendRawTransactionResult;
+                     };
+ };
+type MultiGetTransactionReceiptResult = 
+ variant {
+   Consistent: GetTransactionReceiptResult;
+   Inconsistent: vec record {
+                       RpcService;
+                       GetTransactionReceiptResult;
+                     };
+ };
+type MultiGetTransactionCountResult = 
+ variant {
+   Consistent: GetTransactionCountResult;
+   Inconsistent: vec record {
+                       RpcService;
+                       GetTransactionCountResult;
+                     };
+ };
+type MultiGetLogsResult = 
+ variant {
+   Consistent: GetLogsResult;
+   Inconsistent: vec record {
+                       RpcService;
+                       GetLogsResult;
+                     };
+ };
+type MultiGetBlockByNumberResult = 
+ variant {
+   Consistent: GetBlockByNumberResult;
+   Inconsistent: vec record {
+                       RpcService;
+                       GetBlockByNumberResult;
+                     };
+ };
+type MultiFeeHistoryResult = 
+ variant {
+   Consistent: FeeHistoryResult;
+   Inconsistent: vec record {
+                       RpcService;
+                       FeeHistoryResult;
+                     };
+ };
+type MultiCallResult = 
+ variant {
+   Consistent: CallResult;
+   Inconsistent: vec record {
+                       RpcService;
+                       CallResult;
+                     };
+ };
+type LogEntry = 
+ record {
+   address: text;
+   blockHash: opt text;
+   blockNumber: opt nat;
+   data: text;
+   logIndex: opt nat;
+   removed: bool;
+   topics: vec text;
+   transactionHash: opt text;
+   transactionIndex: opt nat;
+ };
+type L2MainnetService = 
+ variant {
+   Alchemy;
+   Ankr;
+   BlockPi;
+   Llama;
+   PublicNode;
+ };
+type JsonRpcError = 
+ record {
+   code: int64;
+   message: text;
  };
 type InstallConfig = 
  record {
@@ -200,11 +441,7 @@ type InstallArgs =
  record {
    arg: blob;
    canister_id: principal;
-   mode: variant {
-           install;
-           reinstall;
-           upgrade;
-         };
+   mode: canister_install_mode;
    wasm_module: blob;
  };
 type InitParams = 
@@ -212,6 +449,7 @@ type InitParams =
    admin_only: opt bool;
    canister_time_to_live: nat;
    cycles_per_canister: nat;
+   cycles_settings: opt CyclesSettings;
    max_family_tree_size: nat;
    max_num_canisters: nat;
    nonce_time_to_live: nat;
@@ -240,15 +478,163 @@ type HttpRequest =
    method: text;
    url: text;
  };
+type HttpOutcallError = 
+ variant {
+   IcError: record {
+              code: RejectionCode;
+              message: text;
+            };
+   InvalidHttpJsonRpcResponse:
+    record {
+      body: text;
+      parsingError: opt text;
+      status: nat16;
+    };
+ };
+type HttpHeader = 
+ record {
+   name: text;
+   value: text;
+ };
+type GetTransactionReceiptResult = 
+ variant {
+   Err: RpcError;
+   Ok: opt TransactionReceipt;
+ };
+type GetTransactionCountResult = 
+ variant {
+   Err: RpcError;
+   Ok: nat;
+ };
+type GetTransactionCountArgs = 
+ record {
+   address: text;
+   block: BlockTag;
+ };
+type GetLogsResult = 
+ variant {
+   Err: RpcError;
+   Ok: vec LogEntry;
+ };
+type GetLogsArgs = 
+ record {
+   addresses: vec text;
+   fromBlock: opt BlockTag;
+   toBlock: opt BlockTag;
+   topics: opt vec Topic;
+ };
+type GetBlockByNumberResult = 
+ variant {
+   Err: RpcError;
+   Ok: Block;
+ };
+type FeeHistoryResult = 
+ variant {
+   Err: RpcError;
+   Ok: FeeHistory;
+ };
+type FeeHistoryArgs = 
+ record {
+   blockCount: nat;
+   newestBlock: BlockTag;
+   rewardPercentiles: opt blob;
+ };
+type FeeHistory = 
+ record {
+   baseFeePerGas: vec nat;
+   gasUsedRatio: vec float64;
+   oldestBlock: nat;
+   reward: vec vec nat;
+ };
+type EthSepoliaService = 
+ variant {
+   Alchemy;
+   Ankr;
+   BlockPi;
+   PublicNode;
+   Sepolia;
+ };
+type EthMainnetService = 
+ variant {
+   Alchemy;
+   Ankr;
+   BlockPi;
+   Cloudflare;
+   Llama;
+   PublicNode;
+ };
 type DeployArgs = 
  record {
    arg: blob;
    bypass_wasm_transform: opt bool;
+   mode: opt canister_install_mode;
    wasm_module: blob;
  };
+type CyclesSettings = 
+ record {
+   max_cycles_per_call: nat;
+   max_cycles_total: nat;
+ };
+type ConsensusStrategy = 
+ variant {
+   Equality;
+   Threshold: record {
+                min: nat8;
+                total: opt nat8;
+              };
+ };
+type ChainId = nat64;
 type CanisterInfo = 
  record {
    id: principal;
    timestamp: int;
+ };
+type CallResult = 
+ variant {
+   Err: RpcError;
+   Ok: text;
+ };
+type CallArgs = 
+ record {
+   block: opt BlockTag;
+   transaction: TransactionRequest;
+ };
+type BlockTag = 
+ variant {
+   Earliest;
+   Finalized;
+   Latest;
+   Number: nat;
+   Pending;
+   Safe;
+ };
+type Block = 
+ record {
+   baseFeePerGas: opt nat;
+   difficulty: opt nat;
+   extraData: text;
+   gasLimit: nat;
+   gasUsed: nat;
+   hash: text;
+   logsBloom: text;
+   miner: text;
+   mixHash: text;
+   nonce: nat;
+   number: nat;
+   parentHash: text;
+   receiptsRoot: text;
+   sha3Uncles: text;
+   size: nat;
+   stateRoot: text;
+   timestamp: nat;
+   totalDifficulty: opt nat;
+   transactions: vec text;
+   transactionsRoot: opt text;
+   uncles: vec text;
+ };
+type AccessListEntry = 
+ record {
+   address: text;
+   storageKeys: vec text;
  };
 service : (opt InitParams) -> Self
