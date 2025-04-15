@@ -716,34 +716,7 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
         res
     };
     public shared ({ caller }) func _ttp_request(request : ICType.http_request_args) : async ICType.http_request_result {
-        await* pool.addCycles(caller, #method "http_request");
-        let new_request = switch (request.transform) {
-        case null {
-                 { request with transform = null };
-             };
-        case (?transform) {
-                 let payload = { caller; transform };
-                 let fake_actor: actor { __transform: ICType.transform_function } = actor(Principal.toText(Principal.fromActor this));
-                 let new_transform = ?{ function = fake_actor.__transform; context = to_candid(payload) };
-                 { request with transform = new_transform };
-             };
-        };
-        let res = await IC.http_request(new_request);
-        await* pool.addCycles(caller, #refund);
-        res;
-    };
-    public shared composite query({ caller }) func __transform({context: Blob; response: ICType.http_request_result}) : async ICType.http_request_result {
-        // TODO Remove anonymous identity once https://github.com/dfinity/ic/pull/1337 is released
-        if (caller != Principal.fromText("aaaaa-aa") and caller != Principal.fromText("2vxsx-fae")) {
-            throw Error.reject "Only the management canister can call __transform";
-        };
-        let ?raw : ?{ caller: Principal; transform: {context: Blob; function: ICType.transform_function} } = from_candid context else {
-            throw Error.reject "__transform: Invalid context";
-        };
-        if (not pool.findId(raw.caller)) {
-            throw Error.reject "__transform: Only a canister managed by the Motoko Playground can call __transform";
-        };
-        await raw.transform.function({ context = raw.transform.context; response });
+        Debug.trap("Canister http outcalls are disabled");
     };
     // Endpoints for EVM RPC canister
     public shared ({ caller }) func eth_call(service: EVM.RpcServices, config: ?EVM.RpcConfig, arg: EVM.CallArgs) : async EVM.MultiCallResult {
@@ -835,7 +808,6 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             #delete_canister_snapshot : Any;
             #load_canister_snapshot : Any;
             #_ttp_request : Any;
-            #__transform : Any;
             #sign_with_ecdsa: Any;
             #sign_with_schnorr: Any;
             #eth_call: Any;
@@ -860,7 +832,6 @@ shared (creator) actor class Self(opt_params : ?Types.InitParams) = this {
             case (#delete_canister_snapshot _) false;
             case (#load_canister_snapshot _) false;
             case (#_ttp_request _) false;
-            case (#__transform _) false;
             case (#sign_with_ecdsa _) false;
             case (#sign_with_schnorr _) false;
             case (#eth_call _) false;

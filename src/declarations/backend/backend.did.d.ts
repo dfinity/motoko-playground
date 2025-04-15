@@ -57,10 +57,6 @@ export interface Origin {
 }
 export interface Self {
   GCCanisters: ActorMethod<[], undefined>;
-  __transform: ActorMethod<
-    [{ context: Uint8Array | number[]; response: http_request_result }],
-    http_request_result
-  >;
   _ttp_request: ActorMethod<[http_request_args], http_request_result>;
   balance: ActorMethod<[], bigint>;
   callForward: ActorMethod<
