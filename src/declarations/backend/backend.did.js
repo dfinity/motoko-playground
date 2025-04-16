@@ -143,16 +143,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const Self = IDL.Service({
     GCCanisters: IDL.Func([], [], ["oneway"]),
-    __transform: IDL.Func(
-      [
-        IDL.Record({
-          context: IDL.Vec(IDL.Nat8),
-          response: http_request_result,
-        }),
-      ],
-      [http_request_result],
-      ["composite_query"],
-    ),
     _ttp_request: IDL.Func([http_request_args], [http_request_result], []),
     balance: IDL.Func([], [IDL.Nat], ["query"]),
     callForward: IDL.Func(

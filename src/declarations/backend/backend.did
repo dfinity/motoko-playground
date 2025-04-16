@@ -95,10 +95,6 @@ type Stats =
 type Self = 
  service {
    GCCanisters: () -> () oneway;
-   __transform: (record {
-                   context: blob;
-                   response: http_request_result;
-                 }) -> (http_request_result) composite_query;
    _ttp_request: (http_request_args) -> (http_request_result);
    balance: () -> (nat) query;
    callForward: (CanisterInfo, text, blob) -> (blob);
