@@ -43,7 +43,7 @@
     "mo-dev": "^0.13.0",
     "prettier": "^3.3.3",
     "typescript": "^5.5.4",
-    "vite": "^6.2.5",
+    "vite": "^6.3.4",
     "vite-plugin-environment": "^1.1.3",
     "vite-plugin-top-level-await": "^1.4.4",
     "vite-plugin-wasm": "^3.3.0"
